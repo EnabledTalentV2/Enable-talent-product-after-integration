@@ -14,6 +14,7 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/types";
+type WorkEntry = UserData["workExperience"]["entries"][number];
 
 const initialSteps: Step[] = [
   { id: 1, label: "Basic Info", key: "basicInfo", status: "pending", isActive: true },
@@ -51,19 +52,24 @@ const initialUserData: UserData = {
   },
   workExperience: {
     experienceType: "experienced",
-    company: "tiktok",
-    role: "Sr UX designer",
-    from: "",
-    to: "21-Jan-2025",
-    description: [
-      "- Collaborated with cross-functional teams including product managers, engineers, and marketers to understand business goals and user needs.",
-      "- Conducted user research through interviews, surveys, and usability testing to inform design decisions.",
-      "- Created wireframes, prototypes, and user flows to communicate design ideas and facilitate feedback.",
-      "- Designed intuitive and elegant user interfaces for web and mobile applications, adhering to design principles and best practices.",
-      "- Implemented responsive design techniques to ensure a seamless user experience across devices.",
-    ].join("\n"),
+    entries: [
+      {
+        company: "tiktok",
+        role: "Sr UX designer",
+        from: "",
+        to: "21-Jan-2025",
+        current: false,
+        description: [
+          "- Collaborated with cross-functional teams including product managers, engineers, and marketers to understand business goals and user needs.",
+          "- Conducted user research through interviews, surveys, and usability testing to inform design decisions.",
+          "- Created wireframes, prototypes, and user flows to communicate design ideas and facilitate feedback.",
+          "- Designed intuitive and elegant user interfaces for web and mobile applications, adhering to design principles and best practices.",
+          "- Implemented responsive design techniques to ensure a seamless user experience across devices.",
+        ].join("\n"),
+      },
+    ],
   },
-  skills: { skills: "" },
+  skills: { skills: "", primaryList: ["UX Design", "UX Research", "Usability Principles", "Information Architecture", "Wireframing And Prototyping", "Design Systems Governance", "Agile Methodologies"] },
   projects: { projects: "" },
   achievements: { achievements: "" },
   certification: { certification: "" },
@@ -79,6 +85,13 @@ export default function ManualResumeFill() {
   const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(null);
   const [educationErrors, setEducationErrors] = useState<Partial<Record<keyof UserData["education"], string>>>({});
   const [educationFirstError, setEducationFirstError] = useState<string | null>(null);
+  const [workExpErrors, setWorkExpErrors] = useState<{
+    experienceType?: string;
+    entries?: Record<number, Partial<Record<keyof UserData["workExperience"]["entries"][number], string>>>;
+  }>({});
+  const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(null);
+  const [skillErrors, setSkillErrors] = useState<Partial<Record<keyof UserData["skills"], string>>>({});
+  const [skillFirstError, setSkillFirstError] = useState<string | null>(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
@@ -153,11 +166,71 @@ export default function ManualResumeFill() {
         setEducationFirstError(null);
         return true;
       case "workExperience":
-        return Boolean(
-          userData.workExperience.company && userData.workExperience.role && userData.workExperience.experienceType
-        );
+        if (userData.workExperience.experienceType === "fresher") {
+          setWorkExpErrors({});
+          setWorkExpFirstError(null);
+          return true;
+        }
+        const requiredFields: Array<{ field: keyof UserData["workExperience"]["entries"][number]; message: string }> = [
+          { field: "company", message: "Please enter Company Name" },
+          { field: "role", message: "Please enter Role" },
+          { field: "from", message: "Please enter start date" },
+          { field: "description", message: "Please enter Description" },
+        ];
+        const entries = userData.workExperience.entries;
+        const errors: typeof workExpErrors = { entries: {} };
+        let firstId: string | null = null;
+        if (!entries.length) {
+          errors.entries = {
+            0: {
+              company: "Please enter Company Name",
+              role: "Please enter Role",
+              from: "Please enter start date",
+              to: "Please enter end date",
+              description: "Please enter Description",
+            },
+          };
+          firstId = "workExp-0-company";
+        }
+        entries.forEach((entry, idx) => {
+          requiredFields.forEach(({ field, message }) => {
+            if (field === "to" && entry.current) return;
+            if (!entry[field]) {
+              if (!errors.entries) errors.entries = {};
+              if (!errors.entries[idx]) errors.entries[idx] = {};
+              errors.entries[idx]![field] = message;
+              if (!firstId) {
+                firstId = `workExp-${idx}-${field}`;
+              }
+            }
+          });
+          if (!entry.current && !entry.to) {
+            if (!errors.entries) errors.entries = {};
+            if (!errors.entries[idx]) errors.entries[idx] = {};
+            errors.entries[idx]!.to = "Please enter end date";
+            if (!firstId) firstId = `workExp-${idx}-to`;
+          }
+        });
+        const hasErrors = Boolean(firstId);
+        if (hasErrors) {
+          setWorkExpErrors((prev) => ({ ...prev, ...errors }));
+          setWorkExpFirstError(firstId);
+          return false;
+        }
+        setWorkExpErrors({});
+        setWorkExpFirstError(null);
+        return true;
       case "reviewAgree":
         return userData.reviewAgree.agree;
+      case "skills":
+        if (!userData.skills.primaryList || userData.skills.primaryList.length === 0) {
+          setSkillErrors({ skills: "Please add at least one skill" });
+          setSkillFirstError("skills-input");
+          return false;
+        }
+        setSkillErrors({});
+        setSkillFirstError(null);
+        return true;
       default:
         return true;
     }
@@ -252,14 +325,94 @@ export default function ManualResumeFill() {
         return (
           <WorkExperience
             data={userData.workExperience}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, workExperience: { ...prev.workExperience, ...patch } }))}
+            errors={workExpErrors}
+            onExperienceTypeChange={(experienceType) => {
+              setUserData((prev) => ({
+                ...prev,
+                workExperience: {
+                  ...prev.workExperience,
+                  experienceType,
+                },
+              }));
+              if (experienceType === "fresher") {
+                setWorkExpErrors({});
+                setWorkExpFirstError(null);
+              }
+            }}
+            onEntryChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextEntries = prev.workExperience.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+              });
+              setWorkExpErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.entries && cleared.entries[index]) {
+                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  cleared.entries = { ...cleared.entries, [index]: updated };
+                }
+                return cleared;
+              });
+              setWorkExpFirstError((prev) => {
+                if (!prev) return prev;
+                const [, idxStr, field] = prev.split("-");
+                const idxNum = Number(idxStr);
+                if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof WorkEntry]) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onAddEntry={() => {
+              setUserData((prev) => ({
+                ...prev,
+                workExperience: {
+                  ...prev.workExperience,
+                  entries: [...prev.workExperience.entries, { company: "", role: "", from: "", to: "", description: "" }],
+                },
+              }));
+            }}
+            onRemoveEntry={(index) => {
+              setUserData((prev) => {
+                const nextEntries = prev.workExperience.entries.filter((_, idx) => idx !== index);
+                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+              });
+              setWorkExpErrors({});
+              setWorkExpFirstError(null);
+            }}
           />
         );
       case "skills":
         return (
           <Skills
             data={userData.skills}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }))}
+            errors={skillErrors}
+            onChange={(patch) => {
+              setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }));
+              setSkillErrors((prev) => {
+                const cleared = { ...prev };
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                  if (patch[key]) {
+                    delete (cleared as Record<string, string>)[key as string];
+                  }
+                });
+                return cleared;
+              });
+              setSkillFirstError((prev) => {
+                if (!prev) return prev;
+                const targetId = "skills-input";
+                if (patch.skills && prev === targetId) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
           />
         );
       case "projects":
@@ -307,7 +460,7 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [activeStep.key, userData, basicInfoErrors, educationErrors]);
+  }, [activeStep.key, userData, basicInfoErrors, educationErrors, workExpErrors, skillErrors]);
 
   useEffect(() => {
     if (basicInfoFirstError && activeStep.key === "basicInfo") {
@@ -328,6 +481,26 @@ export default function ManualResumeFill() {
       }
     }
   }, [educationFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (workExpFirstError && activeStep.key === "workExperience") {
+      const el = document.getElementById(workExpFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [workExpFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (skillFirstError && activeStep.key === "skills") {
+      const el = document.getElementById(skillFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [skillFirstError, activeStep.key]);
 
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">

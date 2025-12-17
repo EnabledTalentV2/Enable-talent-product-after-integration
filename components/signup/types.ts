@@ -44,11 +44,14 @@ export type UserData = {
   };
   workExperience: {
     experienceType: 'experienced' | 'fresher';
-    company: string;
-    role: string;
-    from: string;
-    to: string;
-    description: string;
+    entries: Array<{
+      company: string;
+      role: string;
+      from: string;
+      to: string;
+      current?: boolean;
+      description: string;
+    }>;
   };
   skills: { skills: string };
   projects: { projects: string };
@@ -57,4 +60,5 @@ export type UserData = {
   preference: { preference: string };
   otherDetails: { otherDetails: string };
   reviewAgree: { agree: boolean; notes: string };
+  skills: { skills: string; primaryList?: string[] };
 };
