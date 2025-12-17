@@ -1,7 +1,7 @@
 'use client';
 
 export default function Header() {
-  const percent = 68; // 0–100
+  const percent = 68; // 0-100
 
   return (
     <header className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-r from-[#C05621] to-[#FBBF24] shadow-lg px-6 py-8 md:px-12 md:py-10">
