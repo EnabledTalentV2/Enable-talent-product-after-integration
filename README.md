@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Enable Talent - Job Platform for Persons with Disabilities
 
-## Getting Started
+A modern, accessible job platform designed to empower persons with disabilities to register, build their profiles, and connect with employment opportunities. Enable Talent creates an inclusive space where companies can discover talented individuals while prioritizing accessibility and equal opportunity.
 
-First, run the development server:
+## 🎯 Mission
+
+To bridge the employment gap for persons with disabilities by providing an accessible, user-friendly platform that connects skilled individuals with inclusive employers and meaningful job opportunities.
+
+## ✨ Features
+
+- **Accessible Registration & Signup** - Easy-to-use onboarding process with accessibility-first design
+- **Resume Management** - Upload resumes or fill out profiles manually with comprehensive job history and skills sections
+- **Job Discovery** - Browse and search job listings from disability-inclusive employers
+- **Profile Building** - Create detailed professional profiles showcasing skills, experience, and qualifications
+- **Employment Opportunities** - Connect with companies actively looking to hire talented individuals with disabilities
+- **Responsive Design** - Fully responsive interface that works seamlessly across all devices
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org) (React-based full-stack framework)
+- **Language:** [TypeScript](https://www.typescriptlang.org)
+- **Styling:** CSS with PostCSS
+- **Linting:** ESLint
+- **Package Manager:** npm/yarn
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 16.x or higher
+- npm or yarn package manager
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd product
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The application will automatically reload as you make changes to the code.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📁 Project Structure
 
-## Learn More
+```
+├── app/                          # Next.js app directory
+│   ├── layout.tsx               # Root layout component
+│   ├── page.tsx                 # Home page
+│   ├── globals.css              # Global styles
+│   └── (sign-up)/               # Sign-up route group
+│       └── signup/
+│           ├── page.tsx         # Main signup page
+│           ├── manual-resume-fill/  # Manual profile entry
+│           └── resume-upload/       # Resume upload functionality
+├── components/                   # Reusable React components
+│   └── signup/                   # Sign-up related components
+│       ├── Header.tsx           # Header component
+│       └── Navbar.tsx           # Navigation component
+├── public/                       # Static assets
+│   └── logo/                     # Logo files
+├── package.json                  # Project dependencies
+├── next.config.ts               # Next.js configuration
+├── tsconfig.json                # TypeScript configuration
+├── eslint.config.mjs            # ESLint configuration
+└── postcss.config.mjs           # PostCSS configuration
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 📝 Available Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint to check code quality
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ♿ Accessibility
 
-## Deploy on Vercel
+Enable Talent is built with accessibility as a core principle. The platform follows WCAG guidelines to ensure it's usable by everyone, including persons with various disabilities.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🤝 Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+We welcome contributions! Please feel free to submit issues and enhancement requests.
+
+## 📄 License
+
+[Add your license information here]
+
+## 📞 Support
+
+For questions or support, please contact the Enable Talent team.
+
+---
+
+Built with ❤️ to create inclusive employment opportunities
