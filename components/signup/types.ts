@@ -22,8 +22,26 @@ export type Step = {
 };
 
 export type UserData = {
-  basicInfo: { fullName: string; email: string; phone: string; location: string };
-  education: { school: string; degree: string; graduation: string };
+  basicInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    location: string;
+    citizenshipStatus: string;
+    gender: string;
+    ethnicity: string;
+    socialProfile: string;
+    linkedinUrl: string;
+    currentStatus: string;
+    profilePhoto?: string;
+  };
+  education: {
+    courseName: string;
+    major: string;
+    institution: string;
+    graduationDate: string;
+  };
   workExperience: {
     experienceType: 'experienced' | 'fresher';
     company: string;

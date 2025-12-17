@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "@/components/signup/Header";
 import Sidebar from "@/components/signup/Sidebar";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
@@ -29,8 +29,26 @@ const initialSteps: Step[] = [
 ];
 
 const initialUserData: UserData = {
-  basicInfo: { fullName: "", email: "", phone: "", location: "" },
-  education: { school: "", degree: "", graduation: "" },
+  basicInfo: {
+    firstName: "Jenny",
+    lastName: "",
+    email: "",
+    phone: "(229) 555-0109",
+    location: "Allentown, New Mexico 31134",
+    citizenshipStatus: "Canadian",
+    gender: "Female",
+    ethnicity: "South Asian",
+    socialProfile: "Jennywilson.com",
+    linkedinUrl: "www.linkedin.com/jennywilson",
+    currentStatus: "Newly graduated student interested in working with employers in Brampton",
+    profilePhoto: "",
+  },
+  education: {
+    courseName: "",
+    major: "Design methodologies, Aesthetics, Visual communication, Technical specification...",
+    institution: "York University",
+    graduationDate: "",
+  },
   workExperience: {
     experienceType: "experienced",
     company: "tiktok",
@@ -57,6 +75,10 @@ const initialUserData: UserData = {
 export default function ManualResumeFill() {
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const [userData, setUserData] = useState<UserData>(initialUserData);
+  const [basicInfoErrors, setBasicInfoErrors] = useState<Partial<Record<keyof UserData["basicInfo"], string>>>({});
+  const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(null);
+  const [educationErrors, setEducationErrors] = useState<Partial<Record<keyof UserData["education"], string>>>({});
+  const [educationFirstError, setEducationFirstError] = useState<string | null>(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
@@ -87,9 +109,49 @@ export default function ManualResumeFill() {
   const validateStep = (key: StepKey) => {
     switch (key) {
       case "basicInfo":
-        return Boolean(userData.basicInfo.fullName && userData.basicInfo.email);
+        const requiredBasicFields: Array<{ field: keyof UserData["basicInfo"]; message: string }> = [
+          { field: "firstName", message: "Please enter First Name" },
+          { field: "lastName", message: "Please enter Last Name" },
+          { field: "email", message: "Please enter Email Address" },
+          { field: "phone", message: "Please enter Phone number" },
+          { field: "location", message: "Please enter Location" },
+          { field: "citizenshipStatus", message: "Please select Citizenship status" },
+          { field: "gender", message: "Please select Gender" },
+          { field: "ethnicity", message: "Please select Ethnicity" },
+          { field: "currentStatus", message: "Please enter your current status and goal" },
+        ];
+        const missing = requiredBasicFields.filter(({ field }) => !userData.basicInfo[field]);
+        if (missing.length) {
+          const errs: Partial<Record<keyof UserData["basicInfo"], string>> = {};
+          missing.forEach(({ field, message }) => {
+            errs[field] = message;
+          });
+          setBasicInfoErrors((prev) => ({ ...prev, ...errs }));
+          setBasicInfoFirstError(`basicInfo-${missing[0].field}`);
+          return false;
+        }
+        setBasicInfoErrors({});
+        setBasicInfoFirstError(null);
+        return true;
       case "education":
-        return Boolean(userData.education.school && userData.education.degree);
+        const requiredEducationFields: Array<{ field: keyof UserData["education"]; message: string }> = [
+          { field: "courseName", message: "Please enter the Course Name" },
+          { field: "major", message: "Please enter Major" },
+          { field: "institution", message: "Please enter Institution" },
+        ];
+        const missingEdu = requiredEducationFields.filter(({ field }) => !userData.education[field]);
+        if (missingEdu.length) {
+          const errs: Partial<Record<keyof UserData["education"], string>> = {};
+          missingEdu.forEach(({ field, message }) => {
+            errs[field] = message;
+          });
+          setEducationErrors((prev) => ({ ...prev, ...errs }));
+          setEducationFirstError(`education-${missingEdu[0].field}`);
+          return false;
+        }
+        setEducationErrors({});
+        setEducationFirstError(null);
+        return true;
       case "workExperience":
         return Boolean(
           userData.workExperience.company && userData.workExperience.role && userData.workExperience.experienceType
@@ -134,14 +196,56 @@ export default function ManualResumeFill() {
         return (
           <BasicInfo
             data={userData.basicInfo}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, basicInfo: { ...prev.basicInfo, ...patch } }))}
+            errors={basicInfoErrors}
+            onChange={(patch) => {
+              setUserData((prev) => ({ ...prev, basicInfo: { ...prev.basicInfo, ...patch } }));
+              setBasicInfoErrors((prev) => {
+                const cleared = { ...prev };
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                  if (patch[key]) {
+                    delete (cleared as Record<string, string>)[key as string];
+                  }
+                });
+                return cleared;
+              });
+              setBasicInfoFirstError((prev) => {
+                if (!prev) return prev;
+                const firstKey = prev.replace("basicInfo-", "") as keyof UserData["basicInfo"];
+                const updatedKeys = Object.keys(patch) as (keyof typeof patch)[];
+                if (updatedKeys.includes(firstKey) && patch[firstKey]) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
           />
         );
       case "education":
         return (
           <Education
             data={userData.education}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, education: { ...prev.education, ...patch } }))}
+            errors={educationErrors}
+            onChange={(patch) => {
+              setUserData((prev) => ({ ...prev, education: { ...prev.education, ...patch } }));
+              setEducationErrors((prev) => {
+                const cleared = { ...prev };
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                  if (patch[key]) {
+                    delete (cleared as Record<string, string>)[key as string];
+                  }
+                });
+                return cleared;
+              });
+              setEducationFirstError((prev) => {
+                if (!prev) return prev;
+                const firstKey = prev.replace("education-", "") as keyof UserData["education"];
+                const updatedKeys = Object.keys(patch) as (keyof typeof patch)[];
+                if (updatedKeys.includes(firstKey) && patch[firstKey]) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
           />
         );
       case "workExperience":
@@ -203,7 +307,27 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [activeStep.key, userData]);
+  }, [activeStep.key, userData, basicInfoErrors, educationErrors]);
+
+  useEffect(() => {
+    if (basicInfoFirstError && activeStep.key === "basicInfo") {
+      const el = document.getElementById(basicInfoFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [basicInfoFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (educationFirstError && activeStep.key === "education") {
+      const el = document.getElementById(educationFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [educationFirstError, activeStep.key]);
 
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
