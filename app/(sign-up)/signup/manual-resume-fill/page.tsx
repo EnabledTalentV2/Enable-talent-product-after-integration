@@ -119,7 +119,7 @@ const initialUserData: UserData = {
     availability: "",
     desiredSalary: "80000-90000",
   },
-  reviewAgree: { agree: false, notes: "" },
+  reviewAgree: { agree: false, discover: "LinkedIn", comments: "" },
 };
 
 export default function ManualResumeFill() {
@@ -154,6 +154,8 @@ export default function ManualResumeFill() {
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
+  const completedSteps = stepsState.filter((s) => s.status === "completed").length;
+  const progressPercent = Math.min(100, Math.round((completedSteps / stepsState.length) * 100));
 
   const setActiveStep = (nextIndex: number) => {
     setStepsState((prev) =>
@@ -978,7 +980,7 @@ export default function ManualResumeFill() {
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
       <div className="max-w-7xl w-full flex flex-col gap-6">
-        <Header />
+        <Header percent={progressPercent} />
 
         <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Sidebar steps={stepsState} />
@@ -1010,7 +1012,8 @@ export default function ManualResumeFill() {
                 <button
                   type="button"
                   onClick={handleSaveAndNext}
-                  className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+                  className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={activeStep.key === "reviewAgree" && !userData.reviewAgree.agree}
                 >
                   {activeIndex === stepsState.length - 1 ? "Finish" : "Save & Next"}
                 </button>

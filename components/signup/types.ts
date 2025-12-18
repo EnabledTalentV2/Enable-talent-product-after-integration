@@ -95,5 +95,5 @@ export type UserData = {
     availability: string;
     desiredSalary: string;
   };
-  reviewAgree: { agree: boolean; notes: string };
+  reviewAgree: { agree: boolean; discover: string; comments: string };
 };

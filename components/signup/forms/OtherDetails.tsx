@@ -211,7 +211,7 @@ export default function OtherDetails({
       <div className="space-y-2">
         <label className={`block text-sm font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
           {availabilityError ||
-            "What is your earliest availability for any full-time opportunities that may come from the BReady Talent Access Service?"}
+            "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
         </label>
         <div className="relative">
           <select

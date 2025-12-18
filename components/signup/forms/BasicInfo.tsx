@@ -187,7 +187,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
 
       <InputBlock
         id="basicInfo-currentStatus"
-        label="What is your current status and goal in joining the BReady Talent Program?"
+        label="What is your current status and goal in joining the Enabled Talent Program?"
         value={data.currentStatus}
         onChange={(v) => onChange({ currentStatus: v })}
         placeholder="Describe your status and goals"
