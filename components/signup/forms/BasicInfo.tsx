@@ -40,25 +40,34 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.profilePhoto ? "text-red-600" : "text-slate-700"}`}>Profile photo</label>
+        <label 
+          htmlFor="basicInfo-profilePhoto"
+          className={`block text-sm font-medium ${errors?.profilePhoto ? "text-red-600" : "text-slate-700"}`}
+        >
+          Profile photo
+        </label>
         <div
           className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 ${
             errors?.profilePhoto ? "border-red-400" : "border-gray-300"
           }`}
         >
-          <label className="flex cursor-pointer flex-col items-center gap-2 text-sm text-slate-600">
+          <label htmlFor="basicInfo-profilePhoto" className="flex cursor-pointer flex-col items-center gap-2 text-sm text-slate-600">
             <UploadCloud className="h-5 w-5 text-orange-500" />
             <div className="flex items-center gap-1">
               <span>Drag and drop or,</span>
               <span className="text-orange-500 font-medium">Browse</span>
             </div>
             <input
+              id="basicInfo-profilePhoto"
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => onChange({ profilePhoto: e.target.files?.[0]?.name || "" })}
             />
           </label>
+          {data.profilePhoto && (
+            <p className="text-xs text-slate-500 mt-2 text-center">Selected: {data.profilePhoto}</p>
+          )}
         </div>
         {errors?.profilePhoto ? <p className="text-xs text-red-600">{errors.profilePhoto}</p> : null}
       </div>
@@ -167,6 +176,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <InputBlock
+        id="basicInfo-socialProfile"
         label="Social Profile"
         value={data.socialProfile}
         onChange={(v) => onChange({ socialProfile: v })}

@@ -42,7 +42,7 @@ export default function Header({ percent }: Props) {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-            <span className={`text-2xl font-bold ${numberColor}`}>{safePercent}</span>
+            <span className={`text-2xl font-bold ${numberColor}`}>{safePercent}%</span>
             <span className="text-[9px] uppercase font-semibold text-slate-500">Profile</span>
             <span className="text-[9px] uppercase font-semibold text-slate-500">Completed</span>
           </div>
