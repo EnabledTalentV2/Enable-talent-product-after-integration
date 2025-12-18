@@ -98,7 +98,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <label className={`block text-sm font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}>Citizenship status</label>
         <select
           id="basicInfo-citizenshipStatus"
-          className={selectClass(errors?.citizenshipStatus)}
+          className={selectClass(Boolean(errors?.citizenshipStatus))}
           value={data.citizenshipStatus}
           onChange={(e) => onChange({ citizenshipStatus: e.target.value })}
         >
@@ -124,7 +124,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <label className={`block text-sm font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>Gender</label>
         <select
           id="basicInfo-gender"
-          className={selectClass(errors?.gender)}
+          className={selectClass(Boolean(errors?.gender))}
           value={data.gender}
           onChange={(e) => onChange({ gender: e.target.value })}
         >
@@ -149,7 +149,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <label className={`block text-sm font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>Ethnicity</label>
         <select
           id="basicInfo-ethnicity"
-          className={selectClass(errors?.ethnicity)}
+          className={selectClass(Boolean(errors?.ethnicity))}
           value={data.ethnicity}
           onChange={(e) => onChange({ ethnicity: e.target.value })}
         >

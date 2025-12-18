@@ -15,6 +15,8 @@ import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/types";
 type WorkEntry = UserData["workExperience"]["entries"][number];
+type ProjectEntry = UserData["projects"]["entries"][number];
+type CertificationEntry = UserData["certification"]["entries"][number];
 
 const initialSteps: Step[] = [
   { id: 1, label: "Basic Info", key: "basicInfo", status: "pending", isActive: true },
@@ -57,7 +59,7 @@ const initialUserData: UserData = {
         company: "tiktok",
         role: "Sr UX designer",
         from: "",
-        to: "21-Jan-2025",
+        to: "2025-01-21",
         current: false,
         description: [
           "- Collaborated with cross-functional teams including product managers, engineers, and marketers to understand business goals and user needs.",
@@ -70,10 +72,43 @@ const initialUserData: UserData = {
     ],
   },
   skills: { skills: "", primaryList: ["UX Design", "UX Research", "Usability Principles", "Information Architecture", "Wireframing And Prototyping", "Design Systems Governance", "Agile Methodologies"] },
-  projects: { projects: "" },
-  achievements: { achievements: "" },
-  certification: { certification: "" },
-  preference: { preference: "" },
+  projects: {
+    entries: [
+      {
+        projectName: "UST Global",
+        projectDescription: "Sr UX designer",
+        current: false,
+        from: "",
+        to: "2025-01-21",
+      },
+    ],
+  },
+  achievements: {
+    entries: [
+      {
+        title: "Spot Award",
+        issueDate: "2022",
+        description:
+          "Received Spot Award in recognition of outstanding performance and contributions to Amazon Projectx",
+      },
+    ],
+  },
+  certification: {
+    noCertification: false,
+    entries: [
+      {
+        name: "Design Thinking for Innovation",
+        issueDate: "Aug 2021",
+        organization: "University of Virginia",
+        credentialIdUrl: "",
+      },
+    ],
+  },
+  preference: {
+    companySize: ["10 - 100"],
+    jobType: ["Full time"],
+    jobSearch: ["Ready for Interviews"],
+  },
   otherDetails: { otherDetails: "" },
   reviewAgree: { agree: false, notes: "" },
 };
@@ -92,6 +127,14 @@ export default function ManualResumeFill() {
   const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(null);
   const [skillErrors, setSkillErrors] = useState<Partial<Record<keyof UserData["skills"], string>>>({});
   const [skillFirstError, setSkillFirstError] = useState<string | null>(null);
+  const [projectErrors, setProjectErrors] = useState<{
+    entries?: Record<number, Partial<Record<keyof ProjectEntry, string>>>;
+  }>({});
+  const [projectFirstError, setProjectFirstError] = useState<string | null>(null);
+  const [certErrors, setCertErrors] = useState<{
+    entries?: Record<number, Partial<Record<keyof CertificationEntry, string>>>;
+  }>({});
+  const [certFirstError, setCertFirstError] = useState<string | null>(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
@@ -231,6 +274,90 @@ export default function ManualResumeFill() {
         setSkillErrors({});
         setSkillFirstError(null);
         return true;
+      case "projects":
+        const requiredProjectFields: Array<{ field: keyof ProjectEntry; message: string }> = [
+          { field: "projectName", message: "Please enter Project name" },
+          { field: "projectDescription", message: "Please enter Project description" },
+          { field: "from", message: "Please enter start date" },
+          { field: "to", message: "Please enter end date" },
+        ];
+        const projectEntries = userData.projects.entries;
+        const projectErrs: typeof projectErrors = { entries: {} };
+        let firstProjectId: string | null = null;
+        if (!projectEntries.length) {
+          projectErrs.entries = {
+            0: {
+              projectName: "Please enter Project name",
+              projectDescription: "Please enter Project description",
+              from: "Please enter start date",
+              to: "Please enter end date",
+            },
+          };
+          firstProjectId = "project-0-projectName";
+        }
+        projectEntries.forEach((entry, idx) => {
+          requiredProjectFields.forEach(({ field, message }) => {
+            if (field === "to" && entry.current) return;
+            if (!entry[field]) {
+              if (!projectErrs.entries) projectErrs.entries = {};
+              if (!projectErrs.entries[idx]) projectErrs.entries[idx] = {};
+              projectErrs.entries[idx]![field] = message;
+              if (!firstProjectId) firstProjectId = `project-${idx}-${field}`;
+            }
+          });
+        });
+        if (firstProjectId) {
+          setProjectErrors((prev) => ({ ...prev, ...projectErrs }));
+          setProjectFirstError(firstProjectId);
+          return false;
+        }
+        setProjectErrors({});
+        setProjectFirstError(null);
+        return true;
+      case "certification":
+        if (userData.certification.noCertification) {
+          setCertErrors({});
+          setCertFirstError(null);
+          return true;
+        }
+        const requiredCertFields: Array<{ field: keyof CertificationEntry; message: string }> = [
+          { field: "name", message: "Please enter Name of certification" },
+          { field: "issueDate", message: "Please enter Issue Date" },
+          { field: "organization", message: "Please enter Issued organization" },
+          { field: "credentialIdUrl", message: "Please enter Credential ID/URL" },
+        ];
+        const certEntries = userData.certification.entries;
+        const certErrs: typeof certErrors = { entries: {} };
+        let firstCertId: string | null = null;
+        if (!certEntries.length) {
+          certErrs.entries = {
+            0: {
+              name: "Please enter Name of certification",
+              issueDate: "Please enter Issue Date",
+              organization: "Please enter Issued organization",
+              credentialIdUrl: "Please enter Credential ID/URL",
+            },
+          };
+          firstCertId = "cert-0-name";
+        }
+        certEntries.forEach((entry, idx) => {
+          requiredCertFields.forEach(({ field, message }) => {
+            if (!entry[field]) {
+              if (!certErrs.entries) certErrs.entries = {};
+              if (!certErrs.entries[idx]) certErrs.entries[idx] = {};
+              certErrs.entries[idx]![field] = message;
+              if (!firstCertId) firstCertId = `cert-${idx}-${field}`;
+            }
+          });
+        });
+        if (firstCertId) {
+          setCertErrors((prev) => ({ ...prev, ...certErrs }));
+          setCertFirstError(firstCertId);
+          return false;
+        }
+        setCertErrors({});
+        setCertFirstError(null);
+        return true;
       default:
         return true;
     }
@@ -355,6 +482,9 @@ export default function ManualResumeFill() {
                       delete updated[key as string];
                     }
                   });
+                  if (patch.current === true) {
+                    delete updated.to;
+                  }
                   cleared.entries = { ...cleared.entries, [index]: updated };
                 }
                 return cleared;
@@ -363,6 +493,9 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const [, idxStr, field] = prev.split("-");
                 const idxNum = Number(idxStr);
+                if (idxNum === index && field === "to" && patch.current === true) {
+                  return null;
+                }
                 if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof WorkEntry]) {
                   return null;
                 }
@@ -397,19 +530,18 @@ export default function ManualResumeFill() {
               setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }));
               setSkillErrors((prev) => {
                 const cleared = { ...prev };
-                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                  if (patch[key]) {
-                    delete (cleared as Record<string, string>)[key as string];
-                  }
-                });
+                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) {
+                  delete (cleared as Record<string, string>).skills;
+                }
+                if ("primaryList" in patch) {
+                  delete (cleared as Record<string, string>).skills;
+                }
                 return cleared;
               });
               setSkillFirstError((prev) => {
                 if (!prev) return prev;
-                const targetId = "skills-input";
-                if (patch.skills && prev === targetId) {
-                  return null;
-                }
+                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) return null;
+                if ("primaryList" in patch) return null;
                 return prev;
               });
             }}
@@ -419,21 +551,168 @@ export default function ManualResumeFill() {
         return (
           <Projects
             data={userData.projects}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, projects: { ...prev.projects, ...patch } }))}
+            errors={projectErrors}
+            onEntryChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextEntries = prev.projects.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+              });
+              setProjectErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.entries && cleared.entries[index]) {
+                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  if (patch.current === true) {
+                    delete updated.to;
+                  }
+                  cleared.entries = { ...cleared.entries, [index]: updated };
+                }
+                return cleared;
+              });
+              setProjectFirstError((prev) => {
+                if (!prev) return prev;
+                const [, idxStr, field] = prev.split("-");
+                const idxNum = Number(idxStr);
+                if (idxNum === index && field === "to" && patch.current === true) {
+                  return null;
+                }
+                if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof ProjectEntry]) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                projects: {
+                  ...prev.projects,
+                  entries: [
+                    ...prev.projects.entries,
+                    { projectName: "", projectDescription: "", current: false, from: "", to: "" },
+                  ],
+                },
+              }))
+            }
+            onRemoveEntry={(index) => {
+              setUserData((prev) => {
+                const nextEntries = prev.projects.entries.filter((_, idx) => idx !== index);
+                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+              });
+              setProjectErrors({});
+              setProjectFirstError(null);
+            }}
           />
         );
       case "achievements":
         return (
           <Achievements
             data={userData.achievements}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, achievements: { ...prev.achievements, ...patch } }))}
+            onEntryChange={(index, patch) =>
+              setUserData((prev) => {
+                const nextEntries = prev.achievements.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+              })
+            }
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                achievements: {
+                  ...prev.achievements,
+                  entries: [...prev.achievements.entries, { title: "", issueDate: "", description: "" }],
+                },
+              }))
+            }
+            onRemoveEntry={(index) =>
+              setUserData((prev) => {
+                const nextEntries = prev.achievements.entries.filter((_, idx) => idx !== index);
+                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+              })
+            }
           />
         );
       case "certification":
         return (
           <Certification
             data={userData.certification}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, certification: { ...prev.certification, ...patch } }))}
+            errors={certErrors}
+            onToggleNoCertification={(value) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.length
+                  ? prev.certification.entries
+                  : [{ name: "", issueDate: "", organization: "", credentialIdUrl: "" }];
+                return {
+                  ...prev,
+                  certification: { ...prev.certification, noCertification: value, entries: nextEntries },
+                };
+              });
+              if (value) {
+                setCertErrors({});
+                setCertFirstError(null);
+              }
+            }}
+            onEntryChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+              });
+              setCertErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.entries && cleared.entries[index]) {
+                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  cleared.entries = { ...cleared.entries, [index]: updated };
+                }
+                return cleared;
+              });
+              setCertFirstError((prev) => {
+                if (!prev) return prev;
+                const [, idxStr, field] = prev.split("-");
+                const idxNum = Number(idxStr);
+                if (
+                  idxNum === index &&
+                  (Object.keys(patch) as string[]).includes(field) &&
+                  patch[field as keyof CertificationEntry]
+                ) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                certification: {
+                  ...prev.certification,
+                  entries: [
+                    ...prev.certification.entries,
+                    { name: "", issueDate: "", organization: "", credentialIdUrl: "" },
+                  ],
+                },
+              }))
+            }
+            onRemoveEntry={(index) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.filter((_, idx) => idx !== index);
+                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+              });
+              setCertErrors({});
+              setCertFirstError(null);
+            }}
           />
         );
       case "preference":
@@ -460,7 +739,7 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [activeStep.key, userData, basicInfoErrors, educationErrors, workExpErrors, skillErrors]);
+  }, [activeStep.key, userData, basicInfoErrors, educationErrors, workExpErrors, skillErrors, projectErrors, certErrors]);
 
   useEffect(() => {
     if (basicInfoFirstError && activeStep.key === "basicInfo") {
@@ -502,6 +781,26 @@ export default function ManualResumeFill() {
     }
   }, [skillFirstError, activeStep.key]);
 
+  useEffect(() => {
+    if (projectFirstError && activeStep.key === "projects") {
+      const el = document.getElementById(projectFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [projectFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (certFirstError && activeStep.key === "certification") {
+      const el = document.getElementById(certFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [certFirstError, activeStep.key]);
+
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
       <div className="max-w-7xl w-full flex flex-col gap-6">
@@ -522,7 +821,7 @@ export default function ManualResumeFill() {
               </div>
             </div>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {renderForm}
 
               <div className="pt-8 border-t border-gray-100 flex items-center justify-between">

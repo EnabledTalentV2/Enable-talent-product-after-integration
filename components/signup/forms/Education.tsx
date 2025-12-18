@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, Calendar } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import InputBlock from "./InputBlock";
 import type { UserData } from "../types";
 
@@ -75,7 +75,6 @@ export default function Education({ data, onChange, errors }: Props) {
             placeholder="Enter graduation date"
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
           />
-          
         </div>
       </div>
     </div>
