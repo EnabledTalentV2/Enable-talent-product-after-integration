@@ -17,6 +17,7 @@ import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/ty
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
+type LanguageEntry = UserData["otherDetails"]["languages"][number];
 
 const initialSteps: Step[] = [
   { id: 1, label: "Basic Info", key: "basicInfo", status: "pending", isActive: true },
@@ -109,7 +110,15 @@ const initialUserData: UserData = {
     jobType: ["Full time"],
     jobSearch: ["Ready for Interviews"],
   },
-  otherDetails: { otherDetails: "" },
+  otherDetails: {
+    languages: [
+      { language: "English", speaking: "Proficient", reading: "Basic", writing: "Proficient" },
+      { language: "French", speaking: "Proficient", reading: "Basic", writing: "Proficient" },
+    ],
+    careerStage: "Mid career professional (<10 years)",
+    availability: "",
+    desiredSalary: "80000-90000",
+  },
   reviewAgree: { agree: false, notes: "" },
 };
 
@@ -135,6 +144,13 @@ export default function ManualResumeFill() {
     entries?: Record<number, Partial<Record<keyof CertificationEntry, string>>>;
   }>({});
   const [certFirstError, setCertFirstError] = useState<string | null>(null);
+  const [otherDetailsErrors, setOtherDetailsErrors] = useState<{
+    languages?: Record<number, Partial<Record<keyof LanguageEntry, string>>>;
+    careerStage?: string;
+    availability?: string;
+    desiredSalary?: string;
+  }>({});
+  const [otherDetailsFirstError, setOtherDetailsFirstError] = useState<string | null>(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
@@ -357,6 +373,74 @@ export default function ManualResumeFill() {
         }
         setCertErrors({});
         setCertFirstError(null);
+        return true;
+      case "otherDetails":
+        const requiredLanguageFields: Array<{ field: keyof LanguageEntry; message: string }> = [
+          { field: "language", message: "Please select Language" },
+          { field: "speaking", message: "Please select Speaking level" },
+          { field: "reading", message: "Please select Reading level" },
+          { field: "writing", message: "Please select Writing level" },
+        ];
+        const requiredOtherFields: Array<{
+          field: keyof Pick<UserData["otherDetails"], "careerStage" | "availability" | "desiredSalary">;
+          message: string;
+          id: string;
+        }> = [
+          { field: "careerStage", message: "Please select your career stage", id: "otherDetails-careerStage" },
+          {
+            field: "availability",
+            message: "Please enter your earliest availability for full-time opportunities",
+            id: "otherDetails-availability",
+          },
+          { field: "desiredSalary", message: "Please select desired salary", id: "otherDetails-desiredSalary" },
+        ];
+
+        const langEntries = userData.otherDetails.languages;
+        const otherErrs: typeof otherDetailsErrors = { languages: {} };
+        let firstOtherId: string | null = null;
+
+        if (!langEntries.length) {
+          otherErrs.languages = {
+            0: {
+              language: "Please select Language",
+              speaking: "Please select Speaking level",
+              reading: "Please select Reading level",
+              writing: "Please select Writing level",
+            },
+          };
+          firstOtherId = "otherDetails-lang-0-language";
+        }
+
+        langEntries.forEach((entry, idx) => {
+          requiredLanguageFields.forEach(({ field, message }) => {
+            if (!entry[field]) {
+              if (!otherErrs.languages) otherErrs.languages = {};
+              if (!otherErrs.languages[idx]) otherErrs.languages[idx] = {};
+              otherErrs.languages[idx]![field] = message;
+              if (!firstOtherId) firstOtherId = `otherDetails-lang-${idx}-${field}`;
+            }
+          });
+        });
+
+        requiredOtherFields.forEach(({ field, message, id }) => {
+          if (!userData.otherDetails[field]) {
+            (otherErrs as Record<string, string>)[field] = message;
+            if (!firstOtherId) firstOtherId = id;
+          }
+        });
+
+        if (firstOtherId) {
+          const hasLanguageErrors = otherErrs.languages && Object.keys(otherErrs.languages).length > 0;
+          if (!hasLanguageErrors) {
+            delete otherErrs.languages;
+          }
+          setOtherDetailsErrors(otherErrs);
+          setOtherDetailsFirstError(firstOtherId);
+          return false;
+        }
+
+        setOtherDetailsErrors({});
+        setOtherDetailsFirstError(null);
         return true;
       default:
         return true;
@@ -726,7 +810,77 @@ export default function ManualResumeFill() {
         return (
           <OtherDetails
             data={userData.otherDetails}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }))}
+            errors={otherDetailsErrors}
+            onChange={(patch) => {
+              setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }));
+              setOtherDetailsErrors((prev) => {
+                const cleared = { ...prev };
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                  if (patch[key]) {
+                    delete (cleared as Record<string, unknown>)[key as string];
+                  }
+                });
+                return cleared;
+              });
+              setOtherDetailsFirstError((prev) => {
+                if (!prev) return prev;
+                const updatedKeys = Object.keys(patch) as Array<keyof typeof patch>;
+                if (updatedKeys.some((key) => prev === `otherDetails-${String(key)}` && patch[key])) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onLanguageChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextLanguages = prev.otherDetails.languages.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+              });
+              setOtherDetailsErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.languages && cleared.languages[index]) {
+                  const updated = { ...(cleared.languages[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  cleared.languages = { ...cleared.languages, [index]: updated };
+                }
+                return cleared;
+              });
+              setOtherDetailsFirstError((prev) => {
+                if (!prev) return prev;
+                const parts = prev.split("-");
+                if (parts[0] === "otherDetails" && parts[1] === "lang") {
+                  const idxNum = Number(parts[2]);
+                  const field = parts[3] as keyof LanguageEntry;
+                  if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field]) {
+                    return null;
+                  }
+                }
+                return prev;
+              });
+            }}
+            onAddLanguage={() =>
+              setUserData((prev) => ({
+                ...prev,
+                otherDetails: {
+                  ...prev.otherDetails,
+                  languages: [...prev.otherDetails.languages, { language: "", speaking: "", reading: "", writing: "" }],
+                },
+              }))
+            }
+            onRemoveLanguage={(index) => {
+              setUserData((prev) => {
+                const nextLanguages = prev.otherDetails.languages.filter((_, idx) => idx !== index);
+                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+              });
+              setOtherDetailsErrors({});
+              setOtherDetailsFirstError(null);
+            }}
           />
         );
       case "reviewAgree":
@@ -739,7 +893,17 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [activeStep.key, userData, basicInfoErrors, educationErrors, workExpErrors, skillErrors, projectErrors, certErrors]);
+  }, [
+    activeStep.key,
+    userData,
+    basicInfoErrors,
+    educationErrors,
+    workExpErrors,
+    skillErrors,
+    projectErrors,
+    certErrors,
+    otherDetailsErrors,
+  ]);
 
   useEffect(() => {
     if (basicInfoFirstError && activeStep.key === "basicInfo") {
@@ -800,6 +964,16 @@ export default function ManualResumeFill() {
       }
     }
   }, [certFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (otherDetailsFirstError && activeStep.key === "otherDetails") {
+      const el = document.getElementById(otherDetailsFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [otherDetailsFirstError, activeStep.key]);
 
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">

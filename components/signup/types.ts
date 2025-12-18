@@ -84,6 +84,16 @@ export type UserData = {
     jobType: string[];
     jobSearch: string[];
   };
-  otherDetails: { otherDetails: string };
+  otherDetails: {
+    languages: Array<{
+      language: string;
+      speaking: string;
+      reading: string;
+      writing: string;
+    }>;
+    careerStage: string;
+    availability: string;
+    desiredSalary: string;
+  };
   reviewAgree: { agree: boolean; notes: string };
 };
