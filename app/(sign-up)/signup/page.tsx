@@ -114,6 +114,9 @@ export default function SignUpPage() {
                 <Link className="ml-4 font-semibold text-[#B45309] hover:underline" href="/signup/resume-upload">
                   Resume upload
                 </Link>
+                <Link className="ml-4 font-semibold text-[#B45309] hover:underline" href="/dashboard">
+                  Dashboard
+                </Link>
               </p>
             </div>
           </div>
