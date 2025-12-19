@@ -1,6 +1,7 @@
 "use client";
 
-import  { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/signup/Header";
 import Sidebar from "@/components/signup/Sidebar";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
@@ -14,6 +15,8 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { clearPendingSignup, getCurrentUser, getPendingSignup, saveUser, setCurrentUser } from "@/lib/localUserStore";
+import { computeProfileCompletion } from "@/lib/profileCompletion";
 import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/types";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
@@ -34,9 +37,12 @@ const initialSteps: Step[] = [
 ];
 
 export default function ManualResumeFill() {
+  const router = useRouter();
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const [finishing, setFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<Partial<Record<keyof UserData["basicInfo"], string>>>({});
   const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(null);
   const [educationErrors, setEducationErrors] = useState<Partial<Record<keyof UserData["education"], string>>>({});
@@ -66,8 +72,8 @@ export default function ManualResumeFill() {
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
-  const completedSteps = stepsState.filter((s) => s.status === "completed").length;
-  const progressPercent = Math.min(100, Math.round((completedSteps / stepsState.length) * 100));
+  const profilePercent = useMemo(() => computeProfileCompletion(userData).percent, [userData]);
+  const isLastStep = activeIndex === stepsState.length - 1;
 
   const setActiveStep = (nextIndex: number) => {
     setStepsState((prev) =>
@@ -361,12 +367,92 @@ export default function ManualResumeFill() {
     }
   };
 
-  const handleSaveAndNext = () => {
-    if (activeIndex === -1) return;
+  const handleFinish = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    setFinishError(null);
+
+    try {
+      const pending = getPendingSignup();
+      const currentUser = getCurrentUser();
+
+      if (!pending && !currentUser) {
+        setFinishError("No active signup or logged-in user found. Please start from signup or login.");
+        return;
+      }
+
+      const emailFromPending = pending?.email?.trim();
+      const passwordFromPending = pending?.password || "";
+      const emailFromCurrent = currentUser?.email?.trim();
+      const passwordFromCurrent = currentUser?.password || "";
+
+      const email = emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
+      const password = pending ? passwordFromPending : passwordFromCurrent;
+
+      if (!email) {
+        setFinishError("Missing email. Please start from the signup page.");
+        return;
+      }
+
+      if (pending && !password) {
+        setFinishError("Missing password. Please start from the signup page.");
+        return;
+      }
+
+      const finalizedData = {
+        ...userData,
+        basicInfo: {
+          ...userData.basicInfo,
+          email,
+        },
+      };
+
+      if (pending) {
+        saveUser({ email, password, userData: finalizedData });
+        clearPendingSignup();
+      } else if (currentUser) {
+        saveUser({ email: emailFromCurrent || email, password: passwordFromCurrent, userData: finalizedData });
+      }
+
+      setCurrentUser(email);
+      setUserData(() => finalizedData);
+
+      try {
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalizedData),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(() => data);
+        }
+      } catch {
+        // Local storage already saved; ignore backend mock failures.
+      }
+
+      router.push("/dashboard");
+    } catch (err) {
+      setFinishError("Unable to complete signup. Please try again.");
+    } finally {
+      setFinishing(false);
+    }
+  };
+
+  const handleSaveAndNext = async () => {
+    if (activeIndex === -1 || finishing) return;
     const isValid = validateStep(activeStep.key);
 
     if (!isValid) {
       updateStepStatus(activeIndex, "error", "Please complete required fields");
+      return;
+    }
+
+    if (activeIndex === stepsState.length - 1) {
+      updateStepStatus(activeIndex, "completed");
+      await handleFinish();
       return;
     }
 
@@ -893,7 +979,7 @@ export default function ManualResumeFill() {
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
       <div className="max-w-7xl w-full flex flex-col gap-6">
-        <Header percent={progressPercent} />
+        <Header percent={profilePercent} />
 
         <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Sidebar steps={stepsState} />
@@ -913,6 +999,8 @@ export default function ManualResumeFill() {
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {renderForm}
 
+              {finishError ? <p className="text-sm font-medium text-red-600">{finishError}</p> : null}
+
               <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
                 <button
                   type="button"
@@ -926,9 +1014,9 @@ export default function ManualResumeFill() {
                   type="button"
                   onClick={handleSaveAndNext}
                   className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={activeStep.key === "reviewAgree" && !userData.reviewAgree.agree}
+                  disabled={finishing || (activeStep.key === "reviewAgree" && !userData.reviewAgree.agree)}
                 >
-                  {activeIndex === stepsState.length - 1 ? "Finish" : "Save & Next"}
+                  {finishing && isLastStep ? "Finishing..." : isLastStep ? "Finish" : "Save & Next"}
                 </button>
               </div>
             </form>

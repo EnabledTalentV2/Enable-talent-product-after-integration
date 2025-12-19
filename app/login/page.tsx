@@ -4,58 +4,58 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { setPendingSignup } from "@/lib/localUserStore";
+import { clearCurrentUser, getUserByEmail, setCurrentUser } from "@/lib/localUserStore";
 
 const inputClasses =
   "w-full rounded-lg border border-gray-200 px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50";
 
-export default function SignUpPage() {
+export default function LoginPage() {
   const router = useRouter();
   const setUserData = useUserDataStore((s) => s.setUserData);
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
     setError(null);
 
-    const trimmedName = fullName.trim();
-    const trimmedEmail = email.trim();
+    try {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail || !password) {
+        setError("Please enter your email and password.");
+        return;
+      }
 
-    if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
-      setError("Please fill in all required fields.");
-      return;
+      clearCurrentUser();
+      const storedUser = getUserByEmail(trimmedEmail);
+
+      if (!storedUser || storedUser.password !== password) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      setCurrentUser(storedUser.email);
+      setUserData(() => storedUser.userData);
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    const [firstName, ...rest] = trimmedName.split(/\s+/);
-    const lastName = rest.join(" ");
-
-    setUserData((prev) => ({
-      ...prev,
-      basicInfo: {
-        ...prev.basicInfo,
-        firstName: firstName || prev.basicInfo.firstName,
-        lastName,
-        email: trimmedEmail,
-      },
-    }));
-
-    setPendingSignup({ email: trimmedEmail, password });
-    router.push("/signup/manual-resume-fill");
   };
 
   return (
     <main className="min-h-screen bg-[#FCD34D]">
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
-        {/* Decorative Background */}
         <div
           aria-hidden="true"
           className="absolute bottom-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full border-[40px] border-white/20 blur-sm"
@@ -65,12 +65,12 @@ export default function SignUpPage() {
           className="absolute top-[-10%] right-[-10%] h-[400px] w-[400px] rounded-full border-[30px] border-white/10 blur-sm"
         />
 
-        <article className="relative flex min-h-[550px] w-full max-w-4xl flex-col overflow-hidden rounded-3xl shadow-2xl md:flex-row">
+        <article className="relative flex min-h-[520px] w-full max-w-4xl flex-col overflow-hidden rounded-3xl shadow-2xl md:flex-row">
           <aside className="relative flex w-full flex-col justify-center bg-white/20 p-8 backdrop-blur-md md:w-5/12 md:p-12">
             <div className="relative z-10 space-y-3">
-              <h2 className="text-3xl font-semibold text-gray-900">Seeking for a job?</h2>
+              <h2 className="text-3xl font-semibold text-gray-900">Welcome back</h2>
               <p className="text-base font-medium leading-relaxed text-gray-800">
-                Get your dream job by signing up to EnabledTalent.
+                Log in to continue your EnabledTalent journey.
               </p>
             </div>
             <div
@@ -81,27 +81,10 @@ export default function SignUpPage() {
 
           <div className="flex w-full justify-center bg-white p-8 md:w-7/12 md:p-12">
             <div className="w-full max-w-md">
-              <h1 className="text-2xl font-bold text-gray-900">Sign Up</h1>
-              <p className="mb-8 text-sm text-gray-500">Create an account to start using EnabledTalent.</p>
+              <h1 className="text-2xl font-bold text-gray-900">Login</h1>
+              <p className="mb-8 text-sm text-gray-500">Sign in with your email and password.</p>
 
               <form className="space-y-5" noValidate onSubmit={handleSubmit}>
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="fullname">
-                    Full name
-                  </label>
-                  <input
-                    className={inputClasses}
-                    id="fullname"
-                    name="fullname"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Enter full name"
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    required
-                  />
-                </div>
-
                 <div className="space-y-1.5">
                   <label className="block text-sm font-semibold text-gray-700" htmlFor="email">
                     Email
@@ -128,27 +111,10 @@ export default function SignUpPage() {
                     id="password"
                     name="password"
                     type="password"
-                    autoComplete="new-password"
-                    placeholder="Create a password"
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="confirmPassword">
-                    Confirm password
-                  </label>
-                  <input
-                    className={inputClasses}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Re-enter password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
                     required
                   />
                 </div>
@@ -157,18 +123,18 @@ export default function SignUpPage() {
 
                 <button
                   type="submit"
-                  className="mt-4 w-full rounded-xl bg-[#B45309] py-3.5 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#92400e]"
+                  disabled={submitting}
+                  className="mt-4 w-full rounded-xl bg-[#B45309] py-3.5 font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-[#92400e] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Create account
+                  {submitting ? "Signing in..." : "Login"}
                 </button>
               </form>
 
               <p className="mt-6 text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link className="font-semibold text-[#B45309] hover:underline" href="/login">
-                  Login
+                New here?{" "}
+                <Link className="font-semibold text-[#B45309] hover:underline" href="/signup">
+                  Create an account
                 </Link>
-                
               </p>
             </div>
           </div>

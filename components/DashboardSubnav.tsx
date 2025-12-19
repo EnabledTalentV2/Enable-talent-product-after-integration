@@ -1,9 +1,13 @@
 'use client';
 
+import { usePathname } from "next/navigation";
 import { BriefcaseBusiness, Building2, Home, Search, User } from "lucide-react";
 
 export default function DashboardSubnav() {
+  const pathname = usePathname();
   const linkClass = "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors";
+  const activeClass = "bg-white text-slate-900 shadow-sm";
+  const isProfileActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/profile");
 
   return (
     <div className="flex justify-center bg-[#EEF3FF] px-6 pb-6 md:px-12">
@@ -21,7 +25,11 @@ export default function DashboardSubnav() {
             <Building2 size={16} />
             <span>Companies</span>
           </button>
-          <button className={`${linkClass} text-slate-700 hover:bg-slate-300 hover:text-black`}>
+          <button
+            className={`${linkClass} ${
+              isProfileActive ? activeClass : "text-slate-700 hover:bg-slate-300 hover:text-black"
+            }`}
+          >
             <User size={16} />
             <span>Profile</span>
           </button>
