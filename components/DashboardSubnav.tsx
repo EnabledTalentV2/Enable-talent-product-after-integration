@@ -43,7 +43,7 @@ export default function DashboardSubnav() {
   ];
 
   return (
-    <div className="flex justify-center bg-[#EEF3FF] px-6 pb-6 md:px-12">
+    <div className="flex justify-center bg-[#F0F4F8] px-6 pb-6 md:px-12">
       <div className="flex w-full max-w-8xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           {navItems.map((item) => {

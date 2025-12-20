@@ -4,7 +4,7 @@ import DashboardSubnav from "@/components/DashboardSubnav";
 
 export default function DashboardLayoutPage({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#EEF3FF]">
+    <div className="min-h-screen bg-[#F0F4F8]">
       <DashBoardNavbar />
       <DashboardSubnav />
       <main className="px-6 pb-10 md:px-12">{children}</main>

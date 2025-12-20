@@ -21,7 +21,7 @@ export default function DashBoardNavbar() {
   };
 
   return (
-    <nav className="flex h-20 items-center justify-center bg-[#EEF3FF] px-6 md:px-12">
+    <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
       <div className="flex w-full max-w-8xl items-center justify-between">
         <div className="flex items-center gap-3">
           <Image
