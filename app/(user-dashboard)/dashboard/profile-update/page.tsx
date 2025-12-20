@@ -381,7 +381,7 @@ export default function ProfileUpdatePage() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 max-w-360 mx-auto py-10">
       <header className="space-y-2">
         <p className="text-sm font-semibold text-amber-700">Profile Update</p>
         <h1 className="text-2xl font-bold text-slate-900">Finish your profile</h1>

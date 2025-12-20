@@ -2,6 +2,9 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Banknote, MapPin } from "lucide-react";
+import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { useUserDataStore } from "@/lib/userDataStore";
+import { computeProfileCompletion } from "@/lib/profileCompletion";
 
 type JobStatus = "Accepted" | "Rejected";
 
@@ -141,6 +144,8 @@ export default function MyJobsPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const detailsRef = useRef<HTMLDivElement | null>(null);
+  const userData = useUserDataStore((s) => s.userData);
+  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
 
   const filteredJobs = useMemo(() => {
     if (activeFilter === "All") {
@@ -161,8 +166,10 @@ export default function MyJobsPage() {
   };
 
   return (
-    <section className="rounded-[32px] bg-[#F1F5F9] p-6 md:p-8">
-      <div className="mx-auto max-w-7xl">
+    <section className="space-y-6 max-w-360 mx-auto py-10">
+    <DashboardProfilePrompt percent={profilePercent} />
+    <div className=" ">
+      <div className="mx-auto ">
         <div className="mb-6 flex flex-wrap gap-3">
           {filters.map((filter) => (
             <button
@@ -310,6 +317,7 @@ export default function MyJobsPage() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Calendar, Globe, Users, MapPin } from "lucide-react";
+import { Calendar, Globe, MapPin, Users } from "lucide-react";
+import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { useUserDataStore } from "@/lib/userDataStore";
+import { computeProfileCompletion } from "@/lib/profileCompletion";
 
 type Company = {
   id: string;
@@ -117,6 +120,8 @@ const companies: Company[] = [
 export default function CompaniesPage() {
   const [selectedId, setSelectedId] = useState(companies[0]?.id ?? "");
   const detailsRef = useRef<HTMLDivElement | null>(null);
+  const userData = useUserDataStore((s) => s.userData);
+  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
 
   const activeCompany = useMemo(
     () => companies.find((company) => company.id === selectedId) ?? companies[0],
@@ -133,8 +138,10 @@ export default function CompaniesPage() {
   };
 
   return (
-    <section className="rounded-[32px] bg-[#F1F5F9] p-6 md:p-8">
-      <div className="mx-auto max-w-7xl">
+    <section className="mx-auto max-w-360 space-y-6">
+    <DashboardProfilePrompt percent={profilePercent} />
+    <div className="  ">
+      <div className="mx-auto max-w-360 ">
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* LEFT LIST (match MyJobsPage card style) */}
           <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
@@ -302,6 +309,7 @@ export default function CompaniesPage() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
   );
 }

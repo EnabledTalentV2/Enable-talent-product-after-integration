@@ -85,7 +85,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-8 max-w-360 mx-auto py-10">
       <DashboardProfilePrompt percent={profilePercent} />
 
       <header className="space-y-1">

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertCircle, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import placeholder from "@/public/Placeholder.png";
+import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { getCurrentUser, hasStoredUsers } from "@/lib/localUserStore";
 
@@ -159,6 +161,7 @@ export default function HomePageDashboard() {
     ? userData.basicInfo.profilePhoto
     : placeholder;
   const unreadCount = notifications.filter((notice) => notice.unread).length;
+  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
 
   const aboutParagraphs = useMemo(() => {
     const paragraphs: string[] = [];
@@ -353,7 +356,8 @@ export default function HomePageDashboard() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl pb-6">
+    <section className="mx-auto max-w-360 space-y-6 py-10">
+      <DashboardProfilePrompt percent={profilePercent} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div className="space-y-6">
           <div className="flex items-start justify-between rounded-[28px] bg-[#F7D16C] px-6 py-5 shadow-sm">
