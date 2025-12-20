@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Bell, LogOut, Search, User } from "lucide-react";
 
 export default function Navbar() {
@@ -17,10 +18,10 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-7">
-            <button className="hidden items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 md:flex">
+            <Link href="/dashboard" className="hidden items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 md:flex">
               <User size={18} />
               <span>Profile</span>
-            </button>
+            </Link >
             <button className="hidden items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 md:flex">
               <LogOut size={18} />
               <span>Log Out</span>

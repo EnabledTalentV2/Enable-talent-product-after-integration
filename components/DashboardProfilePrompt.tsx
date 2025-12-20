@@ -25,7 +25,7 @@ export default function DashboardProfilePrompt({ percent }: DashboardProfileProm
           <p className="text-sm font-semibold uppercase tracking-wide text-white/80">Make your profile</p>
           <h2 className="mt-1 text-2xl font-semibold text-white">Standout from 1000s of candidates</h2>
           <Link
-            href="/signup/manual-resume-fill"
+            href="/dashboard/profile-update"
             className="mt-4 inline-flex items-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#9A3412] shadow-sm transition hover:bg-white/90"
           >
             Update Profile

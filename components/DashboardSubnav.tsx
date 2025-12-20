@@ -7,7 +7,8 @@ export default function DashboardSubnav() {
   const pathname = usePathname();
   const linkClass = "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors";
   const activeClass = "bg-white text-slate-900 shadow-sm";
-  const isProfileActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/profile");
+  const isProfileActive =
+    pathname === "/dashboard" || pathname.startsWith("/dashboard/profile") || pathname === "/dashboard/profile-update";
 
   return (
     <div className="flex justify-center bg-[#EEF3FF] px-6 pb-6 md:px-12">
