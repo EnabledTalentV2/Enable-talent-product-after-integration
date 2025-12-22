@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Plus, Trash2 } from "lucide-react";
 import InputBlock from "./InputBlock";
@@ -13,7 +13,12 @@ type Props = {
   onRemoveEntry?: (index: number) => void;
 };
 
-export default function Achievements({ data, onEntryChange, onAddEntry, onRemoveEntry }: Props) {
+export default function Achievements({
+  data,
+  onEntryChange,
+  onAddEntry,
+  onRemoveEntry,
+}: Props) {
   const entries = data.entries;
 
   return (
@@ -65,10 +70,8 @@ export default function Achievements({ data, onEntryChange, onAddEntry, onRemove
         className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
       >
         <Plus size={16} />
-        Add another achievement
+        {entries.length === 0 ? "Add achievement" : "Add another achievement"}
       </button>
     </div>
   );
 }
-
-

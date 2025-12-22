@@ -38,7 +38,10 @@ export default function Skills({ data, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="skills-input" className="block text-base font-medium text-slate-700">
+        <label
+          htmlFor="skills-input"
+          className="block text-base font-medium text-slate-700"
+        >
           Skills
         </label>
         <p className="text-sm text-slate-500">
@@ -58,7 +61,6 @@ export default function Skills({ data, errors, onChange }: Props) {
             placeholder="Type a skill and click Add"
             className="w-full bg-transparent text-base text-slate-800 outline-none"
           />
-          
         </div>
         {errors?.skills ? (
           <p className="text-sm text-red-600">{errors.skills}</p>
@@ -71,7 +73,7 @@ export default function Skills({ data, errors, onChange }: Props) {
             className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#C27528] px-4 py-2 text-base font-semibold text-[#C27528] hover:bg-orange-50 transition"
           >
             <Plus size={16} />
-            Add Skills 
+            {skillList.length === 0 ? "Add Skill" : "Add another skill"}
           </button>
         </div>
       </div>
@@ -99,5 +101,3 @@ export default function Skills({ data, errors, onChange }: Props) {
     </div>
   );
 }
-
-

@@ -29,7 +29,7 @@ const countValue = (value: unknown): Counts => {
   }
 
   if (typeof value === "boolean") {
-    return { total: 1, filled: 1 };
+    return { total: 1, filled: value ? 1 : 0 };
   }
 
   if (Array.isArray(value)) {
@@ -40,7 +40,10 @@ const countValue = (value: unknown): Counts => {
     return value.reduce(
       (acc, item) => {
         const next = countValue(item);
-        return { total: acc.total + next.total, filled: acc.filled + next.filled };
+        return {
+          total: acc.total + next.total,
+          filled: acc.filled + next.filled,
+        };
       },
       { total: 0, filled: 0 }
     );
@@ -50,7 +53,10 @@ const countValue = (value: unknown): Counts => {
     return Object.values(value as Record<string, unknown>).reduce(
       (acc, item) => {
         const next = countValue(item);
-        return { total: acc.total + next.total, filled: acc.filled + next.filled };
+        return {
+          total: acc.total + next.total,
+          filled: acc.filled + next.filled,
+        };
       },
       { total: 0, filled: 0 }
     );
@@ -61,13 +67,22 @@ const countValue = (value: unknown): Counts => {
 
 const combineCounts = (...counts: Counts[]) =>
   counts.reduce(
-    (acc, next) => ({ total: acc.total + next.total, filled: acc.filled + next.filled }),
+    (acc, next) => ({
+      total: acc.total + next.total,
+      filled: acc.filled + next.filled,
+    }),
     { total: 0, filled: 0 }
   );
 
 const toCompletion = (counts: Counts) => {
-  const percent = counts.total > 0 ? Math.min(100, Math.round((counts.filled / counts.total) * 100)) : 0;
-  return { percent, isComplete: counts.total > 0 && counts.filled === counts.total };
+  const percent =
+    counts.total > 0
+      ? Math.min(100, Math.round((counts.filled / counts.total) * 100))
+      : 0;
+  return {
+    percent,
+    isComplete: counts.total > 0 && counts.filled === counts.total,
+  };
 };
 
 const computeSectionCounts = (data: UserData): SectionCounts => {
@@ -86,8 +101,18 @@ const computeSectionCounts = (data: UserData): SectionCounts => {
         countValue(data.certification.entries)
       );
 
+  const projectCounts = data.projects.noProjects
+    ? countValue({ noProjects: data.projects.noProjects })
+    : combineCounts(
+        countValue({ noProjects: data.projects.noProjects }),
+        countValue(data.projects.entries)
+      );
+
   const reviewAgreeCounts = combineCounts(
-    countValue({ discover: data.reviewAgree.discover, comments: data.reviewAgree.comments }),
+    countValue({
+      discover: data.reviewAgree.discover,
+      comments: data.reviewAgree.comments,
+    }),
     { total: 1, filled: data.reviewAgree.agree ? 1 : 0 }
   );
 
@@ -96,7 +121,7 @@ const computeSectionCounts = (data: UserData): SectionCounts => {
     education: countValue(data.education),
     workExperience: workExperienceCounts,
     skills: countValue(data.skills),
-    projects: countValue(data.projects),
+    projects: projectCounts,
     achievements: countValue(data.achievements),
     certification: certificationCounts,
     preference: countValue(data.preference),
@@ -125,7 +150,13 @@ export const computeProfileSectionCompletion = (data: UserData) => {
 export const computeProfileCompletion = (data: UserData) => {
   const counts = computeSectionCounts(data);
   const totals = combineCounts(...(Object.values(counts) as Counts[]));
-  const percent = totals.total > 0 ? Math.min(100, Math.round((totals.filled / totals.total) * 100)) : 0;
+  const percent =
+    totals.total > 0
+      ? Math.min(100, Math.round((totals.filled / totals.total) * 100))
+      : 0;
 
-  return { percent, isComplete: totals.total > 0 && totals.filled === totals.total };
+  return {
+    percent,
+    isComplete: totals.total > 0 && totals.filled === totals.total,
+  };
 };

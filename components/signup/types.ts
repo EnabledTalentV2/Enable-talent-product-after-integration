@@ -1,16 +1,16 @@
-export type StepStatus = 'pending' | 'completed' | 'error';
+export type StepStatus = "pending" | "completed" | "error";
 
 export type StepKey =
-  | 'basicInfo'
-  | 'education'
-  | 'workExperience'
-  | 'skills'
-  | 'projects'
-  | 'achievements'
-  | 'certification'
-  | 'preference'
-  | 'otherDetails'
-  | 'reviewAgree';
+  | "basicInfo"
+  | "education"
+  | "workExperience"
+  | "skills"
+  | "projects"
+  | "achievements"
+  | "certification"
+  | "preference"
+  | "otherDetails"
+  | "reviewAgree";
 
 export type Step = {
   id: number;
@@ -43,7 +43,7 @@ export type UserData = {
     graduationDate: string;
   };
   workExperience: {
-    experienceType: 'experienced' | 'fresher';
+    experienceType: "experienced" | "fresher";
     entries: Array<{
       company: string;
       role: string;
@@ -55,6 +55,7 @@ export type UserData = {
   };
   skills: { skills: string; primaryList?: string[] };
   projects: {
+    noProjects: boolean;
     entries: Array<{
       projectName: string;
       projectDescription: string;

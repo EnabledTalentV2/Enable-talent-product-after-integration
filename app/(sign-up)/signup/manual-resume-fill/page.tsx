@@ -15,16 +15,33 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { clearPendingSignup, getCurrentUser, getPendingSignup, saveUser, setCurrentUser } from "@/lib/localUserStore";
+import {
+  clearPendingSignup,
+  getCurrentUser,
+  getPendingSignup,
+  saveUser,
+  setCurrentUser,
+} from "@/lib/localUserStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
-import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/types";
+import type {
+  Step,
+  StepKey,
+  StepStatus,
+  UserData,
+} from "@/components/signup/types";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
 
 const initialSteps: Step[] = [
-  { id: 1, label: "Basic Info", key: "basicInfo", status: "pending", isActive: true },
+  {
+    id: 1,
+    label: "Basic Info",
+    key: "basicInfo",
+    status: "pending",
+    isActive: true,
+  },
   { id: 2, label: "Education", key: "education", status: "pending" },
   { id: 3, label: "Work Experience", key: "workExperience", status: "pending" },
   { id: 4, label: "Skills", key: "skills", status: "pending" },
@@ -41,23 +58,53 @@ export default function ManualResumeFill() {
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+
+  useEffect(() => {
+    const pending = getPendingSignup();
+    if (!pending) {
+      router.replace("/signup");
+      return;
+    }
+    setLoading(false);
+  }, [router]);
+
   const [finishError, setFinishError] = useState<string | null>(null);
-  const [basicInfoErrors, setBasicInfoErrors] = useState<Partial<Record<keyof UserData["basicInfo"], string>>>({});
-  const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(null);
-  const [educationErrors, setEducationErrors] = useState<Partial<Record<keyof UserData["education"], string>>>({});
-  const [educationFirstError, setEducationFirstError] = useState<string | null>(null);
+  const [basicInfoErrors, setBasicInfoErrors] = useState<
+    Partial<Record<keyof UserData["basicInfo"], string>>
+  >({});
+  const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(
+    null
+  );
+  const [educationErrors, setEducationErrors] = useState<
+    Partial<Record<keyof UserData["education"], string>>
+  >({});
+  const [educationFirstError, setEducationFirstError] = useState<string | null>(
+    null
+  );
   const [workExpErrors, setWorkExpErrors] = useState<{
     experienceType?: string;
-    entries?: Record<number, Partial<Record<keyof UserData["workExperience"]["entries"][number], string>>>;
+    entries?: Record<
+      number,
+      Partial<
+        Record<keyof UserData["workExperience"]["entries"][number], string>
+      >
+    >;
   }>({});
-  const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(null);
-  const [skillErrors, setSkillErrors] = useState<Partial<Record<keyof UserData["skills"], string>>>({});
+  const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(
+    null
+  );
+  const [skillErrors, setSkillErrors] = useState<
+    Partial<Record<keyof UserData["skills"], string>>
+  >({});
   const [skillFirstError, setSkillFirstError] = useState<string | null>(null);
   const [projectErrors, setProjectErrors] = useState<{
     entries?: Record<number, Partial<Record<keyof ProjectEntry, string>>>;
   }>({});
-  const [projectFirstError, setProjectFirstError] = useState<string | null>(null);
+  const [projectFirstError, setProjectFirstError] = useState<string | null>(
+    null
+  );
   const [certErrors, setCertErrors] = useState<{
     entries?: Record<number, Partial<Record<keyof CertificationEntry, string>>>;
   }>({});
@@ -68,11 +115,16 @@ export default function ManualResumeFill() {
     availability?: string;
     desiredSalary?: string;
   }>({});
-  const [otherDetailsFirstError, setOtherDetailsFirstError] = useState<string | null>(null);
+  const [otherDetailsFirstError, setOtherDetailsFirstError] = useState<
+    string | null
+  >(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
-  const profilePercent = useMemo(() => computeProfileCompletion(userData).percent, [userData]);
+  const profilePercent = useMemo(
+    () => computeProfileCompletion(userData).percent,
+    [userData]
+  );
   const isLastStep = activeIndex === stepsState.length - 1;
 
   const setActiveStep = (nextIndex: number) => {
@@ -84,7 +136,11 @@ export default function ManualResumeFill() {
     );
   };
 
-  const updateStepStatus = (idx: number, status: StepStatus, errorText?: string) => {
+  const updateStepStatus = (
+    idx: number,
+    status: StepStatus,
+    errorText?: string
+  ) => {
     setStepsState((prev) =>
       prev.map((step, i) =>
         i === idx
@@ -101,18 +157,29 @@ export default function ManualResumeFill() {
   const validateStep = (key: StepKey) => {
     switch (key) {
       case "basicInfo":
-        const requiredBasicFields: Array<{ field: keyof UserData["basicInfo"]; message: string }> = [
+        const requiredBasicFields: Array<{
+          field: keyof UserData["basicInfo"];
+          message: string;
+        }> = [
           { field: "firstName", message: "Please enter First Name" },
           { field: "lastName", message: "Please enter Last Name" },
           { field: "email", message: "Please enter Email Address" },
           { field: "phone", message: "Please enter Phone number" },
           { field: "location", message: "Please enter Location" },
-          { field: "citizenshipStatus", message: "Please select Citizenship status" },
+          {
+            field: "citizenshipStatus",
+            message: "Please select Citizenship status",
+          },
           { field: "gender", message: "Please select Gender" },
           { field: "ethnicity", message: "Please select Ethnicity" },
-          { field: "currentStatus", message: "Please enter your current status and goal" },
+          {
+            field: "currentStatus",
+            message: "Please enter your current status and goal",
+          },
         ];
-        const missing = requiredBasicFields.filter(({ field }) => !userData.basicInfo[field]);
+        const missing = requiredBasicFields.filter(
+          ({ field }) => !userData.basicInfo[field]
+        );
         if (missing.length) {
           const errs: Partial<Record<keyof UserData["basicInfo"], string>> = {};
           missing.forEach(({ field, message }) => {
@@ -126,12 +193,17 @@ export default function ManualResumeFill() {
         setBasicInfoFirstError(null);
         return true;
       case "education":
-        const requiredEducationFields: Array<{ field: keyof UserData["education"]; message: string }> = [
+        const requiredEducationFields: Array<{
+          field: keyof UserData["education"];
+          message: string;
+        }> = [
           { field: "courseName", message: "Please enter the Course Name" },
           { field: "major", message: "Please enter Major" },
           { field: "institution", message: "Please enter Institution" },
         ];
-        const missingEdu = requiredEducationFields.filter(({ field }) => !userData.education[field]);
+        const missingEdu = requiredEducationFields.filter(
+          ({ field }) => !userData.education[field]
+        );
         if (missingEdu.length) {
           const errs: Partial<Record<keyof UserData["education"], string>> = {};
           missingEdu.forEach(({ field, message }) => {
@@ -150,7 +222,10 @@ export default function ManualResumeFill() {
           setWorkExpFirstError(null);
           return true;
         }
-        const requiredFields: Array<{ field: keyof UserData["workExperience"]["entries"][number]; message: string }> = [
+        const requiredFields: Array<{
+          field: keyof UserData["workExperience"]["entries"][number];
+          message: string;
+        }> = [
           { field: "company", message: "Please enter Company Name" },
           { field: "role", message: "Please enter Role" },
           { field: "from", message: "Please enter start date" },
@@ -202,7 +277,10 @@ export default function ManualResumeFill() {
       case "reviewAgree":
         return userData.reviewAgree.agree;
       case "skills":
-        if (!userData.skills.primaryList || userData.skills.primaryList.length === 0) {
+        if (
+          !userData.skills.primaryList ||
+          userData.skills.primaryList.length === 0
+        ) {
           setSkillErrors({ skills: "Please add at least one skill" });
           setSkillFirstError("skills-input");
           return false;
@@ -211,9 +289,20 @@ export default function ManualResumeFill() {
         setSkillFirstError(null);
         return true;
       case "projects":
-        const requiredProjectFields: Array<{ field: keyof ProjectEntry; message: string }> = [
+        if (userData.projects.noProjects) {
+          setProjectErrors({});
+          setProjectFirstError(null);
+          return true;
+        }
+        const requiredProjectFields: Array<{
+          field: keyof ProjectEntry;
+          message: string;
+        }> = [
           { field: "projectName", message: "Please enter Project name" },
-          { field: "projectDescription", message: "Please enter Project description" },
+          {
+            field: "projectDescription",
+            message: "Please enter Project description",
+          },
           { field: "from", message: "Please enter start date" },
           { field: "to", message: "Please enter end date" },
         ];
@@ -256,11 +345,20 @@ export default function ManualResumeFill() {
           setCertFirstError(null);
           return true;
         }
-        const requiredCertFields: Array<{ field: keyof CertificationEntry; message: string }> = [
+        const requiredCertFields: Array<{
+          field: keyof CertificationEntry;
+          message: string;
+        }> = [
           { field: "name", message: "Please enter Name of certification" },
           { field: "issueDate", message: "Please enter Issue Date" },
-          { field: "organization", message: "Please enter Issued organization" },
-          { field: "credentialIdUrl", message: "Please enter Credential ID/URL" },
+          {
+            field: "organization",
+            message: "Please enter Issued organization",
+          },
+          {
+            field: "credentialIdUrl",
+            message: "Please enter Credential ID/URL",
+          },
         ];
         const certEntries = userData.certification.entries;
         const certErrs: typeof certErrors = { entries: {} };
@@ -295,24 +393,39 @@ export default function ManualResumeFill() {
         setCertFirstError(null);
         return true;
       case "otherDetails":
-        const requiredLanguageFields: Array<{ field: keyof LanguageEntry; message: string }> = [
+        const requiredLanguageFields: Array<{
+          field: keyof LanguageEntry;
+          message: string;
+        }> = [
           { field: "language", message: "Please select Language" },
           { field: "speaking", message: "Please select Speaking level" },
           { field: "reading", message: "Please select Reading level" },
           { field: "writing", message: "Please select Writing level" },
         ];
         const requiredOtherFields: Array<{
-          field: keyof Pick<UserData["otherDetails"], "careerStage" | "availability" | "desiredSalary">;
+          field: keyof Pick<
+            UserData["otherDetails"],
+            "careerStage" | "availability" | "desiredSalary"
+          >;
           message: string;
           id: string;
         }> = [
-          { field: "careerStage", message: "Please select your career stage", id: "otherDetails-careerStage" },
+          {
+            field: "careerStage",
+            message: "Please select your career stage",
+            id: "otherDetails-careerStage",
+          },
           {
             field: "availability",
-            message: "Please enter your earliest availability for full-time opportunities",
+            message:
+              "Please enter your earliest availability for full-time opportunities",
             id: "otherDetails-availability",
           },
-          { field: "desiredSalary", message: "Please select desired salary", id: "otherDetails-desiredSalary" },
+          {
+            field: "desiredSalary",
+            message: "Please select desired salary",
+            id: "otherDetails-desiredSalary",
+          },
         ];
 
         const langEntries = userData.otherDetails.languages;
@@ -337,7 +450,8 @@ export default function ManualResumeFill() {
               if (!otherErrs.languages) otherErrs.languages = {};
               if (!otherErrs.languages[idx]) otherErrs.languages[idx] = {};
               otherErrs.languages[idx]![field] = message;
-              if (!firstOtherId) firstOtherId = `otherDetails-lang-${idx}-${field}`;
+              if (!firstOtherId)
+                firstOtherId = `otherDetails-lang-${idx}-${field}`;
             }
           });
         });
@@ -350,7 +464,8 @@ export default function ManualResumeFill() {
         });
 
         if (firstOtherId) {
-          const hasLanguageErrors = otherErrs.languages && Object.keys(otherErrs.languages).length > 0;
+          const hasLanguageErrors =
+            otherErrs.languages && Object.keys(otherErrs.languages).length > 0;
           if (!hasLanguageErrors) {
             delete otherErrs.languages;
           }
@@ -377,7 +492,9 @@ export default function ManualResumeFill() {
       const currentUser = getCurrentUser();
 
       if (!pending && !currentUser) {
-        setFinishError("No active signup or logged-in user found. Please start from signup or login.");
+        setFinishError(
+          "No active signup or logged-in user found. Please start from signup or login."
+        );
         return;
       }
 
@@ -386,7 +503,8 @@ export default function ManualResumeFill() {
       const emailFromCurrent = currentUser?.email?.trim();
       const passwordFromCurrent = currentUser?.password || "";
 
-      const email = emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
+      const email =
+        emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
       const password = pending ? passwordFromPending : passwordFromCurrent;
 
       if (!email) {
@@ -411,7 +529,11 @@ export default function ManualResumeFill() {
         saveUser({ email, password, userData: finalizedData });
         clearPendingSignup();
       } else if (currentUser) {
-        saveUser({ email: emailFromCurrent || email, password: passwordFromCurrent, userData: finalizedData });
+        saveUser({
+          email: emailFromCurrent || email,
+          password: passwordFromCurrent,
+          userData: finalizedData,
+        });
       }
 
       setCurrentUser(email);
@@ -459,7 +581,12 @@ export default function ManualResumeFill() {
     setStepsState((prev) =>
       prev.map((step, idx) => {
         if (idx === activeIndex) {
-          return { ...step, status: "completed", isActive: false, errorText: undefined };
+          return {
+            ...step,
+            status: "completed",
+            isActive: false,
+            errorText: undefined,
+          };
         }
         if (idx === activeIndex + 1) {
           return { ...step, isActive: true };
@@ -482,20 +609,30 @@ export default function ManualResumeFill() {
             data={userData.basicInfo}
             errors={basicInfoErrors}
             onChange={(patch) => {
-              setUserData((prev) => ({ ...prev, basicInfo: { ...prev.basicInfo, ...patch } }));
+              setUserData((prev) => ({
+                ...prev,
+                basicInfo: { ...prev.basicInfo, ...patch },
+              }));
               setBasicInfoErrors((prev) => {
                 const cleared = { ...prev };
-                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                  if (patch[key]) {
-                    delete (cleared as Record<string, string>)[key as string];
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                  (key) => {
+                    if (patch[key]) {
+                      delete (cleared as Record<string, string>)[key as string];
+                    }
                   }
-                });
+                );
                 return cleared;
               });
               setBasicInfoFirstError((prev) => {
                 if (!prev) return prev;
-                const firstKey = prev.replace("basicInfo-", "") as keyof UserData["basicInfo"];
-                const updatedKeys = Object.keys(patch) as (keyof typeof patch)[];
+                const firstKey = prev.replace(
+                  "basicInfo-",
+                  ""
+                ) as keyof UserData["basicInfo"];
+                const updatedKeys = Object.keys(
+                  patch
+                ) as (keyof typeof patch)[];
                 if (updatedKeys.includes(firstKey) && patch[firstKey]) {
                   return null;
                 }
@@ -510,20 +647,30 @@ export default function ManualResumeFill() {
             data={userData.education}
             errors={educationErrors}
             onChange={(patch) => {
-              setUserData((prev) => ({ ...prev, education: { ...prev.education, ...patch } }));
+              setUserData((prev) => ({
+                ...prev,
+                education: { ...prev.education, ...patch },
+              }));
               setEducationErrors((prev) => {
                 const cleared = { ...prev };
-                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                  if (patch[key]) {
-                    delete (cleared as Record<string, string>)[key as string];
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                  (key) => {
+                    if (patch[key]) {
+                      delete (cleared as Record<string, string>)[key as string];
+                    }
                   }
-                });
+                );
                 return cleared;
               });
               setEducationFirstError((prev) => {
                 if (!prev) return prev;
-                const firstKey = prev.replace("education-", "") as keyof UserData["education"];
-                const updatedKeys = Object.keys(patch) as (keyof typeof patch)[];
+                const firstKey = prev.replace(
+                  "education-",
+                  ""
+                ) as keyof UserData["education"];
+                const updatedKeys = Object.keys(
+                  patch
+                ) as (keyof typeof patch)[];
                 if (updatedKeys.includes(firstKey) && patch[firstKey]) {
                   return null;
                 }
@@ -552,20 +699,31 @@ export default function ManualResumeFill() {
             }}
             onEntryChange={(index, patch) => {
               setUserData((prev) => {
-                const nextEntries = prev.workExperience.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.workExperience.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+                return {
+                  ...prev,
+                  workExperience: {
+                    ...prev.workExperience,
+                    entries: nextEntries,
+                  },
+                };
               });
               setWorkExpErrors((prev) => {
                 const cleared = { ...prev };
                 if (cleared.entries && cleared.entries[index]) {
-                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
-                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                    if (patch[key]) {
-                      delete updated[key as string];
+                  const updated = {
+                    ...(cleared.entries[index] as Record<string, string>),
+                  };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                    (key) => {
+                      if (patch[key]) {
+                        delete updated[key as string];
+                      }
                     }
-                  });
+                  );
                   if (patch.current === true) {
                     delete updated.to;
                   }
@@ -577,10 +735,18 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const [, idxStr, field] = prev.split("-");
                 const idxNum = Number(idxStr);
-                if (idxNum === index && field === "to" && patch.current === true) {
+                if (
+                  idxNum === index &&
+                  field === "to" &&
+                  patch.current === true
+                ) {
                   return null;
                 }
-                if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof WorkEntry]) {
+                if (
+                  idxNum === index &&
+                  (Object.keys(patch) as string[]).includes(field) &&
+                  patch[field as keyof WorkEntry]
+                ) {
                   return null;
                 }
                 return prev;
@@ -591,14 +757,31 @@ export default function ManualResumeFill() {
                 ...prev,
                 workExperience: {
                   ...prev.workExperience,
-                  entries: [...prev.workExperience.entries, { company: "", role: "", from: "", to: "", description: "" }],
+                  entries: [
+                    ...prev.workExperience.entries,
+                    {
+                      company: "",
+                      role: "",
+                      from: "",
+                      to: "",
+                      description: "",
+                    },
+                  ],
                 },
               }));
             }}
             onRemoveEntry={(index) => {
               setUserData((prev) => {
-                const nextEntries = prev.workExperience.entries.filter((_, idx) => idx !== index);
-                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+                const nextEntries = prev.workExperience.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  workExperience: {
+                    ...prev.workExperience,
+                    entries: nextEntries,
+                  },
+                };
               });
               setWorkExpErrors({});
               setWorkExpFirstError(null);
@@ -611,10 +794,16 @@ export default function ManualResumeFill() {
             data={userData.skills}
             errors={skillErrors}
             onChange={(patch) => {
-              setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }));
+              setUserData((prev) => ({
+                ...prev,
+                skills: { ...prev.skills, ...patch },
+              }));
               setSkillErrors((prev) => {
                 const cleared = { ...prev };
-                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) {
+                if (
+                  typeof patch.skills === "string" &&
+                  patch.skills.trim().length > 0
+                ) {
                   delete (cleared as Record<string, string>).skills;
                 }
                 if ("primaryList" in patch) {
@@ -624,7 +813,11 @@ export default function ManualResumeFill() {
               });
               setSkillFirstError((prev) => {
                 if (!prev) return prev;
-                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) return null;
+                if (
+                  typeof patch.skills === "string" &&
+                  patch.skills.trim().length > 0
+                )
+                  return null;
                 if ("primaryList" in patch) return null;
                 return prev;
               });
@@ -636,22 +829,39 @@ export default function ManualResumeFill() {
           <Projects
             data={userData.projects}
             errors={projectErrors}
+            onNoProjectsChange={(val) => {
+              setUserData((prev) => ({
+                ...prev,
+                projects: { ...prev.projects, noProjects: val },
+              }));
+              if (val) {
+                setProjectErrors({});
+                setProjectFirstError(null);
+              }
+            }}
             onEntryChange={(index, patch) => {
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
                   idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+                return {
+                  ...prev,
+                  projects: { ...prev.projects, entries: nextEntries },
+                };
               });
               setProjectErrors((prev) => {
                 const cleared = { ...prev };
                 if (cleared.entries && cleared.entries[index]) {
-                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
-                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                    if (patch[key]) {
-                      delete updated[key as string];
+                  const updated = {
+                    ...(cleared.entries[index] as Record<string, string>),
+                  };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                    (key) => {
+                      if (patch[key]) {
+                        delete updated[key as string];
+                      }
                     }
-                  });
+                  );
                   if (patch.current === true) {
                     delete updated.to;
                   }
@@ -663,10 +873,18 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const [, idxStr, field] = prev.split("-");
                 const idxNum = Number(idxStr);
-                if (idxNum === index && field === "to" && patch.current === true) {
+                if (
+                  idxNum === index &&
+                  field === "to" &&
+                  patch.current === true
+                ) {
                   return null;
                 }
-                if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof ProjectEntry]) {
+                if (
+                  idxNum === index &&
+                  (Object.keys(patch) as string[]).includes(field) &&
+                  patch[field as keyof ProjectEntry]
+                ) {
                   return null;
                 }
                 return prev;
@@ -679,15 +897,26 @@ export default function ManualResumeFill() {
                   ...prev.projects,
                   entries: [
                     ...prev.projects.entries,
-                    { projectName: "", projectDescription: "", current: false, from: "", to: "" },
+                    {
+                      projectName: "",
+                      projectDescription: "",
+                      current: false,
+                      from: "",
+                      to: "",
+                    },
                   ],
                 },
               }))
             }
             onRemoveEntry={(index) => {
               setUserData((prev) => {
-                const nextEntries = prev.projects.entries.filter((_, idx) => idx !== index);
-                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+                const nextEntries = prev.projects.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  projects: { ...prev.projects, entries: nextEntries },
+                };
               });
               setProjectErrors({});
               setProjectFirstError(null);
@@ -700,10 +929,14 @@ export default function ManualResumeFill() {
             data={userData.achievements}
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
-                const nextEntries = prev.achievements.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.achievements.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+                return {
+                  ...prev,
+                  achievements: { ...prev.achievements, entries: nextEntries },
+                };
               })
             }
             onAddEntry={() =>
@@ -711,14 +944,22 @@ export default function ManualResumeFill() {
                 ...prev,
                 achievements: {
                   ...prev.achievements,
-                  entries: [...prev.achievements.entries, { title: "", issueDate: "", description: "" }],
+                  entries: [
+                    ...prev.achievements.entries,
+                    { title: "", issueDate: "", description: "" },
+                  ],
                 },
               }))
             }
             onRemoveEntry={(index) =>
               setUserData((prev) => {
-                const nextEntries = prev.achievements.entries.filter((_, idx) => idx !== index);
-                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+                const nextEntries = prev.achievements.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  achievements: { ...prev.achievements, entries: nextEntries },
+                };
               })
             }
           />
@@ -732,10 +973,21 @@ export default function ManualResumeFill() {
               setUserData((prev) => {
                 const nextEntries = prev.certification.entries.length
                   ? prev.certification.entries
-                  : [{ name: "", issueDate: "", organization: "", credentialIdUrl: "" }];
+                  : [
+                      {
+                        name: "",
+                        issueDate: "",
+                        organization: "",
+                        credentialIdUrl: "",
+                      },
+                    ];
                 return {
                   ...prev,
-                  certification: { ...prev.certification, noCertification: value, entries: nextEntries },
+                  certification: {
+                    ...prev.certification,
+                    noCertification: value,
+                    entries: nextEntries,
+                  },
                 };
               });
               if (value) {
@@ -745,20 +997,31 @@ export default function ManualResumeFill() {
             }}
             onEntryChange={(index, patch) => {
               setUserData((prev) => {
-                const nextEntries = prev.certification.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.certification.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+                return {
+                  ...prev,
+                  certification: {
+                    ...prev.certification,
+                    entries: nextEntries,
+                  },
+                };
               });
               setCertErrors((prev) => {
                 const cleared = { ...prev };
                 if (cleared.entries && cleared.entries[index]) {
-                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
-                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                    if (patch[key]) {
-                      delete updated[key as string];
+                  const updated = {
+                    ...(cleared.entries[index] as Record<string, string>),
+                  };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                    (key) => {
+                      if (patch[key]) {
+                        delete updated[key as string];
+                      }
                     }
-                  });
+                  );
                   cleared.entries = { ...cleared.entries, [index]: updated };
                 }
                 return cleared;
@@ -784,15 +1047,28 @@ export default function ManualResumeFill() {
                   ...prev.certification,
                   entries: [
                     ...prev.certification.entries,
-                    { name: "", issueDate: "", organization: "", credentialIdUrl: "" },
+                    {
+                      name: "",
+                      issueDate: "",
+                      organization: "",
+                      credentialIdUrl: "",
+                    },
                   ],
                 },
               }))
             }
             onRemoveEntry={(index) => {
               setUserData((prev) => {
-                const nextEntries = prev.certification.entries.filter((_, idx) => idx !== index);
-                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+                const nextEntries = prev.certification.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  certification: {
+                    ...prev.certification,
+                    entries: nextEntries,
+                  },
+                };
               });
               setCertErrors({});
               setCertFirstError(null);
@@ -803,7 +1079,12 @@ export default function ManualResumeFill() {
         return (
           <Preference
             data={userData.preference}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, preference: { ...prev.preference, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                preference: { ...prev.preference, ...patch },
+              }))
+            }
           />
         );
       case "otherDetails":
@@ -812,20 +1093,34 @@ export default function ManualResumeFill() {
             data={userData.otherDetails}
             errors={otherDetailsErrors}
             onChange={(patch) => {
-              setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }));
+              setUserData((prev) => ({
+                ...prev,
+                otherDetails: { ...prev.otherDetails, ...patch },
+              }));
               setOtherDetailsErrors((prev) => {
                 const cleared = { ...prev };
-                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                  if (patch[key]) {
-                    delete (cleared as Record<string, unknown>)[key as string];
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                  (key) => {
+                    if (patch[key]) {
+                      delete (cleared as Record<string, unknown>)[
+                        key as string
+                      ];
+                    }
                   }
-                });
+                );
                 return cleared;
               });
               setOtherDetailsFirstError((prev) => {
                 if (!prev) return prev;
-                const updatedKeys = Object.keys(patch) as Array<keyof typeof patch>;
-                if (updatedKeys.some((key) => prev === `otherDetails-${String(key)}` && patch[key])) {
+                const updatedKeys = Object.keys(patch) as Array<
+                  keyof typeof patch
+                >;
+                if (
+                  updatedKeys.some(
+                    (key) =>
+                      prev === `otherDetails-${String(key)}` && patch[key]
+                  )
+                ) {
                   return null;
                 }
                 return prev;
@@ -833,21 +1128,35 @@ export default function ManualResumeFill() {
             }}
             onLanguageChange={(index, patch) => {
               setUserData((prev) => {
-                const nextLanguages = prev.otherDetails.languages.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextLanguages = prev.otherDetails.languages.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+                return {
+                  ...prev,
+                  otherDetails: {
+                    ...prev.otherDetails,
+                    languages: nextLanguages,
+                  },
+                };
               });
               setOtherDetailsErrors((prev) => {
                 const cleared = { ...prev };
                 if (cleared.languages && cleared.languages[index]) {
-                  const updated = { ...(cleared.languages[index] as Record<string, string>) };
-                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                    if (patch[key]) {
-                      delete updated[key as string];
+                  const updated = {
+                    ...(cleared.languages[index] as Record<string, string>),
+                  };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach(
+                    (key) => {
+                      if (patch[key]) {
+                        delete updated[key as string];
+                      }
                     }
-                  });
-                  cleared.languages = { ...cleared.languages, [index]: updated };
+                  );
+                  cleared.languages = {
+                    ...cleared.languages,
+                    [index]: updated,
+                  };
                 }
                 return cleared;
               });
@@ -857,7 +1166,11 @@ export default function ManualResumeFill() {
                 if (parts[0] === "otherDetails" && parts[1] === "lang") {
                   const idxNum = Number(parts[2]);
                   const field = parts[3] as keyof LanguageEntry;
-                  if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field]) {
+                  if (
+                    idxNum === index &&
+                    (Object.keys(patch) as string[]).includes(field) &&
+                    patch[field]
+                  ) {
                     return null;
                   }
                 }
@@ -869,14 +1182,25 @@ export default function ManualResumeFill() {
                 ...prev,
                 otherDetails: {
                   ...prev.otherDetails,
-                  languages: [...prev.otherDetails.languages, { language: "", speaking: "", reading: "", writing: "" }],
+                  languages: [
+                    ...prev.otherDetails.languages,
+                    { language: "", speaking: "", reading: "", writing: "" },
+                  ],
                 },
               }))
             }
             onRemoveLanguage={(index) => {
               setUserData((prev) => {
-                const nextLanguages = prev.otherDetails.languages.filter((_, idx) => idx !== index);
-                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+                const nextLanguages = prev.otherDetails.languages.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  otherDetails: {
+                    ...prev.otherDetails,
+                    languages: nextLanguages,
+                  },
+                };
               });
               setOtherDetailsErrors({});
               setOtherDetailsFirstError(null);
@@ -887,7 +1211,12 @@ export default function ManualResumeFill() {
         return (
           <ReviewAndAgree
             data={userData.reviewAgree}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, reviewAgree: { ...prev.reviewAgree, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                reviewAgree: { ...prev.reviewAgree, ...patch },
+              }))
+            }
           />
         );
       default:
@@ -976,6 +1305,14 @@ export default function ManualResumeFill() {
     }
   }, [otherDetailsFirstError, activeStep.key]);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#EFF6FF]">
+        <div className="text-slate-500">Verifying signup session...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
       <div className="max-w-7xl w-full flex flex-col gap-6">
@@ -988,7 +1325,9 @@ export default function ManualResumeFill() {
             <div className="flex items-start justify-between gap-4 mb-8">
               <div>
                 <p className="text-base text-slate-500">Step {activeStep.id}</p>
-                <h2 className="text-2xl font-bold text-slate-900">{activeStep.label}</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {activeStep.label}
+                </h2>
               </div>
               <div className="hidden md:flex items-center gap-2 text-base text-slate-500">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -999,7 +1338,11 @@ export default function ManualResumeFill() {
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {renderForm}
 
-              {finishError ? <p className="text-base font-medium text-red-600">{finishError}</p> : null}
+              {finishError ? (
+                <p className="text-base font-medium text-red-600">
+                  {finishError}
+                </p>
+              ) : null}
 
               <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
                 <button
@@ -1014,9 +1357,17 @@ export default function ManualResumeFill() {
                   type="button"
                   onClick={handleSaveAndNext}
                   className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={finishing || (activeStep.key === "reviewAgree" && !userData.reviewAgree.agree)}
+                  disabled={
+                    finishing ||
+                    (activeStep.key === "reviewAgree" &&
+                      !userData.reviewAgree.agree)
+                  }
                 >
-                  {finishing && isLastStep ? "Finishing..." : isLastStep ? "Finish" : "Save & Next"}
+                  {finishing && isLastStep
+                    ? "Finishing..."
+                    : isLastStep
+                    ? "Finish"
+                    : "Save & Next"}
                 </button>
               </div>
             </form>
@@ -1026,4 +1377,3 @@ export default function ManualResumeFill() {
     </div>
   );
 }
-
