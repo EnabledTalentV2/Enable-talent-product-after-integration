@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import InputBlock from "./InputBlock";
@@ -28,7 +28,10 @@ export default function Certification({
   const entries = data.entries;
   const isNone = data.noCertification;
   const errorCount = errors?.entries
-    ? Object.values(errors.entries).reduce((acc, val) => acc + (val ? Object.keys(val).length : 0), 0)
+    ? Object.values(errors.entries).reduce(
+        (acc, val) => acc + (val ? Object.keys(val).length : 0),
+        0
+      )
     : 0;
 
   return (
@@ -36,13 +39,13 @@ export default function Certification({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Certifications</h3>
         {errorCount > 0 && !isNone ? (
-          <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")} error
           </span>
         ) : null}
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+      <label className="flex items-center gap-2 text-base font-medium text-slate-700">
         <input
           id="cert-noCertification"
           type="checkbox"
@@ -52,12 +55,13 @@ export default function Certification({
         />
         <span>No certification</span>
       </label>
-      <p className="text-xs text-slate-500">
-        Don&apos;t have any certifications? Tick &quot;No certification&quot; to skip this step.
+      <p className="text-sm text-slate-500">
+        Don&apos;t have any certifications? Tick &quot;No certification&quot; to
+        skip this step.
       </p>
 
       {isNone ? (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
           You selected &quot;No certification&quot;. You can skip this step.
         </div>
       ) : null}
@@ -68,14 +72,19 @@ export default function Certification({
             const credentialError = entryErrors.credentialIdUrl;
 
             return (
-              <div key={idx} className="space-y-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div
+                key={idx}
+                className="space-y-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-800">Certification {idx + 1}</p>
+                  <p className="text-base font-semibold text-slate-800">
+                    Certification {idx + 1}
+                  </p>
                   {onRemoveEntry && entries.length > 1 ? (
                     <button
                       type="button"
                       onClick={() => onRemoveEntry(idx)}
-                      className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                      className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -115,28 +124,37 @@ export default function Certification({
 
                 <div className="space-y-2">
                   <label
-                    className={`block text-sm font-medium ${
+                    htmlFor={`cert-${idx}-credentialIdUrl`}
+                    className={`block text-base font-medium ${
                       credentialError ? "text-red-600" : "text-slate-700"
                     }`}
                   >
                     Credential ID/URL
                   </label>
                   <div
-                    className={`flex items-center rounded-lg border px-3 py-2.5 text-sm shadow-sm ${
-                      credentialError ? "border-red-400 text-slate-700" : "border-gray-200 text-slate-800"
+                    className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${
+                      credentialError
+                        ? "border-red-400 text-slate-700"
+                        : "border-gray-200 text-slate-800"
                     }`}
                   >
                     <input
                       id={`cert-${idx}-credentialIdUrl`}
                       type="text"
                       value={entry.credentialIdUrl}
-                      onChange={(e) => onEntryChange(idx, { credentialIdUrl: e.target.value })}
+                      onChange={(e) =>
+                        onEntryChange(idx, { credentialIdUrl: e.target.value })
+                      }
                       placeholder="Enter credential id or url"
                       className="w-full bg-transparent outline-none"
                     />
-                    {credentialError ? <AlertCircle className="h-5 w-5 text-red-500" /> : null}
+                    {credentialError ? (
+                      <AlertCircle className="h-5 w-5 text-red-500" />
+                    ) : null}
                   </div>
-                  {credentialError ? <p className="text-xs text-red-600">{credentialError}</p> : null}
+                  {credentialError ? (
+                    <p className="text-sm text-red-600">{credentialError}</p>
+                  ) : null}
                 </div>
               </div>
             );
@@ -147,10 +165,12 @@ export default function Certification({
         <button
           type="button"
           onClick={onAddEntry}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-sm hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
-          Add another certification
+          {entries.length === 0
+            ? "Add certification"
+            : "Add another certification"}
         </button>
       ) : null}
     </div>

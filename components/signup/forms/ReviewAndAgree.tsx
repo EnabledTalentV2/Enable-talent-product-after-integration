@@ -9,17 +9,20 @@ type Props = {
 
 export default function ReviewAndAgree({ data, onChange }: Props) {
   const selectClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
+    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
   const inputClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
+    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
 
   const discoverOptions = ["LinkedIn", "Referral", "Job board", "University/College", "Career fair", "Other"];
 
   return (
     <div className="space-y-6 text-slate-800">
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-800">How did you discover the Enabled Talent platform?</label>
+        <label htmlFor="reviewAgree-discover" className="block text-base font-semibold text-slate-800">
+          How did you discover the Enabled Talent platform?
+        </label>
         <select
+          id="reviewAgree-discover"
           value={data.discover}
           onChange={(e) => onChange({ discover: e.target.value })}
           className={`${selectClass} pr-10`}
@@ -34,8 +37,11 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-800">Comments</label>
+        <label htmlFor="reviewAgree-comments" className="block text-base font-semibold text-slate-800">
+          Comments
+        </label>
         <textarea
+          id="reviewAgree-comments"
           rows={3}
           value={data.comments}
           onChange={(e) => onChange({ comments: e.target.value })}
@@ -45,8 +51,8 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-semibold text-slate-800">Terms And Conditions</p>
-        <ul className="space-y-3 text-sm text-slate-700 list-disc pl-5">
+        <p className="text-base font-semibold text-slate-800">Terms And Conditions</p>
+        <ul className="space-y-3 text-base text-slate-700 list-disc pl-5">
           <li>
             Allow EnabledTalent to share your resume, pitch yourself and behaviour question video with third parties (ex. prospective employers) to
             consider you for an internship.
@@ -69,10 +75,10 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
         </ul>
       </div>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-base text-slate-600">
         By ticking the checkboxes below, you confirm that you have read, understood and agreed with the statement.
       </p>
-      <p className="text-sm text-slate-500">
+      <p className="text-base text-slate-500">
         If you have questions about the collection, use and disclosure of this information by the University, please contact Mohammad Adnan Syed, 350
         Victoria Street, Toronto, M5B 2K3, admin@talent-accelerator.com
       </p>
@@ -84,8 +90,9 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
           onChange={(e) => onChange({ agree: e.target.checked })}
           className="w-5 h-5 accent-orange-600 border-gray-300"
         />
-        <span className="text-sm">I confirm that I have read, understood and agreed with the statement.</span>
+        <span className="text-base">I confirm that I have read, understood and agreed with the statement.</span>
       </label>
     </div>
   );
 }
+

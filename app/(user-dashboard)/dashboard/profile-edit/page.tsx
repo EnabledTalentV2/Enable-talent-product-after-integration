@@ -46,7 +46,7 @@ const sectionLabels: Record<StepKey, string> = {
 const cardClass = "rounded-2xl bg-white p-6 shadow-sm";
 const titleClass = "text-lg font-semibold text-slate-900";
 
-export default function ProfileUpdatePage() {
+export default function ProfileEditPage() {
   const router = useRouter();
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
@@ -62,7 +62,6 @@ export default function ProfileUpdatePage() {
     () => sectionOrder.filter((key) => !sectionCompletion[key].isComplete),
     [sectionCompletion]
   );
-  const hasIncompleteSections = incompleteSections.length > 0;
 
   useEffect(() => {
     let active = true;
@@ -224,12 +223,6 @@ export default function ProfileUpdatePage() {
         return (
           <Projects
             data={userData.projects}
-            onNoProjectsChange={(value) =>
-              setUserData((prev) => ({
-                ...prev,
-                projects: { ...prev.projects, noProjects: value },
-              }))
-            }
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
@@ -393,11 +386,11 @@ export default function ProfileUpdatePage() {
         <p className="text-base font-semibold text-amber-700">Profile Update</p>
         <h1 className="text-2xl font-bold text-slate-900">Finish your profile</h1>
         <p className="text-base text-slate-600">
-          Review and update your profile details below. Profile completion: {completion.percent}%.
+          Update the missing sections below. Profile completion: {completion.percent}%.
         </p>
       </header>
 
-      {!hasIncompleteSections ? (
+      {incompleteSections.length === 0 ? (
         <div className={cardClass}>
           <h2 className={titleClass}>All set</h2>
           <p className="mt-2 text-base text-slate-600">Your profile is complete.</p>
@@ -409,16 +402,16 @@ export default function ProfileUpdatePage() {
             Back to dashboard
           </button>
         </div>
-      ) : null}
-
-      <div className="space-y-6">
-        {sectionOrder.map((key) => (
-          <section key={key} className={cardClass}>
-            <h2 className={titleClass}>{sectionLabels[key]}</h2>
-            <div className="mt-4">{renderSection(key)}</div>
-          </section>
-        ))}
-      </div>
+      ) : (
+        <div className="space-y-6">
+          {incompleteSections.map((key) => (
+            <section key={key} className={cardClass}>
+              <h2 className={titleClass}>{sectionLabels[key]}</h2>
+              <div className="mt-4">{renderSection(key)}</div>
+            </section>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <button
@@ -443,5 +436,4 @@ export default function ProfileUpdatePage() {
     </section>
   );
 }
-
 

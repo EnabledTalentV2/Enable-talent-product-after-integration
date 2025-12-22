@@ -229,7 +229,7 @@ export default function DashboardPage() {
               <h2 className="text-lg font-semibold text-slate-900">
                 Recruiter Engagement Trend
               </h2>
-              <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-500">
+              <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-sm font-semibold text-slate-500">
                 {Object.entries(engagementSeries).map(([key, value]) => {
                   const isActive = activeMetric === key;
                   return (
@@ -251,7 +251,7 @@ export default function DashboardPage() {
                 })}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
               {timeRanges.map((range) => {
                 const isActive = activeRange === range;
                 return (
@@ -279,7 +279,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-4 text-xs text-slate-500">
+          <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
             <span className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#E6A24E]" />
               Expected {metricLabelLower}
@@ -301,7 +301,7 @@ export default function DashboardPage() {
               Low (&lt;60%) of expected
             </span>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-sm text-slate-400">
             Expected based on role &amp; market
           </p>
         </div>
@@ -309,31 +309,31 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <div className="rounded-[28px] bg-white p-6 shadow-sm">
             <div className="rounded-2xl bg-[#FFF4DB] px-4 py-5 text-center">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Profile Match Strength
               </p>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {profileMatchStrength}%
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-sm text-slate-500">
                 Across 12 active job matches
               </p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs text-slate-500">Recruiter views</p>
+                <p className="text-sm text-slate-500">Recruiter views</p>
                 <p className="mt-1 text-xl font-semibold text-slate-900">18</p>
                 <p
-                  className={`text-xs font-semibold ${recruiterViewsDelta.className}`}
+                  className={`text-sm font-semibold ${recruiterViewsDelta.className}`}
                 >
                   {recruiterViewsDelta.label}
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-xs text-slate-500">Job invitations</p>
+                <p className="text-sm text-slate-500">Job invitations</p>
                 <p className="mt-1 text-xl font-semibold text-slate-900">4</p>
                 <p
-                  className={`text-xs font-semibold ${jobInvitesDelta.className}`}
+                  className={`text-sm font-semibold ${jobInvitesDelta.className}`}
                 >
                   {jobInvitesDelta.label}
                 </p>
@@ -346,11 +346,11 @@ export default function DashboardPage() {
               <h3 className="text-base font-semibold text-slate-900">
                 Attention Needed
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-500">
                 3 issues require action this week
               </p>
             </div>
-            <ul className="mt-4 space-y-3 text-sm text-slate-700">
+            <ul className="mt-4 space-y-3 text-base text-slate-700">
               {attentionItems.map((item) => (
                 <li key={item.id} className="flex items-center gap-3">
                   <span
@@ -364,7 +364,7 @@ export default function DashboardPage() {
             </ul>
             <button
               type="button"
-              className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#C27803] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+              className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               Review all alerts -&gt;
             </button>
@@ -388,24 +388,24 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold ${getBrandStyle(
+                      className={`flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
                         match.company
                       )}`}
                     >
                       {getCompanyInitial(match.company)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-base font-semibold text-slate-900">
                         {match.role}
                       </p>
-                      <p className="text-xs text-slate-500">{match.company}</p>
+                      <p className="text-sm text-slate-500">{match.company}</p>
                     </div>
                   </div>
-                  <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                  <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-800">
                     {match.matchPercent}% Matching
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
                   <span className="rounded-full bg-slate-100 px-3 py-1">
                     {match.type}
                   </span>
@@ -413,8 +413,8 @@ export default function DashboardPage() {
                     {match.experience}
                   </span>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">{match.location}</p>
-                <div className="mt-4 flex items-center gap-6 text-xs text-slate-500">
+                <p className="mt-3 text-sm text-slate-500">{match.location}</p>
+                <div className="mt-4 flex items-center gap-6 text-sm text-slate-500">
                   <span>
                     Accepted:{" "}
                     <span className="font-semibold text-slate-700">
@@ -444,7 +444,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">
               Notifications
             </h2>
-            <span className="text-sm text-slate-500">
+            <span className="text-base text-slate-500">
               ({unreadCount} Unread)
             </span>
           </div>
@@ -457,17 +457,17 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${getBrandStyle(
+                      className={`flex h-10 w-10 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
                         notice.company
                       )}`}
                     >
                       {getCompanyInitial(notice.company)}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-base font-medium text-slate-900">
                         {notice.message}
                       </p>
-                      <p className="text-xs text-slate-400">{notice.time}</p>
+                      <p className="text-sm text-slate-400">{notice.time}</p>
                     </div>
                   </div>
                   {notice.unread ? (
@@ -480,18 +480,18 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap gap-3">
                       <button
                         type="button"
-                        className="rounded-lg bg-[#C27803] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+                        className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
                       >
                         Accept request
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                        className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
                       >
                         Decline request
                       </button>
                     </div>
-                    <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-xs text-[#B42318]">
+                    <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
                       <AlertCircle className="mt-0.5 h-4 w-4" />
                       <span>{requestNote}</span>
                     </div>
@@ -505,3 +505,5 @@ export default function DashboardPage() {
     </section>
   );
 }
+
+

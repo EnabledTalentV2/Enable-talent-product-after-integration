@@ -175,7 +175,7 @@ export default function MyJobsPage() {
             <button
               key={filter}
               onClick={() => setActiveFilter(filter)}
-              className={`rounded-xl px-6 py-2.5 text-sm font-bold transition ${
+              className={`rounded-xl px-6 py-2.5 text-base font-bold transition ${
                 activeFilter === filter
                   ? "bg-[#C27803] text-white"
                   : "bg-[#E2E8F0] text-slate-900 hover:bg-slate-200"
@@ -199,8 +199,8 @@ export default function MyJobsPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-400">{job.posted}</span>
-                    <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-xs font-bold text-[#10B981]">
+                    <span className="text-base font-medium text-slate-400">{job.posted}</span>
+                    <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
                       {job.status}
                     </span>
                   </div>
@@ -223,16 +223,16 @@ export default function MyJobsPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-slate-500">
                         <MapPin size={18} className="text-orange-400" />
-                        <span className="text-sm font-medium">{job.location}</span>
+                        <span className="text-base font-medium">{job.location}</span>
                       </div>
                       <div className="flex items-center gap-2 text-slate-500">
                         <Banknote size={18} className="text-orange-400" />
-                        <span className="text-sm font-medium">{job.salary}</span>
+                        <span className="text-base font-medium">{job.salary}</span>
                       </div>
                     </div>
                     <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
                       <p className="text-lg font-bold text-slate-900">{job.match}%</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Matching</p>
+                      <p className="text-sm font-bold uppercase tracking-wider text-slate-700">Matching</p>
                     </div>
                   </div>
                 </button>
@@ -261,32 +261,32 @@ export default function MyJobsPage() {
                       <p className="text-lg font-medium text-slate-500">{activeJob.company}</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-sm font-bold text-[#10B981]">
+                  <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
                     {activeJob.status}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Job Type</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
                     <p className="text-lg font-bold text-slate-900">{activeJob.jobType}</p>
                   </div>
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Location</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Location</p>
                     <p className="text-lg font-bold text-slate-900">{activeJob.location}</p>
                   </div>
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Work Mode</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
                     <p className="text-lg font-bold text-slate-900">{activeJob.workMode}</p>
                   </div>
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Years of Experience</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
                     <p className="text-lg font-bold text-slate-900">{activeJob.yearsExperience}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="mb-1 text-sm font-medium text-slate-400">Salary</p>
+                  <p className="mb-1 text-base font-medium text-slate-400">Salary</p>
                   <p className="text-2xl font-bold text-slate-900">{activeJob.salary}</p>
                 </div>
 
@@ -321,3 +321,5 @@ export default function MyJobsPage() {
   </section>
   );
 }
+
+

@@ -159,8 +159,8 @@ export default function CompaniesPage() {
                 >
                   {/* top row like "posted + status" */}
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-400">{company.lastActive}</span>
-                    <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-xs font-bold text-[#10B981]">
+                    <span className="text-base font-medium text-slate-400">{company.lastActive}</span>
+                    <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
                       {company.hiringStatus}
                     </span>
                   </div>
@@ -186,18 +186,18 @@ export default function CompaniesPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-slate-500">
                         <MapPin size={18} className="text-orange-400" />
-                        <span className="text-sm font-medium">{company.details.location}</span>
+                        <span className="text-base font-medium">{company.details.location}</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-slate-500">
                         <Users size={18} className="text-orange-400" />
-                        <span className="text-sm font-medium">{company.hiringCount} Hiring</span>
+                        <span className="text-base font-medium">{company.hiringCount} Hiring</span>
                       </div>
                     </div>
 
                     <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
                       <p className="text-lg font-bold text-slate-900">{company.jobTitle}</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                      <p className="text-sm font-bold uppercase tracking-wider text-slate-700">
                         Hiring focus
                       </p>
                     </div>
@@ -232,7 +232,7 @@ export default function CompaniesPage() {
                     </div>
                   </div>
 
-                  <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-sm font-bold text-[#10B981]">
+                  <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
                     {activeCompany.hiringStatus}
                   </span>
                 </div>
@@ -240,29 +240,29 @@ export default function CompaniesPage() {
                 {/* metrics grid like Job Type / Location / Work Mode / YoE */}
                 <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Location</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Location</p>
                     <p className="text-lg font-bold text-slate-900">{activeCompany.details.location}</p>
                   </div>
 
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Industry</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Industry</p>
                     <p className="text-lg font-bold text-slate-900">{activeCompany.details.industry}</p>
                   </div>
 
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Founded year</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Founded year</p>
                     <p className="text-lg font-bold text-slate-900">{activeCompany.details.founded}</p>
                   </div>
 
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-400">Employee size</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">Employee size</p>
                     <p className="text-lg font-bold text-slate-900">{activeCompany.details.employeeSize}</p>
                   </div>
                 </div>
 
                 {/* hiring count (like Salary block) */}
                 <div>
-                  <p className="mb-1 text-sm font-medium text-slate-400">Open roles / Hiring</p>
+                  <p className="mb-1 text-base font-medium text-slate-400">Open roles / Hiring</p>
                   <p className="text-2xl font-bold text-slate-900">{activeCompany.hiringCount}</p>
                 </div>
 
@@ -313,3 +313,5 @@ export default function CompaniesPage() {
   </section>
   );
 }
+
+

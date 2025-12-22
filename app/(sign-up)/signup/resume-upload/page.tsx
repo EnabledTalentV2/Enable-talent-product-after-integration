@@ -1,13 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/signup/Navbar";
 import Link from "next/link";
+import { getPendingSignup } from "@/lib/localUserStore";
 
 export default function ResumeUpload() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const pending = getPendingSignup();
+    if (!pending) {
+      router.replace("/signup");
+      return;
+    }
+    setLoading(false);
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
+        <div className="text-slate-500">Verifying signup session...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-[#F0F5FA]  text-slate-900">
       {/* Navbar */}
-      
+
       <Navbar />
 
       {/* Main */}
@@ -34,7 +57,9 @@ export default function ResumeUpload() {
               Upload Resume
             </button>
 
-            <span className="text-sm text-slate-500">Supports file format .pdf</span>
+            <span className="text-base text-slate-500">
+              Supports file format .pdf
+            </span>
           </div>
 
           <div className="mt-10 text-base text-slate-600">

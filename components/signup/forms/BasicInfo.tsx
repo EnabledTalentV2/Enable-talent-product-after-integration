@@ -1,5 +1,6 @@
-'use client';
+﻿"use client";
 
+import { useRef } from "react";
 import { UploadCloud } from "lucide-react";
 import InputBlock from "./InputBlock";
 import type { UserData } from "../types";
@@ -11,9 +12,20 @@ type Props = {
 };
 
 export default function BasicInfo({ data, onChange, errors }: Props) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const clearProfilePhoto = () => {
+    onChange({ profilePhoto: "" });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const selectClass = (hasError?: boolean) =>
-    `w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
-      hasError ? "border-red-400 focus:ring-red-200 focus:border-red-500" : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+    `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-red-400 focus:ring-red-200 focus:border-red-500"
+        : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
     }`;
 
   return (
@@ -40,9 +52,11 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label 
+        <label
           htmlFor="basicInfo-profilePhoto"
-          className={`block text-sm font-medium ${errors?.profilePhoto ? "text-red-600" : "text-slate-700"}`}
+          className={`block text-base font-medium ${
+            errors?.profilePhoto ? "text-red-600" : "text-slate-700"
+          }`}
         >
           Profile photo
         </label>
@@ -51,7 +65,10 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
             errors?.profilePhoto ? "border-red-400" : "border-gray-300"
           }`}
         >
-          <label htmlFor="basicInfo-profilePhoto" className="flex cursor-pointer flex-col items-center gap-2 text-sm text-slate-600">
+          <label
+            htmlFor="basicInfo-profilePhoto"
+            className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+          >
             <UploadCloud className="h-5 w-5 text-orange-500" />
             <div className="flex items-center gap-1">
               <span>Drag and drop or,</span>
@@ -59,17 +76,33 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
             </div>
             <input
               id="basicInfo-profilePhoto"
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => onChange({ profilePhoto: e.target.files?.[0]?.name || "" })}
+              onChange={(e) =>
+                onChange({ profilePhoto: e.target.files?.[0]?.name || "" })
+              }
             />
           </label>
-          {data.profilePhoto && (
-            <p className="text-xs text-slate-500 mt-2 text-center">Selected: {data.profilePhoto}</p>
-          )}
+          {data.profilePhoto ? (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
+              <span className="text-slate-500">
+                Selected: {data.profilePhoto}
+              </span>
+              <button
+                type="button"
+                onClick={clearProfilePhoto}
+                className="font-medium text-red-600 hover:text-red-700"
+              >
+                Remove photo
+              </button>
+            </div>
+          ) : null}
         </div>
-        {errors?.profilePhoto ? <p className="text-xs text-red-600">{errors.profilePhoto}</p> : null}
+        {errors?.profilePhoto ? (
+          <p className="text-sm text-red-600">{errors.profilePhoto}</p>
+        ) : null}
       </div>
 
       <InputBlock
@@ -88,7 +121,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         label="Phone number"
         value={data.phone}
         onChange={(v) => onChange({ phone: v })}
-        placeholder="(229) 555-0109"
+        placeholder="Enter phone number"
         error={Boolean(errors?.phone)}
         errorMessage={errors?.phone}
       />
@@ -104,7 +137,14 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       />
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}>Citizenship status</label>
+        <label
+          htmlFor="basicInfo-citizenshipStatus"
+          className={`block text-base font-medium ${
+            errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"
+          }`}
+        >
+          Citizenship status
+        </label>
         <select
           id="basicInfo-citizenshipStatus"
           className={selectClass(Boolean(errors?.citizenshipStatus))}
@@ -118,19 +158,32 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="Student Visa">Student Visa</option>
           <option value="Other">Other</option>
         </select>
-        {errors?.citizenshipStatus ? <p className="text-xs text-red-600">{errors.citizenshipStatus}</p> : null}
+        {errors?.citizenshipStatus ? (
+          <p className="text-sm text-red-600">{errors.citizenshipStatus}</p>
+        ) : null}
       </div>
 
-      <div className="space-y-2 text-xs text-slate-600">
-        <p>Your response to this question is entirely voluntary and will not affect your eligibility.</p>
+      <div className="space-y-2 text-sm text-slate-600">
         <p>
-          This information will be used by the Governments of Ontario and Canada for policy analysis and statistical purposes related to employment
+          Your response to this question is entirely voluntary and will not
+          affect your eligibility.
+        </p>
+        <p>
+          This information will be used by the Governments of Ontario and Canada
+          for policy analysis and statistical purposes related to employment
           programs and services.
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>Gender</label>
+        <label
+          htmlFor="basicInfo-gender"
+          className={`block text-base font-medium ${
+            errors?.gender ? "text-red-600" : "text-slate-700"
+          }`}
+        >
+          Gender
+        </label>
         <select
           id="basicInfo-gender"
           className={selectClass(Boolean(errors?.gender))}
@@ -143,19 +196,32 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="Non-binary">Non-binary</option>
           <option value="Prefer not to say">Prefer not to say</option>
         </select>
-        {errors?.gender ? <p className="text-xs text-red-600">{errors.gender}</p> : null}
+        {errors?.gender ? (
+          <p className="text-sm text-red-600">{errors.gender}</p>
+        ) : null}
       </div>
 
-      <div className="space-y-2 text-xs text-slate-600">
-        <p>Please select all that apply. Your response to this question is entirely voluntary and will not affect your eligibility.</p>
+      <div className="space-y-2 text-sm text-slate-600">
         <p>
-          This information will be used by the Governments of Ontario and Canada for policy analysis and statistical purposes related to employment
+          Please select all that apply. Your response to this question is
+          entirely voluntary and will not affect your eligibility.
+        </p>
+        <p>
+          This information will be used by the Governments of Ontario and Canada
+          for policy analysis and statistical purposes related to employment
           programs and services. (You may select more than one option).
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>Ethnicity</label>
+        <label
+          htmlFor="basicInfo-ethnicity"
+          className={`block text-base font-medium ${
+            errors?.ethnicity ? "text-red-600" : "text-slate-700"
+          }`}
+        >
+          Ethnicity
+        </label>
         <select
           id="basicInfo-ethnicity"
           className={selectClass(Boolean(errors?.ethnicity))}
@@ -172,12 +238,14 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="White">White</option>
           <option value="Other">Other</option>
         </select>
-        {errors?.ethnicity ? <p className="text-xs text-red-600">{errors.ethnicity}</p> : null}
+        {errors?.ethnicity ? (
+          <p className="text-sm text-red-600">{errors.ethnicity}</p>
+        ) : null}
       </div>
 
       <InputBlock
         id="basicInfo-socialProfile"
-        label="Social Profile"
+        label="Website or portfolio"
         value={data.socialProfile}
         onChange={(v) => onChange({ socialProfile: v })}
         placeholder="Website or portfolio"
@@ -190,7 +258,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         label="LinkedIn URL"
         value={data.linkedinUrl}
         onChange={(v) => onChange({ linkedinUrl: v })}
-        placeholder="www.linkedin.com/yourprofile"
+        placeholder="https://www.linkedin.com/in/your-profile"
         error={Boolean(errors?.linkedinUrl)}
         errorMessage={errors?.linkedinUrl}
       />
@@ -207,3 +275,4 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
     </div>
   );
 }
+
