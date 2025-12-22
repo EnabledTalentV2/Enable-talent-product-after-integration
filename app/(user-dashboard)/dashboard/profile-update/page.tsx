@@ -224,6 +224,12 @@ export default function ProfileUpdatePage() {
         return (
           <Projects
             data={userData.projects}
+            onNoProjectsChange={(value) =>
+              setUserData((prev) => ({
+                ...prev,
+                projects: { ...prev.projects, noProjects: value },
+              }))
+            }
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
@@ -437,4 +443,5 @@ export default function ProfileUpdatePage() {
     </section>
   );
 }
+
 
