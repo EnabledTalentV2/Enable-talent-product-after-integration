@@ -50,7 +50,7 @@ const countValue = (value: unknown): Counts => {
   }
 
   if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>).reduce(
+    return Object.values(value as Record<string, unknown>).reduce<Counts>(
       (acc, item) => {
         const next = countValue(item);
         return {

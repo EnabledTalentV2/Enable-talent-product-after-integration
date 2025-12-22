@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -223,6 +223,12 @@ export default function ProfileEditPage() {
         return (
           <Projects
             data={userData.projects}
+            onNoProjectsChange={(value) =>
+              setUserData((prev) => ({
+                ...prev,
+                projects: { ...prev.projects, noProjects: value },
+              }))
+            }
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
@@ -436,4 +442,6 @@ export default function ProfileEditPage() {
     </section>
   );
 }
+
+
 
