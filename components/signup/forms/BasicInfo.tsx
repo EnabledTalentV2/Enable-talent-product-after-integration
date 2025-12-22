@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 
+import { useRef } from "react";
 import { UploadCloud } from "lucide-react";
 import InputBlock from "./InputBlock";
 import type { UserData } from "../types";
@@ -11,6 +12,15 @@ type Props = {
 };
 
 export default function BasicInfo({ data, onChange, errors }: Props) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const clearProfilePhoto = () => {
+    onChange({ profilePhoto: "" });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const selectClass = (hasError?: boolean) =>
     `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
       hasError
@@ -66,6 +76,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
             </div>
             <input
               id="basicInfo-profilePhoto"
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               className="hidden"
@@ -74,11 +85,20 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
               }
             />
           </label>
-          {data.profilePhoto && (
-            <p className="text-sm text-slate-500 mt-2 text-center">
-              Selected: {data.profilePhoto}
-            </p>
-          )}
+          {data.profilePhoto ? (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
+              <span className="text-slate-500">
+                Selected: {data.profilePhoto}
+              </span>
+              <button
+                type="button"
+                onClick={clearProfilePhoto}
+                className="font-medium text-red-600 hover:text-red-700"
+              >
+                Remove photo
+              </button>
+            </div>
+          ) : null}
         </div>
         {errors?.profilePhoto ? (
           <p className="text-sm text-red-600">{errors.profilePhoto}</p>
@@ -255,3 +275,4 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
     </div>
   );
 }
+
