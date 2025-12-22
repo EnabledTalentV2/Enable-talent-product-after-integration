@@ -20,7 +20,7 @@ export default function InputBlock({ label, id, value, onChange, placeholder, ty
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className={`block text-sm font-medium ${error ? "text-red-600" : "text-slate-700"}`}>
+      <label htmlFor={inputId} className={`block text-base font-medium ${error ? "text-red-600" : "text-slate-700"}`}>
         {label}
       </label>
       <input
@@ -38,10 +38,12 @@ export default function InputBlock({ label, id, value, onChange, placeholder, ty
         }`}
       />
       {errorMessage ? (
-        <p id={errorId} className="text-xs text-red-600">
+        <p id={errorId} className="text-sm text-red-600">
           {errorMessage}
         </p>
       ) : null}
     </div>
   );
 }
+
+

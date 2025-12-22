@@ -34,7 +34,7 @@ export default function ResumeUpload() {
               Upload Resume
             </button>
 
-            <span className="text-sm text-slate-500">Supports file format .pdf</span>
+            <span className="text-base text-slate-500">Supports file format .pdf</span>
           </div>
 
           <div className="mt-10 text-base text-slate-600">
@@ -51,3 +51,4 @@ export default function ResumeUpload() {
     </div>
   );
 }
+

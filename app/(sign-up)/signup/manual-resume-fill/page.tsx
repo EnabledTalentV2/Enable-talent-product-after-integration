@@ -987,10 +987,10 @@ export default function ManualResumeFill() {
           <main className="md:col-span-9 bg-white rounded-3xl p-8 md:p-10 shadow-lg">
             <div className="flex items-start justify-between gap-4 mb-8">
               <div>
-                <p className="text-sm text-slate-500">Step {activeStep.id}</p>
+                <p className="text-base text-slate-500">Step {activeStep.id}</p>
                 <h2 className="text-2xl font-bold text-slate-900">{activeStep.label}</h2>
               </div>
-              <div className="hidden md:flex items-center gap-2 text-sm text-slate-500">
+              <div className="hidden md:flex items-center gap-2 text-base text-slate-500">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span>Profile completion tracking</span>
               </div>
@@ -999,7 +999,7 @@ export default function ManualResumeFill() {
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {renderForm}
 
-              {finishError ? <p className="text-sm font-medium text-red-600">{finishError}</p> : null}
+              {finishError ? <p className="text-base font-medium text-red-600">{finishError}</p> : null}
 
               <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
                 <button
@@ -1026,3 +1026,4 @@ export default function ManualResumeFill() {
     </div>
   );
 }
+

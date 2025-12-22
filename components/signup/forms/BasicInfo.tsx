@@ -12,7 +12,7 @@ type Props = {
 
 export default function BasicInfo({ data, onChange, errors }: Props) {
   const selectClass = (hasError?: boolean) =>
-    `w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
+    `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
       hasError ? "border-red-400 focus:ring-red-200 focus:border-red-500" : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
     }`;
 
@@ -42,7 +42,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <div className="space-y-2">
         <label 
           htmlFor="basicInfo-profilePhoto"
-          className={`block text-sm font-medium ${errors?.profilePhoto ? "text-red-600" : "text-slate-700"}`}
+          className={`block text-base font-medium ${errors?.profilePhoto ? "text-red-600" : "text-slate-700"}`}
         >
           Profile photo
         </label>
@@ -51,7 +51,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
             errors?.profilePhoto ? "border-red-400" : "border-gray-300"
           }`}
         >
-          <label htmlFor="basicInfo-profilePhoto" className="flex cursor-pointer flex-col items-center gap-2 text-sm text-slate-600">
+          <label htmlFor="basicInfo-profilePhoto" className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600">
             <UploadCloud className="h-5 w-5 text-orange-500" />
             <div className="flex items-center gap-1">
               <span>Drag and drop or,</span>
@@ -66,10 +66,10 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
             />
           </label>
           {data.profilePhoto && (
-            <p className="text-xs text-slate-500 mt-2 text-center">Selected: {data.profilePhoto}</p>
+            <p className="text-sm text-slate-500 mt-2 text-center">Selected: {data.profilePhoto}</p>
           )}
         </div>
-        {errors?.profilePhoto ? <p className="text-xs text-red-600">{errors.profilePhoto}</p> : null}
+        {errors?.profilePhoto ? <p className="text-sm text-red-600">{errors.profilePhoto}</p> : null}
       </div>
 
       <InputBlock
@@ -106,7 +106,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <div className="space-y-2">
         <label
           htmlFor="basicInfo-citizenshipStatus"
-          className={`block text-sm font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}
+          className={`block text-base font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}
         >
           Citizenship status
         </label>
@@ -123,10 +123,10 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="Student Visa">Student Visa</option>
           <option value="Other">Other</option>
         </select>
-        {errors?.citizenshipStatus ? <p className="text-xs text-red-600">{errors.citizenshipStatus}</p> : null}
+        {errors?.citizenshipStatus ? <p className="text-sm text-red-600">{errors.citizenshipStatus}</p> : null}
       </div>
 
-      <div className="space-y-2 text-xs text-slate-600">
+      <div className="space-y-2 text-sm text-slate-600">
         <p>Your response to this question is entirely voluntary and will not affect your eligibility.</p>
         <p>
           This information will be used by the Governments of Ontario and Canada for policy analysis and statistical purposes related to employment
@@ -135,7 +135,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="basicInfo-gender" className={`block text-sm font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="basicInfo-gender" className={`block text-base font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>
           Gender
         </label>
         <select
@@ -150,10 +150,10 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="Non-binary">Non-binary</option>
           <option value="Prefer not to say">Prefer not to say</option>
         </select>
-        {errors?.gender ? <p className="text-xs text-red-600">{errors.gender}</p> : null}
+        {errors?.gender ? <p className="text-sm text-red-600">{errors.gender}</p> : null}
       </div>
 
-      <div className="space-y-2 text-xs text-slate-600">
+      <div className="space-y-2 text-sm text-slate-600">
         <p>Please select all that apply. Your response to this question is entirely voluntary and will not affect your eligibility.</p>
         <p>
           This information will be used by the Governments of Ontario and Canada for policy analysis and statistical purposes related to employment
@@ -162,7 +162,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="basicInfo-ethnicity" className={`block text-sm font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="basicInfo-ethnicity" className={`block text-base font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>
           Ethnicity
         </label>
         <select
@@ -181,7 +181,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           <option value="White">White</option>
           <option value="Other">Other</option>
         </select>
-        {errors?.ethnicity ? <p className="text-xs text-red-600">{errors.ethnicity}</p> : null}
+        {errors?.ethnicity ? <p className="text-sm text-red-600">{errors.ethnicity}</p> : null}
       </div>
 
       <InputBlock
@@ -216,3 +216,5 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
     </div>
   );
 }
+
+

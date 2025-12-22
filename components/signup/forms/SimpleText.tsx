@@ -16,7 +16,7 @@ export default function SimpleText({ title, id, placeholder, value, onChange }: 
 
   return (
     <div className="space-y-2">
-      <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+      <label htmlFor={inputId} className="block text-base font-medium text-slate-700">
         {title}
       </label>
       <textarea
@@ -25,8 +25,9 @@ export default function SimpleText({ title, id, placeholder, value, onChange }: 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-lg border border-gray-200 text-slate-800 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
+        className="w-full px-4 py-3 rounded-lg border border-gray-200 text-slate-800 text-base leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
       />
     </div>
   );
 }
+

@@ -27,7 +27,7 @@ export default function DashBoardNavbar() {
   return (
     <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
       <div className="flex w-full max-w-8xl items-center justify-between">
-        <div className="flex items-center gap-3">
+        <a href="https://enable-talent-landing.vercel.app/" className="flex items-center gap-3">
           <Image
             src="/logo/et-new.svg"
             alt="EnabledTalent logo"
@@ -36,12 +36,12 @@ export default function DashBoardNavbar() {
             priority
             className="h-10 w-auto object-contain"
           />
-        </div>
+        </a>
 
         <div className="flex items-center gap-7">
           <Link
             href="/dashboard/profile-update"
-            className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
+            className="hidden items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
           >
             <User size={18} />
             <span>Profile</span>
@@ -50,7 +50,7 @@ export default function DashBoardNavbar() {
           <button
             type="button"
             onClick={handleLogout}
-            className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
+            className="hidden items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
           >
             <LogOut size={18} />
             <span>Log Out</span>
@@ -59,7 +59,7 @@ export default function DashBoardNavbar() {
             <Bell size={20} />
             <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
           </button>
-          <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90">
+          <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90">
             <Search size={18} strokeWidth={3} />
             <span>AI Career Coach</span>
           </button>
@@ -68,3 +68,4 @@ export default function DashBoardNavbar() {
     </nav>
   );
 }
+

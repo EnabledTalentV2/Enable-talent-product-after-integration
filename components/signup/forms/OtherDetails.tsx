@@ -30,7 +30,7 @@ export default function OtherDetails({
   onRemoveLanguage,
 }: Props) {
   const selectClass = (hasError?: boolean) =>
-    `w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
+    `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
       hasError
         ? "border-red-400 focus:ring-red-200 focus:border-red-500"
         : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
@@ -72,7 +72,7 @@ export default function OtherDetails({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Other details</h3>
         {errorCount > 0 ? (
-          <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")} error
           </span>
         ) : null}
@@ -86,7 +86,7 @@ export default function OtherDetails({
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-language`}
-                  className={`block text-sm font-medium ${entryErrors.language ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.language ? "text-red-600" : "text-slate-700"}`}
                 >
                   Language
                 </label>
@@ -103,13 +103,13 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.language ? <p className="text-xs text-red-600">{entryErrors.language}</p> : null}
+                {entryErrors.language ? <p className="text-sm text-red-600">{entryErrors.language}</p> : null}
               </div>
 
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-speaking`}
-                  className={`block text-sm font-medium ${entryErrors.speaking ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.speaking ? "text-red-600" : "text-slate-700"}`}
                 >
                   Speaking
                 </label>
@@ -126,13 +126,13 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.speaking ? <p className="text-xs text-red-600">{entryErrors.speaking}</p> : null}
+                {entryErrors.speaking ? <p className="text-sm text-red-600">{entryErrors.speaking}</p> : null}
               </div>
 
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-reading`}
-                  className={`block text-sm font-medium ${entryErrors.reading ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.reading ? "text-red-600" : "text-slate-700"}`}
                 >
                   Reading
                 </label>
@@ -149,14 +149,14 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.reading ? <p className="text-xs text-red-600">{entryErrors.reading}</p> : null}
+                {entryErrors.reading ? <p className="text-sm text-red-600">{entryErrors.reading}</p> : null}
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor={`otherDetails-lang-${idx}-writing`}
-                    className={`block text-sm font-medium ${entryErrors.writing ? "text-red-600" : "text-slate-700"}`}
+                    className={`block text-base font-medium ${entryErrors.writing ? "text-red-600" : "text-slate-700"}`}
                   >
                     Writing
                   </label>
@@ -164,7 +164,7 @@ export default function OtherDetails({
                     <button
                       type="button"
                       onClick={() => onRemoveLanguage(idx)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -184,7 +184,7 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.writing ? <p className="text-xs text-red-600">{entryErrors.writing}</p> : null}
+                {entryErrors.writing ? <p className="text-sm text-red-600">{entryErrors.writing}</p> : null}
               </div>
             </div>
           );
@@ -193,7 +193,7 @@ export default function OtherDetails({
         <button
           type="button"
           onClick={onAddLanguage}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-sm hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
           Add another language
@@ -201,7 +201,7 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-careerStage" className={`block text-sm font-medium ${errors?.careerStage ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-careerStage" className={`block text-base font-medium ${errors?.careerStage ? "text-red-600" : "text-slate-700"}`}>
           How would you identify your career stage (choose best option)
         </label>
         <select
@@ -217,11 +217,11 @@ export default function OtherDetails({
             </option>
           ))}
         </select>
-        {errors?.careerStage ? <p className="text-xs text-red-600">{errors.careerStage}</p> : null}
+        {errors?.careerStage ? <p className="text-sm text-red-600">{errors.careerStage}</p> : null}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-availability" className={`block text-sm font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-availability" className={`block text-base font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
           {availabilityError ||
             "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
         </label>
@@ -246,7 +246,7 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-desiredSalary" className={`block text-sm font-medium ${errors?.desiredSalary ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-desiredSalary" className={`block text-base font-medium ${errors?.desiredSalary ? "text-red-600" : "text-slate-700"}`}>
           Desired salary (CAD)
         </label>
         <select
@@ -262,8 +262,10 @@ export default function OtherDetails({
             </option>
           ))}
         </select>
-        {errors?.desiredSalary ? <p className="text-xs text-red-600">{errors.desiredSalary}</p> : null}
+        {errors?.desiredSalary ? <p className="text-sm text-red-600">{errors.desiredSalary}</p> : null}
       </div>
     </div>
   );
 }
+
+

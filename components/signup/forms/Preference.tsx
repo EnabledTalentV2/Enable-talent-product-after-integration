@@ -26,7 +26,7 @@ export default function Preference({ data, onChange }: Props) {
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
   }) => (
-    <label className="inline-flex items-center gap-2 text-sm cursor-pointer select-none">
+    <label className="inline-flex items-center gap-2 text-base cursor-pointer select-none">
       <input
         type="checkbox"
         name={name}
@@ -42,7 +42,7 @@ export default function Preference({ data, onChange }: Props) {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-slate-800">Company Size</p>
+        <p className="text-base font-semibold text-slate-800">Company Size</p>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           {companySizeOptions.map((option) => (
             <Option
@@ -59,7 +59,7 @@ export default function Preference({ data, onChange }: Props) {
       </div>
 
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-slate-800">Type of Job</p>
+        <p className="text-base font-semibold text-slate-800">Type of Job</p>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           {jobTypeOptions.map((option) => (
             <Option
@@ -76,7 +76,7 @@ export default function Preference({ data, onChange }: Props) {
       </div>
 
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-slate-800">Job Search</p>
+        <p className="text-base font-semibold text-slate-800">Job Search</p>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           {jobSearchOptions.map((option) => (
             <Option
@@ -94,3 +94,4 @@ export default function Preference({ data, onChange }: Props) {
     </div>
   );
 }
+

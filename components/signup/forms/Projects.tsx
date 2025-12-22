@@ -27,7 +27,7 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Projects</h3>
         {errorCount > 0 ? (
-          <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
+          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
         ) : null}
       </div>
 
@@ -38,12 +38,12 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
         return (
           <div key={idx} className="space-y-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800">Project {idx + 1}</p>
+              <p className="text-base font-semibold text-slate-800">Project {idx + 1}</p>
               {onRemoveEntry && entries.length > 1 ? (
                 <button
                   type="button"
                   onClick={() => onRemoveEntry(idx)}
-                  className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                  className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                   Remove
@@ -72,9 +72,9 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
             />
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-700">Currently working on this project?</p>
+              <p className="text-base font-medium text-slate-700">Currently working on this project?</p>
               <div className="flex items-center gap-8">
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 text-base text-slate-700 cursor-pointer">
                   <input
                     type="radio"
                     name={`project-${idx}-current`}
@@ -84,7 +84,7 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
                   />
                   <span>Yes</span>
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <label className="flex items-center gap-2 text-base text-slate-700 cursor-pointer">
                   <input
                     type="radio"
                     name={`project-${idx}-current`}
@@ -101,7 +101,7 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
               <div className="space-y-1.5">
                 <label
                   htmlFor={`project-${idx}-from`}
-                  className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
                 >
                   From
                 </label>
@@ -116,12 +116,12 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
                       : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
                   }`}
                 />
-                {entryErrors.from ? <p className="text-xs text-red-600">{entryErrors.from}</p> : null}
+                {entryErrors.from ? <p className="text-sm text-red-600">{entryErrors.from}</p> : null}
               </div>
               <div className="space-y-1.5">
                 <label
                   htmlFor={`project-${idx}-to`}
-                  className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
                 >
                   To
                 </label>
@@ -137,7 +137,7 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
                       : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
                   } ${isCurrent ? "bg-slate-50 text-slate-500" : ""}`}
                 />
-                {entryErrors.to ? <p className="text-xs text-red-600">{entryErrors.to}</p> : null}
+                {entryErrors.to ? <p className="text-sm text-red-600">{entryErrors.to}</p> : null}
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
       <button
         type="button"
         onClick={onAddEntry}
-        className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-sm hover:bg-orange-50 transition-colors"
+        className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
       >
         <Plus size={16} />
         Add another project
@@ -155,3 +155,5 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
     </div>
   );
 }
+
+

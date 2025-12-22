@@ -373,19 +373,19 @@ export default function ProfileUpdatePage() {
   };
 
   if (loading) {
-    return <div className="py-10 text-sm text-slate-600">Loading your profile...</div>;
+    return <div className="py-10 text-base text-slate-600">Loading your profile...</div>;
   }
 
   if (error) {
-    return <div className="py-10 text-sm font-medium text-red-600">{error}</div>;
+    return <div className="py-10 text-base font-medium text-red-600">{error}</div>;
   }
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
       <header className="space-y-2">
-        <p className="text-sm font-semibold text-amber-700">Profile Update</p>
+        <p className="text-base font-semibold text-amber-700">Profile Update</p>
         <h1 className="text-2xl font-bold text-slate-900">Finish your profile</h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-base text-slate-600">
           Update the missing sections below. Profile completion: {completion.percent}%.
         </p>
       </header>
@@ -393,11 +393,11 @@ export default function ProfileUpdatePage() {
       {incompleteSections.length === 0 ? (
         <div className={cardClass}>
           <h2 className={titleClass}>All set</h2>
-          <p className="mt-2 text-sm text-slate-600">Your profile is complete.</p>
+          <p className="mt-2 text-base text-slate-600">Your profile is complete.</p>
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="mt-4 inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="mt-4 inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-base font-semibold text-white transition hover:bg-slate-800"
           >
             Back to dashboard
           </button>
@@ -418,7 +418,7 @@ export default function ProfileUpdatePage() {
           type="button"
           onClick={() => handleSave(false)}
           disabled={saving}
-          className="rounded-lg bg-[#C27528] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-lg bg-[#C27528] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {saving ? "Saving..." : "Save changes"}
         </button>
@@ -426,13 +426,14 @@ export default function ProfileUpdatePage() {
           type="button"
           onClick={() => handleSave(true)}
           disabled={saving}
-          className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-lg border border-slate-300 px-5 py-2.5 text-base font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-70"
         >
           Save &amp; return
         </button>
-        {saveError ? <span className="text-sm font-medium text-red-600">{saveError}</span> : null}
-        {saveSuccess ? <span className="text-sm font-medium text-emerald-600">{saveSuccess}</span> : null}
+        {saveError ? <span className="text-base font-medium text-red-600">{saveError}</span> : null}
+        {saveSuccess ? <span className="text-base font-medium text-emerald-600">{saveSuccess}</span> : null}
       </div>
     </section>
   );
 }
+

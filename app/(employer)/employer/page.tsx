@@ -57,10 +57,11 @@ export default function Employers() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-400">
+        <p className="text-base text-slate-400">
           &copy; 2025 Enabled Talent. All rights reserved.
         </p>
       </div>
     </main>
   );
 }
+

@@ -43,10 +43,11 @@ export default function Home() {
           </Link>
         </div>
 
-        <p className="text-sm text-slate-500">
+        <p className="text-base text-slate-500">
           Empowering careers through accessibility and opportunity.
         </p>
       </div>
     </main>
   );
 }
+

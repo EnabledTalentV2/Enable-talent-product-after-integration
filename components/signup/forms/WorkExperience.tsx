@@ -51,12 +51,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
           </label>
         </div>
         {errorCount > 0 && data.experienceType === "experienced" ? (
-          <span className="text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
+          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
         ) : null}
       </div>
 
       {isFresher ? (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
           Marked as fresher. You can add experience later if needed.
         </div>
       ) : null}
@@ -67,12 +67,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
           return (
             <div key={idx} className="space-y-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-800">Experience {idx + 1}</p>
+                <p className="text-base font-semibold text-slate-800">Experience {idx + 1}</p>
                 {onRemoveEntry && entries.length > 1 ? (
                   <button
                     type="button"
                     onClick={() => onRemoveEntry(idx)}
-                    className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600"
+                    className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
                     Remove
@@ -104,7 +104,7 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`workExp-${idx}-from`}
-                    className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
+                    className={`block text-base font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
                   >
                     From
                   </label>
@@ -120,12 +120,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
                         : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
                     }`}
                   />
-                  {entryErrors.from ? <p className="text-xs text-red-600">{entryErrors.from}</p> : null}
+                  {entryErrors.from ? <p className="text-sm text-red-600">{entryErrors.from}</p> : null}
                 </div>
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`workExp-${idx}-to`}
-                    className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
+                    className={`block text-base font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
                   >
                     To
                   </label>
@@ -142,11 +142,11 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
                     }`}
                     disabled={entry.current}
                   />
-                  {entryErrors.to ? <p className="text-xs text-red-600">{entryErrors.to}</p> : null}
+                  {entryErrors.to ? <p className="text-sm text-red-600">{entryErrors.to}</p> : null}
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-2 text-base font-medium text-slate-700">
                 <input
                   id={`workExp-${idx}-current`}
                   type="checkbox"
@@ -160,7 +160,7 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
               <div className="space-y-1.5">
                 <label
                   htmlFor={`workExp-${idx}-description`}
-                  className={`block text-sm font-medium ${entryErrors.description ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${entryErrors.description ? "text-red-600" : "text-slate-700"}`}
                 >
                   Description
                 </label>
@@ -169,13 +169,13 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
                   rows={6}
                   value={entry.description}
                   onChange={(e) => onEntryChange(idx, { description: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-lg border text-slate-800 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 ${
+                  className={`w-full px-4 py-3 rounded-lg border text-slate-800 text-base leading-relaxed shadow-sm focus:outline-none focus:ring-2 ${
                     entryErrors.description
                       ? "border-red-400 focus:ring-red-200 focus:border-red-500"
                       : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
                   }`}
                 />
-                {entryErrors.description ? <p className="text-xs text-red-600">{entryErrors.description}</p> : null}
+                {entryErrors.description ? <p className="text-sm text-red-600">{entryErrors.description}</p> : null}
               </div>
             </div>
           );
@@ -185,7 +185,7 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
         <button
           type="button"
           onClick={onAddEntry}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-sm hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
           Add another experience
@@ -194,3 +194,5 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
     </div>
   );
 }
+
+

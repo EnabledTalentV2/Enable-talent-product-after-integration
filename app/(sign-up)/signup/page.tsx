@@ -82,11 +82,11 @@ export default function SignUpPage() {
           <div className="flex w-full justify-center bg-white p-8 md:w-7/12 md:p-12">
             <div className="w-full max-w-md">
               <h1 className="text-2xl font-bold text-gray-900">Sign Up</h1>
-              <p className="mb-8 text-sm text-gray-500">Create an account to start using EnabledTalent.</p>
+              <p className="mb-8 text-base text-gray-500">Create an account to start using EnabledTalent.</p>
 
               <form className="space-y-5" noValidate onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="fullname">
+                  <label className="block text-base font-semibold text-gray-700" htmlFor="fullname">
                     Full name
                   </label>
                   <input
@@ -103,7 +103,7 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="email">
+                  <label className="block text-base font-semibold text-gray-700" htmlFor="email">
                     Email
                   </label>
                   <input
@@ -120,7 +120,7 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="password">
+                  <label className="block text-base font-semibold text-gray-700" htmlFor="password">
                     Password
                   </label>
                   <input
@@ -137,7 +137,7 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-semibold text-gray-700" htmlFor="confirmPassword">
+                  <label className="block text-base font-semibold text-gray-700" htmlFor="confirmPassword">
                     Confirm password
                   </label>
                   <input
@@ -153,7 +153,7 @@ export default function SignUpPage() {
                   />
                 </div>
 
-                {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
+                {error ? <p className="text-base font-medium text-red-600">{error}</p> : null}
 
                 <button
                   type="submit"
@@ -163,7 +163,7 @@ export default function SignUpPage() {
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-gray-600">
+              <p className="mt-6 text-center text-base text-gray-600">
                 Already have an account?{" "}
                 <Link className="font-semibold text-[#B45309] hover:underline" href="/login">
                   Login
@@ -177,3 +177,4 @@ export default function SignUpPage() {
     </main>
   );
 }
+
