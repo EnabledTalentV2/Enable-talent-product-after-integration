@@ -22,7 +22,7 @@ export default function ResumeUpload() {
 
           <div className="mt-12 flex w-full flex-col items-center gap-6 rounded-3xl border-2 border-dashed border-blue-100 bg-slate-50/70 p-10 md:p-14">
             <p className="text-lg font-semibold leading-relaxed text-[#1E293B]">
-              Upload your resume to build a BReady{" "}
+              Upload your resume to build an Enabled Talent{" "}
               <br className="hidden md:block" />
               profile automatically
             </p>

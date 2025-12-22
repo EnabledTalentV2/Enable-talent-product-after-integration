@@ -53,12 +53,47 @@ export type UserData = {
       description: string;
     }>;
   };
-  skills: { skills: string };
-  projects: { projects: string };
-  achievements: { achievements: string };
-  certification: { certification: string };
-  preference: { preference: string };
-  otherDetails: { otherDetails: string };
-  reviewAgree: { agree: boolean; notes: string };
   skills: { skills: string; primaryList?: string[] };
+  projects: {
+    entries: Array<{
+      projectName: string;
+      projectDescription: string;
+      current: boolean;
+      from: string;
+      to: string;
+    }>;
+  };
+  achievements: {
+    entries: Array<{
+      title: string;
+      issueDate: string;
+      description: string;
+    }>;
+  };
+  certification: {
+    noCertification: boolean;
+    entries: Array<{
+      name: string;
+      issueDate: string;
+      organization: string;
+      credentialIdUrl: string;
+    }>;
+  };
+  preference: {
+    companySize: string[];
+    jobType: string[];
+    jobSearch: string[];
+  };
+  otherDetails: {
+    languages: Array<{
+      language: string;
+      speaking: string;
+      reading: string;
+      writing: string;
+    }>;
+    careerStage: string;
+    availability: string;
+    desiredSalary: string;
+  };
+  reviewAgree: { agree: boolean; discover: string; comments: string };
 };

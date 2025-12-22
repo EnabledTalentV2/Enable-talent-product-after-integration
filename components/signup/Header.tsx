@@ -1,7 +1,13 @@
 'use client';
 
-export default function Header() {
-  const percent = 68; // 0-100
+type Props = {
+  percent: number;
+};
+
+export default function Header({ percent }: Props) {
+  const safePercent = Math.min(100, Math.max(0, Math.round(percent)));
+  const ringColor = safePercent >= 100 ? "text-emerald-500" : "text-orange-500";
+  const numberColor = safePercent >= 100 ? "text-emerald-600" : "text-[#C05621]";
 
   return (
     <header className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-r from-[#C05621] to-[#FBBF24] shadow-lg px-6 py-8 md:px-12 md:py-10">
@@ -16,7 +22,7 @@ export default function Header() {
             className="w-full h-full -rotate-90"
             viewBox="0 0 36 36"
             role="img"
-            aria-label={`Profile completed ${percent}%`}
+            aria-label={`Profile completed ${safePercent}%`}
           >
             <path
               className="text-gray-200"
@@ -26,8 +32,8 @@ export default function Header() {
               strokeWidth="3"
             />
             <path
-              className="text-orange-500"
-              strokeDasharray={`${percent}, 100`}
+              className={ringColor}
+              strokeDasharray={`${safePercent}, 100`}
               strokeLinecap="round"
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               fill="none"
@@ -36,7 +42,7 @@ export default function Header() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-            <span className="text-2xl font-bold text-[#C05621]">{percent}</span>
+            <span className={`text-2xl font-bold ${numberColor}`}>{safePercent}%</span>
             <span className="text-[9px] uppercase font-semibold text-slate-500">Profile</span>
             <span className="text-[9px] uppercase font-semibold text-slate-500">Completed</span>
           </div>

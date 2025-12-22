@@ -5,3 +5,9 @@
   --foreground: #171717;
   color-scheme: light;  
 }
+
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+}

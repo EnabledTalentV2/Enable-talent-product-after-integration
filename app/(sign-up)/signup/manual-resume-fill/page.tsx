@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/signup/Header";
 import Sidebar from "@/components/signup/Sidebar";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
@@ -13,8 +14,14 @@ import Achievements from "@/components/signup/forms/Achievements";
 import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
+import { useUserDataStore } from "@/lib/userDataStore";
+import { clearPendingSignup, getCurrentUser, getPendingSignup, saveUser, setCurrentUser } from "@/lib/localUserStore";
+import { computeProfileCompletion } from "@/lib/profileCompletion";
 import type { Step, StepKey, StepStatus, UserData } from "@/components/signup/types";
 type WorkEntry = UserData["workExperience"]["entries"][number];
+type ProjectEntry = UserData["projects"]["entries"][number];
+type CertificationEntry = UserData["certification"]["entries"][number];
+type LanguageEntry = UserData["otherDetails"]["languages"][number];
 
 const initialSteps: Step[] = [
   { id: 1, label: "Basic Info", key: "basicInfo", status: "pending", isActive: true },
@@ -29,58 +36,13 @@ const initialSteps: Step[] = [
   { id: 10, label: "Review And Agree", key: "reviewAgree", status: "pending" },
 ];
 
-const initialUserData: UserData = {
-  basicInfo: {
-    firstName: "Jenny",
-    lastName: "",
-    email: "",
-    phone: "(229) 555-0109",
-    location: "Allentown, New Mexico 31134",
-    citizenshipStatus: "Canadian",
-    gender: "Female",
-    ethnicity: "South Asian",
-    socialProfile: "Jennywilson.com",
-    linkedinUrl: "www.linkedin.com/jennywilson",
-    currentStatus: "Newly graduated student interested in working with employers in Brampton",
-    profilePhoto: "",
-  },
-  education: {
-    courseName: "",
-    major: "Design methodologies, Aesthetics, Visual communication, Technical specification...",
-    institution: "York University",
-    graduationDate: "",
-  },
-  workExperience: {
-    experienceType: "experienced",
-    entries: [
-      {
-        company: "tiktok",
-        role: "Sr UX designer",
-        from: "",
-        to: "21-Jan-2025",
-        current: false,
-        description: [
-          "- Collaborated with cross-functional teams including product managers, engineers, and marketers to understand business goals and user needs.",
-          "- Conducted user research through interviews, surveys, and usability testing to inform design decisions.",
-          "- Created wireframes, prototypes, and user flows to communicate design ideas and facilitate feedback.",
-          "- Designed intuitive and elegant user interfaces for web and mobile applications, adhering to design principles and best practices.",
-          "- Implemented responsive design techniques to ensure a seamless user experience across devices.",
-        ].join("\n"),
-      },
-    ],
-  },
-  skills: { skills: "", primaryList: ["UX Design", "UX Research", "Usability Principles", "Information Architecture", "Wireframing And Prototyping", "Design Systems Governance", "Agile Methodologies"] },
-  projects: { projects: "" },
-  achievements: { achievements: "" },
-  certification: { certification: "" },
-  preference: { preference: "" },
-  otherDetails: { otherDetails: "" },
-  reviewAgree: { agree: false, notes: "" },
-};
-
 export default function ManualResumeFill() {
+  const router = useRouter();
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
-  const [userData, setUserData] = useState<UserData>(initialUserData);
+  const userData = useUserDataStore((s) => s.userData);
+  const setUserData = useUserDataStore((s) => s.setUserData);
+  const [finishing, setFinishing] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<Partial<Record<keyof UserData["basicInfo"], string>>>({});
   const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(null);
   const [educationErrors, setEducationErrors] = useState<Partial<Record<keyof UserData["education"], string>>>({});
@@ -92,9 +54,26 @@ export default function ManualResumeFill() {
   const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(null);
   const [skillErrors, setSkillErrors] = useState<Partial<Record<keyof UserData["skills"], string>>>({});
   const [skillFirstError, setSkillFirstError] = useState<string | null>(null);
+  const [projectErrors, setProjectErrors] = useState<{
+    entries?: Record<number, Partial<Record<keyof ProjectEntry, string>>>;
+  }>({});
+  const [projectFirstError, setProjectFirstError] = useState<string | null>(null);
+  const [certErrors, setCertErrors] = useState<{
+    entries?: Record<number, Partial<Record<keyof CertificationEntry, string>>>;
+  }>({});
+  const [certFirstError, setCertFirstError] = useState<string | null>(null);
+  const [otherDetailsErrors, setOtherDetailsErrors] = useState<{
+    languages?: Record<number, Partial<Record<keyof LanguageEntry, string>>>;
+    careerStage?: string;
+    availability?: string;
+    desiredSalary?: string;
+  }>({});
+  const [otherDetailsFirstError, setOtherDetailsFirstError] = useState<string | null>(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
+  const profilePercent = useMemo(() => computeProfileCompletion(userData).percent, [userData]);
+  const isLastStep = activeIndex === stepsState.length - 1;
 
   const setActiveStep = (nextIndex: number) => {
     setStepsState((prev) =>
@@ -231,17 +210,249 @@ export default function ManualResumeFill() {
         setSkillErrors({});
         setSkillFirstError(null);
         return true;
+      case "projects":
+        const requiredProjectFields: Array<{ field: keyof ProjectEntry; message: string }> = [
+          { field: "projectName", message: "Please enter Project name" },
+          { field: "projectDescription", message: "Please enter Project description" },
+          { field: "from", message: "Please enter start date" },
+          { field: "to", message: "Please enter end date" },
+        ];
+        const projectEntries = userData.projects.entries;
+        const projectErrs: typeof projectErrors = { entries: {} };
+        let firstProjectId: string | null = null;
+        if (!projectEntries.length) {
+          projectErrs.entries = {
+            0: {
+              projectName: "Please enter Project name",
+              projectDescription: "Please enter Project description",
+              from: "Please enter start date",
+              to: "Please enter end date",
+            },
+          };
+          firstProjectId = "project-0-projectName";
+        }
+        projectEntries.forEach((entry, idx) => {
+          requiredProjectFields.forEach(({ field, message }) => {
+            if (field === "to" && entry.current) return;
+            if (!entry[field]) {
+              if (!projectErrs.entries) projectErrs.entries = {};
+              if (!projectErrs.entries[idx]) projectErrs.entries[idx] = {};
+              projectErrs.entries[idx]![field] = message;
+              if (!firstProjectId) firstProjectId = `project-${idx}-${field}`;
+            }
+          });
+        });
+        if (firstProjectId) {
+          setProjectErrors((prev) => ({ ...prev, ...projectErrs }));
+          setProjectFirstError(firstProjectId);
+          return false;
+        }
+        setProjectErrors({});
+        setProjectFirstError(null);
+        return true;
+      case "certification":
+        if (userData.certification.noCertification) {
+          setCertErrors({});
+          setCertFirstError(null);
+          return true;
+        }
+        const requiredCertFields: Array<{ field: keyof CertificationEntry; message: string }> = [
+          { field: "name", message: "Please enter Name of certification" },
+          { field: "issueDate", message: "Please enter Issue Date" },
+          { field: "organization", message: "Please enter Issued organization" },
+          { field: "credentialIdUrl", message: "Please enter Credential ID/URL" },
+        ];
+        const certEntries = userData.certification.entries;
+        const certErrs: typeof certErrors = { entries: {} };
+        let firstCertId: string | null = null;
+        if (!certEntries.length) {
+          certErrs.entries = {
+            0: {
+              name: "Please enter Name of certification",
+              issueDate: "Please enter Issue Date",
+              organization: "Please enter Issued organization",
+              credentialIdUrl: "Please enter Credential ID/URL",
+            },
+          };
+          firstCertId = "cert-0-name";
+        }
+        certEntries.forEach((entry, idx) => {
+          requiredCertFields.forEach(({ field, message }) => {
+            if (!entry[field]) {
+              if (!certErrs.entries) certErrs.entries = {};
+              if (!certErrs.entries[idx]) certErrs.entries[idx] = {};
+              certErrs.entries[idx]![field] = message;
+              if (!firstCertId) firstCertId = `cert-${idx}-${field}`;
+            }
+          });
+        });
+        if (firstCertId) {
+          setCertErrors((prev) => ({ ...prev, ...certErrs }));
+          setCertFirstError(firstCertId);
+          return false;
+        }
+        setCertErrors({});
+        setCertFirstError(null);
+        return true;
+      case "otherDetails":
+        const requiredLanguageFields: Array<{ field: keyof LanguageEntry; message: string }> = [
+          { field: "language", message: "Please select Language" },
+          { field: "speaking", message: "Please select Speaking level" },
+          { field: "reading", message: "Please select Reading level" },
+          { field: "writing", message: "Please select Writing level" },
+        ];
+        const requiredOtherFields: Array<{
+          field: keyof Pick<UserData["otherDetails"], "careerStage" | "availability" | "desiredSalary">;
+          message: string;
+          id: string;
+        }> = [
+          { field: "careerStage", message: "Please select your career stage", id: "otherDetails-careerStage" },
+          {
+            field: "availability",
+            message: "Please enter your earliest availability for full-time opportunities",
+            id: "otherDetails-availability",
+          },
+          { field: "desiredSalary", message: "Please select desired salary", id: "otherDetails-desiredSalary" },
+        ];
+
+        const langEntries = userData.otherDetails.languages;
+        const otherErrs: typeof otherDetailsErrors = { languages: {} };
+        let firstOtherId: string | null = null;
+
+        if (!langEntries.length) {
+          otherErrs.languages = {
+            0: {
+              language: "Please select Language",
+              speaking: "Please select Speaking level",
+              reading: "Please select Reading level",
+              writing: "Please select Writing level",
+            },
+          };
+          firstOtherId = "otherDetails-lang-0-language";
+        }
+
+        langEntries.forEach((entry, idx) => {
+          requiredLanguageFields.forEach(({ field, message }) => {
+            if (!entry[field]) {
+              if (!otherErrs.languages) otherErrs.languages = {};
+              if (!otherErrs.languages[idx]) otherErrs.languages[idx] = {};
+              otherErrs.languages[idx]![field] = message;
+              if (!firstOtherId) firstOtherId = `otherDetails-lang-${idx}-${field}`;
+            }
+          });
+        });
+
+        requiredOtherFields.forEach(({ field, message, id }) => {
+          if (!userData.otherDetails[field]) {
+            (otherErrs as Record<string, string>)[field] = message;
+            if (!firstOtherId) firstOtherId = id;
+          }
+        });
+
+        if (firstOtherId) {
+          const hasLanguageErrors = otherErrs.languages && Object.keys(otherErrs.languages).length > 0;
+          if (!hasLanguageErrors) {
+            delete otherErrs.languages;
+          }
+          setOtherDetailsErrors(otherErrs);
+          setOtherDetailsFirstError(firstOtherId);
+          return false;
+        }
+
+        setOtherDetailsErrors({});
+        setOtherDetailsFirstError(null);
+        return true;
       default:
         return true;
     }
   };
 
-  const handleSaveAndNext = () => {
-    if (activeIndex === -1) return;
+  const handleFinish = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    setFinishError(null);
+
+    try {
+      const pending = getPendingSignup();
+      const currentUser = getCurrentUser();
+
+      if (!pending && !currentUser) {
+        setFinishError("No active signup or logged-in user found. Please start from signup or login.");
+        return;
+      }
+
+      const emailFromPending = pending?.email?.trim();
+      const passwordFromPending = pending?.password || "";
+      const emailFromCurrent = currentUser?.email?.trim();
+      const passwordFromCurrent = currentUser?.password || "";
+
+      const email = emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
+      const password = pending ? passwordFromPending : passwordFromCurrent;
+
+      if (!email) {
+        setFinishError("Missing email. Please start from the signup page.");
+        return;
+      }
+
+      if (pending && !password) {
+        setFinishError("Missing password. Please start from the signup page.");
+        return;
+      }
+
+      const finalizedData = {
+        ...userData,
+        basicInfo: {
+          ...userData.basicInfo,
+          email,
+        },
+      };
+
+      if (pending) {
+        saveUser({ email, password, userData: finalizedData });
+        clearPendingSignup();
+      } else if (currentUser) {
+        saveUser({ email: emailFromCurrent || email, password: passwordFromCurrent, userData: finalizedData });
+      }
+
+      setCurrentUser(email);
+      setUserData(() => finalizedData);
+
+      try {
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalizedData),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(() => data);
+        }
+      } catch {
+        // Local storage already saved; ignore backend mock failures.
+      }
+
+      router.push("/dashboard");
+    } catch (err) {
+      setFinishError("Unable to complete signup. Please try again.");
+    } finally {
+      setFinishing(false);
+    }
+  };
+
+  const handleSaveAndNext = async () => {
+    if (activeIndex === -1 || finishing) return;
     const isValid = validateStep(activeStep.key);
 
     if (!isValid) {
       updateStepStatus(activeIndex, "error", "Please complete required fields");
+      return;
+    }
+
+    if (activeIndex === stepsState.length - 1) {
+      updateStepStatus(activeIndex, "completed");
+      await handleFinish();
       return;
     }
 
@@ -355,6 +566,9 @@ export default function ManualResumeFill() {
                       delete updated[key as string];
                     }
                   });
+                  if (patch.current === true) {
+                    delete updated.to;
+                  }
                   cleared.entries = { ...cleared.entries, [index]: updated };
                 }
                 return cleared;
@@ -363,6 +577,9 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const [, idxStr, field] = prev.split("-");
                 const idxNum = Number(idxStr);
+                if (idxNum === index && field === "to" && patch.current === true) {
+                  return null;
+                }
                 if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof WorkEntry]) {
                   return null;
                 }
@@ -397,19 +614,18 @@ export default function ManualResumeFill() {
               setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }));
               setSkillErrors((prev) => {
                 const cleared = { ...prev };
-                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
-                  if (patch[key]) {
-                    delete (cleared as Record<string, string>)[key as string];
-                  }
-                });
+                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) {
+                  delete (cleared as Record<string, string>).skills;
+                }
+                if ("primaryList" in patch) {
+                  delete (cleared as Record<string, string>).skills;
+                }
                 return cleared;
               });
               setSkillFirstError((prev) => {
                 if (!prev) return prev;
-                const targetId = "skills-input";
-                if (patch.skills && prev === targetId) {
-                  return null;
-                }
+                if (typeof patch.skills === "string" && patch.skills.trim().length > 0) return null;
+                if ("primaryList" in patch) return null;
                 return prev;
               });
             }}
@@ -419,21 +635,168 @@ export default function ManualResumeFill() {
         return (
           <Projects
             data={userData.projects}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, projects: { ...prev.projects, ...patch } }))}
+            errors={projectErrors}
+            onEntryChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextEntries = prev.projects.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+              });
+              setProjectErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.entries && cleared.entries[index]) {
+                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  if (patch.current === true) {
+                    delete updated.to;
+                  }
+                  cleared.entries = { ...cleared.entries, [index]: updated };
+                }
+                return cleared;
+              });
+              setProjectFirstError((prev) => {
+                if (!prev) return prev;
+                const [, idxStr, field] = prev.split("-");
+                const idxNum = Number(idxStr);
+                if (idxNum === index && field === "to" && patch.current === true) {
+                  return null;
+                }
+                if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field as keyof ProjectEntry]) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                projects: {
+                  ...prev.projects,
+                  entries: [
+                    ...prev.projects.entries,
+                    { projectName: "", projectDescription: "", current: false, from: "", to: "" },
+                  ],
+                },
+              }))
+            }
+            onRemoveEntry={(index) => {
+              setUserData((prev) => {
+                const nextEntries = prev.projects.entries.filter((_, idx) => idx !== index);
+                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+              });
+              setProjectErrors({});
+              setProjectFirstError(null);
+            }}
           />
         );
       case "achievements":
         return (
           <Achievements
             data={userData.achievements}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, achievements: { ...prev.achievements, ...patch } }))}
+            onEntryChange={(index, patch) =>
+              setUserData((prev) => {
+                const nextEntries = prev.achievements.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+              })
+            }
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                achievements: {
+                  ...prev.achievements,
+                  entries: [...prev.achievements.entries, { title: "", issueDate: "", description: "" }],
+                },
+              }))
+            }
+            onRemoveEntry={(index) =>
+              setUserData((prev) => {
+                const nextEntries = prev.achievements.entries.filter((_, idx) => idx !== index);
+                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+              })
+            }
           />
         );
       case "certification":
         return (
           <Certification
             data={userData.certification}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, certification: { ...prev.certification, ...patch } }))}
+            errors={certErrors}
+            onToggleNoCertification={(value) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.length
+                  ? prev.certification.entries
+                  : [{ name: "", issueDate: "", organization: "", credentialIdUrl: "" }];
+                return {
+                  ...prev,
+                  certification: { ...prev.certification, noCertification: value, entries: nextEntries },
+                };
+              });
+              if (value) {
+                setCertErrors({});
+                setCertFirstError(null);
+              }
+            }}
+            onEntryChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+              });
+              setCertErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.entries && cleared.entries[index]) {
+                  const updated = { ...(cleared.entries[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  cleared.entries = { ...cleared.entries, [index]: updated };
+                }
+                return cleared;
+              });
+              setCertFirstError((prev) => {
+                if (!prev) return prev;
+                const [, idxStr, field] = prev.split("-");
+                const idxNum = Number(idxStr);
+                if (
+                  idxNum === index &&
+                  (Object.keys(patch) as string[]).includes(field) &&
+                  patch[field as keyof CertificationEntry]
+                ) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onAddEntry={() =>
+              setUserData((prev) => ({
+                ...prev,
+                certification: {
+                  ...prev.certification,
+                  entries: [
+                    ...prev.certification.entries,
+                    { name: "", issueDate: "", organization: "", credentialIdUrl: "" },
+                  ],
+                },
+              }))
+            }
+            onRemoveEntry={(index) => {
+              setUserData((prev) => {
+                const nextEntries = prev.certification.entries.filter((_, idx) => idx !== index);
+                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+              });
+              setCertErrors({});
+              setCertFirstError(null);
+            }}
           />
         );
       case "preference":
@@ -447,7 +810,77 @@ export default function ManualResumeFill() {
         return (
           <OtherDetails
             data={userData.otherDetails}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }))}
+            errors={otherDetailsErrors}
+            onChange={(patch) => {
+              setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }));
+              setOtherDetailsErrors((prev) => {
+                const cleared = { ...prev };
+                (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                  if (patch[key]) {
+                    delete (cleared as Record<string, unknown>)[key as string];
+                  }
+                });
+                return cleared;
+              });
+              setOtherDetailsFirstError((prev) => {
+                if (!prev) return prev;
+                const updatedKeys = Object.keys(patch) as Array<keyof typeof patch>;
+                if (updatedKeys.some((key) => prev === `otherDetails-${String(key)}` && patch[key])) {
+                  return null;
+                }
+                return prev;
+              });
+            }}
+            onLanguageChange={(index, patch) => {
+              setUserData((prev) => {
+                const nextLanguages = prev.otherDetails.languages.map((entry, idx) =>
+                  idx === index ? { ...entry, ...patch } : entry
+                );
+                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+              });
+              setOtherDetailsErrors((prev) => {
+                const cleared = { ...prev };
+                if (cleared.languages && cleared.languages[index]) {
+                  const updated = { ...(cleared.languages[index] as Record<string, string>) };
+                  (Object.keys(patch) as (keyof typeof patch)[]).forEach((key) => {
+                    if (patch[key]) {
+                      delete updated[key as string];
+                    }
+                  });
+                  cleared.languages = { ...cleared.languages, [index]: updated };
+                }
+                return cleared;
+              });
+              setOtherDetailsFirstError((prev) => {
+                if (!prev) return prev;
+                const parts = prev.split("-");
+                if (parts[0] === "otherDetails" && parts[1] === "lang") {
+                  const idxNum = Number(parts[2]);
+                  const field = parts[3] as keyof LanguageEntry;
+                  if (idxNum === index && (Object.keys(patch) as string[]).includes(field) && patch[field]) {
+                    return null;
+                  }
+                }
+                return prev;
+              });
+            }}
+            onAddLanguage={() =>
+              setUserData((prev) => ({
+                ...prev,
+                otherDetails: {
+                  ...prev.otherDetails,
+                  languages: [...prev.otherDetails.languages, { language: "", speaking: "", reading: "", writing: "" }],
+                },
+              }))
+            }
+            onRemoveLanguage={(index) => {
+              setUserData((prev) => {
+                const nextLanguages = prev.otherDetails.languages.filter((_, idx) => idx !== index);
+                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+              });
+              setOtherDetailsErrors({});
+              setOtherDetailsFirstError(null);
+            }}
           />
         );
       case "reviewAgree":
@@ -460,7 +893,18 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [activeStep.key, userData, basicInfoErrors, educationErrors, workExpErrors, skillErrors]);
+  }, [
+    activeStep.key,
+    userData,
+    setUserData,
+    basicInfoErrors,
+    educationErrors,
+    workExpErrors,
+    skillErrors,
+    projectErrors,
+    certErrors,
+    otherDetailsErrors,
+  ]);
 
   useEffect(() => {
     if (basicInfoFirstError && activeStep.key === "basicInfo") {
@@ -502,10 +946,40 @@ export default function ManualResumeFill() {
     }
   }, [skillFirstError, activeStep.key]);
 
+  useEffect(() => {
+    if (projectFirstError && activeStep.key === "projects") {
+      const el = document.getElementById(projectFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [projectFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (certFirstError && activeStep.key === "certification") {
+      const el = document.getElementById(certFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [certFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (otherDetailsFirstError && activeStep.key === "otherDetails") {
+      const el = document.getElementById(otherDetailsFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [otherDetailsFirstError, activeStep.key]);
+
   return (
     <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
       <div className="max-w-7xl w-full flex flex-col gap-6">
-        <Header />
+        <Header percent={profilePercent} />
 
         <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Sidebar steps={stepsState} />
@@ -522,8 +996,10 @@ export default function ManualResumeFill() {
               </div>
             </div>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               {renderForm}
+
+              {finishError ? <p className="text-sm font-medium text-red-600">{finishError}</p> : null}
 
               <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
                 <button
@@ -537,9 +1013,10 @@ export default function ManualResumeFill() {
                 <button
                   type="button"
                   onClick={handleSaveAndNext}
-                  className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+                  className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={finishing || (activeStep.key === "reviewAgree" && !userData.reviewAgree.agree)}
                 >
-                  {activeIndex === stepsState.length - 1 ? "Finish" : "Save & Next"}
+                  {finishing && isLastStep ? "Finishing..." : isLastStep ? "Finish" : "Save & Next"}
                 </button>
               </div>
             </form>
