@@ -1,17 +1,26 @@
 'use client';
 
+import { useId } from "react";
+
 type Props = {
   title: string;
+  id?: string;
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
 };
 
-export default function SimpleText({ title, placeholder, value, onChange }: Props) {
+export default function SimpleText({ title, id, placeholder, value, onChange }: Props) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-slate-700">{title}</label>
+      <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+        {title}
+      </label>
       <textarea
+        id={inputId}
         rows={4}
         value={value}
         onChange={(e) => onChange(e.target.value)}

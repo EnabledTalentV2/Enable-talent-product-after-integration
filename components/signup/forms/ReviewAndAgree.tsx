@@ -18,8 +18,11 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
   return (
     <div className="space-y-6 text-slate-800">
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-800">How did you discover the Enabled Talent platform?</label>
+        <label htmlFor="reviewAgree-discover" className="block text-sm font-semibold text-slate-800">
+          How did you discover the Enabled Talent platform?
+        </label>
         <select
+          id="reviewAgree-discover"
           value={data.discover}
           onChange={(e) => onChange({ discover: e.target.value })}
           className={`${selectClass} pr-10`}
@@ -34,8 +37,11 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-slate-800">Comments</label>
+        <label htmlFor="reviewAgree-comments" className="block text-sm font-semibold text-slate-800">
+          Comments
+        </label>
         <textarea
+          id="reviewAgree-comments"
           rows={3}
           value={data.comments}
           onChange={(e) => onChange({ comments: e.target.value })}

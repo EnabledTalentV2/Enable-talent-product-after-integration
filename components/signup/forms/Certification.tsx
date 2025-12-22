@@ -115,6 +115,7 @@ export default function Certification({
 
                 <div className="space-y-2">
                   <label
+                    htmlFor={`cert-${idx}-credentialIdUrl`}
                     className={`block text-sm font-medium ${
                       credentialError ? "text-red-600" : "text-slate-700"
                     }`}

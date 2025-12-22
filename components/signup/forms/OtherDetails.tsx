@@ -84,7 +84,10 @@ export default function OtherDetails({
           return (
             <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <label className={`block text-sm font-medium ${entryErrors.language ? "text-red-600" : "text-slate-700"}`}>
+                <label
+                  htmlFor={`otherDetails-lang-${idx}-language`}
+                  className={`block text-sm font-medium ${entryErrors.language ? "text-red-600" : "text-slate-700"}`}
+                >
                   Language
                 </label>
                 <select
@@ -104,7 +107,10 @@ export default function OtherDetails({
               </div>
 
               <div className="space-y-2">
-                <label className={`block text-sm font-medium ${entryErrors.speaking ? "text-red-600" : "text-slate-700"}`}>
+                <label
+                  htmlFor={`otherDetails-lang-${idx}-speaking`}
+                  className={`block text-sm font-medium ${entryErrors.speaking ? "text-red-600" : "text-slate-700"}`}
+                >
                   Speaking
                 </label>
                 <select
@@ -124,7 +130,10 @@ export default function OtherDetails({
               </div>
 
               <div className="space-y-2">
-                <label className={`block text-sm font-medium ${entryErrors.reading ? "text-red-600" : "text-slate-700"}`}>
+                <label
+                  htmlFor={`otherDetails-lang-${idx}-reading`}
+                  className={`block text-sm font-medium ${entryErrors.reading ? "text-red-600" : "text-slate-700"}`}
+                >
                   Reading
                 </label>
                 <select
@@ -145,7 +154,10 @@ export default function OtherDetails({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className={`block text-sm font-medium ${entryErrors.writing ? "text-red-600" : "text-slate-700"}`}>
+                  <label
+                    htmlFor={`otherDetails-lang-${idx}-writing`}
+                    className={`block text-sm font-medium ${entryErrors.writing ? "text-red-600" : "text-slate-700"}`}
+                  >
                     Writing
                   </label>
                   {onRemoveLanguage && data.languages.length > 1 ? (
@@ -189,7 +201,7 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.careerStage ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-careerStage" className={`block text-sm font-medium ${errors?.careerStage ? "text-red-600" : "text-slate-700"}`}>
           How would you identify your career stage (choose best option)
         </label>
         <select
@@ -209,7 +221,7 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-availability" className={`block text-sm font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
           {availabilityError ||
             "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
         </label>
@@ -234,7 +246,7 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.desiredSalary ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="otherDetails-desiredSalary" className={`block text-sm font-medium ${errors?.desiredSalary ? "text-red-600" : "text-slate-700"}`}>
           Desired salary (CAD)
         </label>
         <select

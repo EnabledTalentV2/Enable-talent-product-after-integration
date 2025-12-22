@@ -38,7 +38,7 @@ export default function Skills({ data, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-700">
+        <label htmlFor="skills-input" className="block text-sm font-medium text-slate-700">
           Skills
         </label>
         <p className="text-xs text-slate-500">

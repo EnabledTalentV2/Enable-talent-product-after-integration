@@ -24,7 +24,7 @@ export default function Education({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor="education-courseName" className={`block text-sm font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
           {errors?.courseName || "Course Name"}
         </label>
         <div
@@ -66,9 +66,12 @@ export default function Education({ data, onChange, errors }: Props) {
       />
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-slate-700">Graduation Date</label>
+        <label htmlFor="education-graduationDate" className="block text-sm font-medium text-slate-700">
+          Graduation Date
+        </label>
         <div className="relative">
           <input
+            id="education-graduationDate"
             type="date"
             value={data.graduationDate}
             onChange={(e) => onChange({ graduationDate: e.target.value })}

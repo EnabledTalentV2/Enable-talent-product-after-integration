@@ -99,7 +99,12 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}>From</label>
+                <label
+                  htmlFor={`project-${idx}-from`}
+                  className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
+                >
+                  From
+                </label>
                 <input
                   id={`project-${idx}-from`}
                   type="date"
@@ -114,7 +119,12 @@ export default function Projects({ data, errors, onEntryChange, onAddEntry, onRe
                 {entryErrors.from ? <p className="text-xs text-red-600">{entryErrors.from}</p> : null}
               </div>
               <div className="space-y-1.5">
-                <label className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}>To</label>
+                <label
+                  htmlFor={`project-${idx}-to`}
+                  className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
+                >
+                  To
+                </label>
                 <input
                   id={`project-${idx}-to`}
                   type="date"

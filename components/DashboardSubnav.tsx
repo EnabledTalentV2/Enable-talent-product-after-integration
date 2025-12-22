@@ -69,6 +69,7 @@ export default function DashboardSubnav() {
             <input
               type="text"
               placeholder="Search by skills, company or job"
+              aria-label="Search by skills, company or job"
               className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-sm text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
             <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />

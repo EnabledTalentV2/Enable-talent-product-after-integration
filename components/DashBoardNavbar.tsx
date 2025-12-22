@@ -55,7 +55,7 @@ export default function DashBoardNavbar() {
             <LogOut size={18} />
             <span>Log Out</span>
           </button>
-          <button className="relative text-slate-600 transition-colors hover:text-slate-900">
+          <button className="relative text-slate-600 transition-colors hover:text-slate-900" aria-label="Notifications">
             <Bell size={20} />
             <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
           </button>

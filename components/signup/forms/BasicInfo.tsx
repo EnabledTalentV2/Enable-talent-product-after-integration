@@ -104,7 +104,12 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       />
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}>Citizenship status</label>
+        <label
+          htmlFor="basicInfo-citizenshipStatus"
+          className={`block text-sm font-medium ${errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"}`}
+        >
+          Citizenship status
+        </label>
         <select
           id="basicInfo-citizenshipStatus"
           className={selectClass(Boolean(errors?.citizenshipStatus))}
@@ -130,7 +135,9 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>Gender</label>
+        <label htmlFor="basicInfo-gender" className={`block text-sm font-medium ${errors?.gender ? "text-red-600" : "text-slate-700"}`}>
+          Gender
+        </label>
         <select
           id="basicInfo-gender"
           className={selectClass(Boolean(errors?.gender))}
@@ -155,7 +162,9 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       </div>
 
       <div className="space-y-2">
-        <label className={`block text-sm font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>Ethnicity</label>
+        <label htmlFor="basicInfo-ethnicity" className={`block text-sm font-medium ${errors?.ethnicity ? "text-red-600" : "text-slate-700"}`}>
+          Ethnicity
+        </label>
         <select
           id="basicInfo-ethnicity"
           className={selectClass(Boolean(errors?.ethnicity))}

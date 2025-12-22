@@ -102,7 +102,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <label className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}>From</label>
+                  <label
+                    htmlFor={`workExp-${idx}-from`}
+                    className={`block text-sm font-medium ${entryErrors.from ? "text-red-600" : "text-slate-700"}`}
+                  >
+                    From
+                  </label>
                   <input
                     id={`workExp-${idx}-from`}
                     type="date"
@@ -118,7 +123,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
                   {entryErrors.from ? <p className="text-xs text-red-600">{entryErrors.from}</p> : null}
                 </div>
                 <div className="space-y-1.5">
-                  <label className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}>To</label>
+                  <label
+                    htmlFor={`workExp-${idx}-to`}
+                    className={`block text-sm font-medium ${entryErrors.to ? "text-red-600" : "text-slate-700"}`}
+                  >
+                    To
+                  </label>
                   <input
                     id={`workExp-${idx}-to`}
                     type="date"
@@ -148,7 +158,12 @@ export default function WorkExperience({ data, errors, onExperienceTypeChange, o
               </label>
 
               <div className="space-y-1.5">
-                <label className={`block text-sm font-medium ${entryErrors.description ? "text-red-600" : "text-slate-700"}`}>Description</label>
+                <label
+                  htmlFor={`workExp-${idx}-description`}
+                  className={`block text-sm font-medium ${entryErrors.description ? "text-red-600" : "text-slate-700"}`}
+                >
+                  Description
+                </label>
                 <textarea
                   id={`workExp-${idx}-description`}
                   rows={6}

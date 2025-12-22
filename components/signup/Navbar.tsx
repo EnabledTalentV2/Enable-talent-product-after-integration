@@ -26,7 +26,7 @@ export default function Navbar() {
               <LogOut size={18} />
               <span>Log Out</span>
             </button>
-            <button className="relative text-slate-500 transition-colors hover:text-slate-800">
+            <button className="relative text-slate-500 transition-colors hover:text-slate-800" aria-label="Notifications">
               <Bell size={20} />
               <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
             </button>
