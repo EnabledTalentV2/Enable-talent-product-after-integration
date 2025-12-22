@@ -79,9 +79,21 @@ const engagementSeries = {
 const timeRanges = ["1W", "1M", "3M", "1Y"] as const;
 
 const attentionItems: AttentionItem[] = [
-  { id: "profile-completeness", tone: "warning", text: "Profile completeness at 68%" },
-  { id: "recent-invites", tone: "danger", text: "No responses to 2 recent invites" },
-  { id: "skill-gap", tone: "neutral", text: 'Skill gap for "Senior UX" role at Google' },
+  {
+    id: "profile-completeness",
+    tone: "warning",
+    text: "Profile completeness at 68%",
+  },
+  {
+    id: "recent-invites",
+    tone: "danger",
+    text: "No responses to 2 recent invites",
+  },
+  {
+    id: "skill-gap",
+    tone: "neutral",
+    text: 'Skill gap for "Senior UX" role at Google',
+  },
 ];
 
 const recentMatches: RecentMatch[] = [
@@ -119,7 +131,8 @@ const notifications: Notification[] = [
   {
     id: "meta-invite",
     company: "Meta",
-    message: "Recruiter from Meta sent an invitation request for a matching job",
+    message:
+      "Recruiter from Meta sent an invitation request for a matching job",
     time: "3 minutes ago",
     type: "request",
     unread: true,
@@ -127,7 +140,8 @@ const notifications: Notification[] = [
   {
     id: "amazon-invite",
     company: "Amazon",
-    message: "Recruiter from Amazon sent an invitation request for a matching job",
+    message:
+      "Recruiter from Amazon sent an invitation request for a matching job",
     time: "5 minutes ago",
     type: "request",
     unread: true,
@@ -161,7 +175,8 @@ const getBrandKey = (company: string) => company.split(" ")[0] || company;
 const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
-const getCompanyInitial = (company: string) => getBrandKey(company).slice(0, 1).toUpperCase();
+const getCompanyInitial = (company: string) =>
+  getBrandKey(company).slice(0, 1).toUpperCase();
 
 const formatDelta = (value: number) => ({
   label: `${value >= 0 ? "+" : "-"}${Math.abs(value)}% vs last month`,
@@ -169,85 +184,39 @@ const formatDelta = (value: number) => ({
 });
 
 export default function DashboardPage() {
-  const router = useRouter();
   const userData = useUserDataStore((s) => s.userData);
-  const setUserData = useUserDataStore((s) => s.setUserData);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeMetric, setActiveMetric] = useState<keyof typeof engagementSeries>("views");
-  const [activeRange, setActiveRange] = useState<(typeof timeRanges)[number]>("1Y");
+  const [activeMetric, setActiveMetric] =
+    useState<keyof typeof engagementSeries>("views");
+  const [activeRange, setActiveRange] =
+    useState<(typeof timeRanges)[number]>("1Y");
 
-  useEffect(() => {
-    let active = true;
-
-    const loadUser = async () => {
-      try {
-        const useLocalAuth = hasStoredUsers();
-        const localUser = getCurrentUser();
-
-        if (useLocalAuth) {
-          if (!localUser?.userData) {
-            router.replace("/login");
-            return;
-          }
-
-          if (active) {
-            setUserData(() => localUser.userData);
-            setError(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const response = await fetch("/api/user/me", { credentials: "include" });
-
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error("Failed to load user data.");
-        }
-
-        const data = await response.json();
-        if (active) {
-          setUserData(() => data);
-          setError(null);
-        }
-      } catch (err) {
-        if (active) {
-          setError("Unable to load your dashboard right now.");
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      active = false;
-    };
-  }, [router, setUserData]);
-
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
   const profileMatchStrength = Math.round(profilePercent) || 87;
+
+  // Filter points based on activeRange
+  const filteredPoints = useMemo(() => {
+    const allPoints = engagementSeries[activeMetric].points;
+    switch (activeRange) {
+      case "1W":
+        return allPoints.slice(-1); // Show last month as proxy for 1W
+      case "1M":
+        return allPoints.slice(-1);
+      case "3M":
+        return allPoints.slice(-3);
+      case "1Y":
+      default:
+        return [...allPoints];
+    }
+  }, [activeMetric, activeRange]);
+
   const metricLabel = engagementSeries[activeMetric].label;
   const metricLabelLower = metricLabel.toLowerCase();
   const unreadCount = notifications.filter((notice) => notice.unread).length;
   const recruiterViewsDelta = formatDelta(-5);
   const jobInvitesDelta = formatDelta(20);
-
-  if (loading) {
-    return <div className="py-10 text-sm text-slate-600">Loading your dashboard...</div>;
-  }
-
-  if (error) {
-    return <div className="py-10 text-sm font-medium text-red-600">{error}</div>;
-  }
 
   return (
     <section className="mx-auto max-w-360 space-y-8 py-10">
@@ -257,7 +226,9 @@ export default function DashboardPage() {
         <div className="rounded-[28px] bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Recruiter Engagement Trend</h2>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Recruiter Engagement Trend
+              </h2>
               <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-500">
                 {Object.entries(engagementSeries).map(([key, value]) => {
                   const isActive = activeMetric === key;
@@ -265,9 +236,13 @@ export default function DashboardPage() {
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setActiveMetric(key as keyof typeof engagementSeries)}
+                      onClick={() =>
+                        setActiveMetric(key as keyof typeof engagementSeries)
+                      }
                       className={`rounded-full px-3 py-1 transition ${
-                        isActive ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+                        isActive
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-500"
                       }`}
                     >
                       {value.label}
@@ -285,7 +260,9 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => setActiveRange(range)}
                     className={`rounded-full px-3 py-1 transition ${
-                      isActive ? "bg-[#C27803] text-white shadow-sm" : "bg-slate-100 text-slate-500"
+                      isActive
+                        ? "bg-[#C27803] text-white shadow-sm"
+                        : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     {range}
@@ -297,7 +274,7 @@ export default function DashboardPage() {
 
           <div className="mt-6 h-64">
             <EngagementTrendChart
-              points={[...engagementSeries[activeMetric].points]}
+              points={filteredPoints}
               metricLabel={metricLabelLower}
             />
           </div>
@@ -324,7 +301,9 @@ export default function DashboardPage() {
               Low (&lt;60%) of expected
             </span>
           </div>
-          <p className="mt-3 text-xs text-slate-400">Expected based on role &amp; market</p>
+          <p className="mt-3 text-xs text-slate-400">
+            Expected based on role &amp; market
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -333,21 +312,29 @@ export default function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Profile Match Strength
               </p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">{profileMatchStrength}%</p>
-              <p className="mt-1 text-xs text-slate-500">Across 12 active job matches</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">
+                {profileMatchStrength}%
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Across 12 active job matches
+              </p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
                 <p className="text-xs text-slate-500">Recruiter views</p>
                 <p className="mt-1 text-xl font-semibold text-slate-900">18</p>
-                <p className={`text-xs font-semibold ${recruiterViewsDelta.className}`}>
+                <p
+                  className={`text-xs font-semibold ${recruiterViewsDelta.className}`}
+                >
                   {recruiterViewsDelta.label}
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 px-4 py-3">
                 <p className="text-xs text-slate-500">Job invitations</p>
                 <p className="mt-1 text-xl font-semibold text-slate-900">4</p>
-                <p className={`text-xs font-semibold ${jobInvitesDelta.className}`}>
+                <p
+                  className={`text-xs font-semibold ${jobInvitesDelta.className}`}
+                >
                   {jobInvitesDelta.label}
                 </p>
               </div>
@@ -356,13 +343,21 @@ export default function DashboardPage() {
 
           <div className="rounded-[28px] bg-white p-6 shadow-sm">
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-900">Attention Needed</h3>
-              <p className="text-xs text-slate-500">3 issues require action this week</p>
+              <h3 className="text-base font-semibold text-slate-900">
+                Attention Needed
+              </h3>
+              <p className="text-xs text-slate-500">
+                3 issues require action this week
+              </p>
             </div>
             <ul className="mt-4 space-y-3 text-sm text-slate-700">
               {attentionItems.map((item) => (
                 <li key={item.id} className="flex items-center gap-3">
-                  <span className={`h-2 w-2 rounded-full ${attentionToneStyles[item.tone]}`} />
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      attentionToneStyles[item.tone]
+                    }`}
+                  />
                   <span>{item.text}</span>
                 </li>
               ))}
@@ -380,11 +375,16 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Matches</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Recent Matches
+            </h2>
           </div>
           <div className="space-y-4">
             {recentMatches.map((match) => (
-              <div key={match.id} className="rounded-[28px] bg-white p-5 shadow-sm">
+              <div
+                key={match.id}
+                className="rounded-[28px] bg-white p-5 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div
@@ -395,7 +395,9 @@ export default function DashboardPage() {
                       {getCompanyInitial(match.company)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{match.role}</p>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {match.role}
+                      </p>
                       <p className="text-xs text-slate-500">{match.company}</p>
                     </div>
                   </div>
@@ -404,19 +406,32 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{match.type}</span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{match.experience}</span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">
+                    {match.type}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-3 py-1">
+                    {match.experience}
+                  </span>
                 </div>
                 <p className="mt-3 text-xs text-slate-500">{match.location}</p>
                 <div className="mt-4 flex items-center gap-6 text-xs text-slate-500">
                   <span>
-                    Accepted: <span className="font-semibold text-slate-700">{match.stats.accepted}</span>
+                    Accepted:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {match.stats.accepted}
+                    </span>
                   </span>
                   <span>
-                    Declined: <span className="font-semibold text-slate-700">{match.stats.declined}</span>
+                    Declined:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {match.stats.declined}
+                    </span>
                   </span>
                   <span>
-                    Matching: <span className="font-semibold text-slate-700">{match.stats.matching}</span>
+                    Matching:{" "}
+                    <span className="font-semibold text-slate-700">
+                      {match.stats.matching}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -426,12 +441,19 @@ export default function DashboardPage() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold text-slate-900">Notifications</h2>
-            <span className="text-sm text-slate-500">({unreadCount} Unread)</span>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Notifications
+            </h2>
+            <span className="text-sm text-slate-500">
+              ({unreadCount} Unread)
+            </span>
           </div>
           <div className="space-y-4">
             {notifications.map((notice) => (
-              <div key={notice.id} className="rounded-[28px] bg-white p-5 shadow-sm">
+              <div
+                key={notice.id}
+                className="rounded-[28px] bg-white p-5 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div
@@ -442,11 +464,15 @@ export default function DashboardPage() {
                       {getCompanyInitial(notice.company)}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-slate-900">{notice.message}</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        {notice.message}
+                      </p>
                       <p className="text-xs text-slate-400">{notice.time}</p>
                     </div>
                   </div>
-                  {notice.unread ? <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" /> : null}
+                  {notice.unread ? (
+                    <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                  ) : null}
                 </div>
 
                 {notice.type === "request" ? (

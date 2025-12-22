@@ -13,7 +13,10 @@ export default function DashBoardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } finally {
       clearCurrentUser();
       resetUserData();
@@ -36,14 +39,13 @@ export default function DashBoardNavbar() {
         </div>
 
         <div className="flex items-center gap-7">
-          <Link href="/dashboard/profile-update" className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex">
+          <Link
+            href="/dashboard/profile-update"
+            className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
+          >
             <User size={18} />
             <span>Profile</span>
-          </Link >
-          <button className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex">
-            <User size={18} />
-            <span>Profile</span>
-          </button>
+          </Link>
 
           <button
             type="button"
@@ -66,4 +68,3 @@ export default function DashBoardNavbar() {
     </nav>
   );
 }
-        
