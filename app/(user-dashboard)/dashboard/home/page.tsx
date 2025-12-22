@@ -157,9 +157,8 @@ export default function HomePageDashboard() {
     toTrimmed(userData.workExperience.entries[0]?.role) ||
     userData.skills.primaryList?.[0] ||
     "Job seeker";
-  const profileImage = isLikelyImageSource(userData.basicInfo.profilePhoto)
-    ? userData.basicInfo.profilePhoto
-    : placeholder;
+  const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
+  const profileImage = isLikelyImageSource(profilePhoto) ? profilePhoto : placeholder;
   const unreadCount = notifications.filter((notice) => notice.unread).length;
   const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
 
@@ -319,7 +318,7 @@ export default function HomePageDashboard() {
       {
         id: "achievements",
         label: "Achievements",
-        count: userData.achievements.entries.length,
+        count: achievementItems.length,
         items: achievementItems,
       },
       {
