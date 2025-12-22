@@ -40,7 +40,7 @@ export default function DashBoardNavbar() {
 
         <div className="flex items-center gap-7">
           <Link
-            href="/dashboard/profile-update"
+            href="/dashboard/profile"
             className="hidden items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
           >
             <User size={18} />

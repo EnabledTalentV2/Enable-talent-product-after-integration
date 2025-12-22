@@ -1,12 +1,20 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, Building2, Home, LayoutDashboard, Search, User } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Building2,
+  Home,
+  LayoutDashboard,
+  Search,
+  User,
+} from "lucide-react";
 
 export default function DashboardSubnav() {
   const pathname = usePathname();
-  const linkClass = "flex items-center gap-2 rounded-full px-3 py-2 text-base font-medium transition-colors";
+  const linkClass =
+    "flex items-center gap-2 rounded-full px-3 py-2 text-base font-medium transition-colors";
   const inactiveClass = "text-slate-700 hover:bg-slate-300 hover:text-black";
   const activeClass = "bg-white text-slate-900 shadow-sm";
   const navItems = [
@@ -35,10 +43,10 @@ export default function DashboardSubnav() {
       isActive: (path: string) => path.startsWith("/dashboard/companies"),
     },
     {
-      href: "/dashboard/profile-update",
+      href: "/dashboard/profile",
       label: "Profile",
       icon: User,
-      isActive: (path: string) => path.startsWith("/dashboard/profile-update"),
+      isActive: (path: string) => path === "/dashboard/profile",
     },
   ];
 
@@ -55,7 +63,9 @@ export default function DashboardSubnav() {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`${linkClass} ${isActive ? activeClass : inactiveClass}`}
+                className={`${linkClass} ${
+                  isActive ? activeClass : inactiveClass
+                }`}
               >
                 <Icon size={16} />
                 <span>{item.label}</span>
@@ -79,4 +89,3 @@ export default function DashboardSubnav() {
     </div>
   );
 }
-

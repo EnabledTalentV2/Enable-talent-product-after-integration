@@ -30,7 +30,7 @@ export default function DashboardProfilePrompt({
             Standout from 1000s of candidates
           </h2>
           <Link
-            href="/dashboard/profile-update"
+            href="/dashboard/profile-edit"
             className="mt-4 inline-flex items-center rounded-lg bg-white px-4 py-2 text-base font-semibold text-[#9A3412] shadow-sm transition hover:bg-white/90"
           >
             Update Profile
