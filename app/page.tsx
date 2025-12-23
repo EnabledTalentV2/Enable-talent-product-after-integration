@@ -30,7 +30,7 @@ export default function Home() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Link
-            href="/login"
+            href="/login-talent"
             className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:opacity-90 active:scale-95"
           >
             For Talent

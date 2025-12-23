@@ -4,7 +4,12 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { clearCurrentUser, getUserByEmail, setCurrentUser } from "@/lib/localUserStore";
+import {
+  clearCurrentUser,
+  getUserByEmail,
+  setCurrentUser,
+} from "@/lib/localUserStore";
+import { Eye, EyeOff } from "lucide-react";
 
 const inputClasses =
   "w-full rounded-lg border border-gray-200 px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50";
@@ -14,6 +19,7 @@ export default function LoginPage() {
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +74,9 @@ export default function LoginPage() {
         <article className="relative flex min-h-[520px] w-full max-w-4xl flex-col overflow-hidden rounded-3xl shadow-2xl md:flex-row">
           <aside className="relative flex w-full flex-col justify-center bg-white/20 p-8 backdrop-blur-md md:w-5/12 md:p-12">
             <div className="relative z-10 space-y-3">
-              <h2 className="text-3xl font-semibold text-gray-900">Welcome back</h2>
+              <h2 className="text-3xl font-semibold text-gray-900">
+                Welcome back
+              </h2>
               <p className="text-base font-medium leading-relaxed text-gray-800">
                 Log in to continue your EnabledTalent journey.
               </p>
@@ -82,11 +90,16 @@ export default function LoginPage() {
           <div className="flex w-full justify-center bg-white p-8 md:w-7/12 md:p-12">
             <div className="w-full max-w-md">
               <h1 className="text-2xl font-bold text-gray-900">Login</h1>
-              <p className="mb-8 text-base text-gray-500">Sign in with your email and password.</p>
+              <p className="mb-8 text-base text-gray-500">
+                Sign in with your email and password.
+              </p>
 
               <form className="space-y-5" noValidate onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="email">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="email"
+                  >
                     Email
                   </label>
                   <input
@@ -103,23 +116,53 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="password">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="password"
+                  >
                     Password
                   </label>
-                  <input
-                    className={inputClasses}
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      className={inputClasses}
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
 
-                {error ? <p className="text-base font-medium text-red-600">{error}</p> : null}
+                <div className="flex items-center justify-between text-sm">
+                  <label className="flex items-center text-gray-600">
+                    <input
+                      type="checkbox"
+                      className="mr-2 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    Remember me
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="font-medium text-[#B45309] hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {error ? (
+                  <p className="text-base font-medium text-red-600">{error}</p>
+                ) : null}
 
                 <button
                   type="submit"
@@ -132,7 +175,10 @@ export default function LoginPage() {
 
               <p className="mt-6 text-center text-base text-gray-600">
                 New here?{" "}
-                <Link className="font-semibold text-[#B45309] hover:underline" href="/signup">
+                <Link
+                  className="font-semibold text-[#B45309] hover:underline"
+                  href="/signup"
+                >
                   Create an account
                 </Link>
               </p>
@@ -143,4 +189,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
