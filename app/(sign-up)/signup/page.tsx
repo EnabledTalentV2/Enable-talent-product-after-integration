@@ -1,13 +1,24 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type RefObject } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { setPendingSignup } from "@/lib/localUserStore";
 
-const inputClasses =
-  "w-full rounded-lg border border-gray-200 px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50";
+const inputClasses = (hasError?: boolean) =>
+  `w-full rounded-lg border px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+    hasError
+      ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+      : "border-gray-200 focus:border-amber-500 focus:ring-amber-500/50"
+  }`;
+
+type FieldErrors = Partial<{
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}>;
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -16,22 +27,58 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const fullNameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
+
+  const clearFieldError = (field: keyof FieldErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
+    setFieldErrors({});
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
 
-    if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
-      setError("Please fill in all required fields.");
-      return;
+    const nextErrors: FieldErrors = {};
+    if (!trimmedName) {
+      nextErrors.fullName = "Full name is required.";
+    }
+    if (!trimmedEmail) {
+      nextErrors.email = "Email is required.";
+    }
+    if (!password) {
+      nextErrors.password = "Password is required.";
+    }
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "Please confirm your password.";
+    } else if (password && password !== confirmPassword) {
+      nextErrors.confirmPassword = "Passwords do not match.";
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      const fieldOrder: Array<[keyof FieldErrors, RefObject<HTMLInputElement | null>]> = [
+        ["fullName", fullNameRef],
+        ["email", emailRef],
+        ["password", passwordRef],
+        ["confirmPassword", confirmPasswordRef],
+      ];
+      const firstInvalid = fieldOrder.find(([key]) => nextErrors[key]);
+      const target = firstInvalid?.[1]?.current;
+      if (target) {
+        target.focus();
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -49,7 +96,7 @@ export default function SignUpPage() {
     }));
 
     setPendingSignup({ email: trimmedEmail, password });
-    router.push("/signup/manual-resume-fill");
+    router.push("/signup/resume-upload");
   };
 
   return (
@@ -90,16 +137,27 @@ export default function SignUpPage() {
                     Full name
                   </label>
                   <input
-                    className={inputClasses}
+                    className={inputClasses(Boolean(fieldErrors.fullName))}
                     id="fullname"
                     name="fullname"
                     type="text"
                     autoComplete="name"
                     placeholder="Enter full name"
                     value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
+                    ref={fullNameRef}
+                    aria-invalid={Boolean(fieldErrors.fullName)}
+                    aria-describedby={fieldErrors.fullName ? "fullname-error" : undefined}
+                    onChange={(event) => {
+                      setFullName(event.target.value);
+                      clearFieldError("fullName");
+                    }}
                     required
                   />
+                  {fieldErrors.fullName ? (
+                    <p id="fullname-error" className="text-sm text-red-600">
+                      {fieldErrors.fullName}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5">
@@ -107,16 +165,27 @@ export default function SignUpPage() {
                     Email
                   </label>
                   <input
-                    className={inputClasses}
+                    className={inputClasses(Boolean(fieldErrors.email))}
                     id="email"
                     name="email"
                     type="email"
                     autoComplete="email"
                     placeholder="Enter email address"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    ref={emailRef}
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      clearFieldError("email");
+                    }}
                     required
                   />
+                  {fieldErrors.email ? (
+                    <p id="email-error" className="text-sm text-red-600">
+                      {fieldErrors.email}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5">
@@ -124,16 +193,27 @@ export default function SignUpPage() {
                     Password
                   </label>
                   <input
-                    className={inputClasses}
+                    className={inputClasses(Boolean(fieldErrors.password))}
                     id="password"
                     name="password"
                     type="password"
                     autoComplete="new-password"
                     placeholder="Create a password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    ref={passwordRef}
+                    aria-invalid={Boolean(fieldErrors.password)}
+                    aria-describedby={fieldErrors.password ? "password-error" : undefined}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      clearFieldError("password");
+                    }}
                     required
                   />
+                  {fieldErrors.password ? (
+                    <p id="password-error" className="text-sm text-red-600">
+                      {fieldErrors.password}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5">
@@ -141,19 +221,28 @@ export default function SignUpPage() {
                     Confirm password
                   </label>
                   <input
-                    className={inputClasses}
+                    className={inputClasses(Boolean(fieldErrors.confirmPassword))}
                     id="confirmPassword"
                     name="confirmPassword"
                     type="password"
                     autoComplete="new-password"
                     placeholder="Re-enter password"
                     value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    ref={confirmPasswordRef}
+                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                    aria-describedby={fieldErrors.confirmPassword ? "confirmPassword-error" : undefined}
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value);
+                      clearFieldError("confirmPassword");
+                    }}
                     required
                   />
+                  {fieldErrors.confirmPassword ? (
+                    <p id="confirmPassword-error" className="text-sm text-red-600">
+                      {fieldErrors.confirmPassword}
+                    </p>
+                  ) : null}
                 </div>
-
-                {error ? <p className="text-base font-medium text-red-600">{error}</p> : null}
 
                 <button
                   type="submit"
@@ -177,4 +266,3 @@ export default function SignUpPage() {
     </main>
   );
 }
-

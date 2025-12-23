@@ -11,5 +11,5 @@ export function proxy(request: Request) {
 }
 
 export const config = {
-    matcher: ["/signup/resume-upload/:path*", "/dashboard/:path*"],
+    matcher: ["/signup/:path+", "/dashboard/:path*", "/employer/:path+"],
 };
