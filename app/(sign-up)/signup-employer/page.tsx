@@ -6,6 +6,7 @@ import { useState, useRef, type FormEvent, type RefObject } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
+import { setPendingSignup } from "@/lib/localUserStore";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full px-4 py-3 rounded-lg border outline-none transition-colors text-gray-700 placeholder-gray-400 ${
@@ -96,10 +97,21 @@ export default function SignupEmployerPage() {
       return;
     }
 
-    // Proceed with signup logic (e.g., API call or redirect)
-    console.log("Signup data:", { fullName, employerName, email, password });
-    // For now, redirect to login or dashboard
-    router.push("/login-employer");
+    // Proceed with signup logic
+    setPendingSignup({ email: trimmedEmail, password });
+
+    // Simulate API call to set HTTP-only cookie
+    fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        basicInfo: { firstName: trimmedName, email: trimmedEmail },
+        employerName: trimmedEmployerName,
+        role: "employer",
+      }),
+    }).then(() => {
+      router.push("/signup-employer/email-verification");
+    });
   };
 
   return (
