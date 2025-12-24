@@ -21,7 +21,7 @@ export default function DashboardLayoutPage({
       const localUser = getCurrentUser();
 
       if (!localUser?.userData) {
-        router.replace("/login");
+        router.replace("/login-talent");
         return;
       }
 

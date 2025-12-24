@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
+import AttentionWidget from "@/components/dashboard/AttentionWidget";
+import DashboardSummaryCard from "@/components/dashboard/DashboardSummaryCard";
+import TimeRangeTabs from "@/components/dashboard/TimeRangeTabs";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { getCurrentUser, hasStoredUsers } from "@/lib/localUserStore";
 
 type Notification = {
   id: string;
@@ -164,12 +165,6 @@ const brandStyles: Record<string, string> = {
   Amazon: "bg-orange-100 text-orange-700",
 };
 
-const attentionToneStyles: Record<AttentionItem["tone"], string> = {
-  warning: "bg-amber-400",
-  danger: "bg-red-500",
-  neutral: "bg-slate-300",
-};
-
 const getBrandKey = (company: string) => company.split(" ")[0] || company;
 
 const getBrandStyle = (company: string) =>
@@ -217,6 +212,10 @@ export default function DashboardPage() {
   const unreadCount = notifications.filter((notice) => notice.unread).length;
   const recruiterViewsDelta = formatDelta(-5);
   const jobInvitesDelta = formatDelta(20);
+  const summaryMetrics = [
+    { label: "Recruiter views", value: "18", delta: recruiterViewsDelta },
+    { label: "Job invitations", value: "4", delta: jobInvitesDelta },
+  ];
 
   return (
     <section className="mx-auto max-w-360 space-y-8 py-10">
@@ -251,25 +250,11 @@ export default function DashboardPage() {
                 })}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
-              {timeRanges.map((range) => {
-                const isActive = activeRange === range;
-                return (
-                  <button
-                    key={range}
-                    type="button"
-                    onClick={() => setActiveRange(range)}
-                    className={`rounded-full px-3 py-1 transition ${
-                      isActive
-                        ? "bg-[#C27803] text-white shadow-sm"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {range}
-                  </button>
-                );
-              })}
-            </div>
+            <TimeRangeTabs
+              ranges={timeRanges}
+              activeRange={activeRange}
+              onChange={setActiveRange}
+            />
           </div>
 
           <div className="mt-6 h-64">
@@ -307,68 +292,14 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-[28px] bg-white p-6 shadow-sm">
-            <div className="rounded-2xl bg-[#FFF4DB] px-4 py-5 text-center">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Profile Match Strength
-              </p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">
-                {profileMatchStrength}%
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Across 12 active job matches
-              </p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-sm text-slate-500">Recruiter views</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">18</p>
-                <p
-                  className={`text-sm font-semibold ${recruiterViewsDelta.className}`}
-                >
-                  {recruiterViewsDelta.label}
-                </p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                <p className="text-sm text-slate-500">Job invitations</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">4</p>
-                <p
-                  className={`text-sm font-semibold ${jobInvitesDelta.className}`}
-                >
-                  {jobInvitesDelta.label}
-                </p>
-              </div>
-            </div>
-          </div>
+          <DashboardSummaryCard
+            title="Profile Match Strength"
+            value={`${profileMatchStrength}%`}
+            subtitle="Across 12 active job matches"
+            metrics={summaryMetrics}
+          />
 
-          <div className="rounded-[28px] bg-white p-6 shadow-sm">
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-900">
-                Attention Needed
-              </h3>
-              <p className="text-sm text-slate-500">
-                3 issues require action this week
-              </p>
-            </div>
-            <ul className="mt-4 space-y-3 text-base text-slate-700">
-              {attentionItems.map((item) => (
-                <li key={item.id} className="flex items-center gap-3">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      attentionToneStyles[item.tone]
-                    }`}
-                  />
-                  <span>{item.text}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-            >
-              Review all alerts -&gt;
-            </button>
-          </div>
+          <AttentionWidget items={attentionItems} />
         </div>
       </div>
 

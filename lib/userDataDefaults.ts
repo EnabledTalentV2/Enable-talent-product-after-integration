@@ -46,7 +46,7 @@ export const initialUserData: UserData = {
     jobSearch: [],
   },
   otherDetails: {
-    languages: [],
+    languages: [{ language: "", speaking: "", reading: "", writing: "" }],
     careerStage: "",
     availability: "",
     desiredSalary: "",

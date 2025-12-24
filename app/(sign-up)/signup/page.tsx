@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { setPendingSignup } from "@/lib/localUserStore";
+import { Eye, EyeOff } from "lucide-react";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full rounded-lg border px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -27,6 +28,8 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
@@ -67,7 +70,9 @@ export default function SignUpPage() {
 
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
-      const fieldOrder: Array<[keyof FieldErrors, RefObject<HTMLInputElement | null>]> = [
+      const fieldOrder: Array<
+        [keyof FieldErrors, RefObject<HTMLInputElement | null>]
+      > = [
         ["fullName", fullNameRef],
         ["email", emailRef],
         ["password", passwordRef],
@@ -115,7 +120,9 @@ export default function SignUpPage() {
         <article className="relative flex min-h-[550px] w-full max-w-4xl flex-col overflow-hidden rounded-3xl shadow-2xl md:flex-row">
           <aside className="relative flex w-full flex-col justify-center bg-white/20 p-8 backdrop-blur-md md:w-5/12 md:p-12">
             <div className="relative z-10 space-y-3">
-              <h2 className="text-3xl font-semibold text-gray-900">Seeking for a job?</h2>
+              <h2 className="text-3xl font-semibold text-gray-900">
+                Seeking for a job?
+              </h2>
               <p className="text-base font-medium leading-relaxed text-gray-800">
                 Get your dream job by signing up to EnabledTalent.
               </p>
@@ -129,11 +136,16 @@ export default function SignUpPage() {
           <div className="flex w-full justify-center bg-white p-8 md:w-7/12 md:p-12">
             <div className="w-full max-w-md">
               <h1 className="text-2xl font-bold text-gray-900">Sign Up</h1>
-              <p className="mb-8 text-base text-gray-500">Create an account to start using EnabledTalent.</p>
+              <p className="mb-8 text-base text-gray-500">
+                Create an account to start using EnabledTalent.
+              </p>
 
               <form className="space-y-5" noValidate onSubmit={handleSubmit}>
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="fullname">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="fullname"
+                  >
                     Full name
                   </label>
                   <input
@@ -146,7 +158,9 @@ export default function SignUpPage() {
                     value={fullName}
                     ref={fullNameRef}
                     aria-invalid={Boolean(fieldErrors.fullName)}
-                    aria-describedby={fieldErrors.fullName ? "fullname-error" : undefined}
+                    aria-describedby={
+                      fieldErrors.fullName ? "fullname-error" : undefined
+                    }
                     onChange={(event) => {
                       setFullName(event.target.value);
                       clearFieldError("fullName");
@@ -161,7 +175,10 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="email">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="email"
+                  >
                     Email
                   </label>
                   <input
@@ -174,7 +191,9 @@ export default function SignUpPage() {
                     value={email}
                     ref={emailRef}
                     aria-invalid={Boolean(fieldErrors.email)}
-                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                    aria-describedby={
+                      fieldErrors.email ? "email-error" : undefined
+                    }
                     onChange={(event) => {
                       setEmail(event.target.value);
                       clearFieldError("email");
@@ -189,26 +208,40 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="password">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="password"
+                  >
                     Password
                   </label>
-                  <input
-                    className={inputClasses(Boolean(fieldErrors.password))}
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Create a password"
-                    value={password}
-                    ref={passwordRef}
-                    aria-invalid={Boolean(fieldErrors.password)}
-                    aria-describedby={fieldErrors.password ? "password-error" : undefined}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      clearFieldError("password");
-                    }}
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      className={inputClasses(Boolean(fieldErrors.password))}
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Create a password"
+                      value={password}
+                      ref={passwordRef}
+                      aria-invalid={Boolean(fieldErrors.password)}
+                      aria-describedby={
+                        fieldErrors.password ? "password-error" : undefined
+                      }
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        clearFieldError("password");
+                      }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                   {fieldErrors.password ? (
                     <p id="password-error" className="text-sm text-red-600">
                       {fieldErrors.password}
@@ -217,28 +250,55 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-base font-semibold text-gray-700" htmlFor="confirmPassword">
+                  <label
+                    className="block text-base font-semibold text-gray-700"
+                    htmlFor="confirmPassword"
+                  >
                     Confirm password
                   </label>
-                  <input
-                    className={inputClasses(Boolean(fieldErrors.confirmPassword))}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Re-enter password"
-                    value={confirmPassword}
-                    ref={confirmPasswordRef}
-                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
-                    aria-describedby={fieldErrors.confirmPassword ? "confirmPassword-error" : undefined}
-                    onChange={(event) => {
-                      setConfirmPassword(event.target.value);
-                      clearFieldError("confirmPassword");
-                    }}
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      className={inputClasses(
+                        Boolean(fieldErrors.confirmPassword)
+                      )}
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      ref={confirmPasswordRef}
+                      aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                      aria-describedby={
+                        fieldErrors.confirmPassword
+                          ? "confirmPassword-error"
+                          : undefined
+                      }
+                      onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        clearFieldError("confirmPassword");
+                      }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
                   {fieldErrors.confirmPassword ? (
-                    <p id="confirmPassword-error" className="text-sm text-red-600">
+                    <p
+                      id="confirmPassword-error"
+                      className="text-sm text-red-600"
+                    >
                       {fieldErrors.confirmPassword}
                     </p>
                   ) : null}
@@ -254,10 +314,12 @@ export default function SignUpPage() {
 
               <p className="mt-6 text-center text-base text-gray-600">
                 Already have an account?{" "}
-                <Link className="font-semibold text-[#B45309] hover:underline" href="/login">
+                <Link
+                  className="font-semibold text-[#B45309] hover:underline"
+                  href="/login"
+                >
                   Login
                 </Link>
-                
               </p>
             </div>
           </div>
