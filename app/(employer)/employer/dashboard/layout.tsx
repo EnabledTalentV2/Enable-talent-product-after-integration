@@ -3,7 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentEmployer } from "@/lib/localEmployerStore";
-
+import DashBoardNavbar from "@/components/DashBaordNavbarEmployer";
+import DashboardSubNavEmployer from "@/components/DashBoardSubNavEmployer";
+import DashBoardNavbarEmployer from "@/components/DashBaordNavbarEmployer";
 export default function EmployerDashboardLayout({
   children,
 }: {
@@ -31,5 +33,9 @@ export default function EmployerDashboardLayout({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <DashBoardNavbarEmployer />
+      <DashboardSubNavEmployer />
+      {children}</>);
 }
