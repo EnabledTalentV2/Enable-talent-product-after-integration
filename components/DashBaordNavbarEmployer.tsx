@@ -25,9 +25,12 @@ export default function DashBoardNavbarEmployer() {
   };
 
   return (
-    <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
+    <nav className="flex h-20 items-center justify-center bg-[#EEF5FF] px-6 md:px-12">
       <div className="flex w-full max-w-8xl items-center justify-between">
-        <a href="https://enable-talent-landing.vercel.app/" className="flex items-center gap-3">
+        <a
+          href="https://enable-talent-landing.vercel.app/"
+          className="flex items-center gap-3"
+        >
           <Image
             src="/logo/et-new.svg"
             alt="EnabledTalent logo"
@@ -55,7 +58,10 @@ export default function DashBoardNavbarEmployer() {
             <LogOut size={18} />
             <span>Log Out</span>
           </button>
-          <button className="relative text-slate-600 transition-colors hover:text-slate-900" aria-label="Notifications">
+          <button
+            className="relative text-slate-600 transition-colors hover:text-slate-900"
+            aria-label="Notifications"
+          >
             <Bell size={20} />
             <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
           </button>
@@ -68,4 +74,3 @@ export default function DashBoardNavbarEmployer() {
     </nav>
   );
 }
-

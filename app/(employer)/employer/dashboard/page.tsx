@@ -216,7 +216,11 @@ export default function EmployerDashboardPage() {
   const candidatesAcceptedDelta = formatDelta(20);
   const summaryMetrics = [
     { label: "Active Jobs", value: "42", delta: activeJobsDelta },
-    { label: "Candidates accepted", value: "367", delta: candidatesAcceptedDelta },
+    {
+      label: "Candidates accepted",
+      value: "367",
+      delta: candidatesAcceptedDelta,
+    },
   ];
 
   return (

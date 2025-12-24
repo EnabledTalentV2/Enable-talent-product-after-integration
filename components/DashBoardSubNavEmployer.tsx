@@ -37,7 +37,7 @@ export default function DashboardSubNavEmployer() {
       isActive: (path: string) => path.startsWith("/employer/listed-jobs"),
     },
     {
-      href: "/employer/company-profile",
+      href: "/employer/dashboard/company-profile",
       label: "Company Profile",
       icon: Building2,
       isActive: (path: string) => path.startsWith("/employer/company-profile"),
@@ -45,7 +45,7 @@ export default function DashboardSubNavEmployer() {
   ];
 
   return (
-    <div className="flex justify-center bg-[#F0F4F8] px-6 pb-6 md:px-12">
+    <div className="flex justify-center bg-[#EEF5FF] px-6 pb-6 md:px-12">
       <div className="flex w-full max-w-8xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           {navItems.map((item) => {

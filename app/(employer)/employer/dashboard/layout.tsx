@@ -34,8 +34,10 @@ export default function EmployerDashboardLayout({
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#EEF5FF]">
       <DashBoardNavbarEmployer />
       <DashboardSubNavEmployer />
-      {children}</>);
+      {children}
+    </div>
+  );
 }
