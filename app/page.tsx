@@ -36,7 +36,7 @@ export default function Home() {
             For Talent
           </Link>
           <Link
-            href="/employer"
+            href="/login-employer"
             className="flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-4 text-lg font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
           >
             For Employers

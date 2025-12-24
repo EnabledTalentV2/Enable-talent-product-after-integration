@@ -6,9 +6,15 @@ import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
+import { useEmployerDataStore } from "@/lib/employerDataStore";
+import {
+  getEmployerByEmail,
+  setCurrentEmployer,
+} from "@/lib/localEmployerStore";
 
 export default function EmployerLoginPage() {
   const router = useRouter();
+  const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,14 +24,22 @@ export default function EmployerLoginPage() {
     event.preventDefault();
     setError(null);
 
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
       setError("Please enter both email and password.");
       return;
     }
 
-    // Logic for employer login would go here
-    console.log("Employer Login:", { email, password });
-    // router.push("/employer-dashboard");
+    const storedEmployer = getEmployerByEmail(trimmedEmail);
+    if (!storedEmployer || storedEmployer.password !== password) {
+      setError("Invalid email or password.");
+      return;
+    }
+
+    setCurrentEmployer(trimmedEmail);
+    setEmployerData(() => storedEmployer.employerData);
+    router.push("/employer/dashboard");
   };
 
   return (

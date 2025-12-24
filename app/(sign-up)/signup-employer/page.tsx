@@ -6,7 +6,7 @@ import { useState, useRef, type FormEvent, type RefObject } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
-import { setPendingSignup } from "@/lib/localUserStore";
+import { setPendingEmployerSignup } from "@/lib/localEmployerStore";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full px-4 py-3 rounded-lg border outline-none transition-colors text-gray-700 placeholder-gray-400 ${
@@ -98,7 +98,12 @@ export default function SignupEmployerPage() {
     }
 
     // Proceed with signup logic
-    setPendingSignup({ email: trimmedEmail, password });
+    setPendingEmployerSignup({
+      email: trimmedEmail,
+      password,
+      fullName: trimmedName,
+      employerName: trimmedEmployerName,
+    });
 
     // Simulate API call to set HTTP-only cookie
     fetch("/api/auth/signup", {

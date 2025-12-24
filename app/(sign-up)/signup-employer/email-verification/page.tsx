@@ -4,7 +4,7 @@ import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import { Suspense, useState } from "react";
-import { getPendingSignup } from "@/lib/localUserStore";
+import { getPendingEmployerSignup } from "@/lib/localEmployerStore";
 
 function VerificationContent() {
   const router = useRouter();
@@ -16,7 +16,7 @@ function VerificationContent() {
   );
 
   const handleResendEmail = async () => {
-    const pending = getPendingSignup();
+    const pending = getPendingEmployerSignup();
     if (!pending?.email) {
       setResendStatus("error");
       return;
@@ -105,7 +105,7 @@ function VerificationContent() {
           </p>
 
           <button
-            onClick={() => router.push("/employer")}
+            onClick={() => router.push("/signup-employer/organisation-info")}
             className="rounded-xl bg-[#D98B48] px-12 py-3 font-semibold text-white shadow-md transition-colors hover:bg-[#C07A3D]"
           >
             Get started
