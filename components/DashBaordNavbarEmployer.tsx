@@ -20,7 +20,7 @@ export default function DashBoardNavbarEmployer() {
     } finally {
       clearCurrentUser();
       resetUserData();
-      router.push("/login");
+      router.push("/login-employer");
     }
   };
 

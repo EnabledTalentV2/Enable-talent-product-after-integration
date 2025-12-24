@@ -20,7 +20,7 @@ export default function DashBoardNavbar() {
     } finally {
       clearCurrentUser();
       resetUserData();
-      router.push("/login");
+      router.push("/login-talent");
     }
   };
 
