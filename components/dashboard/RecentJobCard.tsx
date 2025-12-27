@@ -57,7 +57,7 @@ export default function RecentJobCard({
         </span>
       </div>
 
-      <div className="mt-4 flex items-center gap-6 text-sm text-slate-500 border-t pt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-sm text-slate-500 sm:gap-6">
         <span>
           Accepted:{" "}
           <span className="font-semibold text-slate-900">
