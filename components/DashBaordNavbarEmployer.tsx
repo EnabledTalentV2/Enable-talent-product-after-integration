@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, Search, User } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { clearCurrentUser } from "@/lib/localUserStore";
 import Link from "next/link";
@@ -65,10 +65,13 @@ export default function DashBoardNavbarEmployer() {
             <Bell size={20} />
             <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
           </button>
-          <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90">
-            <Search size={18} strokeWidth={3} />
-            <span>Post aJob</span>
-          </button>
+          <Link
+            href="/employer/dashboard/post-jobs"
+            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+          >
+            
+            <span>Post a Job</span>
+          </Link>
         </div>
       </div>
     </nav>

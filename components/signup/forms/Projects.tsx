@@ -25,8 +25,8 @@ export default function Projects({
   onRemoveEntry,
   onNoProjectsChange,
 }: Props) {
-  const entries = data.entries;
-  const noProjects = data.noProjects;
+  const entries = data.entries ?? [];
+  const noProjects = data.noProjects ?? false;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),

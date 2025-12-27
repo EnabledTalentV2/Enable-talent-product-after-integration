@@ -1,4 +1,16 @@
-export type CandidateStatus = "Active" | "Inactive";
+export type CandidateStatus =
+  | "Active"
+  | "Inactive"
+  | "Accepted"
+  | "Declined"
+  | "Request Sent"
+  | "Matching";
+
+export type CandidateStage =
+  | "accepted"
+  | "declined"
+  | "request_sent"
+  | "matching";
 
 export interface Candidate {
   id: string;
@@ -8,6 +20,7 @@ export interface Candidate {
   experience: string;
   matchPercentage: number;
   status: CandidateStatus;
+  stage: CandidateStage;
   avatarUrl?: string;
   isBestMatch?: boolean;
 }
