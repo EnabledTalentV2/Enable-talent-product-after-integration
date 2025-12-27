@@ -7,6 +7,7 @@ import CandidateCard from "@/components/dashboard/CandidateCard";
 import AttentionWidget from "@/components/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/dashboard/TimeRangeTabs";
+import { MOCK_JOBS, MOCK_CANDIDATES, getJobStats } from "./mock-db";
 
 // --- Types ---
 
@@ -90,89 +91,37 @@ const attentionItems: AttentionItem[] = [
   },
 ];
 
-const recentJobs: RecentJob[] = [
-  {
-    id: "ui-ux-designer",
-    role: "UI/UX Designer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "Posted 12 hrs ago",
+const recentJobs: RecentJob[] = MOCK_JOBS.map((job) => {
+  const stats = getJobStats(job.id);
+  return {
+    id: job.id,
+    role: job.title,
+    company: job.company,
+    location: job.location,
+    type: job.type,
+    experience: job.experience,
+    postedTime: `Posted ${job.postedTime}`,
     stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
+      accepted: stats.accepted,
+      declined: stats.declined,
+      matching: stats.matchingCandidates,
     },
-  },
-  {
-    id: "software-engineer",
-    role: "Software Engineer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "Posted 12 hrs ago",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-  {
-    id: "software-engineer-2",
-    role: "Software Engineer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "Posted 12 hrs ago",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-];
+  };
+});
 
-const acceptedCandidates: AcceptedCandidate[] = [
-  {
-    id: "jennifer-allison",
-    name: "Jennifer Allison",
-    role: "UX Designer",
-    location: "Allentown, New Mexico 31134",
-    experience: "12 Yrs",
-    matchPercent: 97,
-    status: "Active",
-  },
-  {
-    id: "henry-creel",
-    name: "Henry Creel",
-    role: "Marketing Analyst",
-    location: "Allentown, New Mexico 31134",
-    experience: "12 Yrs",
-    matchPercent: 97,
-    status: "Active",
-  },
-  {
-    id: "milley-arthur",
-    name: "Milley Arthur",
-    role: "Data Analyst",
-    location: "Allentown, New Mexico 31134",
-    experience: "12 Yrs",
-    matchPercent: 97,
-    status: "Active",
-  },
-  {
-    id: "milley-arthur-2",
-    name: "Milley Arthur",
-    role: "Data Analyst",
-    location: "Allentown, New Mexico 31134",
-    experience: "12 Yrs",
-    matchPercent: 97,
-    status: "Active",
-  },
-];
+const acceptedCandidates: AcceptedCandidate[] = MOCK_CANDIDATES.filter(
+  (c) => c.stage === "accepted"
+).map((c) => ({
+  id: c.id,
+  name: c.name,
+  role: c.role,
+  location: c.location,
+  experience: c.experience,
+  matchPercent: c.matchPercentage,
+  status:
+    c.status === "Active" || c.status === "Inactive" ? c.status : "Active", // Fallback to Active if status is not Active/Inactive
+  avatarUrl: c.avatarUrl,
+}));
 
 // --- Helpers ---
 
@@ -212,13 +161,25 @@ export default function EmployerDashboardPage() {
     }
   }, [activeRange]);
 
+  const totalActiveJobs = MOCK_JOBS.filter((j) => j.status === "Active").length;
+  const totalAcceptedCandidates = MOCK_CANDIDATES.filter(
+    (c) => c.stage === "accepted"
+  ).length;
+  const totalMatchingCandidates = MOCK_CANDIDATES.filter(
+    (c) => c.stage === "matching"
+  ).length;
+
   const activeJobsDelta = formatDelta(-6);
   const candidatesAcceptedDelta = formatDelta(20);
   const summaryMetrics = [
-    { label: "Active Jobs", value: "42", delta: activeJobsDelta },
+    {
+      label: "Active Jobs",
+      value: totalActiveJobs.toString(),
+      delta: activeJobsDelta,
+    },
     {
       label: "Candidates accepted",
-      value: "367",
+      value: totalAcceptedCandidates.toString(),
       delta: candidatesAcceptedDelta,
     },
   ];
@@ -280,8 +241,10 @@ export default function EmployerDashboardPage() {
         <div className="flex flex-col gap-6 min-w-0">
           <DashboardSummaryCard
             title="Matching applicants"
-            value="97"
-            subtitle="Across 42 jobs (avg. 2.3 / job)"
+            value={totalMatchingCandidates.toString()}
+            subtitle={`Across ${totalActiveJobs} jobs (avg. ${(
+              totalMatchingCandidates / (totalActiveJobs || 1)
+            ).toFixed(1)} / job)`}
             metrics={summaryMetrics}
           />
 
