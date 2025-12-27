@@ -37,7 +37,7 @@ export default function AttentionWidget({ items }: AttentionWidgetProps) {
       </ul>
       <button
         type="button"
-        className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+        className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#C27803] px-4 py-2 text-center text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto whitespace-normal leading-snug"
       >
         Review all alerts -&gt;
       </button>

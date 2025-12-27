@@ -15,7 +15,7 @@ export default function TimeRangeTabs<T extends string>({
 }: TimeRangeTabsProps<T>) {
   return (
     <div
-      className={`flex items-center gap-2 text-sm font-semibold text-slate-500 ${className}`}
+      className={`flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 sm:flex-nowrap sm:text-sm ${className}`}
     >
       {ranges.map((range) => {
         const isActive = activeRange === range;
@@ -24,7 +24,7 @@ export default function TimeRangeTabs<T extends string>({
             key={range}
             type="button"
             onClick={() => onChange(range)}
-            className={`rounded-full px-3 py-1 transition ${
+            className={`rounded-full px-2.5 py-1 transition sm:px-3 ${
               isActive
                 ? "bg-[#C27803] text-white shadow-sm"
                 : "bg-slate-100 text-slate-500"

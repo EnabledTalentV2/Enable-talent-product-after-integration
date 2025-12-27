@@ -33,7 +33,7 @@ export default function DashboardSummaryCard({
         <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
         <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {metrics.map((metric) => (
           <DashboardMetricCard
             key={metric.label}

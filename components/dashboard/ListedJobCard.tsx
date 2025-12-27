@@ -1,6 +1,6 @@
 import { MapPin } from "lucide-react";
 
-interface RecentJob {
+interface ListedJob {
   id: string;
   role: string;
   company: string;
@@ -8,6 +8,7 @@ interface RecentJob {
   type: string;
   experience: string;
   postedTime: string;
+  status: "Active" | "Closed" | "Draft";
   stats: {
     accepted: number;
     declined: number;
@@ -15,18 +16,41 @@ interface RecentJob {
   };
 }
 
-interface RecentJobCardProps {
-  job: RecentJob;
+interface ListedJobCardProps {
+  job: ListedJob;
+  isSelected?: boolean;
+  onClick?: () => void;
   getBrandStyle: (company: string) => string;
 }
 
-export default function RecentJobCard({
+export default function ListedJobCard({
   job,
+  isSelected,
+  onClick,
   getBrandStyle,
-}: RecentJobCardProps) {
+}: ListedJobCardProps) {
   return (
-    <div className="rounded-[28px] bg-white p-5 shadow-sm">
-      <p className="text-xs text-slate-400 mb-3">{job.postedTime}</p>
+    <div
+      onClick={onClick}
+      className={`rounded-[28px] p-5 shadow-sm cursor-pointer transition-all border-2 ${
+        isSelected
+          ? "border-orange-400 bg-white"
+          : "border-transparent bg-white hover:border-slate-200"
+      }`}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-slate-400">Posted {job.postedTime}</p>
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            job.status === "Active"
+              ? "bg-green-50 text-green-600"
+              : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {job.status}
+        </span>
+      </div>
+
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <div
@@ -57,7 +81,7 @@ export default function RecentJobCard({
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-sm text-slate-500 sm:gap-6">
+      <div className="mt-4 flex items-center gap-6 text-sm text-slate-500 border-t pt-4">
         <span>
           Accepted:{" "}
           <span className="font-semibold text-slate-900">

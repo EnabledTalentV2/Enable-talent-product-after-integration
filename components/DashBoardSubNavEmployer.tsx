@@ -25,22 +25,23 @@ export default function DashboardSubNavEmployer() {
       isActive: (path: string) => path === "/employer/dashboard",
     },
     {
-      href: "/employer/candidates",
+      href: "/employer/dashboard/candidates",
       label: "Candidates",
       icon: User,
-      isActive: (path: string) => path.startsWith("/employer/candidates"),
+      isActive: (path: string) => path.startsWith("/employer/dashboard/candidates"),
     },
     {
-      href: "/employer/listed-jobs",
+      href: "/employer/dashboard/listed-jobs",
       label: "Listed Jobs",
       icon: BriefcaseBusiness,
-      isActive: (path: string) => path.startsWith("/employer/listed-jobs"),
+      isActive: (path: string) =>
+        path.startsWith("/employer/dashboard/listed-jobs"),
     },
     {
       href: "/employer/dashboard/company-profile",
       label: "Company Profile",
       icon: Building2,
-      isActive: (path: string) => path.startsWith("/employer/company-profile"),
+      isActive: (path: string) => path.startsWith("/employer/dashboard/company-profile"),
     },
   ];
 

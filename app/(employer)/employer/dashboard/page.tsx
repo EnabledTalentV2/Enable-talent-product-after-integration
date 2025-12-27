@@ -224,11 +224,11 @@ export default function EmployerDashboardPage() {
   ];
 
   return (
-    <section className="mx-auto max-w-[1400px] space-y-8 py-10 px-6 mt-6">
+    <section className="mx-auto max-w-[1400px] space-y-6 px-4 py-8 mt-4 sm:space-y-8 sm:px-6 sm:py-10 sm:mt-6">
       {/* Top Section: Chart & Stats */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* Chart Card */}
-        <div className="rounded-[28px] bg-white p-6 shadow-sm">
+        <div className="rounded-[28px] bg-white p-4 shadow-sm sm:p-6 min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
@@ -242,11 +242,11 @@ export default function EmployerDashboardPage() {
             />
           </div>
 
-          <div className="mt-6 h-64">
+          <div className="mt-6 h-56 sm:h-64">
             <EngagementTrendChart points={filteredPoints} metricLabel="rate" />
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
+          <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
             <span className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-sm bg-[#E6A24E]" />
               Projected
@@ -255,7 +255,7 @@ export default function EmployerDashboardPage() {
               <span className="h-3 w-3 rounded-sm bg-[#4F7DF3]" />
               Actual
             </span>
-            <div className="flex items-center gap-4 ml-auto">
+            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto sm:ml-auto">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-sm bg-emerald-400" />
                 Good: ≥ 80%
@@ -277,8 +277,7 @@ export default function EmployerDashboardPage() {
         </div>
 
         {/* Right Column: Stats & Attention */}
-        <div className="space-y-6">
-          {/* Stats Card */}
+        <div className="flex flex-col gap-6 min-w-0">
           <DashboardSummaryCard
             title="Matching applicants"
             value="97"
@@ -286,7 +285,6 @@ export default function EmployerDashboardPage() {
             metrics={summaryMetrics}
           />
 
-          {/* Attention Needed Card */}
           <AttentionWidget items={attentionItems} />
         </div>
       </div>
@@ -296,7 +294,7 @@ export default function EmployerDashboardPage() {
         {/* Recent Jobs */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
               Recent Jobs
             </h2>
           </div>
@@ -314,7 +312,7 @@ export default function EmployerDashboardPage() {
         {/* Accepted Candidates */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
               Accepted Candidates
             </h2>
           </div>
