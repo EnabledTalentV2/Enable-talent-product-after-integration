@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Banknote, MapPin } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
@@ -143,7 +143,7 @@ const filters = ["All", "Accepted", "Rejected"] as const;
 export default function MyJobsPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
-  const detailsRef = useRef<HTMLDivElement | null>(null);
+  const didMountRef = useRef(false);
   const userData = useUserDataStore((s) => s.userData);
   const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
 
@@ -155,15 +155,118 @@ export default function MyJobsPage() {
   }, [activeFilter]);
 
   const activeJob = filteredJobs.find((job) => job.id === selectedId) ?? filteredJobs[0];
+  const activeJobId = activeJob?.id ?? selectedId;
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const targetId = isDesktop
+      ? `job-details-desktop-${activeJobId}`
+      : `job-details-inline-${activeJobId}`;
+
+    requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      if (!target) {
+        return;
+      }
+
+      if (!isDesktop) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      if (target instanceof HTMLElement) {
+        target.focus({ preventScroll: true });
+      }
+    });
+  }, [activeJobId]);
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      requestAnimationFrame(() => {
-        detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
   };
+
+  const JobDetailsPanel = ({ job }: { job: Job }) => (
+    <div className="w-full rounded-[40px] bg-white p-6 shadow-sm md:p-10">
+      <div className="space-y-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            {job.logo ? (
+              <img
+                src={job.logo}
+                alt={job.company}
+                className="h-16 w-16 object-contain"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
+                {job.company.charAt(0)}
+              </div>
+            )}
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">{job.title}</h2>
+              <p className="text-lg font-medium text-slate-500">{job.company}</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
+            {job.status}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
+          <div>
+            <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
+            <p className="text-lg font-bold text-slate-900">{job.jobType}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-base font-medium text-slate-400">Location</p>
+            <p className="text-lg font-bold text-slate-900">{job.location}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
+            <p className="text-lg font-bold text-slate-900">{job.workMode}</p>
+          </div>
+          <div>
+            <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
+            <p className="text-lg font-bold text-slate-900">{job.yearsExperience}</p>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1 text-base font-medium text-slate-400">Salary</p>
+          <p className="text-2xl font-bold text-slate-900">{job.salary}</p>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-xl font-bold text-slate-900">About the job</h4>
+          <p className="leading-relaxed text-slate-600">{job.about}</p>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-xl font-bold text-slate-900">Description</h4>
+          <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+            {job.description.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-xl font-bold text-slate-900">Requirement</h4>
+          <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+            {job.requirements.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
@@ -186,134 +289,81 @@ export default function MyJobsPage() {
           ))}
         </div>
 
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
-            {filteredJobs.map((job) => {
-              const isSelected = selectedId === job.id;
-              return (
-                <button
-                  key={job.id}
-                  onClick={() => handleSelect(job.id)}
-                  className={`relative w-full rounded-[32px] border-2 bg-white p-5 text-left shadow-sm transition-all sm:p-6 ${
-                    isSelected ? "border-[#C27803]" : "border-transparent"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-medium text-slate-400">{job.posted}</span>
-                    <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
-                      {job.status}
-                    </span>
-                  </div>
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
+              {filteredJobs.map((job) => {
+                const isSelected = selectedId === job.id;
+                return (
+                  <div key={job.id} className="space-y-4">
+                    <button
+                      onClick={() => handleSelect(job.id)}
+                      className={`relative w-full rounded-[32px] border-2 bg-white p-5 text-left shadow-sm transition-all sm:p-6 ${
+                        isSelected ? "border-[#C27803]" : "border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-base font-medium text-slate-400">{job.posted}</span>
+                        <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
+                          {job.status}
+                        </span>
+                      </div>
 
-                  <div className="mt-4 flex items-center gap-4">
-                    {job.logo ? (
-                      <img src={job.logo} alt={job.company} className="h-12 w-12 object-contain" />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-600">
-                        {job.company.charAt(0)}
+                      <div className="mt-4 flex items-center gap-4">
+                        {job.logo ? (
+                          <img
+                            src={job.logo}
+                            alt={job.company}
+                            className="h-12 w-12 object-contain"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-600">
+                            {job.company.charAt(0)}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="text-xl font-bold text-slate-900">{job.title}</h3>
+                          <p className="font-medium text-slate-500">{job.company}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 flex items-end justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-slate-500">
+                            <MapPin size={18} className="text-orange-400" />
+                            <span className="text-base font-medium">{job.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-500">
+                            <Banknote size={18} className="text-orange-400" />
+                            <span className="text-base font-medium">{job.salary}</span>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
+                          <p className="text-lg font-bold text-slate-900">{job.match}%</p>
+                          <p className="text-sm font-bold uppercase tracking-wider text-slate-700">Matching</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {isSelected && (
+                      <div
+                        id={`job-details-inline-${job.id}`}
+                        tabIndex={-1}
+                        className="lg:hidden"
+                      >
+                        <JobDetailsPanel job={job} />
                       </div>
                     )}
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900">{job.title}</h3>
-                      <p className="font-medium text-slate-500">{job.company}</p>
-                    </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="mt-6 flex items-end justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <MapPin size={18} className="text-orange-400" />
-                        <span className="text-base font-medium">{job.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Banknote size={18} className="text-orange-400" />
-                        <span className="text-base font-medium">{job.salary}</span>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
-                      <p className="text-lg font-bold text-slate-900">{job.match}%</p>
-                      <p className="text-sm font-bold uppercase tracking-wider text-slate-700">Matching</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div ref={detailsRef} className="w-full rounded-[40px] bg-white p-6 shadow-sm md:p-10 lg:flex-1">
-            {activeJob && (
-              <div className="space-y-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    {activeJob.logo ? (
-                      <img
-                        src={activeJob.logo}
-                        alt={activeJob.company}
-                        className="h-16 w-16 object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
-                        {activeJob.company.charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <h2 className="text-3xl font-bold text-slate-900">{activeJob.title}</h2>
-                      <p className="text-lg font-medium text-slate-500">{activeJob.company}</p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
-                    {activeJob.status}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
-                  <div>
-                    <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
-                    <p className="text-lg font-bold text-slate-900">{activeJob.jobType}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-base font-medium text-slate-400">Location</p>
-                    <p className="text-lg font-bold text-slate-900">{activeJob.location}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
-                    <p className="text-lg font-bold text-slate-900">{activeJob.workMode}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
-                    <p className="text-lg font-bold text-slate-900">{activeJob.yearsExperience}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-1 text-base font-medium text-slate-400">Salary</p>
-                  <p className="text-2xl font-bold text-slate-900">{activeJob.salary}</p>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xl font-bold text-slate-900">About the job</h4>
-                  <p className="leading-relaxed text-slate-600">{activeJob.about}</p>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xl font-bold text-slate-900">Description</h4>
-                  <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-                    {activeJob.description.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-xl font-bold text-slate-900">Requirement</h4>
-                  <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-                    {activeJob.requirements.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
+          <div
+            id={activeJob ? `job-details-desktop-${activeJob.id}` : undefined}
+            tabIndex={-1}
+            className="hidden lg:block lg:flex-1"
+          >
+            {activeJob && <JobDetailsPanel job={activeJob} />}
           </div>
         </div>
       </div>
