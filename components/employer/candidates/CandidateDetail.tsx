@@ -1,5 +1,5 @@
 import React from "react";
-import { CandidateProfile } from "../types";
+import { CandidateProfile } from "@/app/(employer)/employer/dashboard/candidates/types";
 import ProfileSection from "./ProfileSection";
 
 interface CandidateDetailProps {

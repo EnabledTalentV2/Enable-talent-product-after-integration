@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
-import RecentJobCard from "@/components/dashboard/RecentJobCard";
-import CandidateCard from "@/components/dashboard/CandidateCard";
-import AttentionWidget from "@/components/dashboard/AttentionWidget";
-import DashboardSummaryCard from "@/components/dashboard/DashboardSummaryCard";
-import TimeRangeTabs from "@/components/dashboard/TimeRangeTabs";
+import RecentJobCard from "@/components/employer/dashboard/RecentJobCard";
+import CandidateCard from "@/components/employer/dashboard/CandidateCard";
+import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
+import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
+import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
 import { MOCK_JOBS, MOCK_CANDIDATES, getJobStats } from "./mock-db";
 
 // --- Types ---
@@ -185,7 +185,7 @@ export default function EmployerDashboardPage() {
   ];
 
   return (
-    <section className="mx-auto max-w-[1400px] space-y-6 px-4 py-8 mt-4 sm:space-y-8 sm:px-6 sm:py-10 sm:mt-6">
+    <section className="mx-auto max-w-360 space-y-6 px-4 py-8 mt-4 sm:space-y-8 sm:px-6 sm:py-10 sm:mt-6">
       {/* Top Section: Chart & Stats */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* Chart Card */}
