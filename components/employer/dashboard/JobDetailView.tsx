@@ -48,7 +48,7 @@ export default function JobDetailView({
           </div>
         </div>
         <Link
-          href={`/employer/dashboard/post-jobs?jobId=${job.id}`}
+          href={`/employer/dashboard/edit-job/${job.id}`}
           className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
         >
           <Pencil className="h-5 w-5 text-slate-400" />

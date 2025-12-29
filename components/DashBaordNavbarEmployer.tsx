@@ -6,10 +6,12 @@ import { Bell, LogOut, User } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { clearCurrentUser } from "@/lib/localUserStore";
 import Link from "next/link";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 
 export default function DashBoardNavbarEmployer() {
   const router = useRouter();
   const resetUserData = useUserDataStore((s) => s.resetUserData);
+  const resetJobs = useEmployerJobsStore((s) => s.resetJobs);
 
   const handleLogout = async () => {
     try {
@@ -20,6 +22,7 @@ export default function DashBoardNavbarEmployer() {
     } finally {
       clearCurrentUser();
       resetUserData();
+      resetJobs();
       router.push("/login-employer");
     }
   };

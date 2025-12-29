@@ -6,11 +6,9 @@ import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
 import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
 import { CandidateProfile, CandidateStage } from "../types";
-import {
-  MOCK_JOBS,
-  MOCK_CANDIDATES,
-  getJobStats,
-} from "@/app/(employer)/employer/dashboard/mock-db";
+import { MOCK_CANDIDATES, getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { toJobHeaderInfo } from "@/lib/employerJobsUtils";
 
 const TABS = [
   { id: "accepted", label: "Accepted" },
@@ -37,11 +35,12 @@ export default function CandidatesPage() {
   const params = useParams();
   const jobIdParam = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
   const currentJobId = typeof jobIdParam === "string" ? jobIdParam : "";
+  const { jobs, hasFetched } = useEmployerJobsStore();
 
   const currentJob = useMemo(() => {
     if (!currentJobId) return null;
-    return MOCK_JOBS.find((job) => job.id === currentJobId) ?? null;
-  }, [currentJobId]);
+    return jobs.find((job) => job.id === currentJobId) ?? null;
+  }, [currentJobId, jobs]);
 
   const [activeTab, setActiveTab] =
     useState<(typeof TABS)[number]["id"]>("matching");
@@ -62,10 +61,10 @@ export default function CandidatesPage() {
 
   useEffect(() => {
     if (!currentJobId) return;
-    if (!currentJob) {
+    if (hasFetched && !currentJob) {
       router.replace("/employer/dashboard/listed-jobs");
     }
-  }, [currentJobId, currentJob, router]);
+  }, [currentJobId, currentJob, hasFetched, router]);
 
   useEffect(() => {
     if (!currentJobId || !currentJob) {
@@ -106,7 +105,7 @@ export default function CandidatesPage() {
   const selectedCandidate =
     candidates.find((c) => c.id === selectedCandidateId) || null;
 
-  if (!currentJobId) {
+  if (!currentJobId || !hasFetched) {
     return (
       <div className="flex h-screen items-center justify-center text-slate-500">
         Loading candidates...
@@ -122,12 +121,14 @@ export default function CandidatesPage() {
     );
   }
 
+  const jobHeaderInfo = toJobHeaderInfo(currentJob);
+
   return (
     <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
       {/* Top Section: Job Header */}
       <div className="shrink-0">
         {/* Pass the shared job info and calculated stats */}
-        <JobHeader jobInfo={currentJob} stats={jobStats} />
+        <JobHeader jobInfo={jobHeaderInfo} stats={jobStats} />
       </div>
 
       {/* Main Content: Split View */}

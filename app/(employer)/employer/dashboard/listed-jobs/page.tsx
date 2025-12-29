@@ -1,228 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
-
-// --- Types ---
-
-type ListedJob = {
-  id: string;
-  role: string;
-  company: string;
-  location: string;
-  type: string;
-  experience: string;
-  postedTime: string;
-  status: "Active" | "Closed" | "Draft";
-  stats: {
-    accepted: number;
-    declined: number;
-    matching: number;
-  };
-};
-
-type JobDetail = {
-  id: string;
-  role: string;
-  company: string;
-  location: string;
-  type: string;
-  workMode: string;
-  experience: string;
-  salary: string;
-  about: string;
-  description: string[];
-  requirements: string[];
-  stats: {
-    accepted: number;
-    declined: number;
-    requests: number;
-    matching: number;
-  };
-};
-
-// --- Mock Data ---
-
-const listedJobs: ListedJob[] = [
-  {
-    id: "ui-ux-designer",
-    role: "UI/UX Designer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "12 hrs ago",
-    status: "Active",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-  {
-    id: "software-engineer",
-    role: "Software Engineer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "12 hrs ago",
-    status: "Active",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-  {
-    id: "marketing-specialist",
-    role: "Marketing Specialist",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "12 hrs ago",
-    status: "Active",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-  {
-    id: "sales-lead",
-    role: "Sales Lead",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    postedTime: "12 hrs ago",
-    status: "Active",
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-];
-
-const jobDetails: Record<string, JobDetail> = {
-  "ui-ux-designer": {
-    id: "ui-ux-designer",
-    role: "UI/UX Designer",
-    company: "Meta",
-    location: "Toronto",
-    type: "Full Time",
-    workMode: "Hybrid",
-    experience: "12 years",
-    salary: "$2000-4500",
-    about:
-      "We are desertcart, an e-commerce and logistics company based in Dubai, serving customers across 160+ countries worldwide. We are changing the way people shop internationally making it faster, more reliable, and cheaper, and want you to be a part of it.",
-    description: [
-      "Create wireframes, prototypes, and user flows to visualize and communicate design concepts.",
-      "Collaborate with cross-functional teams including product managers, developers, and other designers to ensure seamless implementation.",
-      "Translate research insights into actionable design solutions that enhance user satisfaction and engagement.",
-    ],
-    requirements: [
-      "7+ years of experience evolving and scaling high-performing design systems in a highly matrixed company",
-      "3+ years of experience in people leadership, with experience in hiring, leading, and coaching high performing teams",
-      "Solid understanding of Design Systems - creating, designing, governing, and scaling reusable component libraries - and an ability to communicate its value to a large, complex organizations",
-      "Understanding of best practices and process around governance and maintenance of large-scale design systems",
-      "Influence strategy by developing partnerships, engaging and collaborating effectively with design, product, and engineering",
-      "Operate comfortably in agile environments (e.g. sprints), helping the team prioritize work considering needs, resources and capacity",
-    ],
-    stats: {
-      accepted: 102,
-      declined: 4,
-      requests: 25,
-      matching: 9,
-    },
-  },
-  "marketing-specialist": {
-    id: "marketing-specialist",
-    role: "Marketing Specialist",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    workMode: "On-site",
-    experience: "5+ Years",
-    salary: "$1500-3000",
-    about: "We are looking for a Marketing Specialist to join our team.",
-    description: [
-      "Develop and execute marketing strategies.",
-      "Manage social media accounts.",
-      "Analyze market trends.",
-    ],
-    requirements: [
-      "Bachelor's degree in Marketing or related field.",
-      "3+ years of experience in marketing.",
-      "Strong communication skills.",
-    ],
-    stats: {
-      accepted: 20,
-      declined: 150,
-      requests: 40,
-      matching: 60,
-    },
-  },
-  "software-engineer": {
-    id: "software-engineer",
-    role: "Software Engineer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    workMode: "Hybrid",
-    experience: "5+ Years",
-    salary: "$3000-6000",
-    about: "We are looking for a Software Engineer to join our team.",
-    description: [
-      "Develop and maintain software applications.",
-      "Collaborate with cross-functional teams.",
-    ],
-    requirements: [
-      "Bachelor's degree in Computer Science or related field.",
-      "5+ years of experience in software development.",
-      "Experience with React and Node.js.",
-    ],
-    stats: {
-      accepted: 45,
-      declined: 12,
-      requests: 15,
-      matching: 30,
-    },
-  },
-  // Fallback for other jobs
-  default: {
-    id: "default",
-    role: "Software Engineer",
-    company: "Meta",
-    location: "Toronto",
-    type: "Full Time",
-    workMode: "Hybrid",
-    experience: "5 years",
-    salary: "$3000-6000",
-    about:
-      "We are desertcart, an e-commerce and logistics company based in Dubai, serving customers across 160+ countries worldwide.",
-    description: [
-      "Develop and maintain software applications.",
-      "Collaborate with cross-functional teams.",
-    ],
-    requirements: [
-      "5+ years of experience in software development.",
-      "Experience with React and Node.js.",
-    ],
-    stats: {
-      accepted: 45,
-      declined: 12,
-      requests: 15,
-      matching: 30,
-    },
-  },
-};
-
-// --- Helpers ---
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
@@ -236,21 +20,38 @@ const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
 export default function ListedJobsPage() {
-  const [selectedJobId, setSelectedJobId] = useState<string>("ui-ux-designer");
+  const { jobs, hasFetched } = useEmployerJobsStore();
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const didMountRef = useRef(false);
 
-  const getJobDetails = (jobId: string) =>
-    jobDetails[jobId] || {
-      ...jobDetails.default,
-      ...listedJobs.find((job) => job.id === jobId),
-      // Merge stats from list if needed, but detail has its own stats structure
-    };
+  const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
+  const selectedJob = useMemo(() => {
+    if (!selectedJobId) return null;
+    const job = jobs.find((entry) => entry.id === selectedJobId);
+    return job ? toJobDetail(job) : null;
+  }, [jobs, selectedJobId]);
 
-  const selectedJob = getJobDetails(selectedJobId);
+  useEffect(() => {
+    if (jobs.length === 0) {
+      setSelectedJobId(null);
+      return;
+    }
+
+    setSelectedJobId((current) => {
+      if (current && jobs.some((job) => job.id === current)) {
+        return current;
+      }
+      return jobs[0].id;
+    });
+  }, [jobs]);
 
   useEffect(() => {
     if (!didMountRef.current) {
       didMountRef.current = true;
+      return;
+    }
+
+    if (!selectedJobId) {
       return;
     }
 
@@ -278,6 +79,34 @@ export default function ListedJobsPage() {
       }
     });
   }, [selectedJobId]);
+
+  if (!hasFetched) {
+    return (
+      <div className="flex h-[calc(100vh-120px)] items-center justify-center text-slate-500">
+        Loading listed jobs...
+      </div>
+    );
+  }
+
+  if (hasFetched && listedJobs.length === 0) {
+    return (
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 py-16 text-center">
+        <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-700">
+          No jobs posted yet
+        </div>
+        <p className="text-base text-slate-500">
+          Post your first role to start reviewing candidates and tracking
+          performance.
+        </p>
+        <Link
+          href="/employer/dashboard/post-jobs"
+          className="rounded-xl bg-[#D98836] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+        >
+          Post a Job
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-360 mx-auto">
@@ -318,10 +147,12 @@ export default function ListedJobsPage() {
                       tabIndex={-1}
                       className="lg:hidden"
                     >
-                      <JobDetailView
-                        job={getJobDetails(job.id)}
-                        getBrandStyle={getBrandStyle}
-                      />
+                      {selectedJob && (
+                        <JobDetailView
+                          job={selectedJob}
+                          getBrandStyle={getBrandStyle}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -331,13 +162,15 @@ export default function ListedJobsPage() {
         </div>
 
         {/* Right Column: Job Details */}
-        <div
-          id={`listed-job-details-desktop-${selectedJobId}`}
-          tabIndex={-1}
-          className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10"
-        >
-          <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} />
-        </div>
+        {selectedJob && selectedJobId && (
+          <div
+            id={`listed-job-details-desktop-${selectedJobId}`}
+            tabIndex={-1}
+            className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10"
+          >
+            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} />
+          </div>
+        )}
       </div>
     </div>
   );

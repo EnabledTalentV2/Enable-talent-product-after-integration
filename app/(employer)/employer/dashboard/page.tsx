@@ -7,7 +7,9 @@ import CandidateCard from "@/components/employer/dashboard/CandidateCard";
 import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
-import { MOCK_JOBS, MOCK_CANDIDATES, getJobStats } from "./mock-db";
+import { MOCK_CANDIDATES, getJobStats } from "./mock-db";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { formatExperienceLabel, formatPostedTime } from "@/lib/employerJobsUtils";
 
 // --- Types ---
 
@@ -91,38 +93,6 @@ const attentionItems: AttentionItem[] = [
   },
 ];
 
-const recentJobs: RecentJob[] = MOCK_JOBS.map((job) => {
-  const stats = getJobStats(job.id);
-  return {
-    id: job.id,
-    role: job.title,
-    company: job.company,
-    location: job.location,
-    type: job.type,
-    experience: job.experience,
-    postedTime: `Posted ${job.postedTime}`,
-    stats: {
-      accepted: stats.accepted,
-      declined: stats.declined,
-      matching: stats.matchingCandidates,
-    },
-  };
-});
-
-const acceptedCandidates: AcceptedCandidate[] = MOCK_CANDIDATES.filter(
-  (c) => c.stage === "accepted"
-).map((c) => ({
-  id: c.id,
-  name: c.name,
-  role: c.role,
-  location: c.location,
-  experience: c.experience,
-  matchPercent: c.matchPercentage,
-  status:
-    c.status === "Active" || c.status === "Inactive" ? c.status : "Active", // Fallback to Active if status is not Active/Inactive
-  avatarUrl: c.avatarUrl,
-}));
-
 // --- Helpers ---
 
 const brandStyles: Record<string, string> = {
@@ -142,6 +112,7 @@ const formatDelta = (value: number) => ({
 });
 
 export default function EmployerDashboardPage() {
+  const jobs = useEmployerJobsStore((state) => state.jobs);
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
 
@@ -161,13 +132,55 @@ export default function EmployerDashboardPage() {
     }
   }, [activeRange]);
 
-  const totalActiveJobs = MOCK_JOBS.filter((j) => j.status === "Active").length;
+  const jobIds = useMemo(() => new Set(jobs.map((job) => job.id)), [jobs]);
+  const totalActiveJobs = jobs.filter((job) => job.status === "Active").length;
   const totalAcceptedCandidates = MOCK_CANDIDATES.filter(
-    (c) => c.stage === "accepted"
+    (c) => jobIds.has(c.jobId) && c.stage === "accepted"
   ).length;
   const totalMatchingCandidates = MOCK_CANDIDATES.filter(
-    (c) => c.stage === "matching"
+    (c) => jobIds.has(c.jobId) && c.stage === "matching"
   ).length;
+
+  const recentJobs = useMemo<RecentJob[]>(() => {
+    return [...jobs]
+      .sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt))
+      .map((job) => {
+        const stats = getJobStats(job.id);
+        return {
+          id: job.id,
+          role: job.title,
+          company: job.company,
+          location: job.location,
+          type: job.employmentType,
+          experience: formatExperienceLabel(job.experience),
+          postedTime: `Posted ${formatPostedTime(job.postedAt)}`,
+          stats: {
+            accepted: stats.accepted,
+            declined: stats.declined,
+            matching: stats.matchingCandidates,
+          },
+        };
+      });
+  }, [jobs]);
+
+  const acceptedCandidates = useMemo<AcceptedCandidate[]>(() => {
+    return MOCK_CANDIDATES.filter(
+      (candidate) =>
+        jobIds.has(candidate.jobId) && candidate.stage === "accepted"
+    ).map((candidate) => ({
+      id: candidate.id,
+      name: candidate.name,
+      role: candidate.role,
+      location: candidate.location,
+      experience: candidate.experience,
+      matchPercent: candidate.matchPercentage,
+      status:
+        candidate.status === "Active" || candidate.status === "Inactive"
+          ? candidate.status
+          : "Active",
+      avatarUrl: candidate.avatarUrl,
+    }));
+  }, [jobIds]);
 
   const activeJobsDelta = formatDelta(-6);
   const candidatesAcceptedDelta = formatDelta(20);

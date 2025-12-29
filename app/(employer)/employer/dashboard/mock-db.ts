@@ -1,50 +1,6 @@
 import { CandidateProfile } from "./candidates/types";
 
-// 1. Define Jobs
-export const MOCK_JOBS = [
-  {
-    id: "ui-ux-designer",
-    title: "UI/UX Designer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    postedTime: "12 hrs ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-  },
-  {
-    id: "software-engineer",
-    title: "Software Engineer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    postedTime: "12 hrs ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-  },
-  {
-    id: "marketing-specialist",
-    title: "Marketing Specialist",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    postedTime: "12 hrs ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-  },
-  {
-    id: "sales-lead",
-    title: "Sales Lead",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    postedTime: "12 hrs ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-  },
-];
-
-// 2. Define Candidates (Linked to Jobs via jobId)
+// Define Candidates (Linked to Jobs via jobId)
 export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   {
     id: "1",
@@ -219,7 +175,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
 ];
 
-// 3. Helper to get stats for ANY job
+// Helper to get stats for ANY job
 export const getJobStats = (jobId: string) => {
   const jobCandidates = MOCK_CANDIDATES.filter((c) => c.jobId === jobId);
 

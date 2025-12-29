@@ -3,9 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentEmployer } from "@/lib/localEmployerStore";
-import DashBoardNavbar from "@/components/DashBaordNavbarEmployer";
 import DashboardSubNavEmployer from "@/components/DashBoardSubNavEmployer";
 import DashBoardNavbarEmployer from "@/components/DashBaordNavbarEmployer";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 export default function EmployerDashboardLayout({
   children,
 }: {
@@ -13,6 +13,7 @@ export default function EmployerDashboardLayout({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const fetchJobs = useEmployerJobsStore((state) => state.fetchJobs);
 
   useEffect(() => {
     const currentEmployer = getCurrentEmployer();
@@ -22,8 +23,10 @@ export default function EmployerDashboardLayout({
       return;
     }
 
-    setLoading(false);
-  }, [router]);
+    fetchJobs()
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [fetchJobs, router]);
 
   if (loading) {
     return (
