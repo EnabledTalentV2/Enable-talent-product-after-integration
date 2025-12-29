@@ -46,7 +46,7 @@ export default function DashBoardNavbarEmployer() {
 
         <div className="flex items-center gap-7">
           <Link
-            href="/dashboard/profile"
+            href="/employer/dashboard/company-profile"
             className="hidden items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900 md:flex"
           >
             <User size={18} />
