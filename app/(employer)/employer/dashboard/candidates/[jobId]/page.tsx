@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
 import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
-import { CandidateProfile, CandidateStage } from "./types";
-import { MOCK_JOBS, MOCK_CANDIDATES, getJobStats } from "../mock-db";
+import { CandidateProfile, CandidateStage } from "../types";
+import { MOCK_CANDIDATES, getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { toJobHeaderInfo } from "@/lib/employerJobsUtils";
 
 const TABS = [
   { id: "accepted", label: "Accepted" },
@@ -28,10 +31,16 @@ const fetchCandidates = async (
 };
 
 export default function CandidatesPage() {
-  // In a real app, you would get this ID from the URL params (e.g., /candidates/[jobId])
-  // For now, we select the first job as the "Active" context
-  const currentJobId = "job-1";
-  const currentJob = MOCK_JOBS.find((j) => j.id === currentJobId);
+  const router = useRouter();
+  const params = useParams();
+  const jobIdParam = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
+  const currentJobId = typeof jobIdParam === "string" ? jobIdParam : "";
+  const { jobs, hasFetched } = useEmployerJobsStore();
+
+  const currentJob = useMemo(() => {
+    if (!currentJobId) return null;
+    return jobs.find((job) => job.id === currentJobId) ?? null;
+  }, [currentJobId, jobs]);
 
   const [activeTab, setActiveTab] =
     useState<(typeof TABS)[number]["id"]>("matching");
@@ -42,9 +51,26 @@ export default function CandidatesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Calculate stats dynamically for the current job
-  const jobStats = useMemo(() => getJobStats(currentJobId), [currentJobId]);
+  const jobStats = useMemo(() => {
+    if (!currentJobId || !currentJob) {
+      return { accepted: 0, declined: 0, requestsSent: 0, matchingCandidates: 0 };
+    }
+
+    return getJobStats(currentJobId);
+  }, [currentJob, currentJobId]);
 
   useEffect(() => {
+    if (!currentJobId) return;
+    if (hasFetched && !currentJob) {
+      router.replace("/employer/dashboard/listed-jobs");
+    }
+  }, [currentJobId, currentJob, hasFetched, router]);
+
+  useEffect(() => {
+    if (!currentJobId || !currentJob) {
+      return;
+    }
+
     let isMounted = true;
 
     const loadCandidates = async () => {
@@ -74,19 +100,35 @@ export default function CandidatesPage() {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, currentJobId]);
+  }, [activeTab, currentJobId, currentJob]);
 
   const selectedCandidate =
     candidates.find((c) => c.id === selectedCandidateId) || null;
 
-  if (!currentJob) return <div>Job not found</div>;
+  if (!currentJobId || !hasFetched) {
+    return (
+      <div className="flex h-screen items-center justify-center text-slate-500">
+        Loading candidates...
+      </div>
+    );
+  }
+
+  if (!currentJob) {
+    return (
+      <div className="flex h-screen items-center justify-center text-slate-500">
+        Redirecting to listed jobs...
+      </div>
+    );
+  }
+
+  const jobHeaderInfo = toJobHeaderInfo(currentJob);
 
   return (
     <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
       {/* Top Section: Job Header */}
       <div className="shrink-0">
         {/* Pass the shared job info and calculated stats */}
-        <JobHeader jobInfo={currentJob} stats={jobStats} />
+        <JobHeader jobInfo={jobHeaderInfo} stats={jobStats} />
       </div>
 
       {/* Main Content: Split View */}

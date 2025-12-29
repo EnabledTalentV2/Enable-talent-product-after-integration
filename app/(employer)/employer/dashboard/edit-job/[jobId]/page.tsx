@@ -1,0 +1,94 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, X } from "lucide-react";
+import JobForm from "@/components/employer/dashboard/JobForm";
+import Toast from "@/components/Toast";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import type { JobFormValues } from "@/lib/employerJobsTypes";
+import { toJobFormValues } from "@/lib/employerJobsUtils";
+
+export default function EditJobPage() {
+  const router = useRouter();
+  const params = useParams();
+  const jobIdParam = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
+  const jobId = typeof jobIdParam === "string" ? jobIdParam : "";
+  const { jobs, updateJob, hasFetched } = useEmployerJobsStore();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const job = jobs.find((entry) => entry.id === jobId) ?? null;
+
+  useEffect(() => {
+    if (!jobId) return;
+    if (hasFetched && !job) {
+      router.replace("/employer/dashboard/listed-jobs");
+    }
+  }, [hasFetched, job, jobId, router]);
+
+  const initialValues = useMemo(
+    () => (job ? toJobFormValues(job) : undefined),
+    [job]
+  );
+  if (!jobId || !hasFetched) {
+    return (
+      <div className="flex h-screen items-center justify-center text-slate-500">
+        Loading job details...
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="flex h-screen items-center justify-center text-slate-500">
+        Redirecting to listed jobs...
+      </div>
+    );
+  }
+
+  const handleSubmit = async (values: JobFormValues) => {
+    try {
+      await updateJob(jobId, values);
+      router.push("/employer/dashboard/listed-jobs");
+    } catch (error) {
+      setToastMessage("Unable to save changes. Please try again.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-blue-50/50 p-6 flex justify-center items-start">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm p-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <Link
+            href="/employer/dashboard/listed-jobs"
+            className="flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Link>
+          <button className="text-gray-400 hover:text-gray-600" type="button">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">Edit Job</h1>
+
+        <JobForm
+          submitLabel="Save Changes"
+          initialValues={initialValues}
+          onSubmit={handleSubmit}
+        />
+      </div>
+
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
+    </div>
+  );
+}

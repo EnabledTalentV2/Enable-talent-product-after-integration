@@ -1,34 +1,10 @@
 import { CandidateProfile } from "./candidates/types";
 
-// 1. Define Jobs
-export const MOCK_JOBS = [
-  {
-    id: "job-1",
-    title: "UI/UX Designer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    postedTime: "12 hrs ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-  },
-  {
-    id: "job-2",
-    title: "Senior Software Engineer",
-    company: "Meta",
-    location: "San Francisco, CA",
-    postedTime: "2 days ago",
-    status: "Active" as const,
-    type: "Full Time",
-    experience: "Exp: 7+ Years",
-  },
-];
-
-// 2. Define Candidates (Linked to Jobs via jobId)
+// Define Candidates (Linked to Jobs via jobId)
 export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   {
     id: "1",
-    jobId: "job-1", // Linked to UI/UX Designer
+    jobId: "ui-ux-designer", // Linked to UI/UX Designer
     name: "Nalley Heather D.",
     role: "Website Developer",
     location: "Allentown, New Mexico 31134",
@@ -84,7 +60,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "2",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Jennifer Allison",
     role: "UX Designer",
     location: "Allentown, New Mexico 31134",
@@ -107,7 +83,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "3",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Henry Creel",
     role: "Marketing Analyst",
     location: "Allentown, New Mexico 31134",
@@ -130,7 +106,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "4",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Milley Arthur",
     role: "Data Analyst",
     location: "Allentown, New Mexico 31134",
@@ -153,7 +129,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "5",
-    jobId: "job-2", // Linked to Software Engineer
+    jobId: "software-engineer", // Linked to Software Engineer
     name: "John Doe",
     role: "Software Engineer",
     location: "San Francisco, CA",
@@ -176,7 +152,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "6",
-    jobId: "job-2",
+    jobId: "software-engineer",
     name: "Jane Smith",
     role: "Product Manager",
     location: "New York, NY",
@@ -199,7 +175,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
 ];
 
-// 3. Helper to get stats for ANY job
+// Helper to get stats for ANY job
 export const getJobStats = (jobId: string) => {
   const jobCandidates = MOCK_CANDIDATES.filter((c) => c.jobId === jobId);
 

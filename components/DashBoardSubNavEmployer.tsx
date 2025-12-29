@@ -17,6 +17,7 @@ export default function DashboardSubNavEmployer() {
   const inactiveClass =
     "text-slate-600 hover:bg-slate-200 hover:text-slate-900";
   const activeClass = "bg-[#DCE6F1] text-slate-900 shadow-sm";
+  const disabledClass = "text-slate-400";
   const navItems = [
     {
       href: "/employer/dashboard",
@@ -29,6 +30,7 @@ export default function DashboardSubNavEmployer() {
       label: "Candidates",
       icon: User,
       isActive: (path: string) => path.startsWith("/employer/dashboard/candidates"),
+      disabled: true,
     },
     {
       href: "/employer/dashboard/listed-jobs",
@@ -52,15 +54,35 @@ export default function DashboardSubNavEmployer() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.isActive(pathname);
+            const stateClass = isActive
+              ? activeClass
+              : item.disabled
+              ? disabledClass
+              : inactiveClass;
+            const baseClass = `${linkClass} ${
+              item.disabled ? "cursor-default pointer-events-none" : ""
+            }`;
+
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  aria-disabled="true"
+                  className={`${baseClass} ${stateClass}`}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                </div>
+              );
+            }
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`${linkClass} ${
-                  isActive ? activeClass : inactiveClass
-                }`}
+                className={`${baseClass} ${stateClass}`}
               >
                 <Icon size={16} />
                 <span>{item.label}</span>

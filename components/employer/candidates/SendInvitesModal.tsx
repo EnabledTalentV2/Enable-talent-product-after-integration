@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { X, Search, Check } from "lucide-react";
-import { MOCK_JOBS } from "@/app/(employer)/employer/dashboard/mock-db";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { formatPostedTime, formatExperienceLabel } from "@/lib/employerJobsUtils";
+import { getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
 
 interface SendInvitesModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ export default function SendInvitesModal({
 }: SendInvitesModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
+  const jobs = useEmployerJobsStore((state) => state.jobs);
 
   if (!isOpen) return null;
 
@@ -26,7 +29,7 @@ export default function SendInvitesModal({
     );
   };
 
-  const filteredJobs = MOCK_JOBS.filter((job) =>
+  const filteredJobs = jobs.filter((job) =>
     job.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -66,92 +69,110 @@ export default function SendInvitesModal({
         {/* Job List */}
         <div className="max-h-[400px] overflow-y-auto px-6 pb-4">
           <div className="space-y-4">
-            {filteredJobs.map((job) => {
-              const isSelected = selectedJobIds.includes(job.id);
-              return (
-                <div
-                  key={job.id}
-                  onClick={() => toggleJobSelection(job.id)}
-                  className={`cursor-pointer rounded-2xl border-2 p-4 transition-all ${
-                    isSelected
-                      ? "border-[#C27803] bg-orange-50/30"
-                      : "border-slate-100 bg-white hover:border-slate-200"
-                  }`}
-                >
-                  <div className="mb-3 flex items-start justify-between">
-                    <span className="text-xs font-medium text-slate-500">
-                      Posted {job.postedTime}
-                    </span>
-                    <div
-                      className={`flex h-6 w-6 items-center justify-center rounded-md border transition-colors ${
-                        isSelected
-                          ? "border-[#C27803] bg-[#C27803] text-white"
-                          : "border-slate-300 bg-white"
-                      }`}
-                    >
-                      {isSelected && <Check className="h-4 w-4" />}
+            {filteredJobs.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                No jobs available to invite for right now.
+              </div>
+            ) : (
+              filteredJobs.map((job) => {
+                const isSelected = selectedJobIds.includes(job.id);
+                const stats = getJobStats(job.id);
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => toggleJobSelection(job.id)}
+                    className={`cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                      isSelected
+                        ? "border-[#C27803] bg-orange-50/30"
+                        : "border-slate-100 bg-white hover:border-slate-200"
+                    }`}
+                  >
+                    <div className="mb-3 flex items-start justify-between">
+                      <span className="text-xs font-medium text-slate-500">
+                        Posted {formatPostedTime(job.postedAt)}
+                      </span>
+                      <div
+                        className={`flex h-6 w-6 items-center justify-center rounded-md border transition-colors ${
+                          isSelected
+                            ? "border-[#C27803] bg-[#C27803] text-white"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-4 w-4" />}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-slate-100">
+                        {/* Placeholder for Company Logo - using first letter of company */}
+                        <div className="flex h-full w-full items-center justify-center bg-blue-100 text-xl font-bold text-blue-600">
+                          {job.company.charAt(0)}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-slate-900">
+                          {job.title}
+                        </h3>
+                        <p className="text-sm text-slate-500">{job.company}</p>
+
+                        <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                          <svg
+                            className="h-4 w-4 text-[#E85D04]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          {job.location}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
+                            {formatExperienceLabel(job.experience)}
+                          </span>
+                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
+                            {job.employmentType}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-6 border-t border-slate-100 pt-3 text-xs font-medium text-slate-600">
+                          <span>
+                            Accepted:{" "}
+                            <span className="text-slate-900">
+                              {stats.accepted}
+                            </span>
+                          </span>
+                          <span>
+                            Declined:{" "}
+                            <span className="text-slate-900">
+                              {stats.declined}
+                            </span>
+                          </span>
+                          <span>
+                            Matching:{" "}
+                            <span className="text-slate-900">
+                              {stats.matchingCandidates}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex gap-4">
-                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-slate-100">
-                      {/* Placeholder for Company Logo - using first letter of company */}
-                      <div className="flex h-full w-full items-center justify-center bg-blue-100 text-xl font-bold text-blue-600">
-                        {job.company.charAt(0)}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-slate-900">{job.title}</h3>
-                      <p className="text-sm text-slate-500">{job.company}</p>
-
-                      <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
-                        <svg
-                          className="h-4 w-4 text-[#E85D04]"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                        {job.location}
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
-                          {job.experience}
-                        </span>
-                        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
-                          {job.type}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 flex items-center gap-6 border-t border-slate-100 pt-3 text-xs font-medium text-slate-600">
-                        <span>
-                          Accepted: <span className="text-slate-900">56</span>
-                        </span>
-                        <span>
-                          Declined: <span className="text-slate-900">367</span>
-                        </span>
-                        <span>
-                          Matching: <span className="text-slate-900">97</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
