@@ -59,13 +59,15 @@ export default function DashBoardNavbar() {
             <Bell size={20} />
             <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
           </button>
-          <button className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90">
+          <Link
+            href="/dashboard/career-coach"
+            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+          >
             <Search size={18} strokeWidth={3} />
             <span>AI Career Coach</span>
-          </button>
+          </Link>
         </div>
       </div>
     </nav>
   );
 }
-
