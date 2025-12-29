@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import type { UserData } from "../types";
@@ -15,7 +15,14 @@ type Errors = {
 type Props = {
   data: UserData["otherDetails"];
   errors?: Errors;
-  onChange: (patch: Partial<Pick<UserData["otherDetails"], "careerStage" | "availability" | "desiredSalary">>) => void;
+  onChange: (
+    patch: Partial<
+      Pick<
+        UserData["otherDetails"],
+        "careerStage" | "availability" | "desiredSalary"
+      >
+    >
+  ) => void;
   onLanguageChange: (index: number, patch: Partial<LanguageEntry>) => void;
   onAddLanguage: () => void;
   onRemoveLanguage?: (index: number) => void;
@@ -41,7 +48,10 @@ export default function OtherDetails({
     (errors?.availability ? 1 : 0) +
     (errors?.desiredSalary ? 1 : 0) +
     (errors?.languages
-      ? Object.values(errors.languages).reduce((acc, val) => acc + (val ? Object.keys(val).length : 0), 0)
+      ? Object.values(errors.languages).reduce(
+          (acc, val) => acc + (val ? Object.keys(val).length : 0),
+          0
+        )
       : 0);
 
   const careerStageOptions = [
@@ -51,7 +61,16 @@ export default function OtherDetails({
     "Senior professional (10+ years)",
   ];
 
-  const languageOptions = ["English", "French", "Spanish", "Hindi", "Arabic", "Mandarin", "Other"];
+  const languageOptions = [
+    "English",
+    "French",
+    "Spanish",
+    "Hindi",
+    "Arabic",
+    "Mandarin",
+    "Punjabi",
+    "Other",
+  ];
   const proficiencyOptions = ["Basic", "Intermediate", "Proficient", "Fluent"];
 
   const availabilityOptions = [
@@ -63,7 +82,14 @@ export default function OtherDetails({
     "More than 3 months",
   ];
 
-  const desiredSalaryOptions = ["< 40000", "40000-60000", "60000-80000", "80000-90000", "90000-120000", "120000+"];
+  const desiredSalaryOptions = [
+    "< 40000",
+    "40000-60000",
+    "60000-80000",
+    "80000-90000",
+    "90000-120000",
+    "120000+",
+  ];
 
   const availabilityError = errors?.availability;
 
@@ -86,14 +112,18 @@ export default function OtherDetails({
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-language`}
-                  className={`block text-base font-medium ${entryErrors.language ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${
+                    entryErrors.language ? "text-red-600" : "text-slate-700"
+                  }`}
                 >
                   Language
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-language`}
                   value={entry.language}
-                  onChange={(e) => onLanguageChange(idx, { language: e.target.value })}
+                  onChange={(e) =>
+                    onLanguageChange(idx, { language: e.target.value })
+                  }
                   className={selectClass(Boolean(entryErrors.language))}
                 >
                   <option value="">Select</option>
@@ -103,20 +133,26 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.language ? <p className="text-sm text-red-600">{entryErrors.language}</p> : null}
+                {entryErrors.language ? (
+                  <p className="text-sm text-red-600">{entryErrors.language}</p>
+                ) : null}
               </div>
 
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-speaking`}
-                  className={`block text-base font-medium ${entryErrors.speaking ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${
+                    entryErrors.speaking ? "text-red-600" : "text-slate-700"
+                  }`}
                 >
                   Speaking
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-speaking`}
                   value={entry.speaking}
-                  onChange={(e) => onLanguageChange(idx, { speaking: e.target.value })}
+                  onChange={(e) =>
+                    onLanguageChange(idx, { speaking: e.target.value })
+                  }
                   className={selectClass(Boolean(entryErrors.speaking))}
                 >
                   <option value="">Select</option>
@@ -126,20 +162,26 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.speaking ? <p className="text-sm text-red-600">{entryErrors.speaking}</p> : null}
+                {entryErrors.speaking ? (
+                  <p className="text-sm text-red-600">{entryErrors.speaking}</p>
+                ) : null}
               </div>
 
               <div className="space-y-2">
                 <label
                   htmlFor={`otherDetails-lang-${idx}-reading`}
-                  className={`block text-base font-medium ${entryErrors.reading ? "text-red-600" : "text-slate-700"}`}
+                  className={`block text-base font-medium ${
+                    entryErrors.reading ? "text-red-600" : "text-slate-700"
+                  }`}
                 >
                   Reading
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-reading`}
                   value={entry.reading}
-                  onChange={(e) => onLanguageChange(idx, { reading: e.target.value })}
+                  onChange={(e) =>
+                    onLanguageChange(idx, { reading: e.target.value })
+                  }
                   className={selectClass(Boolean(entryErrors.reading))}
                 >
                   <option value="">Select</option>
@@ -149,14 +191,18 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.reading ? <p className="text-sm text-red-600">{entryErrors.reading}</p> : null}
+                {entryErrors.reading ? (
+                  <p className="text-sm text-red-600">{entryErrors.reading}</p>
+                ) : null}
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor={`otherDetails-lang-${idx}-writing`}
-                    className={`block text-base font-medium ${entryErrors.writing ? "text-red-600" : "text-slate-700"}`}
+                    className={`block text-base font-medium ${
+                      entryErrors.writing ? "text-red-600" : "text-slate-700"
+                    }`}
                   >
                     Writing
                   </label>
@@ -174,7 +220,9 @@ export default function OtherDetails({
                 <select
                   id={`otherDetails-lang-${idx}-writing`}
                   value={entry.writing}
-                  onChange={(e) => onLanguageChange(idx, { writing: e.target.value })}
+                  onChange={(e) =>
+                    onLanguageChange(idx, { writing: e.target.value })
+                  }
                   className={selectClass(Boolean(entryErrors.writing))}
                 >
                   <option value="">Select</option>
@@ -184,7 +232,9 @@ export default function OtherDetails({
                     </option>
                   ))}
                 </select>
-                {entryErrors.writing ? <p className="text-sm text-red-600">{entryErrors.writing}</p> : null}
+                {entryErrors.writing ? (
+                  <p className="text-sm text-red-600">{entryErrors.writing}</p>
+                ) : null}
               </div>
             </div>
           );
@@ -201,7 +251,12 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-careerStage" className={`block text-base font-medium ${errors?.careerStage ? "text-red-600" : "text-slate-700"}`}>
+        <label
+          htmlFor="otherDetails-careerStage"
+          className={`block text-base font-medium ${
+            errors?.careerStage ? "text-red-600" : "text-slate-700"
+          }`}
+        >
           How would you identify your career stage (choose best option)
         </label>
         <select
@@ -217,11 +272,18 @@ export default function OtherDetails({
             </option>
           ))}
         </select>
-        {errors?.careerStage ? <p className="text-sm text-red-600">{errors.careerStage}</p> : null}
+        {errors?.careerStage ? (
+          <p className="text-sm text-red-600">{errors.careerStage}</p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-availability" className={`block text-base font-medium ${availabilityError ? "text-red-600" : "text-slate-700"}`}>
+        <label
+          htmlFor="otherDetails-availability"
+          className={`block text-base font-medium ${
+            availabilityError ? "text-red-600" : "text-slate-700"
+          }`}
+        >
           {availabilityError ||
             "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
         </label>
@@ -246,7 +308,12 @@ export default function OtherDetails({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="otherDetails-desiredSalary" className={`block text-base font-medium ${errors?.desiredSalary ? "text-red-600" : "text-slate-700"}`}>
+        <label
+          htmlFor="otherDetails-desiredSalary"
+          className={`block text-base font-medium ${
+            errors?.desiredSalary ? "text-red-600" : "text-slate-700"
+          }`}
+        >
           Desired salary (CAD)
         </label>
         <select
@@ -262,10 +329,10 @@ export default function OtherDetails({
             </option>
           ))}
         </select>
-        {errors?.desiredSalary ? <p className="text-sm text-red-600">{errors.desiredSalary}</p> : null}
+        {errors?.desiredSalary ? (
+          <p className="text-sm text-red-600">{errors.desiredSalary}</p>
+        ) : null}
       </div>
     </div>
   );
 }
-
-
