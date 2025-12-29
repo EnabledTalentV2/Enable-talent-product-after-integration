@@ -1,5 +1,5 @@
 import React from "react";
-import { JobInfo, JobStats } from "../types";
+import { JobInfo, JobStats } from "@/app/(employer)/employer/dashboard/candidates/types";
 
 interface JobHeaderProps {
   jobInfo: JobInfo;

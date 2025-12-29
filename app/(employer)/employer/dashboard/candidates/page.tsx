@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import JobHeader from "./components/JobHeader";
-import CandidateList from "./components/CandidateList";
-import CandidateDetail from "./components/CandidateDetail";
+import JobHeader from "@/components/employer/candidates/JobHeader";
+import CandidateList from "@/components/employer/candidates/CandidateList";
+import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
 import { CandidateProfile, CandidateStage } from "./types";
 import { MOCK_JOBS, MOCK_CANDIDATES, getJobStats } from "../mock-db";
 
@@ -82,7 +82,7 @@ export default function CandidatesPage() {
   if (!currentJob) return <div>Job not found</div>;
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-[1600px] flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
+    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
       {/* Top Section: Job Header */}
       <div className="shrink-0">
         {/* Pass the shared job info and calculated stats */}

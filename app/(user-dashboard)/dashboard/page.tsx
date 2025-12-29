@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
-import AttentionWidget from "@/components/dashboard/AttentionWidget";
-import DashboardSummaryCard from "@/components/dashboard/DashboardSummaryCard";
-import TimeRangeTabs from "@/components/dashboard/TimeRangeTabs";
+import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
+import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
+import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 

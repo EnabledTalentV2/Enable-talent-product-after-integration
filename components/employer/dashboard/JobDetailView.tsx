@@ -1,4 +1,5 @@
 import { Pencil, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 interface JobDetail {
   id: string;
@@ -46,9 +47,12 @@ export default function JobDetailView({
             <p className="text-slate-500">{job.company}</p>
           </div>
         </div>
-        <button className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors">
+        <Link
+          href={`/employer/dashboard/post-jobs?jobId=${job.id}`}
+          className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+        >
           <Pencil className="h-5 w-5 text-slate-400" />
-        </button>
+        </Link>
       </div>
 
       {/* Stats Grid */}

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import DashboardMetricCard from "@/components/dashboard/DashboardMetricCard";
+import DashboardMetricCard from "@/components/employer/dashboard/DashboardMetricCard";
 
 type SummaryMetric = {
   label: string;

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
-import ListedJobCard from "@/components/dashboard/ListedJobCard";
-import JobDetailView from "@/components/dashboard/JobDetailView";
+import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
+import JobDetailView from "@/components/employer/dashboard/JobDetailView";
 
 // --- Types ---
 
@@ -280,7 +280,7 @@ export default function ListedJobsPage() {
   }, [selectedJobId]);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 max-w-360 mx-auto">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Job List */}
         <div className="flex flex-col lg:col-span-4">
