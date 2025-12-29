@@ -62,5 +62,5 @@ export interface JobInfo {
   company: string;
   location: string;
   postedTime: string;
-  status: "Active" | "Closed";
+  status: "Active" | "Closed" | "Draft";
 }
