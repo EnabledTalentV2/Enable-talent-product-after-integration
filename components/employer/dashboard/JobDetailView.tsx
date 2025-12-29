@@ -100,10 +100,13 @@ export default function JobDetailView({
       </div>
 
       {/* View Candidates Button */}
-      <button className="w-full bg-[#C27831] hover:bg-[#A66528] text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-medium mb-8 transition-colors">
+      <Link
+        href={`/employer/dashboard/candidates/${job.id}`}
+        className="w-full bg-[#C27831] hover:bg-[#A66528] text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-medium mb-8 transition-colors"
+      >
         View Candidates
         <ArrowRight className="h-4 w-4" />
-      </button>
+      </Link>
 
       <hr className="border-slate-100 mb-8" />
 

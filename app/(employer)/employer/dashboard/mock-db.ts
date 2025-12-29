@@ -3,7 +3,7 @@ import { CandidateProfile } from "./candidates/types";
 // 1. Define Jobs
 export const MOCK_JOBS = [
   {
-    id: "job-1",
+    id: "ui-ux-designer",
     title: "UI/UX Designer",
     company: "Meta",
     location: "Allentown, New Mexico 31134",
@@ -13,14 +13,34 @@ export const MOCK_JOBS = [
     experience: "Exp: 5+ Years",
   },
   {
-    id: "job-2",
-    title: "Senior Software Engineer",
+    id: "software-engineer",
+    title: "Software Engineer",
     company: "Meta",
-    location: "San Francisco, CA",
-    postedTime: "2 days ago",
+    location: "Allentown, New Mexico 31134",
+    postedTime: "12 hrs ago",
     status: "Active" as const,
     type: "Full Time",
-    experience: "Exp: 7+ Years",
+    experience: "Exp: 5+ Years",
+  },
+  {
+    id: "marketing-specialist",
+    title: "Marketing Specialist",
+    company: "Meta",
+    location: "Allentown, New Mexico 31134",
+    postedTime: "12 hrs ago",
+    status: "Active" as const,
+    type: "Full Time",
+    experience: "Exp: 5+ Years",
+  },
+  {
+    id: "sales-lead",
+    title: "Sales Lead",
+    company: "Meta",
+    location: "Allentown, New Mexico 31134",
+    postedTime: "12 hrs ago",
+    status: "Active" as const,
+    type: "Full Time",
+    experience: "Exp: 5+ Years",
   },
 ];
 
@@ -28,7 +48,7 @@ export const MOCK_JOBS = [
 export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   {
     id: "1",
-    jobId: "job-1", // Linked to UI/UX Designer
+    jobId: "ui-ux-designer", // Linked to UI/UX Designer
     name: "Nalley Heather D.",
     role: "Website Developer",
     location: "Allentown, New Mexico 31134",
@@ -84,7 +104,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "2",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Jennifer Allison",
     role: "UX Designer",
     location: "Allentown, New Mexico 31134",
@@ -107,7 +127,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "3",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Henry Creel",
     role: "Marketing Analyst",
     location: "Allentown, New Mexico 31134",
@@ -130,7 +150,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "4",
-    jobId: "job-1",
+    jobId: "ui-ux-designer",
     name: "Milley Arthur",
     role: "Data Analyst",
     location: "Allentown, New Mexico 31134",
@@ -153,7 +173,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "5",
-    jobId: "job-2", // Linked to Software Engineer
+    jobId: "software-engineer", // Linked to Software Engineer
     name: "John Doe",
     role: "Software Engineer",
     location: "San Francisco, CA",
@@ -176,7 +196,7 @@ export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [
   },
   {
     id: "6",
-    jobId: "job-2",
+    jobId: "software-engineer",
     name: "Jane Smith",
     role: "Product Manager",
     location: "New York, NY",
