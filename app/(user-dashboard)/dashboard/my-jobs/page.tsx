@@ -5,8 +5,9 @@ import { Banknote, MapPin } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 
-type JobStatus = "Accepted" | "Rejected";
+type JobStatus = "Applied" | "Accepted" | "Rejected";
 
 type Job = {
   id: string;
@@ -16,15 +17,15 @@ type Job = {
   posted: string;
   status: string;
   location: string;
-  salary: string;
-  match: number;
+  salary?: string;
+  match?: number;
   applicationStatus: JobStatus;
-  jobType: string;
-  workMode: string;
-  yearsExperience: string;
-  about: string;
-  description: string[];
-  requirements: string[];
+  jobType?: string;
+  workMode?: string;
+  yearsExperience?: string;
+  about?: string;
+  description?: string[];
+  requirements?: string[];
 };
 
 const jobs: Job[] = [
@@ -138,21 +139,64 @@ const jobs: Job[] = [
   },
 ];
 
-const filters = ["All", "Accepted", "Rejected"] as const;
+const filters = ["All", "Applied", "Accepted", "Rejected"] as const;
 
 export default function MyJobsPage() {
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const didMountRef = useRef(false);
   const userData = useUserDataStore((s) => s.userData);
+  const appliedJobs = useAppliedJobsStore((s) => s.appliedJobs);
   const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+
+  const appliedJobEntries = useMemo(
+    () =>
+      appliedJobs.map((job) => ({
+        id: job.id,
+        title: job.title,
+        company: job.companyName,
+        logo: job.companyLogo,
+        posted: job.posted ?? "Applied recently",
+        status: job.status,
+        location: job.location,
+        salary: job.salary,
+        match: job.match,
+        applicationStatus: "Applied" as const,
+        jobType: job.jobType,
+        workMode: job.workMode,
+        yearsExperience: job.yearsExperience,
+        about: job.about,
+        description: job.description,
+        requirements: job.requirements,
+      })),
+    [appliedJobs]
+  );
+
+  const allJobs = useMemo(() => {
+    const existingIds = new Set(jobs.map((job) => job.id));
+    const uniqueApplied = appliedJobEntries.filter((job) => !existingIds.has(job.id));
+    return [...uniqueApplied, ...jobs];
+  }, [appliedJobEntries]);
+
+  useEffect(() => {
+    if (!allJobs.length) {
+      if (selectedId) {
+        setSelectedId("");
+      }
+      return;
+    }
+
+    if (!allJobs.some((job) => job.id === selectedId)) {
+      setSelectedId(allJobs[0].id);
+    }
+  }, [allJobs, selectedId]);
 
   const filteredJobs = useMemo(() => {
     if (activeFilter === "All") {
-      return jobs;
+      return allJobs;
     }
-    return jobs.filter((job) => job.applicationStatus === activeFilter);
-  }, [activeFilter]);
+    return allJobs.filter((job) => job.applicationStatus === activeFilter);
+  }, [activeFilter, allJobs]);
 
   const activeJob = filteredJobs.find((job) => job.id === selectedId) ?? filteredJobs[0];
   const activeJobId = activeJob?.id ?? selectedId;
@@ -192,81 +236,97 @@ export default function MyJobsPage() {
     setSelectedId(id);
   };
 
-  const JobDetailsPanel = ({ job }: { job: Job }) => (
-    <div className="w-full rounded-[40px] bg-white p-6 shadow-sm md:p-10">
-      <div className="space-y-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            {job.logo ? (
-              <img
-                src={job.logo}
-                alt={job.company}
-                className="h-16 w-16 object-contain"
-              />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
-                {job.company.charAt(0)}
+  const JobDetailsPanel = ({ job }: { job: Job }) => {
+    const jobTypeLabel = job.jobType ?? "TBD";
+    const workModeLabel = job.workMode ?? "TBD";
+    const yearsLabel = job.yearsExperience ?? "TBD";
+    const salaryLabel = job.salary ?? "Not disclosed";
+    const aboutText = job.about ?? "Details will be shared after you apply.";
+    const descriptionItems =
+      job.description && job.description.length > 0 ? job.description : null;
+    const requirementItems =
+      job.requirements && job.requirements.length > 0 ? job.requirements : null;
+
+    return (
+      <div className="w-full rounded-[40px] bg-white p-6 shadow-sm md:p-10">
+        <div className="space-y-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-5">
+              {job.logo ? (
+                <img src={job.logo} alt={job.company} className="h-16 w-16 object-contain" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
+                  {job.company.charAt(0)}
+                </div>
+              )}
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">{job.title}</h2>
+                <p className="text-lg font-medium text-slate-500">{job.company}</p>
               </div>
-            )}
+            </div>
+            <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
+              {job.status}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
             <div>
-              <h2 className="text-3xl font-bold text-slate-900">{job.title}</h2>
-              <p className="text-lg font-medium text-slate-500">{job.company}</p>
+              <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
+              <p className="text-lg font-bold text-slate-900">{jobTypeLabel}</p>
+            </div>
+            <div>
+              <p className="mb-1 text-base font-medium text-slate-400">Location</p>
+              <p className="text-lg font-bold text-slate-900">{job.location}</p>
+            </div>
+            <div>
+              <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
+              <p className="text-lg font-bold text-slate-900">{workModeLabel}</p>
+            </div>
+            <div>
+              <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
+              <p className="text-lg font-bold text-slate-900">{yearsLabel}</p>
             </div>
           </div>
-          <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
-            {job.status}
-          </span>
-        </div>
 
-        <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
           <div>
-            <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
-            <p className="text-lg font-bold text-slate-900">{job.jobType}</p>
+            <p className="mb-1 text-base font-medium text-slate-400">Salary</p>
+            <p className="text-2xl font-bold text-slate-900">{salaryLabel}</p>
           </div>
-          <div>
-            <p className="mb-1 text-base font-medium text-slate-400">Location</p>
-            <p className="text-lg font-bold text-slate-900">{job.location}</p>
+
+          <div className="space-y-4">
+            <h4 className="text-xl font-bold text-slate-900">About the job</h4>
+            <p className="leading-relaxed text-slate-600">{aboutText}</p>
           </div>
-          <div>
-            <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
-            <p className="text-lg font-bold text-slate-900">{job.workMode}</p>
+
+          <div className="space-y-4">
+            <h4 className="text-xl font-bold text-slate-900">Description</h4>
+            {descriptionItems ? (
+              <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+                {descriptionItems.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-slate-600">Details will be shared after you apply.</p>
+            )}
           </div>
-          <div>
-            <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
-            <p className="text-lg font-bold text-slate-900">{job.yearsExperience}</p>
+
+          <div className="space-y-4">
+            <h4 className="text-xl font-bold text-slate-900">Requirement</h4>
+            {requirementItems ? (
+              <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+                {requirementItems.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-slate-600">Details will be shared after you apply.</p>
+            )}
           </div>
-        </div>
-
-        <div>
-          <p className="mb-1 text-base font-medium text-slate-400">Salary</p>
-          <p className="text-2xl font-bold text-slate-900">{job.salary}</p>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-xl font-bold text-slate-900">About the job</h4>
-          <p className="leading-relaxed text-slate-600">{job.about}</p>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-xl font-bold text-slate-900">Description</h4>
-          <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-            {job.description.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="space-y-4">
-          <h4 className="text-xl font-bold text-slate-900">Requirement</h4>
-          <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-            {job.requirements.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
@@ -293,6 +353,9 @@ export default function MyJobsPage() {
             <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
               {filteredJobs.map((job) => {
                 const isSelected = selectedId === job.id;
+                const postedLabel = job.posted ?? "Applied recently";
+                const salaryLabel = job.salary ?? "Not disclosed";
+                const matchLabel = typeof job.match === "number" ? `${job.match}%` : "--";
                 return (
                   <div key={job.id} className="space-y-4">
                     <button
@@ -302,7 +365,7 @@ export default function MyJobsPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-base font-medium text-slate-400">{job.posted}</span>
+                        <span className="text-base font-medium text-slate-400">{postedLabel}</span>
                         <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
                           {job.status}
                         </span>
@@ -334,11 +397,11 @@ export default function MyJobsPage() {
                           </div>
                           <div className="flex items-center gap-2 text-slate-500">
                             <Banknote size={18} className="text-orange-400" />
-                            <span className="text-base font-medium">{job.salary}</span>
+                            <span className="text-base font-medium">{salaryLabel}</span>
                           </div>
                         </div>
                         <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
-                          <p className="text-lg font-bold text-slate-900">{job.match}%</p>
+                          <p className="text-lg font-bold text-slate-900">{matchLabel}</p>
                           <p className="text-sm font-bold uppercase tracking-wider text-slate-700">Matching</p>
                         </div>
                       </div>
