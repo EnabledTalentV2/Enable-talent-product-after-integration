@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import {
   useEffect,
   useRef,
@@ -150,8 +151,17 @@ export default function SignupEmployerPage() {
 
   return (
     <main className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src={backgroundVectorSvg}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
       <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
-        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-xl" />
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 bg-[#C5D8F5]/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
         <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
           {/* Left Side - Welcome */}
           <div className="flex max-w-105 flex-col items-center text-center">
@@ -288,9 +298,7 @@ export default function SignupEmployerPage() {
                   value={employerName}
                   aria-invalid={Boolean(fieldErrors.employerName)}
                   aria-describedby={
-                    fieldErrors.employerName
-                      ? "employer-name-error"
-                      : undefined
+                    fieldErrors.employerName ? "employer-name-error" : undefined
                   }
                   aria-required="true"
                   onChange={(e) => {

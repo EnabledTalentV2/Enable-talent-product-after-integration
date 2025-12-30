@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import backgroundVector from "@/public/Vector 4500.png";
+import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
@@ -72,8 +72,17 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src={backgroundVectorSvg}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
       <div className="relative z-10 mx-auto w-full max-w-5xl px-0 ">
-        <div className=" pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
+        <div className=" pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 bg-gradient-to-br from-[#F7D877]/90 via-[#F2BF4A]/90 to-[#E8A426]/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
         <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
           {/* Left Side Content */}
           <div className="flex max-w-105 flex-col items-center text-center ">
@@ -179,7 +188,9 @@ export default function LoginPage() {
                     placeholder="Enter password"
                     value={password}
                     aria-invalid={hasError}
-                    aria-describedby={hasError ? "talent-login-error" : undefined}
+                    aria-describedby={
+                      hasError ? "talent-login-error" : undefined
+                    }
                     aria-required="true"
                     onChange={(event) => setPassword(event.target.value)}
                     required
