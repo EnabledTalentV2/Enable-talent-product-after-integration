@@ -54,7 +54,7 @@ export default function OrganisationInfoPage() {
   const locationRef = useRef<HTMLInputElement | null>(null);
   const foundedRef = useRef<HTMLInputElement | null>(null);
   const websiteRef = useRef<HTMLInputElement | null>(null);
-  const companySizeRef = useRef<HTMLDivElement | null>(null);
+  const companySizeRef = useRef<HTMLFieldSetElement | null>(null);
   const industryRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
