@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, type FormEvent, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -8,12 +14,13 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { setPendingSignup } from "@/lib/localUserStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
+import backgroundVectorSvg from "@/public/Vector 4500.svg";
 
 const inputClasses = (hasError?: boolean) =>
-  `w-full rounded-xl border px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none focus:ring-1 ${
+  `w-full h-11 rounded-lg border bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-gray-200 focus:border-[#E85D04] focus:ring-[#E85D04]"
+      : "border-slate-200 focus:border-[#E58C3A] focus:ring-[#F6C071]/60"
   }`;
 
 type FieldErrors = Partial<{
@@ -37,6 +44,28 @@ export default function SignUpPage() {
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const hasErrors = Object.keys(fieldErrors).length > 0;
+  const fieldMeta: Array<{
+    key: keyof FieldErrors;
+    label: string;
+    ref: RefObject<HTMLInputElement | null>;
+  }> = [
+    { key: "fullName", label: "Full name", ref: fullNameRef },
+    { key: "email", label: "Email", ref: emailRef },
+    { key: "password", label: "Password", ref: passwordRef },
+    {
+      key: "confirmPassword",
+      label: "Confirm password",
+      ref: confirmPasswordRef,
+    },
+  ];
+
+  useEffect(() => {
+    if (hasErrors) {
+      errorSummaryRef.current?.focus();
+    }
+  }, [hasErrors]);
 
   const clearFieldError = (field: keyof FieldErrors) => {
     setFieldErrors((prev) => {
@@ -72,20 +101,6 @@ export default function SignUpPage() {
 
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
-      const fieldOrder: Array<
-        [keyof FieldErrors, RefObject<HTMLInputElement | null>]
-      > = [
-        ["fullName", fullNameRef],
-        ["email", emailRef],
-        ["password", passwordRef],
-        ["confirmPassword", confirmPasswordRef],
-      ];
-      const firstInvalid = fieldOrder.find(([key]) => nextErrors[key]);
-      const target = firstInvalid?.[1]?.current;
-      if (target) {
-        target.focus();
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
       return;
     }
 
@@ -107,231 +122,318 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-[#FCD34D] relative overflow-hidden flex items-center justify-center">
-      {/* Background Curves/Blobs */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border-[60px] border-white/10 -translate-x-1/2 blur-sm pointer-events-none" />
-      <div className="absolute right-0 bottom-0 w-[600px] h-[600px] rounded-full border-[80px] border-white/10 translate-x-1/3 translate-y-1/3 blur-sm pointer-events-none" />
-
-      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 relative z-10">
-        {/* Left Side Content */}
-        <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-lg">
-          <div className="relative mb-8 flex items-center justify-center">
-            {/* Glow effect behind logo */}
-            <div className="absolute inset-0 bg-[#E85D04] blur-3xl opacity-40 rounded-full scale-150"></div>
-            <div className="relative h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-              <Image
-                src={logo}
-                alt="Enabled Talent Logo"
-                className="h-16 w-16 object-contain"
-              />
+    <main className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src={backgroundVectorSvg}
+          alt=""
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 bg-gradient-to-br from-[#F7D877]/90 via-[#F2BF4A]/90 to-[#E8A426]/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
+        <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
+          {/* Left Side Content */}
+          <div className="flex max-w-105 flex-col items-center text-center ">
+            <div className="relative mb-8 flex items-center justify-center">
+              {/* Golden aura behind logo */}
+              <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
+                <Image
+                  src={logo}
+                  alt="Enabled Talent Logo"
+                  className="h-12 w-12 object-contain"
+                />
+              </div>
             </div>
-          </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight">
-            Welcome To Enabled Talent
-          </h1>
-          <p className="text-lg md:text-xl text-slate-800 font-medium">
-            Because every talent deserves the right chance
-          </p>
-        </div>
-
-        {/* Right Side Card */}
-        <div className="w-full max-w-[480px] bg-white rounded-[40px] p-8 md:p-12 shadow-2xl">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign Up</h2>
-            <p className="text-slate-500">
-              Create a Talent account to start applying
+            <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
+              Welcome To Enabled Talent
+            </h1>
+            <p className="text-base text-slate-800 md:text-lg">
+              Because every talent deserves the right chance
             </p>
           </div>
 
-          <form className="space-y-5" noValidate onSubmit={handleSubmit}>
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="fullname"
+          {/* Right Side Card */}
+          <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
+            <div className="text-center mb-7">
+              <h2
+                id="talent-signup-heading"
+                className="text-[26px] font-semibold text-slate-900 mb-2"
               >
-                Full name
-              </label>
-              <input
-                className={inputClasses(Boolean(fieldErrors.fullName))}
-                id="fullname"
-                name="fullname"
-                type="text"
-                autoComplete="name"
-                placeholder="Enter full name"
-                value={fullName}
-                ref={fullNameRef}
-                aria-invalid={Boolean(fieldErrors.fullName)}
-                aria-describedby={
-                  fieldErrors.fullName ? "fullname-error" : undefined
-                }
-                onChange={(event) => {
-                  setFullName(event.target.value);
-                  clearFieldError("fullName");
-                }}
-                required
-              />
-              {fieldErrors.fullName ? (
-                <p id="fullname-error" className="text-sm text-red-600">
-                  {fieldErrors.fullName}
-                </p>
-              ) : null}
+                Sign Up
+              </h2>
+              <p className="text-sm text-slate-500">
+                Create a Talent account to start applying
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                className={inputClasses(Boolean(fieldErrors.email))}
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="Enter email"
-                value={email}
-                ref={emailRef}
-                aria-invalid={Boolean(fieldErrors.email)}
-                aria-describedby={fieldErrors.email ? "email-error" : undefined}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  clearFieldError("email");
-                }}
-                required
-              />
-              {fieldErrors.email ? (
-                <p id="email-error" className="text-sm text-red-600">
-                  {fieldErrors.email}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  className={inputClasses(Boolean(fieldErrors.password))}
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Enter password"
-                  value={password}
-                  ref={passwordRef}
-                  aria-invalid={Boolean(fieldErrors.password)}
-                  aria-describedby={
-                    fieldErrors.password ? "password-error" : undefined
-                  }
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    clearFieldError("password");
-                  }}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-              {fieldErrors.password ? (
-                <p id="password-error" className="text-sm text-red-600">
-                  {fieldErrors.password}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="confirmPassword"
-              >
-                Confirm password
-              </label>
-              <div className="relative">
-                <input
-                  className={inputClasses(Boolean(fieldErrors.confirmPassword))}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Re-enter password"
-                  value={confirmPassword}
-                  ref={confirmPasswordRef}
-                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
-                  aria-describedby={
-                    fieldErrors.confirmPassword
-                      ? "confirmPassword-error"
-                      : undefined
-                  }
-                  onChange={(event) => {
-                    setConfirmPassword(event.target.value);
-                    clearFieldError("confirmPassword");
-                  }}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
-                </button>
-              </div>
-              {fieldErrors.confirmPassword ? (
-                <p id="confirmPassword-error" className="text-sm text-red-600">
-                  {fieldErrors.confirmPassword}
-                </p>
-              ) : null}
-            </div>
-
-            <button
-              type="submit"
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#C2410C] to-[#EA580C] py-3.5 font-bold text-white shadow-lg shadow-orange-500/30 transition-all hover:shadow-orange-500/50 hover:scale-[1.02]"
+            <form
+              className="space-y-4"
+              aria-labelledby="talent-signup-heading"
+              noValidate
+              onSubmit={handleSubmit}
             >
-              Create account
-            </button>
+              {hasErrors ? (
+                <div
+                  ref={errorSummaryRef}
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Please fix the following:</p>
+                  <ul className="mt-2 space-y-1">
+                    {fieldMeta.map(({ key, label, ref }) => {
+                      const message = fieldErrors[key];
+                      if (!message) return null;
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            onClick={() => ref.current?.focus()}
+                            className="text-left underline"
+                          >
+                            {label}: {message}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="fullname"
+                >
+                  Full name
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
+                </label>
+                <input
+                  className={inputClasses(Boolean(fieldErrors.fullName))}
+                  id="fullname"
+                  name="fullname"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Enter full name"
+                  value={fullName}
+                  ref={fullNameRef}
+                  aria-invalid={Boolean(fieldErrors.fullName)}
+                  aria-describedby={
+                    fieldErrors.fullName ? "fullname-error" : undefined
+                  }
+                  aria-required="true"
+                  onChange={(event) => {
+                    setFullName(event.target.value);
+                    clearFieldError("fullName");
+                  }}
+                  required
+                />
+                {fieldErrors.fullName ? (
+                  <p id="fullname-error" className="text-sm text-red-600">
+                    {fieldErrors.fullName}
+                  </p>
+                ) : null}
+              </div>
 
-            <p className="text-xs text-center text-slate-500 mt-2">
-              Takes less than 2 minutes
-            </p>
-          </form>
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="email"
+                >
+                  Email
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
+                </label>
+                <input
+                  className={inputClasses(Boolean(fieldErrors.email))}
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter email"
+                  value={email}
+                  ref={emailRef}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={
+                    fieldErrors.email ? "email-error" : undefined
+                  }
+                  aria-required="true"
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    clearFieldError("email");
+                  }}
+                  required
+                />
+                {fieldErrors.email ? (
+                  <p id="email-error" className="text-sm text-red-600">
+                    {fieldErrors.email}
+                  </p>
+                ) : null}
+              </div>
 
-          <div className="mt-6 text-center space-y-4">
-            <p className="text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link
-                className="font-bold text-[#E85D04] hover:underline"
-                href="/login-talent"
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="password"
+                >
+                  Password
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
+                </label>
+                <div className="relative">
+                  <input
+                    className={inputClasses(Boolean(fieldErrors.password))}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Enter password"
+                    value={password}
+                    ref={passwordRef}
+                    aria-invalid={Boolean(fieldErrors.password)}
+                    aria-describedby={
+                      fieldErrors.password ? "password-error" : undefined
+                    }
+                    aria-required="true"
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      clearFieldError("password");
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                    aria-controls="password"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {fieldErrors.password ? (
+                  <p id="password-error" className="text-sm text-red-600">
+                    {fieldErrors.password}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="confirmPassword"
+                >
+                  Confirm password
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
+                </label>
+                <div className="relative">
+                  <input
+                    className={inputClasses(
+                      Boolean(fieldErrors.confirmPassword)
+                    )}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    ref={confirmPasswordRef}
+                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                    aria-describedby={
+                      fieldErrors.confirmPassword
+                        ? "confirmPassword-error"
+                        : undefined
+                    }
+                    aria-required="true"
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value);
+                      clearFieldError("confirmPassword");
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showConfirmPassword}
+                    aria-controls="confirmPassword"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword ? (
+                  <p
+                    id="confirmPassword-error"
+                    className="text-sm text-red-600"
+                  >
+                    {fieldErrors.confirmPassword}
+                  </p>
+                ) : null}
+              </div>
+
+              <button
+                type="submit"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white"
               >
-                Login
-              </Link>
-            </p>
+                Create account
+              </button>
 
-            <p className="text-xs text-slate-400">
-              By clicking login, you agree to our{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Privacy Policy
-              </Link>
-            </p>
+              <p className="text-[11px] text-center text-slate-500 mt-2">
+                Takes less than 2 minutes
+              </p>
+            </form>
+
+            <div className="mt-6 text-center space-y-4">
+              <p className="text-[13px] text-slate-600">
+                Already have an account?{" "}
+                <Link
+                  className="font-semibold text-[#E85D04] hover:underline"
+                  href="/login-talent"
+                >
+                  Login
+                </Link>
+              </p>
+
+              <p className="text-[11px] text-slate-400">
+                By clicking login, you agree to our{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Privacy Policy
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
