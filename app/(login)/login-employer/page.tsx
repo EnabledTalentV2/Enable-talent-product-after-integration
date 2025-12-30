@@ -188,14 +188,7 @@ export default function EmployerLoginPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-[13px]">
-                <label className="flex items-center text-gray-600">
-                  <input
-                    type="checkbox"
-                    className="mr-2 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                  />
-                  Remember me
-                </label>
+              <div className="flex justify-end text-[13px]">
                 <Link
                   href="/forgot-password"
                   title="Forgot Password"
