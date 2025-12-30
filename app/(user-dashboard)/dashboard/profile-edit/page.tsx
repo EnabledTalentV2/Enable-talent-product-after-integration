@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { getCurrentUser, hasStoredUsers, saveUser, setCurrentUser } from "@/lib/localUserStore";
 import { computeProfileCompletion, computeProfileSectionCompletion } from "@/lib/profileCompletion";
-import type { StepKey } from "@/components/signup/types";
+import type { StepKey } from "@/lib/types/user";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";

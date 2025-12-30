@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CandidateProfile } from "@/app/(employer)/employer/dashboard/candidates/types";
+import { CandidateProfile } from "@/lib/types/candidates";
 import ProfileSection from "./ProfileSection";
 import SendInvitesModal from "./SendInvitesModal";
 import SuccessModal from "./SuccessModal";

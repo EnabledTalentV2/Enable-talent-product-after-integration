@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
 import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
-import { CandidateProfile, CandidateStage } from "../types";
+import { CandidateProfile, CandidateStage } from "@/lib/types/candidates";
 import { MOCK_CANDIDATES, getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { toJobHeaderInfo } from "@/lib/employerJobsUtils";

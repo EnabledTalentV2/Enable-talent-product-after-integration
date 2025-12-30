@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { UploadCloud } from "lucide-react";
 import InputBlock from "./InputBlock";
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 
 type Props = {
   data: UserData["basicInfo"];

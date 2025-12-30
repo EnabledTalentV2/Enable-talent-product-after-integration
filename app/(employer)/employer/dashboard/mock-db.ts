@@ -1,4 +1,4 @@
-import { CandidateProfile } from "./candidates/types";
+import { CandidateProfile } from "@/lib/types/candidates";
 
 // Define Candidates (Linked to Jobs via jobId)
 export const MOCK_CANDIDATES: (CandidateProfile & { jobId: string })[] = [

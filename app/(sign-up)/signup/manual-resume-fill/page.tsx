@@ -28,7 +28,7 @@ import type {
   StepKey,
   StepStatus,
   UserData,
-} from "@/components/signup/types";
+} from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];

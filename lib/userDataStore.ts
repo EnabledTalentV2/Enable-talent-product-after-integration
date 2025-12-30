@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { initialUserData } from "@/lib/userDataDefaults";
-import type { UserData } from "@/components/signup/types";
+import type { UserData } from "@/lib/types/user";
 
 type UserDataStore = {
   userData: UserData;

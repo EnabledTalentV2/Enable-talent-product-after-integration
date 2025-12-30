@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 
 type Props = {
   data: UserData["preference"];

@@ -6,7 +6,7 @@ import Navbar from "@/components/signup/Navbar";
 import Link from "next/link";
 import { getPendingSignup } from "@/lib/localUserStore";
 import { useUserDataStore } from "@/lib/userDataStore";
-import type { UserData } from "@/components/signup/types";
+import type { UserData } from "@/lib/types/user";
 
 const allowedExtensions = [".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff"];
 const allowedMimeTypes = new Set([

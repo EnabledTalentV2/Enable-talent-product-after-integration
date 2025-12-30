@@ -1,4 +1,4 @@
-import type { UserData } from "@/components/signup/types";
+import type { UserData } from "@/lib/types/user";
 
 let mockUserData: UserData | null = null;
 

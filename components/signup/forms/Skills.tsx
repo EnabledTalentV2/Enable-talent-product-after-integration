@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 
 type SkillData = UserData["skills"] & { primaryList?: string[] };
 

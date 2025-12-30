@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { UserData } from "@/components/signup/types";
+import type { UserData } from "@/lib/types/user";
 import { setMockUserData } from "@/lib/mockUserSession";
 
 export async function POST(request: Request) {

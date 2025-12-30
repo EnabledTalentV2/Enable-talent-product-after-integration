@@ -1,6 +1,6 @@
 "use client";
 
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 import { Plus, Trash2 } from "lucide-react";
 import InputBlock from "./InputBlock";
 
