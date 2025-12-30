@@ -14,6 +14,7 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { setPendingSignup } from "@/lib/localUserStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
+import backgroundVectorSvg from "@/public/Vector 4500.svg";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
@@ -122,12 +123,17 @@ export default function SignUpPage() {
 
   return (
     <main className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
-      {/* Background Curves/Blobs */}
-      <div className="pointer-events-none absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-white/30 blur-3xl" />
-      <div className="pointer-events-none absolute left-0 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[70px] border-white/15 blur-sm" />
-      <div className="pointer-events-none absolute right-0 bottom-0 h-[560px] w-[560px] translate-x-1/3 translate-y-1/3 rounded-full border-[80px] border-white/15 blur-sm" />
-      <div className="pointer-events-none absolute right-16 top-16 h-[260px] w-[260px] rounded-full bg-white/20 blur-3xl" />
-
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: `url(${backgroundVectorSvg.src})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "100% auto",
+          backgroundPosition: "center",
+          opacity: 0.35,
+        }}
+      />
       <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
         <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
         <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
