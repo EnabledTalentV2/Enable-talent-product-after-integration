@@ -409,17 +409,6 @@ export default function OrganisationInfoPage() {
                       key={size.value}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <div
-                        className={`h-5 w-5 rounded-full border flex items-center justify-center ${
-                          organizationInfo.companySize === size.value
-                            ? "border-orange-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {organizationInfo.companySize === size.value && (
-                          <div className="h-3 w-3 rounded-full bg-orange-500" />
-                        )}
-                      </div>
                       <input
                         type="radio"
                         name="companySize"
@@ -431,8 +420,19 @@ export default function OrganisationInfoPage() {
                             companySize: event.target.value,
                           });
                         }}
-                        className="hidden"
+                        className="sr-only peer"
                       />
+                      <div
+                        className={`h-5 w-5 rounded-full border flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-orange-500 peer-focus-visible:ring-offset-2 ${
+                          organizationInfo.companySize === size.value
+                            ? "border-orange-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {organizationInfo.companySize === size.value && (
+                          <div className="h-3 w-3 rounded-full bg-orange-500" />
+                        )}
+                      </div>
                       <span className="text-gray-600">{size.label}</span>
                     </label>
                   ))}
