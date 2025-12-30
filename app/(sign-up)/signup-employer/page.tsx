@@ -9,10 +9,10 @@ import logo from "@/public/logo/ET Logo-01.webp";
 import { setPendingEmployerSignup } from "@/lib/localEmployerStore";
 
 const inputClasses = (hasError?: boolean) =>
-  `w-full px-4 py-3 rounded-lg border outline-none transition-colors text-gray-700 placeholder-gray-400 ${
+  `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
     hasError
-      ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-200"
-      : "border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+      ? "border-red-400 focus:border-red-500 focus:ring-red-200"
+      : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
   }`;
 
 type FieldErrors = Partial<{
@@ -120,45 +120,55 @@ export default function SignupEmployerPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#C5D8F5] flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-6xl bg-white/30 backdrop-blur-md rounded-[30px] shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[700px]">
-        {/* Left Side - Welcome */}
-        <div className="w-full md:w-1/2 p-12 flex flex-col items-center justify-center text-center relative">
-          <div className="mb-8 relative">
-            {/* Orange glow effect behind logo */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-400/50 rounded-full blur-2xl"></div>
-            <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-full shadow-sm p-4">
-              <Image
-                src={logo}
-                alt="Enabled Talent Logo"
-                width={60}
-                height={60}
-                className="object-contain"
-              />
+    <main className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
+      {/* Background Curves/Blobs */}
+      <div className="pointer-events-none absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-white/30 blur-3xl" />
+      <div className="pointer-events-none absolute left-0 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[70px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[560px] w-[560px] translate-x-1/3 translate-y-1/3 rounded-full border-[80px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-16 top-16 h-[260px] w-[260px] rounded-full bg-white/20 blur-3xl" />
+
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-xl" />
+        <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
+          {/* Left Side - Welcome */}
+          <div className="flex max-w-105 flex-col items-center text-center">
+            <div className="relative mb-8 flex items-center justify-center">
+              {/* Orange glow effect behind logo */}
+              <div className="pointer-events-none absolute -inset-8 rounded-full bg-orange-400/50 blur-3xl" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4">
+                <Image
+                  src={logo}
+                  alt="Enabled Talent Logo"
+                  width={60}
+                  height={60}
+                  className="h-12 w-12 object-contain"
+                />
+              </div>
             </div>
+
+            <h1 className="text-3xl font-semibold text-gray-900 mb-4 leading-tight md:text-4xl">
+              Welcome To Enabled Talent
+            </h1>
+            <p className="text-base text-gray-700 md:text-lg max-w-md">
+              Find and hire top talent across Canada - faster and smarter
+            </p>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Welcome To Enabled Talent
-          </h1>
-          <p className="text-gray-700 text-lg max-w-md">
-            Find and hire top talent across Canada - faster and smarter
-          </p>
-        </div>
-
-        {/* Right Side - Form */}
-        <div className="w-full md:w-1/2 bg-white p-8 md:p-12 flex flex-col justify-center rounded-[30px] md:rounded-l-none md:rounded-r-[30px]">
-          <div className="max-w-md mx-auto w-full">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Sign Up</h2>
-              <p className="text-gray-500">
+          {/* Right Side - Form */}
+          <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
+            <div className="text-center mb-7">
+              <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+                Sign Up
+              </h2>
+              <p className="text-sm text-gray-500">
                 Create an employer account to start hiring
               </p>
             </div>
 
-            <form className="space-y-5" noValidate onSubmit={handleSubmit}>
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+            <form className="space-y-4" noValidate onSubmit={handleSubmit}>
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Full name
                 </label>
                 <input
@@ -173,14 +183,14 @@ export default function SignupEmployerPage() {
                   ref={fullNameRef}
                 />
                 {fieldErrors.fullName && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="mt-1 text-sm text-red-600">
                     {fieldErrors.fullName}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Employer name
                 </label>
                 <input
@@ -195,14 +205,14 @@ export default function SignupEmployerPage() {
                   ref={employerNameRef}
                 />
                 {fieldErrors.employerName && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="mt-1 text-sm text-red-600">
                     {fieldErrors.employerName}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Email
                 </label>
                 <input
@@ -217,14 +227,14 @@ export default function SignupEmployerPage() {
                   ref={emailRef}
                 />
                 {fieldErrors.email && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="mt-1 text-sm text-red-600">
                     {fieldErrors.email}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Password
                 </label>
                 <div className="relative">
@@ -248,14 +258,14 @@ export default function SignupEmployerPage() {
                   </button>
                 </div>
                 {fieldErrors.password && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="mt-1 text-sm text-red-600">
                     {fieldErrors.password}
                   </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -285,7 +295,7 @@ export default function SignupEmployerPage() {
                   </button>
                 </div>
                 {fieldErrors.confirmPassword && (
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="mt-1 text-sm text-red-600">
                     {fieldErrors.confirmPassword}
                   </p>
                 )}
@@ -293,18 +303,18 @@ export default function SignupEmployerPage() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#C04622] to-[#E88F53] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity shadow-md mt-6"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90"
               >
                 Create account
               </button>
 
-              <p className="text-center text-gray-400 text-sm mt-2">
+              <p className="mt-2 text-center text-[11px] text-gray-400">
                 Takes less than 2 minutes
               </p>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
+            <div className="mt-6 text-center">
+              <p className="text-[13px] text-gray-600">
                 Already have an account?{" "}
                 <Link
                   href="/login-employer"
@@ -315,7 +325,7 @@ export default function SignupEmployerPage() {
               </p>
             </div>
 
-            <div className="mt-8 text-center text-xs text-gray-400">
+            <div className="mt-6 text-center text-[11px] text-gray-400">
               By clicking login, you agree to our{" "}
               <Link href="/terms" className="underline hover:text-gray-600">
                 Terms of Service
@@ -328,6 +338,6 @@ export default function SignupEmployerPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

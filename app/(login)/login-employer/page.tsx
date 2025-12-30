@@ -12,6 +12,9 @@ import {
   setCurrentEmployer,
 } from "@/lib/localEmployerStore";
 
+const inputClasses =
+  "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
+
 export default function EmployerLoginPage() {
   const router = useRouter();
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
@@ -43,73 +46,81 @@ export default function EmployerLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#C5D8F5] flex items-center justify-center p-4 font-sans">
-      <div className="w-full max-w-6xl bg-white/30 backdrop-blur-md rounded-[30px] shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-        {/* Left Side - Welcome */}
-        <div className="w-full md:w-1/2 p-12 flex flex-col items-center justify-center text-center relative">
-          <div className="mb-8 relative">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-400/50 rounded-full blur-2xl"></div>
-            <div className="relative w-24 h-24 flex items-center justify-center bg-white rounded-full shadow-sm p-4">
-              <Image
-                src={logo}
-                alt="Enabled Talent Logo"
-                width={60}
-                height={60}
-                className="object-contain"
-              />
+    <main className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
+      {/* Background Curves/Blobs */}
+      <div className="pointer-events-none absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-white/30 blur-3xl" />
+      <div className="pointer-events-none absolute left-0 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[70px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[560px] w-[560px] translate-x-1/3 translate-y-1/3 rounded-full border-[80px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-16 top-16 h-[260px] w-[260px] rounded-full bg-white/20 blur-3xl" />
+
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-xl" />
+        <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
+          {/* Left Side - Welcome */}
+          <div className="flex max-w-105 flex-col items-center text-center">
+            <div className="relative mb-8 flex items-center justify-center">
+              <div className="pointer-events-none absolute -inset-8 rounded-full bg-orange-400/50 blur-3xl" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4">
+                <Image
+                  src={logo}
+                  alt="Enabled Talent Logo"
+                  width={60}
+                  height={60}
+                  className="h-12 w-12 object-contain"
+                />
+              </div>
             </div>
+
+            <h1 className="text-3xl font-semibold text-gray-900 mb-4 leading-tight md:text-4xl">
+              Welcome Back
+            </h1>
+            <p className="text-base text-gray-700 md:text-lg max-w-md">
+              Log in to manage your job postings and find top talent.
+            </p>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Welcome Back
-          </h1>
-          <p className="text-gray-700 text-lg max-w-md">
-            Log in to manage your job postings and find top talent.
-          </p>
-        </div>
-
-        {/* Right Side - Form */}
-        <div className="w-full md:w-1/2 bg-white p-8 md:p-12 flex flex-col justify-center rounded-[30px] md:rounded-l-none md:rounded-r-[30px]">
-          <div className="max-w-md mx-auto w-full">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          {/* Right Side - Form */}
+          <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
+            <div className="text-center mb-7">
+              <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
                 Employer Login
               </h2>
-              <p className="text-gray-500">
+              <p className="text-sm text-gray-500">
                 Enter your credentials to access your account
               </p>
             </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                   {error}
                 </div>
               )}
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Email
                 </label>
                 <input
                   type="email"
                   placeholder="Enter email"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-700 placeholder-gray-400"
+                  className={inputClasses}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-base font-semibold text-gray-900 mb-1">
+              <div className="space-y-1">
+                <label className="block text-[16px] font-semibold text-gray-900">
                   Password
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-700 placeholder-gray-400"
+                    className={inputClasses}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -124,7 +135,7 @@ export default function EmployerLoginPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[13px]">
                 <label className="flex items-center text-gray-600">
                   <input
                     type="checkbox"
@@ -135,7 +146,7 @@ export default function EmployerLoginPage() {
                 <Link
                   href="/forgot-password"
                   title="Forgot Password"
-                  className="text-[#C04622] hover:underline font-medium"
+                  className="text-[#C04622] font-medium hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -143,14 +154,14 @@ export default function EmployerLoginPage() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#C04622] to-[#E88F53] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity shadow-md mt-6"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90"
               >
                 Login
               </button>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
+            <div className="mt-6 text-center">
+              <p className="text-[13px] text-gray-600">
                 Don't have an account?{" "}
                 <Link
                   href="/signup-employer"
@@ -163,6 +174,6 @@ export default function EmployerLoginPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
