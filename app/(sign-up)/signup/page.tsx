@@ -114,229 +114,239 @@ export default function SignUpPage() {
       <div className="pointer-events-none absolute right-0 bottom-0 h-[560px] w-[560px] translate-x-1/3 translate-y-1/3 rounded-full border-[80px] border-white/15 blur-sm" />
       <div className="pointer-events-none absolute right-16 top-16 h-[260px] w-[260px] rounded-full bg-white/20 blur-3xl" />
 
-      <div className="relative  z-10 mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-12 px-6 py-12 md:flex-row md:gap-20">
-        {/* Left Side Content */}
-        <div className="flex max-w-105 flex-col items-center text-center ">
-          <div className="relative mb-8 flex items-center justify-center">
-            {/* Golden aura behind logo */}
-            <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
-            <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
-              <Image
-                src={logo}
-                alt="Enabled Talent Logo"
-                className="h-12 w-12 object-contain"
-              />
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-0">
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
+        <div className="relative flex w-full flex-col items-center justify-center gap-12 px-2 py-4 md:flex-row md:gap-20">
+          {/* Left Side Content */}
+          <div className="flex max-w-105 flex-col items-center text-center ">
+            <div className="relative mb-8 flex items-center justify-center">
+              {/* Golden aura behind logo */}
+              <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
+                <Image
+                  src={logo}
+                  alt="Enabled Talent Logo"
+                  className="h-12 w-12 object-contain"
+                />
+              </div>
             </div>
-          </div>
 
-          <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
-            Welcome To Enabled Talent
-          </h1>
-          <p className="text-base text-slate-800 md:text-lg">
-            Because every talent deserves the right chance
-          </p>
-        </div>
-
-        {/* Right Side Card */}
-        <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
-          <div className="text-center mb-7">
-            <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
-              Sign Up
-            </h2>
-            <p className="text-sm text-slate-500">
-              Create a Talent account to start applying
+            <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
+              Welcome To Enabled Talent
+            </h1>
+            <p className="text-base text-slate-800 md:text-lg">
+              Because every talent deserves the right chance
             </p>
           </div>
 
-          <form className="space-y-4" noValidate onSubmit={handleSubmit}>
-            <div className="space-y-1">
-              <label
-                className="block text-[14px] font-semibold text-slate-700"
-                htmlFor="fullname"
-              >
-                Full name
-              </label>
-              <input
-                className={inputClasses(Boolean(fieldErrors.fullName))}
-                id="fullname"
-                name="fullname"
-                type="text"
-                autoComplete="name"
-                placeholder="Enter full name"
-                value={fullName}
-                ref={fullNameRef}
-                aria-invalid={Boolean(fieldErrors.fullName)}
-                aria-describedby={
-                  fieldErrors.fullName ? "fullname-error" : undefined
-                }
-                onChange={(event) => {
-                  setFullName(event.target.value);
-                  clearFieldError("fullName");
-                }}
-                required
-              />
-              {fieldErrors.fullName ? (
-                <p id="fullname-error" className="text-sm text-red-600">
-                  {fieldErrors.fullName}
-                </p>
-              ) : null}
+          {/* Right Side Card */}
+          <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
+            <div className="text-center mb-7">
+              <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+                Sign Up
+              </h2>
+              <p className="text-sm text-slate-500">
+                Create a Talent account to start applying
+              </p>
             </div>
 
-            <div className="space-y-1">
-              <label
-                className="block text-[14px] font-semibold text-slate-700"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                className={inputClasses(Boolean(fieldErrors.email))}
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="Enter email"
-                value={email}
-                ref={emailRef}
-                aria-invalid={Boolean(fieldErrors.email)}
-                aria-describedby={fieldErrors.email ? "email-error" : undefined}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  clearFieldError("email");
-                }}
-                required
-              />
-              {fieldErrors.email ? (
-                <p id="email-error" className="text-sm text-red-600">
-                  {fieldErrors.email}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1">
-              <label
-                className="block text-[14px] font-semibold text-slate-700"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <div className="relative">
+            <form className="space-y-4" noValidate onSubmit={handleSubmit}>
+              <div className="space-y-1">
+                <label
+                  className="block text-[14px] font-semibold text-slate-700"
+                  htmlFor="fullname"
+                >
+                  Full name
+                </label>
                 <input
-                  className={inputClasses(Boolean(fieldErrors.password))}
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Enter password"
-                  value={password}
-                  ref={passwordRef}
-                  aria-invalid={Boolean(fieldErrors.password)}
+                  className={inputClasses(Boolean(fieldErrors.fullName))}
+                  id="fullname"
+                  name="fullname"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Enter full name"
+                  value={fullName}
+                  ref={fullNameRef}
+                  aria-invalid={Boolean(fieldErrors.fullName)}
                   aria-describedby={
-                    fieldErrors.password ? "password-error" : undefined
+                    fieldErrors.fullName ? "fullname-error" : undefined
                   }
                   onChange={(event) => {
-                    setPassword(event.target.value);
-                    clearFieldError("password");
+                    setFullName(event.target.value);
+                    clearFieldError("fullName");
                   }}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                {fieldErrors.fullName ? (
+                  <p id="fullname-error" className="text-sm text-red-600">
+                    {fieldErrors.fullName}
+                  </p>
+                ) : null}
               </div>
-              {fieldErrors.password ? (
-                <p id="password-error" className="text-sm text-red-600">
-                  {fieldErrors.password}
-                </p>
-              ) : null}
-            </div>
 
-            <div className="space-y-1">
-              <label
-                className="block text-[14px] font-semibold text-slate-700"
-                htmlFor="confirmPassword"
-              >
-                Confirm password
-              </label>
-              <div className="relative">
+              <div className="space-y-1">
+                <label
+                  className="block text-[14px] font-semibold text-slate-700"
+                  htmlFor="email"
+                >
+                  Email
+                </label>
                 <input
-                  className={inputClasses(Boolean(fieldErrors.confirmPassword))}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Re-enter password"
-                  value={confirmPassword}
-                  ref={confirmPasswordRef}
-                  aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                  className={inputClasses(Boolean(fieldErrors.email))}
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter email"
+                  value={email}
+                  ref={emailRef}
+                  aria-invalid={Boolean(fieldErrors.email)}
                   aria-describedby={
-                    fieldErrors.confirmPassword
-                      ? "confirmPassword-error"
-                      : undefined
+                    fieldErrors.email ? "email-error" : undefined
                   }
                   onChange={(event) => {
-                    setConfirmPassword(event.target.value);
-                    clearFieldError("confirmPassword");
+                    setEmail(event.target.value);
+                    clearFieldError("email");
                   }}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
-                </button>
+                {fieldErrors.email ? (
+                  <p id="email-error" className="text-sm text-red-600">
+                    {fieldErrors.email}
+                  </p>
+                ) : null}
               </div>
-              {fieldErrors.confirmPassword ? (
-                <p id="confirmPassword-error" className="text-sm text-red-600">
-                  {fieldErrors.confirmPassword}
-                </p>
-              ) : null}
-            </div>
 
-            <button
-              type="submit"
-              className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01]"
-            >
-              Create account
-            </button>
+              <div className="space-y-1">
+                <label
+                  className="block text-[14px] font-semibold text-slate-700"
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    className={inputClasses(Boolean(fieldErrors.password))}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Enter password"
+                    value={password}
+                    ref={passwordRef}
+                    aria-invalid={Boolean(fieldErrors.password)}
+                    aria-describedby={
+                      fieldErrors.password ? "password-error" : undefined
+                    }
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      clearFieldError("password");
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {fieldErrors.password ? (
+                  <p id="password-error" className="text-sm text-red-600">
+                    {fieldErrors.password}
+                  </p>
+                ) : null}
+              </div>
 
-            <p className="text-[11px] text-center text-slate-500 mt-2">
-              Takes less than 2 minutes
-            </p>
-          </form>
+              <div className="space-y-1">
+                <label
+                  className="block text-[14px] font-semibold text-slate-700"
+                  htmlFor="confirmPassword"
+                >
+                  Confirm password
+                </label>
+                <div className="relative">
+                  <input
+                    className={inputClasses(
+                      Boolean(fieldErrors.confirmPassword)
+                    )}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    ref={confirmPasswordRef}
+                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                    aria-describedby={
+                      fieldErrors.confirmPassword
+                        ? "confirmPassword-error"
+                        : undefined
+                    }
+                    onChange={(event) => {
+                      setConfirmPassword(event.target.value);
+                      clearFieldError("confirmPassword");
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword ? (
+                  <p
+                    id="confirmPassword-error"
+                    className="text-sm text-red-600"
+                  >
+                    {fieldErrors.confirmPassword}
+                  </p>
+                ) : null}
+              </div>
 
-          <div className="mt-6 text-center space-y-4">
-            <p className="text-[13px] text-slate-600">
-              Already have an account?{" "}
-              <Link
-                className="font-semibold text-[#E85D04] hover:underline"
-                href="/login-talent"
+              <button
+                type="submit"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01]"
               >
-                Login
-              </Link>
-            </p>
+                Create account
+              </button>
 
-            <p className="text-[11px] text-slate-400">
-              By clicking login, you agree to our{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Privacy Policy
-              </Link>
-            </p>
+              <p className="text-[11px] text-center text-slate-500 mt-2">
+                Takes less than 2 minutes
+              </p>
+            </form>
+
+            <div className="mt-6 text-center space-y-4">
+              <p className="text-[13px] text-slate-600">
+                Already have an account?{" "}
+                <Link
+                  className="font-semibold text-[#E85D04] hover:underline"
+                  href="/login-talent"
+                >
+                  Login
+                </Link>
+              </p>
+
+              <p className="text-[11px] text-slate-400">
+                By clicking login, you agree to our{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Privacy Policy
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
