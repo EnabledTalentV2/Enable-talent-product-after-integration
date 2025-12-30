@@ -14,7 +14,7 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
 const inputClasses =
-  "w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 transition-all placeholder:text-gray-400 focus:border-[#E85D04] focus:outline-none focus:ring-1 focus:ring-[#E85D04]";
+  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,127 +62,137 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-[#FCD34D] relative overflow-hidden flex items-center justify-center">
+    <main className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
       {/* Background Curves/Blobs */}
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border-[60px] border-white/10 -translate-x-1/2 blur-sm pointer-events-none" />
-      <div className="absolute right-0 bottom-0 w-[600px] h-[600px] rounded-full border-[80px] border-white/10 translate-x-1/3 translate-y-1/3 blur-sm pointer-events-none" />
+      <div className="pointer-events-none absolute -left-32 -top-24 h-[420px] w-[420px] rounded-full bg-white/30 blur-3xl" />
+      <div className="pointer-events-none absolute left-0 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[70px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[560px] w-[560px] translate-x-1/3 translate-y-1/3 rounded-full border-[80px] border-white/15 blur-sm" />
+      <div className="pointer-events-none absolute right-16 top-16 h-[260px] w-[260px] rounded-full bg-white/20 blur-3xl" />
 
-      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 relative z-10">
-        {/* Left Side Content */}
-        <div className="flex flex-col items-center md:items-start text-center md:text-left max-w-lg">
-          <div className="relative mb-8 flex items-center justify-center">
-            {/* Glow effect behind logo */}
-            <div className="absolute inset-0 bg-[#E85D04] blur-3xl opacity-40 rounded-full scale-150"></div>
-            <div className="relative h-24 w-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-              <Image
-                src={logo}
-                alt="Enabled Talent Logo"
-                className="h-16 w-16 object-contain"
-              />
-            </div>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight">
-            Welcome To Enabled Talent
-          </h1>
-          <p className="text-lg md:text-xl text-slate-800 font-medium">
-            Because every talent deserves the right chance
-          </p>
-        </div>
-
-        {/* Right Side Card */}
-        <div className="w-full max-w-[480px] bg-white rounded-[40px] p-8 md:p-12 shadow-2xl">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Login</h2>
-            <p className="text-slate-500">Log in to your Talent account</p>
-          </div>
-
-          <form className="space-y-5" noValidate onSubmit={handleSubmit}>
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                className={inputClasses}
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="Enter email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                className="block text-sm font-bold text-slate-900"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  className={inputClasses}
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-0">
+        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
+        <div className="relative flex w-full flex-col items-center justify-center gap-12 px-2 py-4 md:flex-row md:gap-20">
+          {/* Left Side Content */}
+          <div className="flex max-w-105 flex-col items-center text-center ">
+            <div className="relative mb-8 flex items-center justify-center">
+              {/* Golden aura behind logo */}
+              <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
+                <Image
+                  src={logo}
+                  alt="Enabled Talent Logo"
+                  className="h-12 w-12 object-contain"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
               </div>
             </div>
 
-            {error ? (
-              <p className="text-sm font-medium text-red-600 text-center">
-                {error}
+            <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
+              Welcome To Enabled Talent
+            </h1>
+            <p className="text-base text-slate-800 md:text-lg">
+              Because every talent deserves the right chance
+            </p>
+          </div>
+
+          {/* Right Side Card */}
+          <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
+            <div className="text-center mb-7">
+              <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+                Login
+              </h2>
+              <p className="text-sm text-slate-500">
+                Log in to your Talent account
               </p>
-            ) : null}
+            </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#C2410C] to-[#EA580C] py-3.5 font-bold text-white shadow-lg shadow-orange-500/30 transition-all hover:shadow-orange-500/50 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {submitting ? "Signing in..." : "Login"}
-            </button>
-          </form>
+            <form className="space-y-4" noValidate onSubmit={handleSubmit}>
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="email"
+                >
+                  Email
+                </label>
+                <input
+                  className={inputClasses}
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="mt-6 text-center space-y-4">
-            <p className="text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link
-                className="font-bold text-[#E85D04] hover:underline"
-                href="/signup"
+              <div className="space-y-1">
+                <label
+                  className="block text-[16px] font-semibold text-slate-700"
+                  htmlFor="password"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    className={inputClasses}
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {error ? (
+                <p className="text-sm font-medium text-red-600 text-center">
+                  {error}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Sign up
-              </Link>
-            </p>
+                {submitting ? "Signing in..." : "Login"}
+              </button>
+            </form>
 
-            <p className="text-xs text-slate-400">
-              By clicking login, you agree to our{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="#" className="underline hover:text-slate-600">
-                Privacy Policy
-              </Link>
-            </p>
+            <div className="mt-6 text-center space-y-4">
+              <p className="text-[13px] text-slate-600">
+                Already have an account?{" "}
+                <Link
+                  className="font-semibold text-[#E85D04] hover:underline"
+                  href="/signup"
+                >
+                  Sign up
+                </Link>
+              </p>
+
+              <p className="text-[11px] text-slate-400">
+                By clicking login, you agree to our{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="#" className="underline hover:text-slate-600">
+                  Privacy Policy
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

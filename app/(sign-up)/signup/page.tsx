@@ -154,7 +154,7 @@ export default function SignUpPage() {
             <form className="space-y-4" noValidate onSubmit={handleSubmit}>
               <div className="space-y-1">
                 <label
-                  className="block text-[14px] font-semibold text-slate-700"
+                  className="block text-[16px] font-semibold text-slate-700"
                   htmlFor="fullname"
                 >
                   Full name
@@ -187,7 +187,7 @@ export default function SignUpPage() {
 
               <div className="space-y-1">
                 <label
-                  className="block text-[14px] font-semibold text-slate-700"
+                  className="block text-[16px] font-semibold text-slate-700"
                   htmlFor="email"
                 >
                   Email
@@ -220,7 +220,7 @@ export default function SignUpPage() {
 
               <div className="space-y-1">
                 <label
-                  className="block text-[14px] font-semibold text-slate-700"
+                  className="block text-[16px] font-semibold text-slate-700"
                   htmlFor="password"
                 >
                   Password
@@ -262,7 +262,7 @@ export default function SignUpPage() {
 
               <div className="space-y-1">
                 <label
-                  className="block text-[14px] font-semibold text-slate-700"
+                  className="block text-[16px] font-semibold text-slate-700"
                   htmlFor="confirmPassword"
                 >
                   Confirm password
