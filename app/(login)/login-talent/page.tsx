@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const hasError = Boolean(error);
+
+  useEffect(() => {
+    if (hasError) {
+      errorSummaryRef.current?.focus();
+    }
+  }, [hasError]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,7 +106,10 @@ export default function LoginPage() {
           {/* Right Side Card */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
             <div className="text-center mb-7">
-              <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+              <h2
+                id="talent-login-heading"
+                className="text-[26px] font-semibold text-slate-900 mb-2"
+              >
                 Login
               </h2>
               <p className="text-sm text-slate-500">
@@ -106,13 +117,34 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form className="space-y-4 " noValidate onSubmit={handleSubmit}>
+            <form
+              className="space-y-4 "
+              aria-labelledby="talent-login-heading"
+              noValidate
+              onSubmit={handleSubmit}
+            >
+              {error ? (
+                <div
+                  ref={errorSummaryRef}
+                  id="talent-login-error"
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  {error}
+                </div>
+              ) : null}
               <div className="space-y-1">
                 <label
                   className="block text-[16px] font-semibold text-slate-700"
                   htmlFor="email"
                 >
                   Email
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <input
                   className={inputClasses}
@@ -122,6 +154,9 @@ export default function LoginPage() {
                   autoComplete="email"
                   placeholder="Enter email"
                   value={email}
+                  aria-invalid={hasError}
+                  aria-describedby={hasError ? "talent-login-error" : undefined}
+                  aria-required="true"
                   onChange={(event) => setEmail(event.target.value)}
                   required
                 />
@@ -133,6 +168,11 @@ export default function LoginPage() {
                   htmlFor="password"
                 >
                   Password
+                  <span aria-hidden="true" className="text-slate-400">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <div className="relative">
                   <input
@@ -143,29 +183,31 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     placeholder="Enter password"
                     value={password}
+                    aria-invalid={hasError}
+                    aria-describedby={hasError ? "talent-login-error" : undefined}
+                    aria-required="true"
                     onChange={(event) => setPassword(event.target.value)}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                    aria-controls="password"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>
 
-              {error ? (
-                <p className="text-sm font-medium text-red-600 text-center">
-                  {error}
-                </p>
-              ) : null}
-
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {submitting ? "Signing in..." : "Login"}
               </button>

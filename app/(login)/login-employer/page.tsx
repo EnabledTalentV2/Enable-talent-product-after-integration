@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -22,6 +22,14 @@ export default function EmployerLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const hasError = Boolean(error);
+
+  useEffect(() => {
+    if (hasError) {
+      errorSummaryRef.current?.focus();
+    }
+  }, [hasError]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,7 +91,10 @@ export default function EmployerLoginPage() {
           {/* Right Side - Form */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
             <div className="text-center mb-7">
-              <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+              <h2
+                id="employer-login-heading"
+                className="text-[26px] font-semibold text-gray-900 mb-2"
+              >
                 Employer Login
               </h2>
               <p className="text-sm text-gray-500">
@@ -91,44 +102,92 @@ export default function EmployerLoginPage() {
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            <form
+              className="space-y-4"
+              aria-labelledby="employer-login-heading"
+              noValidate
+              onSubmit={handleSubmit}
+            >
+              {error ? (
+                <div
+                  ref={errorSummaryRef}
+                  id="employer-login-error"
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
                   {error}
                 </div>
-              )}
+              ) : null}
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-email"
+                >
                   Email
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <input
                   type="email"
                   placeholder="Enter email"
                   className={inputClasses}
+                  id="employer-email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
+                  aria-invalid={hasError}
+                  aria-describedby={
+                    hasError ? "employer-login-error" : undefined
+                  }
+                  aria-required="true"
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-password"
+                >
                   Password
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
                     className={inputClasses}
+                    id="employer-password"
+                    name="password"
+                    autoComplete="current-password"
                     value={password}
+                    aria-invalid={hasError}
+                    aria-describedby={
+                      hasError ? "employer-login-error" : undefined
+                    }
+                    aria-required="true"
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                    aria-controls="employer-password"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -154,7 +213,7 @@ export default function EmployerLoginPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
               >
                 Login
               </button>

@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef, type FormEvent, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -40,6 +46,29 @@ export default function SignupEmployerPage() {
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const hasErrors = Object.keys(fieldErrors).length > 0;
+  const fieldMeta: Array<{
+    key: keyof FieldErrors;
+    label: string;
+    ref: RefObject<HTMLInputElement | null>;
+  }> = [
+    { key: "fullName", label: "Full name", ref: fullNameRef },
+    { key: "employerName", label: "Employer name", ref: employerNameRef },
+    { key: "email", label: "Email", ref: emailRef },
+    { key: "password", label: "Password", ref: passwordRef },
+    {
+      key: "confirmPassword",
+      label: "Confirm password",
+      ref: confirmPasswordRef,
+    },
+  ];
+
+  useEffect(() => {
+    if (hasErrors) {
+      errorSummaryRef.current?.focus();
+    }
+  }, [hasErrors]);
 
   const clearFieldError = (field: keyof FieldErrors) => {
     setFieldErrors((prev) => {
@@ -158,7 +187,10 @@ export default function SignupEmployerPage() {
           {/* Right Side - Form */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
             <div className="text-center mb-7">
-              <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+              <h2
+                id="employer-signup-heading"
+                className="text-[26px] font-semibold text-gray-900 mb-2"
+              >
                 Sign Up
               </h2>
               <p className="text-sm text-gray-500">
@@ -166,16 +198,64 @@ export default function SignupEmployerPage() {
               </p>
             </div>
 
-            <form className="space-y-4" noValidate onSubmit={handleSubmit}>
+            <form
+              className="space-y-4"
+              aria-labelledby="employer-signup-heading"
+              noValidate
+              onSubmit={handleSubmit}
+            >
+              {hasErrors ? (
+                <div
+                  ref={errorSummaryRef}
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Please fix the following:</p>
+                  <ul className="mt-2 space-y-1">
+                    {fieldMeta.map(({ key, label, ref }) => {
+                      const message = fieldErrors[key];
+                      if (!message) return null;
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            onClick={() => ref.current?.focus()}
+                            className="text-left underline"
+                          >
+                            {label}: {message}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-fullname"
+                >
                   Full name
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <input
                   type="text"
                   placeholder="Enter full name"
                   className={inputClasses(Boolean(fieldErrors.fullName))}
+                  id="employer-fullname"
+                  name="fullName"
+                  autoComplete="name"
                   value={fullName}
+                  aria-invalid={Boolean(fieldErrors.fullName)}
+                  aria-describedby={
+                    fieldErrors.fullName ? "employer-fullname-error" : undefined
+                  }
+                  aria-required="true"
                   onChange={(e) => {
                     setFullName(e.target.value);
                     clearFieldError("fullName");
@@ -183,21 +263,42 @@ export default function SignupEmployerPage() {
                   ref={fullNameRef}
                 />
                 {fieldErrors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="employer-fullname-error"
+                    className="mt-1 text-sm text-red-600"
+                  >
                     {fieldErrors.fullName}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-name"
+                >
                   Employer name
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <input
                   type="text"
                   placeholder="Enter employer name"
                   className={inputClasses(Boolean(fieldErrors.employerName))}
+                  id="employer-name"
+                  name="employerName"
+                  autoComplete="organization"
                   value={employerName}
+                  aria-invalid={Boolean(fieldErrors.employerName)}
+                  aria-describedby={
+                    fieldErrors.employerName
+                      ? "employer-name-error"
+                      : undefined
+                  }
+                  aria-required="true"
                   onChange={(e) => {
                     setEmployerName(e.target.value);
                     clearFieldError("employerName");
@@ -205,21 +306,40 @@ export default function SignupEmployerPage() {
                   ref={employerNameRef}
                 />
                 {fieldErrors.employerName && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="employer-name-error"
+                    className="mt-1 text-sm text-red-600"
+                  >
                     {fieldErrors.employerName}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-email"
+                >
                   Email
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <input
                   type="email"
                   placeholder="Enter email"
                   className={inputClasses(Boolean(fieldErrors.email))}
+                  id="employer-email"
+                  name="email"
+                  autoComplete="email"
                   value={email}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={
+                    fieldErrors.email ? "employer-email-error" : undefined
+                  }
+                  aria-required="true"
                   onChange={(e) => {
                     setEmail(e.target.value);
                     clearFieldError("email");
@@ -227,22 +347,43 @@ export default function SignupEmployerPage() {
                   ref={emailRef}
                 />
                 {fieldErrors.email && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="employer-email-error"
+                    className="mt-1 text-sm text-red-600"
+                  >
                     {fieldErrors.email}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-password"
+                >
                   Password
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
                     className={inputClasses(Boolean(fieldErrors.password))}
+                    id="employer-password"
+                    name="password"
+                    autoComplete="new-password"
                     value={password}
+                    aria-invalid={Boolean(fieldErrors.password)}
+                    aria-describedby={
+                      fieldErrors.password
+                        ? "employer-password-error"
+                        : undefined
+                    }
+                    aria-required="true"
                     onChange={(e) => {
                       setPassword(e.target.value);
                       clearFieldError("password");
@@ -252,21 +393,37 @@ export default function SignupEmployerPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showPassword}
+                    aria-controls="employer-password"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
                 {fieldErrors.password && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="employer-password-error"
+                    className="mt-1 text-sm text-red-600"
+                  >
                     {fieldErrors.password}
                   </p>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="block text-[16px] font-semibold text-gray-900">
+                <label
+                  className="block text-[16px] font-semibold text-gray-900"
+                  htmlFor="employer-confirm-password"
+                >
                   Confirm Password
+                  <span aria-hidden="true" className="text-gray-500">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only">required</span>
                 </label>
                 <div className="relative">
                   <input
@@ -275,7 +432,17 @@ export default function SignupEmployerPage() {
                     className={inputClasses(
                       Boolean(fieldErrors.confirmPassword)
                     )}
+                    id="employer-confirm-password"
+                    name="confirmPassword"
+                    autoComplete="new-password"
                     value={confirmPassword}
+                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                    aria-describedby={
+                      fieldErrors.confirmPassword
+                        ? "employer-confirm-password-error"
+                        : undefined
+                    }
+                    aria-required="true"
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
                       clearFieldError("confirmPassword");
@@ -285,7 +452,12 @@ export default function SignupEmployerPage() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={showConfirmPassword}
+                    aria-controls="employer-confirm-password"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={20} />
@@ -295,7 +467,10 @@ export default function SignupEmployerPage() {
                   </button>
                 </div>
                 {fieldErrors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p
+                    id="employer-confirm-password-error"
+                    className="mt-1 text-sm text-red-600"
+                  >
                     {fieldErrors.confirmPassword}
                   </p>
                 )}
@@ -303,7 +478,7 @@ export default function SignupEmployerPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
               >
                 Create account
               </button>
