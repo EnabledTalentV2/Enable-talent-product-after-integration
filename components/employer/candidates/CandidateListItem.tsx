@@ -13,9 +13,11 @@ export default function CandidateListItem({
   onClick,
 }: CandidateListItemProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`cursor-pointer rounded-2xl border p-4 transition-all hover:shadow-md ${
+      aria-pressed={isSelected}
+      className={`w-full text-left cursor-pointer rounded-2xl border p-4 transition-all hover:shadow-md ${
         isSelected
           ? "border-[#C27803] bg-[#FFFDF5] ring-1 ring-[#C27803]"
           : "border-slate-100 bg-white hover:border-slate-200"
@@ -103,6 +105,6 @@ export default function CandidateListItem({
           <span className="text-[10px] text-slate-500">Matching</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }

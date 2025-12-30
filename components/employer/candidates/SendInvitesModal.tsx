@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, Search, Check } from "lucide-react";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { formatPostedTime, formatExperienceLabel } from "@/lib/employerJobsUtils";
@@ -18,6 +18,45 @@ export default function SendInvitesModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const jobs = useEmployerJobsStore((state) => state.jobs);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    const focusable = dialog?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable?.[0];
+    const last = focusable?.[focusable.length - 1];
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !focusable || focusable.length === 0) {
+        return;
+      }
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    first?.focus();
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -35,27 +74,45 @@ export default function SendInvitesModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="send-invites-title"
+        aria-describedby="send-invites-description"
+        className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
+      >
         {/* Header */}
         <div className="flex items-start justify-between p-6 pb-2">
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2
+            id="send-invites-title"
+            className="text-xl font-bold text-slate-900"
+          >
             Choose the jobs you want to send the invites
           </h2>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
+        <p id="send-invites-description" className="sr-only">
+          Select one or more jobs and send invites to matching candidates.
+        </p>
 
         {/* Search & Filter */}
         <div className="flex gap-3 px-6 py-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search
+              className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
             <input
               type="text"
               placeholder="Search jobs"
+              aria-label="Search jobs"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#C27803] focus:ring-1 focus:ring-[#C27803]"
@@ -78,10 +135,12 @@ export default function SendInvitesModal({
                 const isSelected = selectedJobIds.includes(job.id);
                 const stats = getJobStats(job.id);
                 return (
-                  <div
+                  <button
                     key={job.id}
                     onClick={() => toggleJobSelection(job.id)}
-                    className={`cursor-pointer rounded-2xl border-2 p-4 transition-all ${
+                    type="button"
+                    aria-pressed={isSelected}
+                    className={`w-full text-left cursor-pointer rounded-2xl border-2 p-4 transition-all ${
                       isSelected
                         ? "border-[#C27803] bg-orange-50/30"
                         : "border-slate-100 bg-white hover:border-slate-200"
@@ -169,7 +228,7 @@ export default function SendInvitesModal({
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}

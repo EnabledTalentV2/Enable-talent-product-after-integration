@@ -242,11 +242,11 @@ export default function LoginPage() {
 
               <p className="text-[11px] text-slate-400">
                 By clicking login, you agree to our{" "}
-                <Link href="#" className="underline hover:text-slate-600">
+                <Link href="/terms" className="underline hover:text-slate-600">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="#" className="underline hover:text-slate-600">
+                <Link href="/privacy" className="underline hover:text-slate-600">
                   Privacy Policy
                 </Link>
               </p>

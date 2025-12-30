@@ -217,14 +217,24 @@ export default function OrganisationInfoPage() {
             <form className="space-y-6" onSubmit={handleSubmit}>
               {/* Organization Name */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-name"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Organization name
                 </label>
                 <input
                   ref={orgNameRef}
+                  id="organization-name"
                   type="text"
                   placeholder="Enter organization name"
                   value={organizationInfo.organizationName}
+                  aria-invalid={Boolean(fieldErrors.organizationName)}
+                  aria-describedby={
+                    fieldErrors.organizationName
+                      ? "organization-name-error"
+                      : undefined
+                  }
                   onChange={(event) => {
                     clearFieldError("organizationName");
                     patchOrganizationInfo({
@@ -234,7 +244,10 @@ export default function OrganisationInfoPage() {
                   className={inputClasses(!!fieldErrors.organizationName)}
                 />
                 {fieldErrors.organizationName ? (
-                  <p className="text-sm text-red-500">
+                  <p
+                    id="organization-name-error"
+                    className="text-sm text-red-500"
+                  >
                     {fieldErrors.organizationName}
                   </p>
                 ) : null}
@@ -242,14 +255,24 @@ export default function OrganisationInfoPage() {
 
               {/* About Organization */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-about"
+                  className="text-sm font-medium text-gray-900"
+                >
                   About Organization
                 </label>
                 <textarea
                   ref={aboutRef}
+                  id="organization-about"
                   placeholder="Enter description about company"
                   rows={4}
                   value={organizationInfo.aboutOrganization}
+                  aria-invalid={Boolean(fieldErrors.aboutOrganization)}
+                  aria-describedby={
+                    fieldErrors.aboutOrganization
+                      ? "organization-about-error"
+                      : undefined
+                  }
                   onChange={(event) => {
                     clearFieldError("aboutOrganization");
                     patchOrganizationInfo({
@@ -261,7 +284,10 @@ export default function OrganisationInfoPage() {
                   )} resize-none`}
                 />
                 {fieldErrors.aboutOrganization ? (
-                  <p className="text-sm text-red-500">
+                  <p
+                    id="organization-about-error"
+                    className="text-sm text-red-500"
+                  >
                     {fieldErrors.aboutOrganization}
                   </p>
                 ) : null}
@@ -269,13 +295,21 @@ export default function OrganisationInfoPage() {
 
               {/* Location */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-location"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Location
                 </label>
                 <input
                   ref={locationRef}
+                  id="organization-location"
                   type="text"
                   value={organizationInfo.location}
+                  aria-invalid={Boolean(fieldErrors.location)}
+                  aria-describedby={
+                    fieldErrors.location ? "organization-location-error" : undefined
+                  }
                   onChange={(event) => {
                     clearFieldError("location");
                     patchOrganizationInfo({ location: event.target.value });
@@ -283,19 +317,32 @@ export default function OrganisationInfoPage() {
                   className={inputClasses(!!fieldErrors.location)}
                 />
                 {fieldErrors.location ? (
-                  <p className="text-sm text-red-500">{fieldErrors.location}</p>
+                  <p
+                    id="organization-location-error"
+                    className="text-sm text-red-500"
+                  >
+                    {fieldErrors.location}
+                  </p>
                 ) : null}
               </div>
 
               {/* Founded Year */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-founded"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Founded year
                 </label>
                 <input
                   ref={foundedRef}
+                  id="organization-founded"
                   type="date"
                   value={organizationInfo.foundedYear}
+                  aria-invalid={Boolean(fieldErrors.foundedYear)}
+                  aria-describedby={
+                    fieldErrors.foundedYear ? "organization-founded-error" : undefined
+                  }
                   onChange={(event) => {
                     clearFieldError("foundedYear");
                     patchOrganizationInfo({ foundedYear: event.target.value });
@@ -303,7 +350,10 @@ export default function OrganisationInfoPage() {
                   className={inputClasses(!!fieldErrors.foundedYear)}
                 />
                 {fieldErrors.foundedYear ? (
-                  <p className="text-sm text-red-500">
+                  <p
+                    id="organization-founded-error"
+                    className="text-sm text-red-500"
+                  >
                     {fieldErrors.foundedYear}
                   </p>
                 ) : null}
@@ -311,14 +361,22 @@ export default function OrganisationInfoPage() {
 
               {/* Website */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-website"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Website
                 </label>
                 <input
                   ref={websiteRef}
+                  id="organization-website"
                   type="text"
                   placeholder="Enter website link"
                   value={organizationInfo.website}
+                  aria-invalid={Boolean(fieldErrors.website)}
+                  aria-describedby={
+                    fieldErrors.website ? "organization-website-error" : undefined
+                  }
                   onChange={(event) => {
                     clearFieldError("website");
                     patchOrganizationInfo({ website: event.target.value });
@@ -326,15 +384,20 @@ export default function OrganisationInfoPage() {
                   className={inputClasses(!!fieldErrors.website)}
                 />
                 {fieldErrors.website ? (
-                  <p className="text-sm text-red-500">{fieldErrors.website}</p>
+                  <p
+                    id="organization-website-error"
+                    className="text-sm text-red-500"
+                  >
+                    {fieldErrors.website}
+                  </p>
                 ) : null}
               </div>
 
               {/* Company Size */}
-              <div ref={companySizeRef} className="space-y-3">
-                <label className="text-sm font-medium text-gray-900">
+              <fieldset ref={companySizeRef} className="space-y-3">
+                <legend className="text-sm font-medium text-gray-900">
                   Company Size
-                </label>
+                </legend>
                 <div className="flex flex-wrap gap-6">
                   {[
                     { label: "1 - 10", value: "1-10" },
@@ -379,18 +442,26 @@ export default function OrganisationInfoPage() {
                     {fieldErrors.companySize}
                   </p>
                 ) : null}
-              </div>
+              </fieldset>
 
               {/* Industry */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="organization-industry"
+                  className="text-sm font-medium text-gray-900"
+                >
                   Industry
                 </label>
                 <div className="relative">
                   <select
                     ref={industryRef}
+                    id="organization-industry"
                     className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
                     value={organizationInfo.industry}
+                    aria-invalid={Boolean(fieldErrors.industry)}
+                    aria-describedby={
+                      fieldErrors.industry ? "organization-industry-error" : undefined
+                    }
                     onChange={(event) => {
                       clearFieldError("industry");
                       patchOrganizationInfo({ industry: event.target.value });
@@ -408,7 +479,12 @@ export default function OrganisationInfoPage() {
                   />
                 </div>
                 {fieldErrors.industry ? (
-                  <p className="text-sm text-red-500">{fieldErrors.industry}</p>
+                  <p
+                    id="organization-industry-error"
+                    className="text-sm text-red-500"
+                  >
+                    {fieldErrors.industry}
+                  </p>
                 ) : null}
               </div>
 

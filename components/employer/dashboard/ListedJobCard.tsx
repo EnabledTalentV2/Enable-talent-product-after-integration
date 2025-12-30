@@ -30,9 +30,11 @@ export default function ListedJobCard({
   getBrandStyle,
 }: ListedJobCardProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`rounded-[28px] p-5 shadow-sm cursor-pointer transition-all border-2 ${
+      aria-pressed={Boolean(isSelected)}
+      className={`w-full text-left rounded-[28px] p-5 shadow-sm cursor-pointer transition-all border-2 ${
         isSelected
           ? "border-orange-400 bg-white"
           : "border-transparent bg-white hover:border-slate-200"
@@ -101,6 +103,6 @@ export default function ListedJobCard({
           </span>
         </span>
       </div>
-    </div>
+    </button>
   );
 }
