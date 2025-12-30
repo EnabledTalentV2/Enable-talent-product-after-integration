@@ -374,7 +374,7 @@ export default function SignupEmployerPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
-                    className={inputClasses(Boolean(fieldErrors.password))}
+                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
                     id="employer-password"
                     name="password"
                     autoComplete="new-password"
@@ -400,7 +400,7 @@ export default function SignupEmployerPage() {
                     }
                     aria-pressed={showPassword}
                     aria-controls="employer-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -431,9 +431,9 @@ export default function SignupEmployerPage() {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm password"
-                    className={inputClasses(
+                    className={`${inputClasses(
                       Boolean(fieldErrors.confirmPassword)
-                    )}
+                    )} pr-14`}
                     id="employer-confirm-password"
                     name="confirmPassword"
                     autoComplete="new-password"
@@ -459,7 +459,7 @@ export default function SignupEmployerPage() {
                     }
                     aria-pressed={showConfirmPassword}
                     aria-controls="employer-confirm-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={20} />
@@ -485,7 +485,7 @@ export default function SignupEmployerPage() {
                 Create account
               </button>
 
-              <p className="mt-2 text-center text-[11px] text-gray-400">
+              <p className="mt-2 text-center text-[11px] text-gray-500">
                 Takes less than 2 minutes
               </p>
             </form>
@@ -502,13 +502,13 @@ export default function SignupEmployerPage() {
               </p>
             </div>
 
-            <div className="mt-6 text-center text-[11px] text-gray-400">
+            <div className="mt-6 text-center text-[11px] text-gray-500">
               By clicking login, you agree to our{" "}
-              <Link href="/terms" className="underline hover:text-gray-600">
+              <Link href="/terms" className="underline text-gray-600 hover:text-gray-700">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="underline hover:text-gray-600">
+              <Link href="/privacy" className="underline text-gray-600 hover:text-gray-700">
                 Privacy Policy
               </Link>
             </div>

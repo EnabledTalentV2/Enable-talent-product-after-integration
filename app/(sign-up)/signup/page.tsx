@@ -297,7 +297,7 @@ export default function SignUpPage() {
                 </label>
                 <div className="relative">
                   <input
-                    className={inputClasses(Boolean(fieldErrors.password))}
+                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
@@ -324,7 +324,7 @@ export default function SignUpPage() {
                     }
                     aria-pressed={showPassword}
                     aria-controls="password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -350,9 +350,9 @@ export default function SignUpPage() {
                 </label>
                 <div className="relative">
                   <input
-                    className={inputClasses(
+                    className={`${inputClasses(
                       Boolean(fieldErrors.confirmPassword)
-                    )}
+                    )} pr-14`}
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
@@ -381,7 +381,7 @@ export default function SignUpPage() {
                     }
                     aria-pressed={showConfirmPassword}
                     aria-controls="confirmPassword"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={18} />
@@ -416,20 +416,20 @@ export default function SignUpPage() {
               <p className="text-[13px] text-slate-600">
                 Already have an account?{" "}
                 <Link
-                  className="font-semibold text-[#E85D04] hover:underline"
+                  className="font-semibold text-[#B45309] hover:underline"
                   href="/login-talent"
                 >
                   Login
                 </Link>
               </p>
 
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
-                <Link href="#" className="underline hover:text-slate-600">
+                <Link href="/terms" className="underline text-slate-600 hover:text-slate-700">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="#" className="underline hover:text-slate-600">
+                <Link href="/privacy" className="underline text-slate-600 hover:text-slate-700">
                   Privacy Policy
                 </Link>
               </p>

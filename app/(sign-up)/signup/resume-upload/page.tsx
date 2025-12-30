@@ -171,11 +171,21 @@ export default function ResumeUpload() {
               profile automatically
             </p>
 
+            <label htmlFor="resume-upload-input" className="sr-only">
+              Upload resume
+            </label>
             <input
               ref={fileInputRef}
+              id="resume-upload-input"
               type="file"
               accept=".pdf,.doc,.docx,image/*"
-              className="hidden"
+              className="sr-only"
+              aria-describedby={
+                error
+                  ? "resume-upload-help resume-upload-error"
+                  : "resume-upload-help"
+              }
+              aria-invalid={Boolean(error)}
               onChange={handleFileChange}
             />
 
@@ -189,12 +199,26 @@ export default function ResumeUpload() {
             </button>
 
             {selectedFileName ? (
-              <span className="text-sm text-slate-500">Selected: {selectedFileName}</span>
+              <span
+                id="resume-upload-selected"
+                aria-live="polite"
+                className="text-sm text-slate-500"
+              >
+                Selected: {selectedFileName}
+              </span>
             ) : null}
 
-            {error ? <span className="text-sm text-red-600">{error}</span> : null}
+            {error ? (
+              <span
+                id="resume-upload-error"
+                role="alert"
+                className="text-sm text-red-600"
+              >
+                {error}
+              </span>
+            ) : null}
 
-            <span className="text-base text-slate-500">
+            <span id="resume-upload-help" className="text-base text-slate-500">
               Supports PDF, DOC, DOCX, and image files.
             </span>
           </div>

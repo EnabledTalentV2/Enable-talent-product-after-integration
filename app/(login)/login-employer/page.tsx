@@ -170,7 +170,7 @@ export default function EmployerLoginPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
-                    className={inputClasses}
+                    className={`${inputClasses} pr-14`}
                     id="employer-password"
                     name="password"
                     autoComplete="current-password"
@@ -191,7 +191,7 @@ export default function EmployerLoginPage() {
                     }
                     aria-pressed={showPassword}
                     aria-controls="employer-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>

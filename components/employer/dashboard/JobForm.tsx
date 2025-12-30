@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useId, useState, type ChangeEvent, type FormEvent } from "react";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 
 type JobFormProps = {
@@ -20,6 +20,8 @@ const employmentTypeOptions = [
 const workArrangementOptions = ["Remote", "Hybrid", "Onsite"] as const;
 const urgentOptions = ["Yes", "No"] as const;
 const languageOptions = ["English", "French", "Spanish"] as const;
+
+const toId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 const emptyValues: JobFormValues = {
   title: "",
@@ -41,6 +43,7 @@ export default function JobForm({
   initialValues,
   onSubmit,
 }: JobFormProps) {
+  const formId = useId();
   const [values, setValues] = useState<JobFormValues>({
     ...emptyValues,
     ...initialValues,
@@ -76,10 +79,14 @@ export default function JobForm({
     <form className="space-y-6" onSubmit={handleSubmit}>
       {/* Job Title (Corrected from screenshot typo 'Job Location') */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-title`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Job Title
         </label>
         <input
+          id={`${formId}-title`}
           type="text"
           name="title"
           value={values.title}
@@ -91,11 +98,15 @@ export default function JobForm({
 
       {/* Company Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-company`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Company Name
         </label>
         <div className="relative">
           <input
+            id={`${formId}-company`}
             type="text"
             name="company"
             value={values.company}
@@ -108,10 +119,14 @@ export default function JobForm({
 
       {/* Job Location */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-location`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Job Location
         </label>
         <input
+          id={`${formId}-location`}
           type="text"
           name="location"
           value={values.location}
@@ -123,10 +138,14 @@ export default function JobForm({
 
       {/* Address */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-address`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Address
         </label>
         <input
+          id={`${formId}-address`}
           type="text"
           name="address"
           value={values.address}
@@ -137,14 +156,15 @@ export default function JobForm({
       </div>
 
       {/* Years of experience */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700 mb-3">
           Years of experience
-        </label>
+        </legend>
         <div className="flex flex-wrap gap-6">
           {experienceOptions.map((exp) => (
             <label key={exp} className="flex items-center cursor-pointer">
               <input
+                id={`${formId}-experience-${toId(exp)}`}
                 type="radio"
                 name="experience"
                 value={exp}
@@ -156,22 +176,26 @@ export default function JobForm({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Job Type */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700 mb-3">
           Job Type
-        </label>
+        </legend>
         <div className="space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
+          <div role="group" aria-labelledby={`${formId}-employment-type-label`}>
+            <p
+              id={`${formId}-employment-type-label`}
+              className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3"
+            >
               Employment type
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
               {employmentTypeOptions.map((type) => (
                 <label key={type} className="flex items-center cursor-pointer">
                   <input
+                    id={`${formId}-employment-${toId(type)}`}
                     type="radio"
                     name="employmentType"
                     value={type}
@@ -184,14 +208,18 @@ export default function JobForm({
               ))}
             </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
+          <div role="group" aria-labelledby={`${formId}-work-arrangement-label`}>
+            <p
+              id={`${formId}-work-arrangement-label`}
+              className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3"
+            >
               Work arrangement
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2">
               {workArrangementOptions.map((type) => (
                 <label key={type} className="flex items-center cursor-pointer">
                   <input
+                    id={`${formId}-arrangement-${toId(type)}`}
                     type="radio"
                     name="workArrangement"
                     value={type}
@@ -205,14 +233,18 @@ export default function JobForm({
             </div>
           </div>
         </div>
-      </div>
+      </fieldset>
 
       {/* Preferred language */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-preferred-language`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Preferred language
         </label>
         <select
+          id={`${formId}-preferred-language`}
           name="preferredLanguage"
           value={values.preferredLanguage}
           onChange={handleChange}
@@ -231,14 +263,15 @@ export default function JobForm({
       </div>
 
       {/* Urgently hiring */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700 mb-3">
           Are you urgently hiring?
-        </label>
+        </legend>
         <div className="flex gap-6">
           {urgentOptions.map((option) => (
             <label key={option} className="flex items-center cursor-pointer">
               <input
+                id={`${formId}-urgent-${toId(option)}`}
                 type="radio"
                 name="urgentHiring"
                 value={option}
@@ -250,14 +283,18 @@ export default function JobForm({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Job Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-description`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Job Description
         </label>
         <textarea
+          id={`${formId}-description`}
           rows={6}
           name="description"
           value={values.description}
@@ -269,10 +306,14 @@ export default function JobForm({
 
       {/* Job Requirement */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-requirements`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Job Requirement
         </label>
         <textarea
+          id={`${formId}-requirements`}
           rows={8}
           name="requirements"
           value={values.requirements}
@@ -284,10 +325,14 @@ export default function JobForm({
 
       {/* Estimated Salary */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label
+          htmlFor={`${formId}-salary`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
           Estimated Salary
         </label>
         <input
+          id={`${formId}-salary`}
           type="text"
           name="salary"
           value={values.salary}

@@ -61,8 +61,10 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           Profile photo
         </label>
         <div
-          className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 ${
-            errors?.profilePhoto ? "border-red-400" : "border-gray-300"
+          className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 focus-within:ring-2 ${
+            errors?.profilePhoto
+              ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-200"
+              : "border-gray-300 focus-within:border-orange-500 focus-within:ring-orange-500/30"
           }`}
         >
           <label
@@ -79,7 +81,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              className="sr-only"
               onChange={(e) =>
                 onChange({ profilePhoto: e.target.files?.[0]?.name || "" })
               }
