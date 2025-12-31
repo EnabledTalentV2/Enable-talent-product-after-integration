@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
 
-export async function POST(request: NextRequest) {
+/**
+ * CSRF Token endpoint
+ * Fetches CSRF token from Django backend and forwards it to the client
+ * The CSRF token is required for POST/PUT/DELETE requests
+ */
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json();
     const cookies = request.headers.get("cookie") || "";
 
-    // Forward the login request to Django backend
+    // Fetch CSRF token from Django backend
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.auth.login,
+      API_ENDPOINTS.auth.csrf,
       {
-        method: "POST",
-        body: JSON.stringify(body),
+        method: "GET",
       },
       cookies
     );
@@ -23,7 +26,7 @@ export async function POST(request: NextRequest) {
       status: backendResponse.status,
     });
 
-    // Forward Set-Cookie headers from backend (contains HttpOnly JWT)
+    // Forward Set-Cookie headers (contains csrftoken)
     const setCookie = backendResponse.headers.get("set-cookie");
     if (setCookie) {
       response.headers.set("Set-Cookie", setCookie);
@@ -31,9 +34,9 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("CSRF token error:", error);
     return NextResponse.json(
-      { error: "Failed to connect to authentication service" },
+      { error: "Failed to fetch CSRF token" },
       { status: 500 }
     );
   }

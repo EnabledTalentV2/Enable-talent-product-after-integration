@@ -4,11 +4,22 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/signup/Navbar";
 import Link from "next/link";
-import { getPendingSignup } from "@/lib/localUserStore";
 import { useUserDataStore } from "@/lib/userDataStore";
 import type { UserData } from "@/lib/types/user";
 
-const allowedExtensions = [".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff"];
+const allowedExtensions = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".gif",
+  ".bmp",
+  ".tif",
+  ".tiff",
+];
 const allowedMimeTypes = new Set([
   "application/pdf",
   "application/msword",
@@ -43,35 +54,74 @@ type UserDataPatch = {
 
 const extractUserDataPatch = (payload: unknown): UserDataPatch => {
   if (!isRecord(payload)) return {};
-  const candidate = (isRecord(payload.data) && payload.data) || (isRecord(payload.userData) && payload.userData) || payload;
+  const candidate =
+    (isRecord(payload.data) && payload.data) ||
+    (isRecord(payload.userData) && payload.userData) ||
+    payload;
   if (!isRecord(candidate)) return {};
 
   const patch: UserDataPatch = {};
-  if (isRecord(candidate.basicInfo)) patch.basicInfo = candidate.basicInfo as Partial<UserData["basicInfo"]>;
-  if (isRecord(candidate.education)) patch.education = candidate.education as Partial<UserData["education"]>;
-  if (isRecord(candidate.workExperience)) patch.workExperience = candidate.workExperience as Partial<UserData["workExperience"]>;
-  if (isRecord(candidate.skills)) patch.skills = candidate.skills as Partial<UserData["skills"]>;
-  if (isRecord(candidate.projects)) patch.projects = candidate.projects as Partial<UserData["projects"]>;
-  if (isRecord(candidate.achievements)) patch.achievements = candidate.achievements as Partial<UserData["achievements"]>;
-  if (isRecord(candidate.certification)) patch.certification = candidate.certification as Partial<UserData["certification"]>;
-  if (isRecord(candidate.preference)) patch.preference = candidate.preference as Partial<UserData["preference"]>;
-  if (isRecord(candidate.otherDetails)) patch.otherDetails = candidate.otherDetails as Partial<UserData["otherDetails"]>;
-  if (isRecord(candidate.reviewAgree)) patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
+  if (isRecord(candidate.basicInfo))
+    patch.basicInfo = candidate.basicInfo as Partial<UserData["basicInfo"]>;
+  if (isRecord(candidate.education))
+    patch.education = candidate.education as Partial<UserData["education"]>;
+  if (isRecord(candidate.workExperience))
+    patch.workExperience = candidate.workExperience as Partial<
+      UserData["workExperience"]
+    >;
+  if (isRecord(candidate.skills))
+    patch.skills = candidate.skills as Partial<UserData["skills"]>;
+  if (isRecord(candidate.projects))
+    patch.projects = candidate.projects as Partial<UserData["projects"]>;
+  if (isRecord(candidate.achievements))
+    patch.achievements = candidate.achievements as Partial<
+      UserData["achievements"]
+    >;
+  if (isRecord(candidate.certification))
+    patch.certification = candidate.certification as Partial<
+      UserData["certification"]
+    >;
+  if (isRecord(candidate.preference))
+    patch.preference = candidate.preference as Partial<UserData["preference"]>;
+  if (isRecord(candidate.otherDetails))
+    patch.otherDetails = candidate.otherDetails as Partial<
+      UserData["otherDetails"]
+    >;
+  if (isRecord(candidate.reviewAgree))
+    patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
   return patch;
 };
 
 const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
   ...prev,
-  basicInfo: patch.basicInfo ? { ...prev.basicInfo, ...patch.basicInfo } : prev.basicInfo,
-  education: patch.education ? { ...prev.education, ...patch.education } : prev.education,
-  workExperience: patch.workExperience ? { ...prev.workExperience, ...patch.workExperience } : prev.workExperience,
+  basicInfo: patch.basicInfo
+    ? { ...prev.basicInfo, ...patch.basicInfo }
+    : prev.basicInfo,
+  education: patch.education
+    ? { ...prev.education, ...patch.education }
+    : prev.education,
+  workExperience: patch.workExperience
+    ? { ...prev.workExperience, ...patch.workExperience }
+    : prev.workExperience,
   skills: patch.skills ? { ...prev.skills, ...patch.skills } : prev.skills,
-  projects: patch.projects ? { ...prev.projects, ...patch.projects } : prev.projects,
-  achievements: patch.achievements ? { ...prev.achievements, ...patch.achievements } : prev.achievements,
-  certification: patch.certification ? { ...prev.certification, ...patch.certification } : prev.certification,
-  preference: patch.preference ? { ...prev.preference, ...patch.preference } : prev.preference,
-  otherDetails: patch.otherDetails ? { ...prev.otherDetails, ...patch.otherDetails } : prev.otherDetails,
-  reviewAgree: patch.reviewAgree ? { ...prev.reviewAgree, ...patch.reviewAgree } : prev.reviewAgree,
+  projects: patch.projects
+    ? { ...prev.projects, ...patch.projects }
+    : prev.projects,
+  achievements: patch.achievements
+    ? { ...prev.achievements, ...patch.achievements }
+    : prev.achievements,
+  certification: patch.certification
+    ? { ...prev.certification, ...patch.certification }
+    : prev.certification,
+  preference: patch.preference
+    ? { ...prev.preference, ...patch.preference }
+    : prev.preference,
+  otherDetails: patch.otherDetails
+    ? { ...prev.otherDetails, ...patch.otherDetails }
+    : prev.otherDetails,
+  reviewAgree: patch.reviewAgree
+    ? { ...prev.reviewAgree, ...patch.reviewAgree }
+    : prev.reviewAgree,
 });
 
 export default function ResumeUpload() {
@@ -81,15 +131,31 @@ export default function ResumeUpload() {
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [parseWarning, setParseWarning] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [temporaryToken, setTemporaryToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const pending = getPendingSignup();
-    if (!pending) {
+    const pendingData = sessionStorage.getItem("et_pending_signup");
+    if (!pendingData) {
       router.replace("/signup");
       return;
     }
-    setLoading(false);
+    try {
+      const parsed = JSON.parse(pendingData);
+      if (!parsed.email || !parsed.password) {
+        router.replace("/signup");
+        return;
+      }
+      // Option B: Get the temporary token if available
+      if (parsed.temporaryToken) {
+        setTemporaryToken(parsed.temporaryToken);
+        console.log("[resume-upload] Found temporary signup token");
+      }
+      setLoading(false);
+    } catch {
+      router.replace("/signup");
+    }
   }, [router]);
 
   if (loading) {
@@ -117,34 +183,60 @@ export default function ResumeUpload() {
     }
 
     setError(null);
+    setParseWarning(null);
     setSelectedFileName(file.name);
     setIsUploading(true);
 
+    let parsedSuccessfully = false;
+
     try {
-      const endpoint = process.env.NEXT_PUBLIC_RESUME_PARSE_ENDPOINT;
-      if (endpoint) {
-        const formData = new FormData();
-        formData.append("file", file);
+      // Use our Next.js API route to proxy to Django backend
+      const formData = new FormData();
+      formData.append("file", file);
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          body: formData,
-          credentials: "include",
-        });
+      // Option B: Build headers with temporary token if available
+      const headers: HeadersInit = {};
+      if (temporaryToken) {
+        headers["X-Signup-Token"] = temporaryToken;
+        console.log(
+          "[resume-upload] Sending request with temporary signup token"
+        );
+      }
 
-        if (response.ok) {
-          const payload = (await response.json()) as unknown;
-          const patch = extractUserDataPatch(payload);
+      const response = await fetch("/api/resume/parse", {
+        method: "POST",
+        headers,
+        body: formData,
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const patch = extractUserDataPatch(result.data);
           if (Object.keys(patch).length > 0) {
             setUserData((prev) => mergeUserData(prev, patch));
+            parsedSuccessfully = true;
           }
         }
       }
-    } catch {
-      // Parsing failures should still lead to manual review.
+
+      if (!parsedSuccessfully) {
+        // Show warning and let user manually proceed
+        setParseWarning(
+          "Failed to parse resume. Please click the button below to fill in your details manually."
+        );
+      } else {
+        // Parsing succeeded - automatically proceed
+        router.push("/signup/manual-resume-fill");
+      }
+    } catch (err) {
+      console.error("Resume parse error:", err);
+      setParseWarning(
+        "Failed to parse resume. Please click the button below to fill in your details manually."
+      );
     } finally {
       setIsUploading(false);
-      router.push("/signup/manual-resume-fill");
     }
   };
 
@@ -206,6 +298,23 @@ export default function ResumeUpload() {
               >
                 Selected: {selectedFileName}
               </span>
+            ) : null}
+
+            {parseWarning ? (
+              <div
+                role="alert"
+                className="mt-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
+              >
+                <span className="font-semibold">⚠️ Warning:</span>{" "}
+                {parseWarning}
+                <button
+                  type="button"
+                  onClick={() => router.push("/signup/manual-resume-fill")}
+                  className="mt-3 block w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-700"
+                >
+                  Continue to fill manually
+                </button>
+              </div>
             ) : null}
 
             {error ? (

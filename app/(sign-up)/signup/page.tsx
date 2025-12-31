@@ -11,8 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { setPendingSignup } from "@/lib/localUserStore";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 
@@ -40,6 +39,8 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
@@ -76,9 +77,42 @@ export default function SignUpPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  /**
+   * Option B: Initialize signup to get temporary token for resume parsing
+   * This is called before navigating to resume-upload
+   */
+  const initializeSignup = async (
+    userEmail: string,
+    userPassword: string
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch("/api/auth/signup-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail, password: userPassword }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        console.warn("[signup] signup-init failed:", data);
+        // Return null but don't block - we'll proceed without the token
+        // Resume parsing will gracefully handle missing authentication
+        return null;
+      }
+
+      const data = await response.json();
+      return data.temporary_token || null;
+    } catch (error) {
+      console.warn("[signup] signup-init error:", error);
+      // Don't block signup flow - proceed without token
+      return null;
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFieldErrors({});
+    setServerError(null);
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
@@ -104,21 +138,45 @@ export default function SignUpPage() {
       return;
     }
 
-    const [firstName, ...rest] = trimmedName.split(/\s+/);
-    const lastName = rest.join(" ");
+    setIsSubmitting(true);
 
-    setUserData((prev) => ({
-      ...prev,
-      basicInfo: {
-        ...prev.basicInfo,
-        firstName: firstName || prev.basicInfo.firstName,
-        lastName,
-        email: trimmedEmail,
-      },
-    }));
+    try {
+      const [firstName, ...rest] = trimmedName.split(/\s+/);
+      const lastName = rest.join(" ");
 
-    setPendingSignup({ email: trimmedEmail, password });
-    router.push("/signup/resume-upload");
+      setUserData((prev) => ({
+        ...prev,
+        basicInfo: {
+          ...prev.basicInfo,
+          firstName: firstName || prev.basicInfo.firstName,
+          lastName,
+          email: trimmedEmail,
+        },
+      }));
+
+      // Option B: Try to get temporary token for resume parsing
+      // This is non-blocking - if it fails, we proceed without it
+      const temporaryToken = await initializeSignup(trimmedEmail, password);
+
+      // Store pending signup in sessionStorage for the multi-step form
+      // Include the temporary token if we got one
+      sessionStorage.setItem(
+        "et_pending_signup",
+        JSON.stringify({
+          email: trimmedEmail,
+          password,
+          fullName: trimmedName,
+          temporaryToken: temporaryToken || undefined, // Only include if we got one
+        })
+      );
+
+      router.push("/signup/resume-upload");
+    } catch (error) {
+      console.error("[signup] Error:", error);
+      setServerError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -297,7 +355,9 @@ export default function SignUpPage() {
                 </label>
                 <div className="relative">
                   <input
-                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
+                    className={`${inputClasses(
+                      Boolean(fieldErrors.password)
+                    )} pr-14`}
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
@@ -425,11 +485,17 @@ export default function SignUpPage() {
 
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
-                <Link href="/terms" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/terms"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/privacy"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Privacy Policy
                 </Link>
               </p>

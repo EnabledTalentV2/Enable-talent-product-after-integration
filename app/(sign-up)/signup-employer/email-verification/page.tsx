@@ -3,8 +3,7 @@
 import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
-import { Suspense, useState } from "react";
-import { getPendingEmployerSignup } from "@/lib/localEmployerStore";
+import { Suspense, useState, useEffect } from "react";
 
 function VerificationContent() {
   const router = useRouter();
@@ -14,10 +13,22 @@ function VerificationContent() {
   const [resendStatus, setResendStatus] = useState<"idle" | "sent" | "error">(
     "idle"
   );
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const pendingData = sessionStorage.getItem("et_pending_employer_signup");
+    if (pendingData) {
+      try {
+        const parsed = JSON.parse(pendingData);
+        setPendingEmail(parsed.email || null);
+      } catch {
+        setPendingEmail(null);
+      }
+    }
+  }, []);
 
   const handleResendEmail = async () => {
-    const pending = getPendingEmployerSignup();
-    if (!pending?.email) {
+    if (!pendingEmail) {
       setResendStatus("error");
       return;
     }
@@ -26,15 +37,13 @@ function VerificationContent() {
     setResendStatus("idle");
 
     try {
-      // Simulate API call to future backend endpoint
       await fetch("/api/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pending.email }),
+        credentials: "include",
+        body: JSON.stringify({ email: pendingEmail }),
       });
 
-      // For now, we simulate success regardless of the 404 since the route isn't built yet
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setResendStatus("sent");
 
       // Reset status after 5 seconds

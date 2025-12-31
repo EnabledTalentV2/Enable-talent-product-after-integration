@@ -13,7 +13,6 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
-import { setPendingEmployerSignup } from "@/lib/localEmployerStore";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -41,6 +40,7 @@ export default function SignupEmployerPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [error, setError] = useState(""); // General error message for API failures
 
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const employerNameRef = useRef<HTMLInputElement | null>(null);
@@ -80,9 +80,10 @@ export default function SignupEmployerPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFieldErrors({});
+    setError(""); // Clear any previous errors
 
     const trimmedName = fullName.trim();
     const trimmedEmployerName = employerName.trim();
@@ -127,26 +128,55 @@ export default function SignupEmployerPage() {
       return;
     }
 
-    // Proceed with signup logic
-    setPendingEmployerSignup({
-      email: trimmedEmail,
-      password,
-      fullName: trimmedName,
-      employerName: trimmedEmployerName,
-    });
-
-    // Simulate API call to set HTTP-only cookie
-    fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        basicInfo: { firstName: trimmedName, email: trimmedEmail },
+    // Proceed with signup logic - store in sessionStorage for multi-step form
+    sessionStorage.setItem(
+      "et_pending_employer_signup",
+      JSON.stringify({
+        email: trimmedEmail,
+        password,
+        fullName: trimmedName,
         employerName: trimmedEmployerName,
-        role: "employer",
-      }),
-    }).then(() => {
+      })
+    );
+
+    // Send signup request to backend
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password,
+          confirm_password: password, // Django requires password confirmation
+          fullName: trimmedName,
+          employerName: trimmedEmployerName,
+          role: "employer",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Handle Django validation errors
+        if (typeof errorData === "object") {
+          const errorMessages = Object.entries(errorData)
+            .map(([field, messages]) => {
+              const msgArray = Array.isArray(messages) ? messages : [messages];
+              return `${field}: ${msgArray.join(", ")}`;
+            })
+            .join("\n");
+          setError(errorMessages || "Signup failed. Please try again.");
+        } else {
+          setError(errorData.message || "Signup failed. Please try again.");
+        }
+        return;
+      }
+
       router.push("/signup-employer/email-verification");
-    });
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError("Network error. Please try again.");
+    }
   };
 
   return (
@@ -235,6 +265,15 @@ export default function SignupEmployerPage() {
                   </ul>
                 </div>
               ) : null}
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Error</p>
+                  <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                </div>
+              )}
               <div className="space-y-1">
                 <label
                   className="block text-[16px] font-semibold text-gray-900"
@@ -374,7 +413,9 @@ export default function SignupEmployerPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
-                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
+                    className={`${inputClasses(
+                      Boolean(fieldErrors.password)
+                    )} pr-14`}
                     id="employer-password"
                     name="password"
                     autoComplete="new-password"
@@ -504,11 +545,17 @@ export default function SignupEmployerPage() {
 
             <div className="mt-6 text-center text-[11px] text-gray-500">
               By clicking login, you agree to our{" "}
-              <Link href="/terms" className="underline text-gray-600 hover:text-gray-700">
+              <Link
+                href="/terms"
+                className="underline text-gray-600 hover:text-gray-700"
+              >
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="underline text-gray-600 hover:text-gray-700">
+              <Link
+                href="/privacy"
+                className="underline text-gray-600 hover:text-gray-700"
+              >
                 Privacy Policy
               </Link>
             </div>

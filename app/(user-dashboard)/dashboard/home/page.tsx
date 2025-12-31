@@ -8,7 +8,7 @@ import placeholder from "@/public/Placeholder.png";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { getCurrentUser, hasStoredUsers } from "@/lib/localUserStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type ProfileSection = {
   id: string;
@@ -29,14 +29,16 @@ type Notification = {
 const notifications: Notification[] = [
   {
     id: "meta-invite",
-    message: "Recruiter from Meta sent an invitation request for a matching job",
+    message:
+      "Recruiter from Meta sent an invitation request for a matching job",
     time: "3 minutes ago",
     type: "request",
     unread: true,
   },
   {
     id: "amazon-invite",
-    message: "Recruiter from Amazon sent an invitation request for a matching job",
+    message:
+      "Recruiter from Amazon sent an invitation request for a matching job",
     time: "5 minutes ago",
     type: "request",
     unread: true,
@@ -49,19 +51,22 @@ const notifications: Notification[] = [
   },
   {
     id: "amazon-update-1",
-    message: "Recruiter from Amazon sent an invitation request for a matching job",
+    message:
+      "Recruiter from Amazon sent an invitation request for a matching job",
     time: "5 minutes ago",
     type: "info",
   },
   {
     id: "amazon-update-2",
-    message: "Recruiter from Amazon sent an invitation request for a matching job",
+    message:
+      "Recruiter from Amazon sent an invitation request for a matching job",
     time: "5 minutes ago",
     type: "info",
   },
   {
     id: "amazon-update-3",
-    message: "Recruiter from Amazon sent an invitation request for a matching job",
+    message:
+      "Recruiter from Amazon sent an invitation request for a matching job",
     time: "5 minutes ago",
     type: "info",
   },
@@ -85,39 +90,60 @@ const toTrimmed = (value?: string) => value?.trim() ?? "";
 
 export default function HomePageDashboard() {
   const router = useRouter();
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAboutExpanded, setIsAboutExpanded] = useState(true);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({});
+
+  // Merge with defaults to ensure all nested objects exist
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
 
   useEffect(() => {
     let active = true;
 
     const loadUser = async () => {
       try {
-        const useLocalAuth = hasStoredUsers();
-        const localUser = getCurrentUser();
-
-        if (useLocalAuth) {
-          if (!localUser?.userData) {
-            router.replace("/login");
-            return;
-          }
-
-          if (active) {
-            setUserData(() => localUser.userData);
-            setError(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const response = await fetch("/api/user/me", { credentials: "include" });
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
 
         if (response.status === 401) {
-          router.replace("/login");
+          router.replace("/login-talent");
           return;
         }
 
@@ -158,9 +184,14 @@ export default function HomePageDashboard() {
     userData.skills.primaryList?.[0] ||
     "Job seeker";
   const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
-  const profileImage = isLikelyImageSource(profilePhoto) ? profilePhoto : placeholder;
+  const profileImage = isLikelyImageSource(profilePhoto)
+    ? profilePhoto
+    : placeholder;
   const unreadCount = notifications.filter((notice) => notice.unread).length;
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
 
   const aboutParagraphs = useMemo(() => {
     const paragraphs: string[] = [];
@@ -169,7 +200,9 @@ export default function HomePageDashboard() {
       paragraphs.push(status);
     }
 
-    const description = toTrimmed(userData.workExperience.entries[0]?.description);
+    const description = toTrimmed(
+      userData.workExperience.entries[0]?.description
+    );
     if (description) {
       const normalized = description
         .split("\n")
@@ -183,7 +216,10 @@ export default function HomePageDashboard() {
     }
 
     if (paragraphs.length === 0) {
-      const fallback = [userData.education.major, userData.education.institution]
+      const fallback = [
+        userData.education.major,
+        userData.education.institution,
+      ]
         .map(toTrimmed)
         .filter(Boolean)
         .join(" - ");
@@ -247,9 +283,13 @@ export default function HomePageDashboard() {
           })
           .filter((item): item is string => Boolean(item));
 
-    const companySize = userData.preference.companySize.map(toTrimmed).filter(Boolean);
+    const companySize = userData.preference.companySize
+      .map(toTrimmed)
+      .filter(Boolean);
     const jobType = userData.preference.jobType.map(toTrimmed).filter(Boolean);
-    const jobSearch = userData.preference.jobSearch.map(toTrimmed).filter(Boolean);
+    const jobSearch = userData.preference.jobSearch
+      .map(toTrimmed)
+      .filter(Boolean);
     const preferenceItems: string[] = [];
 
     if (companySize.length > 0) {
@@ -324,7 +364,9 @@ export default function HomePageDashboard() {
       {
         id: "certifications",
         label: "Certifications",
-        count: userData.certification.noCertification ? 0 : userData.certification.entries.length,
+        count: userData.certification.noCertification
+          ? 0
+          : userData.certification.entries.length,
         items: certificationItems,
       },
       {
@@ -343,11 +385,17 @@ export default function HomePageDashboard() {
   }, [userData]);
 
   if (loading) {
-    return <div className="py-10 text-base text-slate-600">Loading your dashboard...</div>;
+    return (
+      <div className="py-10 text-base text-slate-600">
+        Loading your dashboard...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="py-10 text-base font-medium text-red-600">{error}</div>;
+    return (
+      <div className="py-10 text-base font-medium text-red-600">{error}</div>
+    );
   }
 
   const toggleSection = (id: string) => {
@@ -371,8 +419,12 @@ export default function HomePageDashboard() {
                 />
               </div>
               <div>
-                <p className="text-base font-semibold text-slate-900">{profileName}</p>
-                <p className="text-base font-medium text-slate-700">{profileRole}</p>
+                <p className="text-base font-semibold text-slate-900">
+                  {profileName}
+                </p>
+                <p className="text-base font-medium text-slate-700">
+                  {profileRole}
+                </p>
               </div>
             </div>
             <button
@@ -399,19 +451,32 @@ export default function HomePageDashboard() {
                   type="button"
                   onClick={() => setIsAboutExpanded((prev) => !prev)}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:text-slate-700"
-                  aria-label={isAboutExpanded ? "Collapse about section" : "Expand about section"}
+                  aria-label={
+                    isAboutExpanded
+                      ? "Collapse about section"
+                      : "Expand about section"
+                  }
                   aria-expanded={isAboutExpanded}
                   aria-controls="about-section"
                 >
-                  {isAboutExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {isAboutExpanded ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
               </div>
             </div>
             {isAboutExpanded ? (
-              <div id="about-section" className="mt-4 space-y-4 text-base leading-relaxed text-slate-600">
+              <div
+                id="about-section"
+                className="mt-4 space-y-4 text-base leading-relaxed text-slate-600"
+              >
                 {aboutParagraphs.length > 0 ? (
                   aboutParagraphs.map((paragraph, index) => (
-                    <p key={`${paragraph.slice(0, 24)}-${index}`}>{paragraph}</p>
+                    <p key={`${paragraph.slice(0, 24)}-${index}`}>
+                      {paragraph}
+                    </p>
                   ))
                 ) : (
                   <p className="text-slate-400">No details added yet.</p>
@@ -425,23 +490,37 @@ export default function HomePageDashboard() {
               const isExpanded = Boolean(expandedSections[section.id]);
               const contentId = `section-${section.id}`;
               return (
-                <div key={section.id} className="rounded-[28px] bg-white shadow-sm">
+                <div
+                  key={section.id}
+                  className="rounded-[28px] bg-white shadow-sm"
+                >
                   <div className="flex items-center justify-between px-5 py-4">
                     <div>
-                      <p className="text-base font-semibold text-slate-900">{section.label}</p>
+                      <p className="text-base font-semibold text-slate-900">
+                        {section.label}
+                      </p>
                       {typeof section.count === "number" ? (
-                        <p className="text-sm text-slate-400">{section.count} added</p>
+                        <p className="text-sm text-slate-400">
+                          {section.count} added
+                        </p>
                       ) : null}
                     </div>
                     <button
                       type="button"
                       onClick={() => toggleSection(section.id)}
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:text-slate-700"
-                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${section.label}`}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} ${
+                        section.label
+                      }`}
                       aria-expanded={isExpanded}
                       aria-controls={contentId}
                     >
-                      <ChevronDown size={16} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
                   </div>
                   {isExpanded ? (
@@ -455,7 +534,8 @@ export default function HomePageDashboard() {
                             <li key={item}>{item}</li>
                           ))}
                         </ul>
-                      ) : typeof section.count === "number" && section.count > 0 ? (
+                      ) : typeof section.count === "number" &&
+                        section.count > 0 ? (
                         <p>{section.count} items available.</p>
                       ) : (
                         <p>No details added yet.</p>
@@ -470,15 +550,24 @@ export default function HomePageDashboard() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold text-slate-900">Notifications</h2>
-            <span className="text-base text-slate-500">({unreadCount} Unread)</span>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Notifications
+            </h2>
+            <span className="text-base text-slate-500">
+              ({unreadCount} Unread)
+            </span>
           </div>
 
           <div className="space-y-4">
             {notifications.map((notice) => (
-              <div key={notice.id} className="rounded-[28px] bg-white p-5 shadow-sm">
+              <div
+                key={notice.id}
+                className="rounded-[28px] bg-white p-5 shadow-sm"
+              >
                 <div className="space-y-1">
-                  <p className="text-base font-medium text-slate-900">{notice.message}</p>
+                  <p className="text-base font-medium text-slate-900">
+                    {notice.message}
+                  </p>
                   <p className="text-sm text-slate-400">{notice.time}</p>
                 </div>
 
@@ -512,5 +601,3 @@ export default function HomePageDashboard() {
     </section>
   );
 }
-
-

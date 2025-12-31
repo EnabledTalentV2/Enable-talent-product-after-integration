@@ -6,11 +6,6 @@ import Image from "next/image";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import {
-  clearCurrentUser,
-  getUserByEmail,
-  setCurrentUser,
-} from "@/lib/localUserStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
@@ -51,16 +46,37 @@ export default function LoginPage() {
         return;
       }
 
-      clearCurrentUser();
-      const storedUser = getUserByEmail(trimmedEmail);
+      // Call the backend API for login
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password: password,
+        }),
+      });
 
-      if (!storedUser || storedUser.password !== password) {
-        setError("Invalid email or password.");
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different error responses from backend
+        const errorMessage =
+          data.detail ||
+          data.error ||
+          data.message ||
+          "Invalid email or password.";
+        setError(errorMessage);
         return;
       }
 
-      setCurrentUser(storedUser.email);
-      setUserData(() => storedUser.userData);
+      // Update user data store with response data if available
+      if (data) {
+        setUserData(() => data);
+      }
+
       router.push("/dashboard");
     } catch (err: unknown) {
       console.error(err);
@@ -242,11 +258,17 @@ export default function LoginPage() {
 
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
-                <Link href="/terms" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/terms"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/privacy"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Privacy Policy
                 </Link>
               </p>

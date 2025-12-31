@@ -3,14 +3,13 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Bell, LogOut, User } from "lucide-react";
-import { useUserDataStore } from "@/lib/userDataStore";
-import { clearCurrentUser } from "@/lib/localUserStore";
 import Link from "next/link";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { useEmployerDataStore } from "@/lib/employerDataStore";
 
 export default function DashBoardNavbarEmployer() {
   const router = useRouter();
-  const resetUserData = useUserDataStore((s) => s.resetUserData);
+  const resetEmployerData = useEmployerDataStore((s) => s.resetEmployerData);
   const resetJobs = useEmployerJobsStore((s) => s.resetJobs);
 
   const handleLogout = async () => {
@@ -20,8 +19,7 @@ export default function DashBoardNavbarEmployer() {
         credentials: "include",
       });
     } finally {
-      clearCurrentUser();
-      resetUserData();
+      resetEmployerData();
       resetJobs();
       router.push("/login-employer");
     }
@@ -72,7 +70,6 @@ export default function DashBoardNavbarEmployer() {
             href="/employer/dashboard/post-jobs"
             className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
           >
-            
             <span>Post a Job</span>
           </Link>
         </div>

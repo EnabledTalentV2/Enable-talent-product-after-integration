@@ -2,12 +2,6 @@
 
 import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import {
-  clearPendingEmployerSignup,
-  getPendingEmployerSignup,
-  saveEmployer,
-  setCurrentEmployer,
-} from "@/lib/localEmployerStore";
 import defaultImage from "@/public/Placeholder.png";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
@@ -19,6 +13,13 @@ import {
   type RefObject,
 } from "react";
 import { useRouter } from "next/navigation";
+
+type PendingEmployerSignup = {
+  email: string;
+  password: string;
+  fullName?: string;
+  employerName?: string;
+};
 
 type FieldErrors = Partial<{
   organizationName: string;
@@ -48,7 +49,9 @@ export default function OrganisationInfoPage() {
   );
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [pendingSignup] = useState(() => getPendingEmployerSignup());
+  const [pendingSignup, setPendingSignup] =
+    useState<PendingEmployerSignup | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
@@ -58,10 +61,22 @@ export default function OrganisationInfoPage() {
   const industryRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
-    if (!pendingSignup) {
+    const pendingData = sessionStorage.getItem("et_pending_employer_signup");
+    if (!pendingData) {
+      router.replace("/signup-employer");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(pendingData);
+      if (!parsed.email || !parsed.password) {
+        router.replace("/signup-employer");
+        return;
+      }
+      setPendingSignup(parsed);
+    } catch {
       router.replace("/signup-employer");
     }
-  }, [pendingSignup, router]);
+  }, [router]);
 
   const welcomeName =
     pendingSignup?.fullName?.trim() ||
@@ -130,23 +145,41 @@ export default function OrganisationInfoPage() {
       return;
     }
 
-    const pending = getPendingEmployerSignup();
-    if (!pending) {
+    if (!pendingSignup) {
       router.replace("/signup-employer");
       return;
     }
 
-    saveEmployer({
-      email: pending.email,
-      password: pending.password,
-      employerData,
-      fullName: pending.fullName,
-      employerName: pending.employerName,
-    });
-    setCurrentEmployer(pending.email);
-    clearPendingEmployerSignup();
-    setFieldErrors({});
-    router.push("/employer/dashboard");
+    setSubmitting(true);
+
+    try {
+      // Update user profile with organization info via API
+      const response = await fetch("/api/user/me", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...employerData,
+          email: pendingSignup.email,
+          fullName: pendingSignup.fullName,
+          employerName: pendingSignup.employerName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save organization info.");
+      }
+
+      // Clear pending signup from sessionStorage
+      sessionStorage.removeItem("et_pending_employer_signup");
+      setFieldErrors({});
+      router.push("/employer/dashboard");
+    } catch (error) {
+      console.error("Failed to save organization info:", error);
+      setFieldErrors({ organizationName: "Failed to save. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -308,7 +341,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.location}
                   aria-invalid={Boolean(fieldErrors.location)}
                   aria-describedby={
-                    fieldErrors.location ? "organization-location-error" : undefined
+                    fieldErrors.location
+                      ? "organization-location-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("location");
@@ -341,7 +376,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.foundedYear}
                   aria-invalid={Boolean(fieldErrors.foundedYear)}
                   aria-describedby={
-                    fieldErrors.foundedYear ? "organization-founded-error" : undefined
+                    fieldErrors.foundedYear
+                      ? "organization-founded-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("foundedYear");
@@ -375,7 +412,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.website}
                   aria-invalid={Boolean(fieldErrors.website)}
                   aria-describedby={
-                    fieldErrors.website ? "organization-website-error" : undefined
+                    fieldErrors.website
+                      ? "organization-website-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("website");
@@ -460,7 +499,9 @@ export default function OrganisationInfoPage() {
                     value={organizationInfo.industry}
                     aria-invalid={Boolean(fieldErrors.industry)}
                     aria-describedby={
-                      fieldErrors.industry ? "organization-industry-error" : undefined
+                      fieldErrors.industry
+                        ? "organization-industry-error"
+                        : undefined
                     }
                     onChange={(event) => {
                       clearFieldError("industry");

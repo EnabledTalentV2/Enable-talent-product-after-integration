@@ -6,6 +6,7 @@ import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type CompanyProfile = {
   id: string;
@@ -124,10 +125,13 @@ const companies: CompanyProfile[] = [
   },
 ];
 
-const companyById = companies.reduce<Record<string, CompanyProfile>>((acc, company) => {
-  acc[company.id] = company;
-  return acc;
-}, {});
+const companyById = companies.reduce<Record<string, CompanyProfile>>(
+  (acc, company) => {
+    acc[company.id] = company;
+    return acc;
+  },
+  {}
+);
 
 const jobs: CompanyJob[] = [
   {
@@ -301,25 +305,66 @@ const jobs: CompanyJob[] = [
 ];
 
 const getStatusStyles = (status: CompanyJob["status"]) =>
-  status === "Active" ? "bg-[#ECFDF5] text-[#10B981]" : "bg-slate-100 text-slate-500";
+  status === "Active"
+    ? "bg-[#ECFDF5] text-[#10B981]"
+    : "bg-slate-100 text-slate-500";
 
 export default function CompaniesPage() {
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const [showFullDescription, setShowFullDescription] = useState(false);
   const detailsRef = useRef<HTMLDivElement | null>(null);
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
   const appliedJobs = useAppliedJobsStore((s) => s.appliedJobs);
   const applyJob = useAppliedJobsStore((s) => s.applyJob);
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
 
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === selectedId) ?? jobs[0],
     [selectedId]
   );
   const activeCompany = activeJob?.company;
-  const appliedJobIds = useMemo(() => new Set(appliedJobs.map((job) => job.id)), [appliedJobs]);
+  const appliedJobIds = useMemo(
+    () => new Set(appliedJobs.map((job) => job.id)),
+    [appliedJobs]
+  );
   const isApplied = activeJob ? appliedJobIds.has(activeJob.id) : false;
-  const canApply = Boolean(activeJob) && activeJob.status === "Active" && !isApplied;
+  const canApply =
+    Boolean(activeJob) && activeJob.status === "Active" && !isApplied;
   const descriptionItems = activeJob?.description ?? [];
   const canToggleDescription = descriptionItems.length > 2;
   const visibleDescriptionItems = showFullDescription
@@ -334,7 +379,10 @@ export default function CompaniesPage() {
     setSelectedId(id);
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       requestAnimationFrame(() => {
-        detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        detailsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       });
     }
   };
@@ -376,7 +424,8 @@ export default function CompaniesPage() {
             <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
               {jobs.map((job) => {
                 const isSelected = selectedId === job.id;
-                const matchLabel = typeof job.match === "number" ? `${job.match}%` : "--";
+                const matchLabel =
+                  typeof job.match === "number" ? `${job.match}%` : "--";
 
                 return (
                   <button
@@ -414,7 +463,9 @@ export default function CompaniesPage() {
                       )}
 
                       <div className="min-w-0">
-                        <h3 className="truncate text-xl font-bold text-slate-900">{job.title}</h3>
+                        <h3 className="truncate text-xl font-bold text-slate-900">
+                          {job.title}
+                        </h3>
                         <p className="truncate font-medium text-slate-500">
                           {job.company.name}
                         </p>
@@ -425,7 +476,9 @@ export default function CompaniesPage() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-slate-500">
                           <MapPin size={18} className="text-orange-400" />
-                          <span className="text-base font-medium">{job.location}</span>
+                          <span className="text-base font-medium">
+                            {job.location}
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2 text-slate-500">
@@ -437,7 +490,9 @@ export default function CompaniesPage() {
                       </div>
 
                       <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
-                        <p className="text-lg font-bold text-slate-900">{matchLabel}</p>
+                        <p className="text-lg font-bold text-slate-900">
+                          {matchLabel}
+                        </p>
                         <p className="text-sm font-bold uppercase tracking-wider text-slate-700">
                           Matching
                         </p>
@@ -496,14 +551,20 @@ export default function CompaniesPage() {
                             : "cursor-not-allowed bg-slate-200 text-slate-500"
                         }`}
                       >
-                        {isApplied ? "Applied" : activeJob.status === "Active" ? "Apply now" : "Closed"}
+                        {isApplied
+                          ? "Applied"
+                          : activeJob.status === "Active"
+                          ? "Apply now"
+                          : "Closed"}
                       </button>
                     </div>
                   </div>
 
                   <div className="rounded-[28px] bg-[#FFFBEB] p-5">
                     <p className="text-base font-medium text-slate-400">Role</p>
-                    <p className="text-2xl font-bold text-slate-900">{activeJob.title}</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {activeJob.title}
+                    </p>
                     <div className="mt-4 flex flex-wrap gap-6 text-slate-600">
                       <div className="flex items-center gap-2">
                         <MapPin size={18} className="text-orange-400" />
@@ -517,7 +578,9 @@ export default function CompaniesPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xl font-bold text-slate-900">Job description</h4>
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Job description
+                    </h4>
                     {visibleDescriptionItems.length > 0 ? (
                       <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
                         {visibleDescriptionItems.map((item, index) => (
@@ -525,7 +588,9 @@ export default function CompaniesPage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-slate-600">Details will be shared after you apply.</p>
+                      <p className="text-slate-600">
+                        Details will be shared after you apply.
+                      </p>
                     )}
                     {canToggleDescription && (
                       <button
@@ -540,28 +605,36 @@ export default function CompaniesPage() {
 
                   <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
                     <div>
-                      <p className="mb-1 text-base font-medium text-slate-400">Location</p>
+                      <p className="mb-1 text-base font-medium text-slate-400">
+                        Location
+                      </p>
                       <p className="text-lg font-bold text-slate-900">
                         {activeCompany.details.location}
                       </p>
                     </div>
 
                     <div>
-                      <p className="mb-1 text-base font-medium text-slate-400">Industry</p>
+                      <p className="mb-1 text-base font-medium text-slate-400">
+                        Industry
+                      </p>
                       <p className="text-lg font-bold text-slate-900">
                         {activeCompany.details.industry}
                       </p>
                     </div>
 
                     <div>
-                      <p className="mb-1 text-base font-medium text-slate-400">Founded year</p>
+                      <p className="mb-1 text-base font-medium text-slate-400">
+                        Founded year
+                      </p>
                       <p className="text-lg font-bold text-slate-900">
                         {activeCompany.details.founded}
                       </p>
                     </div>
 
                     <div>
-                      <p className="mb-1 text-base font-medium text-slate-400">Employee size</p>
+                      <p className="mb-1 text-base font-medium text-slate-400">
+                        Employee size
+                      </p>
                       <p className="text-lg font-bold text-slate-900">
                         {activeCompany.details.employeeSize}
                       </p>
@@ -569,23 +642,31 @@ export default function CompaniesPage() {
                   </div>
 
                   <div>
-                    <p className="mb-1 text-base font-medium text-slate-400">Open roles / Hiring</p>
+                    <p className="mb-1 text-base font-medium text-slate-400">
+                      Open roles / Hiring
+                    </p>
                     <p className="text-2xl font-bold text-slate-900">
                       {activeCompany.hiringCount}
                     </p>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xl font-bold text-slate-900">About the company</h4>
+                    <h4 className="text-xl font-bold text-slate-900">
+                      About the company
+                    </h4>
                     <div className="space-y-4 leading-relaxed text-slate-600">
                       {activeCompany.about.map((paragraph, i) => (
-                        <p key={`${activeCompany.id}-about-${i}`}>{paragraph}</p>
+                        <p key={`${activeCompany.id}-about-${i}`}>
+                          {paragraph}
+                        </p>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="text-xl font-bold text-slate-900">Company details</h4>
+                    <h4 className="text-xl font-bold text-slate-900">
+                      Company details
+                    </h4>
 
                     <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
                       <li className="flex items-center gap-2">

@@ -9,6 +9,7 @@ import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSumma
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type Notification = {
   id: string;
@@ -179,11 +180,45 @@ const formatDelta = (value: number) => ({
 });
 
 export default function DashboardPage() {
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
   const [activeMetric, setActiveMetric] =
     useState<keyof typeof engagementSeries>("views");
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
+
+  // Merge with defaults to ensure all nested objects exist
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
 
   const { percent: profilePercent } = useMemo(
     () => computeProfileCompletion(userData),
@@ -436,5 +471,3 @@ export default function DashboardPage() {
     </section>
   );
 }
-
-

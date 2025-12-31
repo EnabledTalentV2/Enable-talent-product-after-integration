@@ -8,10 +8,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import {
-  getEmployerByEmail,
-  setCurrentEmployer,
-} from "@/lib/localEmployerStore";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
@@ -22,6 +18,7 @@ export default function EmployerLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const hasError = Boolean(error);
@@ -32,26 +29,63 @@ export default function EmployerLoginPage() {
     }
   }, [hasError]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
     setError(null);
 
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) {
       setError("Please enter both email and password.");
+      setSubmitting(false);
       return;
     }
 
-    const storedEmployer = getEmployerByEmail(trimmedEmail);
-    if (!storedEmployer || storedEmployer.password !== password) {
-      setError("Invalid email or password.");
-      return;
-    }
+    try {
+      // Call the backend API for login
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password: password,
+        }),
+      });
 
-    setCurrentEmployer(trimmedEmail);
-    setEmployerData(() => storedEmployer.employerData);
-    router.push("/employer/dashboard");
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle different error responses from backend
+        const errorMessage =
+          data.detail ||
+          data.error ||
+          data.message ||
+          "Invalid email or password.";
+        setError(errorMessage);
+        return;
+      }
+
+      // Update employer data store with response data if available
+      if (data) {
+        setEmployerData(() => data);
+      }
+
+      router.push("/employer/dashboard");
+    } catch (err: unknown) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -210,9 +244,10 @@ export default function EmployerLoginPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                disabled={submitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Login
+                {submitting ? "Signing in..." : "Login"}
               </button>
             </form>
 

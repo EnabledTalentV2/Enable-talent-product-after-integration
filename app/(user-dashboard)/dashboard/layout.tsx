@@ -4,8 +4,104 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
+import BackendValidationBanner from "@/components/BackendValidationBanner";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { getCurrentUser } from "@/lib/localUserStore";
+import {
+  validateBackendData,
+  logValidationToConsole,
+  type ValidationResult,
+} from "@/lib/backendDataValidator";
+import { initialUserData as defaultUserData } from "@/lib/userDataDefaults";
+import type { UserData } from "@/lib/types/user";
+
+/**
+ * Transform flat backend data to nested frontend UserData structure
+ * This ensures the frontend doesn't crash even if backend returns incomplete data
+ */
+function transformBackendToFrontend(
+  backendData: Record<string, unknown>
+): UserData {
+  return {
+    basicInfo: {
+      firstName:
+        (backendData.first_name as string) ||
+        (backendData.firstName as string) ||
+        defaultUserData.basicInfo.firstName,
+      lastName:
+        (backendData.last_name as string) ||
+        (backendData.lastName as string) ||
+        defaultUserData.basicInfo.lastName,
+      email: (backendData.email as string) || defaultUserData.basicInfo.email,
+      phone:
+        (backendData.phone as string) ||
+        (backendData.phone_number as string) ||
+        defaultUserData.basicInfo.phone,
+      location:
+        (backendData.location as string) || defaultUserData.basicInfo.location,
+      citizenshipStatus:
+        (backendData.citizenship_status as string) ||
+        (backendData.citizenshipStatus as string) ||
+        defaultUserData.basicInfo.citizenshipStatus,
+      gender:
+        (backendData.gender as string) || defaultUserData.basicInfo.gender,
+      ethnicity:
+        (backendData.ethnicity as string) ||
+        defaultUserData.basicInfo.ethnicity,
+      socialProfile:
+        (backendData.social_profile as string) ||
+        (backendData.socialProfile as string) ||
+        defaultUserData.basicInfo.socialProfile,
+      linkedinUrl:
+        (backendData.linkedin_url as string) ||
+        (backendData.linkedinUrl as string) ||
+        (backendData.linkedin as string) ||
+        defaultUserData.basicInfo.linkedinUrl,
+      currentStatus:
+        (backendData.current_status as string) ||
+        (backendData.currentStatus as string) ||
+        defaultUserData.basicInfo.currentStatus,
+      profilePhoto:
+        (backendData.profile_photo as string) ||
+        (backendData.profilePhoto as string) ||
+        (backendData.avatar as string) ||
+        ((backendData.profile as Record<string, unknown>)?.avatar as string) ||
+        defaultUserData.basicInfo.profilePhoto,
+    },
+    workExperience:
+      (backendData.work_experience as UserData["workExperience"]) ||
+        (backendData.workExperience as UserData["workExperience"]) || {
+          ...defaultUserData.workExperience,
+        },
+    education: (backendData.education as UserData["education"]) || {
+      ...defaultUserData.education,
+    },
+    skills: (backendData.skills as UserData["skills"]) || {
+      ...defaultUserData.skills,
+    },
+    projects: (backendData.projects as UserData["projects"]) || {
+      ...defaultUserData.projects,
+    },
+    achievements: (backendData.achievements as UserData["achievements"]) || {
+      ...defaultUserData.achievements,
+    },
+    certification: (backendData.certification as UserData["certification"]) ||
+      (backendData.certifications as UserData["certification"]) || {
+        ...defaultUserData.certification,
+      },
+    preference: (backendData.preference as UserData["preference"]) ||
+      (backendData.preferences as UserData["preference"]) || {
+        ...defaultUserData.preference,
+      },
+    otherDetails: (backendData.other_details as UserData["otherDetails"]) ||
+      (backendData.otherDetails as UserData["otherDetails"]) || {
+        ...defaultUserData.otherDetails,
+      },
+    reviewAgree: (backendData.review_agree as UserData["reviewAgree"]) ||
+      (backendData.reviewAgree as UserData["reviewAgree"]) || {
+        ...defaultUserData.reviewAgree,
+      },
+  };
+}
 
 export default function DashboardLayoutPage({
   children,
@@ -15,21 +111,54 @@ export default function DashboardLayoutPage({
   const router = useRouter();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
+  const [validationResult, setValidationResult] =
+    useState<ValidationResult | null>(null);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const localUser = getCurrentUser();
+    let active = true;
 
-      if (!localUser?.userData) {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (response.status === 401) {
+          router.replace("/login-talent");
+          return;
+        }
+
+        if (!response.ok) {
+          router.replace("/login-talent");
+          return;
+        }
+
+        const rawData = await response.json();
+
+        if (active) {
+          // Validate backend data and log in development
+          if (process.env.NODE_ENV === "development") {
+            const validation = validateBackendData(rawData);
+            setValidationResult(validation);
+            logValidationToConsole(validation);
+          }
+
+          // Transform backend data to frontend structure with defaults
+          const transformedData = transformBackendToFrontend(rawData);
+          setUserData(() => transformedData);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
         router.replace("/login-talent");
-        return;
       }
-
-      setUserData((_prev) => localUser.userData);
-      setLoading(false);
     };
 
     checkAuth();
+
+    return () => {
+      active = false;
+    };
   }, [router, setUserData]);
 
   if (loading) {
@@ -45,6 +174,8 @@ export default function DashboardLayoutPage({
       <DashBoardNavbar />
       <DashboardSubnav />
       <main className="px-6 pb-10 md:px-12">{children}</main>
+      {/* Developer mode banner for backend data validation */}
+      <BackendValidationBanner validationResult={validationResult} />
     </div>
   );
 }

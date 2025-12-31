@@ -15,20 +15,8 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
-import {
-  clearPendingSignup,
-  getCurrentUser,
-  getPendingSignup,
-  saveUser,
-  setCurrentUser,
-} from "@/lib/localUserStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
-import type {
-  Step,
-  StepKey,
-  StepStatus,
-  UserData,
-} from "@/lib/types/user";
+import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
@@ -60,14 +48,29 @@ export default function ManualResumeFill() {
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+  const [pendingSignup, setPendingSignup] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
 
   useEffect(() => {
-    const pending = getPendingSignup();
-    if (!pending) {
+    // Check for pending signup data in sessionStorage (set during initial signup)
+    const pendingData = sessionStorage.getItem("et_pending_signup");
+    if (!pendingData) {
       router.replace("/signup");
       return;
     }
-    setLoading(false);
+    try {
+      const parsed = JSON.parse(pendingData);
+      if (!parsed.email || !parsed.password) {
+        router.replace("/signup");
+        return;
+      }
+      setPendingSignup(parsed);
+      setLoading(false);
+    } catch {
+      router.replace("/signup");
+    }
   }, [router]);
 
   const [finishError, setFinishError] = useState<string | null>(null);
@@ -488,31 +491,22 @@ export default function ManualResumeFill() {
     setFinishError(null);
 
     try {
-      const pending = getPendingSignup();
-      const currentUser = getCurrentUser();
-
-      if (!pending && !currentUser) {
+      if (!pendingSignup) {
         setFinishError(
-          "No active signup or logged-in user found. Please start from signup or login."
+          "No active signup found. Please start from the signup page."
         );
         return;
       }
 
-      const emailFromPending = pending?.email?.trim();
-      const passwordFromPending = pending?.password || "";
-      const emailFromCurrent = currentUser?.email?.trim();
-      const passwordFromCurrent = currentUser?.password || "";
-
-      const email =
-        emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
-      const password = pending ? passwordFromPending : passwordFromCurrent;
+      const email = pendingSignup.email.trim();
+      const password = pendingSignup.password;
 
       if (!email) {
         setFinishError("Missing email. Please start from the signup page.");
         return;
       }
 
-      if (pending && !password) {
+      if (!password) {
         setFinishError("Missing password. Please start from the signup page.");
         return;
       }
@@ -525,35 +519,48 @@ export default function ManualResumeFill() {
         },
       };
 
-      if (pending) {
-        saveUser({ email, password, userData: finalizedData });
-        clearPendingSignup();
-      } else if (currentUser) {
-        saveUser({
-          email: emailFromCurrent || email,
-          password: passwordFromCurrent,
+      // Send signup request to backend
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          confirm_password: password, // Django requires password confirmation
           userData: finalizedData,
-        });
-      }
+        }),
+      });
 
-      setCurrentUser(email);
-      setUserData(() => finalizedData);
-
-      try {
-        const response = await fetch("/api/auth/signup", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalizedData),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(() => data);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        // Handle Django validation errors (field: [messages] format)
+        let errorMessage = "Signup failed. Please try again.";
+        if (typeof errorData === "object" && errorData !== null) {
+          const messages = Object.entries(errorData)
+            .map(([field, msgs]) => {
+              if (Array.isArray(msgs)) {
+                return `${field}: ${msgs.join(", ")}`;
+              }
+              return `${field}: ${msgs}`;
+            })
+            .join(". ");
+          if (messages) {
+            errorMessage = messages;
+          } else if (errorData.detail || errorData.error || errorData.message) {
+            errorMessage =
+              errorData.detail || errorData.error || errorData.message;
+          }
         }
-      } catch {
-        // Local storage already saved; ignore backend mock failures.
+        setFinishError(errorMessage);
+        return;
       }
+
+      const data = await response.json();
+      setUserData(() => data.userData || finalizedData);
+
+      // Clear pending signup from sessionStorage
+      sessionStorage.removeItem("et_pending_signup");
 
       router.push("/dashboard");
     } catch (err) {

@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { getCurrentUser, hasStoredUsers, saveUser, setCurrentUser } from "@/lib/localUserStore";
-import { computeProfileCompletion, computeProfileSectionCompletion } from "@/lib/profileCompletion";
+import {
+  computeProfileCompletion,
+  computeProfileSectionCompletion,
+} from "@/lib/profileCompletion";
 import type { StepKey } from "@/lib/types/user";
+import { initialUserData } from "@/lib/userDataDefaults";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -48,7 +51,39 @@ const titleClass = "text-lg font-semibold text-slate-900";
 
 export default function ProfileUpdatePage() {
   const router = useRouter();
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +91,14 @@ export default function ProfileUpdatePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
-  const completion = useMemo(() => computeProfileCompletion(userData), [userData]);
-  const sectionCompletion = useMemo(() => computeProfileSectionCompletion(userData), [userData]);
+  const completion = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
+  const sectionCompletion = useMemo(
+    () => computeProfileSectionCompletion(userData),
+    [userData]
+  );
   const incompleteSections = useMemo(
     () => sectionOrder.filter((key) => !sectionCompletion[key].isComplete),
     [sectionCompletion]
@@ -69,26 +110,11 @@ export default function ProfileUpdatePage() {
 
     const loadUser = async () => {
       try {
-        const useLocalAuth = hasStoredUsers();
-        const localUser = getCurrentUser();
-
-        if (useLocalAuth) {
-          if (!localUser?.userData) {
-            router.replace("/login");
-            return;
-          }
-
-          if (active) {
-            setUserData(() => localUser.userData);
-            setError(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const response = await fetch("/api/user/me", { credentials: "include" });
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
         if (response.status === 401) {
-          router.replace("/login");
+          router.replace("/login-talent");
           return;
         }
 
@@ -126,30 +152,19 @@ export default function ProfileUpdatePage() {
     setSaveSuccess(null);
 
     try {
-      const currentUser = getCurrentUser();
-      const emailFromData = userData.basicInfo.email.trim();
+      const response = await fetch("/api/user/me", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
 
-      if (currentUser) {
-        const email = emailFromData || currentUser.email;
-        const updatedData = {
-          ...userData,
-          basicInfo: {
-            ...userData.basicInfo,
-            email,
-          },
-        };
-
-        saveUser({ email, password: currentUser.password, userData: updatedData });
-        setCurrentUser(email);
-        setUserData(() => updatedData);
-      } else {
-        await fetch("/api/auth/signup", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        });
+      if (!response.ok) {
+        throw new Error("Failed to save profile.");
       }
+
+      const updatedData = await response.json();
+      setUserData(() => updatedData);
 
       setSaveSuccess("Profile saved.");
       if (redirect) {
@@ -168,14 +183,24 @@ export default function ProfileUpdatePage() {
         return (
           <BasicInfo
             data={userData.basicInfo}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, basicInfo: { ...prev.basicInfo, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                basicInfo: { ...prev.basicInfo, ...patch },
+              }))
+            }
           />
         );
       case "education":
         return (
           <Education
             data={userData.education}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, education: { ...prev.education, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                education: { ...prev.education, ...patch },
+              }))
+            }
           />
         );
       case "workExperience":
@@ -190,10 +215,17 @@ export default function ProfileUpdatePage() {
             }
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
-                const nextEntries = prev.workExperience.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.workExperience.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+                return {
+                  ...prev,
+                  workExperience: {
+                    ...prev.workExperience,
+                    entries: nextEntries,
+                  },
+                };
               })
             }
             onAddEntry={() =>
@@ -201,14 +233,31 @@ export default function ProfileUpdatePage() {
                 ...prev,
                 workExperience: {
                   ...prev.workExperience,
-                  entries: [...prev.workExperience.entries, { company: "", role: "", from: "", to: "", description: "" }],
+                  entries: [
+                    ...prev.workExperience.entries,
+                    {
+                      company: "",
+                      role: "",
+                      from: "",
+                      to: "",
+                      description: "",
+                    },
+                  ],
                 },
               }))
             }
             onRemoveEntry={(index) =>
               setUserData((prev) => {
-                const nextEntries = prev.workExperience.entries.filter((_, idx) => idx !== index);
-                return { ...prev, workExperience: { ...prev.workExperience, entries: nextEntries } };
+                const nextEntries = prev.workExperience.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  workExperience: {
+                    ...prev.workExperience,
+                    entries: nextEntries,
+                  },
+                };
               })
             }
           />
@@ -217,7 +266,12 @@ export default function ProfileUpdatePage() {
         return (
           <Skills
             data={userData.skills}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, skills: { ...prev.skills, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                skills: { ...prev.skills, ...patch },
+              }))
+            }
           />
         );
       case "projects":
@@ -235,7 +289,10 @@ export default function ProfileUpdatePage() {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
                   idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+                return {
+                  ...prev,
+                  projects: { ...prev.projects, entries: nextEntries },
+                };
               })
             }
             onAddEntry={() =>
@@ -245,15 +302,26 @@ export default function ProfileUpdatePage() {
                   ...prev.projects,
                   entries: [
                     ...prev.projects.entries,
-                    { projectName: "", projectDescription: "", current: false, from: "", to: "" },
+                    {
+                      projectName: "",
+                      projectDescription: "",
+                      current: false,
+                      from: "",
+                      to: "",
+                    },
                   ],
                 },
               }))
             }
             onRemoveEntry={(index) =>
               setUserData((prev) => {
-                const nextEntries = prev.projects.entries.filter((_, idx) => idx !== index);
-                return { ...prev, projects: { ...prev.projects, entries: nextEntries } };
+                const nextEntries = prev.projects.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  projects: { ...prev.projects, entries: nextEntries },
+                };
               })
             }
           />
@@ -264,10 +332,14 @@ export default function ProfileUpdatePage() {
             data={userData.achievements}
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
-                const nextEntries = prev.achievements.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.achievements.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+                return {
+                  ...prev,
+                  achievements: { ...prev.achievements, entries: nextEntries },
+                };
               })
             }
             onAddEntry={() =>
@@ -275,14 +347,22 @@ export default function ProfileUpdatePage() {
                 ...prev,
                 achievements: {
                   ...prev.achievements,
-                  entries: [...prev.achievements.entries, { title: "", issueDate: "", description: "" }],
+                  entries: [
+                    ...prev.achievements.entries,
+                    { title: "", issueDate: "", description: "" },
+                  ],
                 },
               }))
             }
             onRemoveEntry={(index) =>
               setUserData((prev) => {
-                const nextEntries = prev.achievements.entries.filter((_, idx) => idx !== index);
-                return { ...prev, achievements: { ...prev.achievements, entries: nextEntries } };
+                const nextEntries = prev.achievements.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  achievements: { ...prev.achievements, entries: nextEntries },
+                };
               })
             }
           />
@@ -295,19 +375,37 @@ export default function ProfileUpdatePage() {
               setUserData((prev) => {
                 const nextEntries = prev.certification.entries.length
                   ? prev.certification.entries
-                  : [{ name: "", issueDate: "", organization: "", credentialIdUrl: "" }];
+                  : [
+                      {
+                        name: "",
+                        issueDate: "",
+                        organization: "",
+                        credentialIdUrl: "",
+                      },
+                    ];
                 return {
                   ...prev,
-                  certification: { ...prev.certification, noCertification: value, entries: nextEntries },
+                  certification: {
+                    ...prev.certification,
+                    noCertification: value,
+                    entries: nextEntries,
+                  },
                 };
               })
             }
             onEntryChange={(index, patch) =>
               setUserData((prev) => {
-                const nextEntries = prev.certification.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextEntries = prev.certification.entries.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+                return {
+                  ...prev,
+                  certification: {
+                    ...prev.certification,
+                    entries: nextEntries,
+                  },
+                };
               })
             }
             onAddEntry={() =>
@@ -317,15 +415,28 @@ export default function ProfileUpdatePage() {
                   ...prev.certification,
                   entries: [
                     ...prev.certification.entries,
-                    { name: "", issueDate: "", organization: "", credentialIdUrl: "" },
+                    {
+                      name: "",
+                      issueDate: "",
+                      organization: "",
+                      credentialIdUrl: "",
+                    },
                   ],
                 },
               }))
             }
             onRemoveEntry={(index) =>
               setUserData((prev) => {
-                const nextEntries = prev.certification.entries.filter((_, idx) => idx !== index);
-                return { ...prev, certification: { ...prev.certification, entries: nextEntries } };
+                const nextEntries = prev.certification.entries.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  certification: {
+                    ...prev.certification,
+                    entries: nextEntries,
+                  },
+                };
               })
             }
           />
@@ -334,20 +445,37 @@ export default function ProfileUpdatePage() {
         return (
           <Preference
             data={userData.preference}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, preference: { ...prev.preference, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                preference: { ...prev.preference, ...patch },
+              }))
+            }
           />
         );
       case "otherDetails":
         return (
           <OtherDetails
             data={userData.otherDetails}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, otherDetails: { ...prev.otherDetails, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                otherDetails: { ...prev.otherDetails, ...patch },
+              }))
+            }
             onLanguageChange={(index, patch) =>
               setUserData((prev) => {
-                const nextLanguages = prev.otherDetails.languages.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                const nextLanguages = prev.otherDetails.languages.map(
+                  (entry, idx) =>
+                    idx === index ? { ...entry, ...patch } : entry
                 );
-                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+                return {
+                  ...prev,
+                  otherDetails: {
+                    ...prev.otherDetails,
+                    languages: nextLanguages,
+                  },
+                };
               })
             }
             onAddLanguage={() =>
@@ -355,14 +483,25 @@ export default function ProfileUpdatePage() {
                 ...prev,
                 otherDetails: {
                   ...prev.otherDetails,
-                  languages: [...prev.otherDetails.languages, { language: "", speaking: "", reading: "", writing: "" }],
+                  languages: [
+                    ...prev.otherDetails.languages,
+                    { language: "", speaking: "", reading: "", writing: "" },
+                  ],
                 },
               }))
             }
             onRemoveLanguage={(index) =>
               setUserData((prev) => {
-                const nextLanguages = prev.otherDetails.languages.filter((_, idx) => idx !== index);
-                return { ...prev, otherDetails: { ...prev.otherDetails, languages: nextLanguages } };
+                const nextLanguages = prev.otherDetails.languages.filter(
+                  (_, idx) => idx !== index
+                );
+                return {
+                  ...prev,
+                  otherDetails: {
+                    ...prev.otherDetails,
+                    languages: nextLanguages,
+                  },
+                };
               })
             }
           />
@@ -371,7 +510,12 @@ export default function ProfileUpdatePage() {
         return (
           <ReviewAndAgree
             data={userData.reviewAgree}
-            onChange={(patch) => setUserData((prev) => ({ ...prev, reviewAgree: { ...prev.reviewAgree, ...patch } }))}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                reviewAgree: { ...prev.reviewAgree, ...patch },
+              }))
+            }
           />
         );
       default:
@@ -380,27 +524,38 @@ export default function ProfileUpdatePage() {
   };
 
   if (loading) {
-    return <div className="py-10 text-base text-slate-600">Loading your profile...</div>;
+    return (
+      <div className="py-10 text-base text-slate-600">
+        Loading your profile...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="py-10 text-base font-medium text-red-600">{error}</div>;
+    return (
+      <div className="py-10 text-base font-medium text-red-600">{error}</div>
+    );
   }
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
       <header className="space-y-2">
         <p className="text-base font-semibold text-amber-700">Profile Update</p>
-        <h1 className="text-2xl font-bold text-slate-900">Finish your profile</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Finish your profile
+        </h1>
         <p className="text-base text-slate-600">
-          Review and update your profile details below. Profile completion: {completion.percent}%.
+          Review and update your profile details below. Profile completion:{" "}
+          {completion.percent}%.
         </p>
       </header>
 
       {!hasIncompleteSections ? (
         <div className={cardClass}>
           <h2 className={titleClass}>All set</h2>
-          <p className="mt-2 text-base text-slate-600">Your profile is complete.</p>
+          <p className="mt-2 text-base text-slate-600">
+            Your profile is complete.
+          </p>
           <button
             type="button"
             onClick={() => router.push("/dashboard")}
@@ -437,11 +592,17 @@ export default function ProfileUpdatePage() {
         >
           Save &amp; return
         </button>
-        {saveError ? <span className="text-base font-medium text-red-600">{saveError}</span> : null}
-        {saveSuccess ? <span className="text-base font-medium text-emerald-600">{saveSuccess}</span> : null}
+        {saveError ? (
+          <span className="text-base font-medium text-red-600">
+            {saveError}
+          </span>
+        ) : null}
+        {saveSuccess ? (
+          <span className="text-base font-medium text-emerald-600">
+            {saveSuccess}
+          </span>
+        ) : null}
       </div>
     </section>
   );
 }
-
-

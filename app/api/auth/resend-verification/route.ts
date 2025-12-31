@@ -1,19 +1,30 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const body = await request.json();
+    const cookies = request.headers.get("cookie") || "";
 
-    // In a real backend, this would trigger an email service (SendGrid, AWS SES, etc.)
-    console.log(`[Mock API] Resending verification email to: ${email}`);
+    // Forward the resend verification request to Django backend
+    const backendResponse = await backendFetch(
+      API_ENDPOINTS.auth.resendVerification,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+      cookies
+    );
 
-    return NextResponse.json({
-      success: true,
-      message: "Verification email resent successfully.",
+    const data = await backendResponse.json();
+
+    return NextResponse.json(data, {
+      status: backendResponse.status,
     });
   } catch (error) {
+    console.error("Resend verification error:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to resend email." },
+      { success: false, message: "Failed to resend verification email." },
       { status: 500 }
     );
   }

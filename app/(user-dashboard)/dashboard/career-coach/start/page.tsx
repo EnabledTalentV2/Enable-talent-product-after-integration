@@ -6,6 +6,7 @@ import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type ChatMessage = {
   id: string;
@@ -49,8 +50,43 @@ const pickCoachReply = (input: string) => {
 };
 
 export default function CareerCoachStartPage() {
-  const userData = useUserDataStore((s) => s.userData);
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
   const [messages, setMessages] = useState<ChatMessage[]>(defaultMessages);
   const [draft, setDraft] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -82,7 +118,10 @@ export default function CareerCoachStartPage() {
   }, [messages]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, isTyping]);
 
   const sendMessage = (content: string) => {
@@ -206,7 +245,9 @@ export default function CareerCoachStartPage() {
               className="w-full resize-none bg-transparent text-sm text-slate-700 outline-none"
             />
             <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-slate-400">Press Enter to send</span>
+              <span className="text-xs text-slate-400">
+                Press Enter to send
+              </span>
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -226,7 +267,9 @@ export default function CareerCoachStartPage() {
 
         <div className="space-y-6">
           <div className="rounded-[28px] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Quick Prompts</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Quick Prompts
+            </h2>
             <p className="mt-2 text-sm text-slate-500">
               Tap a prompt to kick off the conversation.
             </p>
