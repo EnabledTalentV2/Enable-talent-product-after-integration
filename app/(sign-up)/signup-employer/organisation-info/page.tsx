@@ -92,7 +92,7 @@ export default function OrganisationInfoPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedOrgName = organizationInfo.organizationName.trim();
