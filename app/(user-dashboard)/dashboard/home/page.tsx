@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import placeholder from "@/public/Placeholder.png";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { getNotifications, requestNote } from "@/lib/notifications";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
@@ -16,64 +17,6 @@ type ProfileSection = {
   count?: number;
   items?: string[];
 };
-
-type Notification = {
-  id: string;
-  message: string;
-  time: string;
-  type: "request" | "info";
-  unread?: boolean;
-};
-
-// Temporary mock notifications until backend wiring is ready.
-const notifications: Notification[] = [
-  {
-    id: "meta-invite",
-    message:
-      "Recruiter from Meta sent an invitation request for a matching job",
-    time: "3 minutes ago",
-    type: "request",
-    unread: true,
-  },
-  {
-    id: "amazon-invite",
-    message:
-      "Recruiter from Amazon sent an invitation request for a matching job",
-    time: "5 minutes ago",
-    type: "request",
-    unread: true,
-  },
-  {
-    id: "google-view",
-    message: "Talent recruiter from Google viewed your profile",
-    time: "10 minutes ago",
-    type: "info",
-  },
-  {
-    id: "amazon-update-1",
-    message:
-      "Recruiter from Amazon sent an invitation request for a matching job",
-    time: "5 minutes ago",
-    type: "info",
-  },
-  {
-    id: "amazon-update-2",
-    message:
-      "Recruiter from Amazon sent an invitation request for a matching job",
-    time: "5 minutes ago",
-    type: "info",
-  },
-  {
-    id: "amazon-update-3",
-    message:
-      "Recruiter from Amazon sent an invitation request for a matching job",
-    time: "5 minutes ago",
-    type: "info",
-  },
-];
-
-const requestNote =
-  "You have 48 hours to accept the job request. After that, it will automatically decline.";
 
 const isLikelyImageSource = (value?: string) => {
   if (!value) return false;
@@ -98,6 +41,7 @@ export default function HomePageDashboard() {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
+  const notifications = getNotifications();
 
   // Merge with defaults to ensure all nested objects exist
   const userData = useMemo(

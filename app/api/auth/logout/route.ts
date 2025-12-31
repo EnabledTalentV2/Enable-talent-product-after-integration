@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
 
+// Cookie names to clear (must match AUTH_COOKIE_NAMES in proxy.ts)
+const AUTH_COOKIE_NAMES = ["access_token", "jwt", "token", "sessionid"];
+
 export async function POST(request: NextRequest) {
   try {
     const cookies = request.headers.get("cookie") || "";
@@ -27,11 +30,24 @@ export async function POST(request: NextRequest) {
       response.headers.set("Set-Cookie", setCookie);
     }
 
-    // Also clear any local cookies as fallback
+    // Clear ALL possible auth cookies as fallback
+    for (const cookieName of AUTH_COOKIE_NAMES) {
+      response.cookies.set({
+        name: cookieName,
+        value: "",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+        path: "/",
+      });
+    }
+
+    // Also clear user_role cookie if it exists
     response.cookies.set({
-      name: "token",
+      name: "user_role",
       value: "",
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 0,
@@ -41,17 +57,31 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Logout error:", error);
-    // Even if backend fails, clear local cookie
+    // Even if backend fails, clear all local cookies
     const response = NextResponse.json({ ok: true });
+
+    for (const cookieName of AUTH_COOKIE_NAMES) {
+      response.cookies.set({
+        name: cookieName,
+        value: "",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 0,
+        path: "/",
+      });
+    }
+
     response.cookies.set({
-      name: "token",
+      name: "user_role",
       value: "",
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 0,
       path: "/",
     });
+
     return response;
   }
 }
