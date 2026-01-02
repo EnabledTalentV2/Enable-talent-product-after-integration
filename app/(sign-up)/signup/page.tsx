@@ -77,40 +77,10 @@ export default function SignUpPage() {
     });
   };
 
-  /**
-   * Option B: Initialize signup to get temporary token for resume parsing
-   * This is called before navigating to resume-upload
-   */
-  const initializeSignup = async (
-    userEmail: string,
-    userPassword: string
-  ): Promise<string | null> => {
-    try {
-      const response = await fetch("/api/auth/signup-init", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail, password: userPassword }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        console.warn("[signup] signup-init failed:", data);
-        // Return null but don't block - we'll proceed without the token
-        // Resume parsing will gracefully handle missing authentication
-        return null;
-      }
-
-      const data = await response.json();
-      return data.temporary_token || null;
-    } catch (error) {
-      console.warn("[signup] signup-init error:", error);
-      // Don't block signup flow - proceed without token
-      return null;
-    }
-  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
     setFieldErrors({});
     setServerError(null);
 
@@ -154,21 +124,66 @@ export default function SignUpPage() {
         },
       }));
 
-      // Option B: Try to get temporary token for resume parsing
-      // This is non-blocking - if it fails, we proceed without it
-      const temporaryToken = await initializeSignup(trimmedEmail, password);
-
-      // Store pending signup in sessionStorage for the multi-step form
-      // Include the temporary token if we got one
-      sessionStorage.setItem(
-        "et_pending_signup",
-        JSON.stringify({
+      const signupResponse = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
           email: trimmedEmail,
           password,
-          fullName: trimmedName,
-          temporaryToken: temporaryToken || undefined, // Only include if we got one
-        })
-      );
+          confirm_password: password,
+        }),
+      });
+
+      if (!signupResponse.ok) {
+        const errorData = await signupResponse.json().catch(() => ({}));
+        let errorMessage = "Signup failed. Please try again.";
+        if (typeof errorData === "object" && errorData !== null) {
+          const messages = Object.entries(errorData)
+            .map(([field, msgs]) => {
+              if (Array.isArray(msgs)) {
+                return `${field}: ${msgs.join(", ")}`;
+              }
+              return `${field}: ${msgs}`;
+            })
+            .join(". ");
+          if (messages) {
+            errorMessage = messages;
+          } else if (errorData.detail || errorData.error || errorData.message) {
+            errorMessage =
+              errorData.detail || errorData.error || errorData.message;
+          }
+        }
+        setServerError(errorMessage);
+        return;
+      }
+
+      const sessionResponse = await fetch("/api/user/me", {
+        credentials: "include",
+      });
+
+      if (!sessionResponse.ok) {
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: trimmedEmail,
+            password,
+          }),
+        });
+
+        if (!loginResponse.ok) {
+          const loginError = await loginResponse.json().catch(() => ({}));
+          const message =
+            loginError.detail ||
+            loginError.error ||
+            loginError.message ||
+            "Account created, but we couldn't sign you in. Please log in.";
+          setServerError(message);
+          return;
+        }
+      }
 
       router.push("/signup/resume-upload");
     } catch (error) {
@@ -261,6 +276,15 @@ export default function SignUpPage() {
                       );
                     })}
                   </ul>
+                </div>
+              ) : null}
+              {serverError ? (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Error</p>
+                  <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
                 </div>
               ) : null}
               <div className="space-y-1">
@@ -462,9 +486,17 @@ export default function SignUpPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white"
+                disabled={isSubmitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create account
+                {isSubmitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating account...
+                  </span>
+                ) : (
+                  "Create account"
+                )}
               </button>
 
               <p className="text-[11px] text-center text-slate-500 mt-2">

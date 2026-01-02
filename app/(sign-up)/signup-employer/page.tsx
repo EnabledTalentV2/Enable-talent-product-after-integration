@@ -128,17 +128,6 @@ export default function SignupEmployerPage() {
       return;
     }
 
-    // Proceed with signup logic - store in sessionStorage for multi-step form
-    sessionStorage.setItem(
-      "et_pending_employer_signup",
-      JSON.stringify({
-        email: trimmedEmail,
-        password,
-        fullName: trimmedName,
-        employerName: trimmedEmployerName,
-      })
-    );
-
     // Send signup request to backend
     try {
       const response = await fetch("/api/auth/signup", {
@@ -172,7 +161,34 @@ export default function SignupEmployerPage() {
         return;
       }
 
-      router.push("/signup-employer/email-verification");
+      const sessionResponse = await fetch("/api/user/me", {
+        credentials: "include",
+      });
+
+      if (!sessionResponse.ok) {
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: trimmedEmail,
+            password,
+          }),
+        });
+
+        if (!loginResponse.ok) {
+          const loginError = await loginResponse.json().catch(() => ({}));
+          const message =
+            loginError.detail ||
+            loginError.error ||
+            loginError.message ||
+            "Account created, but we couldn't sign you in. Please log in.";
+          setError(message);
+          return;
+        }
+      }
+
+      router.push("/signup-employer/organisation-info");
     } catch (err) {
       console.error("Signup error:", err);
       setError("Network error. Please try again.");

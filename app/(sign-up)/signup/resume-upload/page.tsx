@@ -133,35 +133,40 @@ export default function ResumeUpload() {
   const [error, setError] = useState<string | null>(null);
   const [parseWarning, setParseWarning] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
-  const [temporaryToken, setTemporaryToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const pendingData = sessionStorage.getItem("et_pending_signup");
-    if (!pendingData) {
-      router.replace("/signup");
-      return;
-    }
-    try {
-      const parsed = JSON.parse(pendingData);
-      if (!parsed.email || !parsed.password) {
-        router.replace("/signup");
-        return;
+    let active = true;
+
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          router.replace("/login-talent");
+          return;
+        }
+
+        if (active) {
+          setLoading(false);
+        }
+      } catch {
+        router.replace("/login-talent");
       }
-      // Option B: Get the temporary token if available
-      if (parsed.temporaryToken) {
-        setTemporaryToken(parsed.temporaryToken);
-        console.log("[resume-upload] Found temporary signup token");
-      }
-      setLoading(false);
-    } catch {
-      router.replace("/signup");
-    }
+    };
+
+    checkSession();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
-        <div className="text-slate-500">Verifying signup session...</div>
+        <div className="text-slate-500">Verifying session...</div>
       </div>
     );
   }
@@ -194,18 +199,8 @@ export default function ResumeUpload() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Option B: Build headers with temporary token if available
-      const headers: HeadersInit = {};
-      if (temporaryToken) {
-        headers["X-Signup-Token"] = temporaryToken;
-        console.log(
-          "[resume-upload] Sending request with temporary signup token"
-        );
-      }
-
       const response = await fetch("/api/resume/parse", {
         method: "POST",
-        headers,
         body: formData,
         credentials: "include",
       });

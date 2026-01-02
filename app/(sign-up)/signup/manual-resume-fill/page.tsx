@@ -48,30 +48,50 @@ export default function ManualResumeFill() {
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
-  const [pendingSignup, setPendingSignup] = useState<{
-    email: string;
-    password: string;
-  } | null>(null);
 
   useEffect(() => {
-    // Check for pending signup data in sessionStorage (set during initial signup)
-    const pendingData = sessionStorage.getItem("et_pending_signup");
-    if (!pendingData) {
-      router.replace("/signup");
-      return;
-    }
-    try {
-      const parsed = JSON.parse(pendingData);
-      if (!parsed.email || !parsed.password) {
-        router.replace("/signup");
-        return;
+    let active = true;
+
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          router.replace("/login-talent");
+          return;
+        }
+
+        const data = await response.json().catch(() => null);
+
+        if (active) {
+          const email =
+            data && typeof data.email === "string" ? data.email : "";
+
+          if (email) {
+            setUserData((prev) => {
+              if (prev.basicInfo.email) return prev;
+              return {
+                ...prev,
+                basicInfo: { ...prev.basicInfo, email },
+              };
+            });
+          }
+
+          setLoading(false);
+        }
+      } catch {
+        router.replace("/login-talent");
       }
-      setPendingSignup(parsed);
-      setLoading(false);
-    } catch {
-      router.replace("/signup");
-    }
-  }, [router]);
+    };
+
+    checkSession();
+
+    return () => {
+      active = false;
+    };
+  }, [router, setUserData]);
 
   const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<
@@ -491,23 +511,10 @@ export default function ManualResumeFill() {
     setFinishError(null);
 
     try {
-      if (!pendingSignup) {
-        setFinishError(
-          "No active signup found. Please start from the signup page."
-        );
-        return;
-      }
-
-      const email = pendingSignup.email.trim();
-      const password = pendingSignup.password;
+      const email = userData.basicInfo.email.trim();
 
       if (!email) {
-        setFinishError("Missing email. Please start from the signup page.");
-        return;
-      }
-
-      if (!password) {
-        setFinishError("Missing password. Please start from the signup page.");
+        setFinishError("Missing email. Please log in again.");
         return;
       }
 
@@ -519,23 +526,16 @@ export default function ManualResumeFill() {
         },
       };
 
-      // Send signup request to backend
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
+      const response = await fetch("/api/user/me", {
+        method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          confirm_password: password, // Django requires password confirmation
-          userData: finalizedData,
-        }),
+        body: JSON.stringify(finalizedData),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        // Handle Django validation errors (field: [messages] format)
-        let errorMessage = "Signup failed. Please try again.";
+        let errorMessage = "Unable to save your profile. Please try again.";
         if (typeof errorData === "object" && errorData !== null) {
           const messages = Object.entries(errorData)
             .map(([field, msgs]) => {
@@ -557,10 +557,7 @@ export default function ManualResumeFill() {
       }
 
       const data = await response.json();
-      setUserData(() => data.userData || finalizedData);
-
-      // Clear pending signup from sessionStorage
-      sessionStorage.removeItem("et_pending_signup");
+      setUserData(() => data || finalizedData);
 
       router.push("/dashboard");
     } catch (err) {
@@ -1315,7 +1312,7 @@ export default function ManualResumeFill() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFF6FF]">
-        <div className="text-slate-500">Verifying signup session...</div>
+        <div className="text-slate-500">Verifying session...</div>
       </div>
     );
   }

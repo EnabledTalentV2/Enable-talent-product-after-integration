@@ -16,15 +16,39 @@ function VerificationContent() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const pendingData = sessionStorage.getItem("et_pending_employer_signup");
-    if (pendingData) {
+    let active = true;
+
+    const loadEmail = async () => {
       try {
-        const parsed = JSON.parse(pendingData);
-        setPendingEmail(parsed.email || null);
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (active) {
+            setPendingEmail(null);
+          }
+          return;
+        }
+
+        const data = await response.json().catch(() => null);
+        if (active) {
+          const email =
+            data && typeof data.email === "string" ? data.email : null;
+          setPendingEmail(email);
+        }
       } catch {
-        setPendingEmail(null);
+        if (active) {
+          setPendingEmail(null);
+        }
       }
-    }
+    };
+
+    loadEmail();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleResendEmail = async () => {

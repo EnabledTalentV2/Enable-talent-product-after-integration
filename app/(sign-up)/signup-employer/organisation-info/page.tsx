@@ -14,13 +14,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-type PendingEmployerSignup = {
-  email: string;
-  password: string;
-  fullName?: string;
-  employerName?: string;
-};
-
 type FieldErrors = Partial<{
   organizationName: string;
   aboutOrganization: string;
@@ -40,7 +33,6 @@ const inputClasses = (hasError?: boolean) =>
 
 export default function OrganisationInfoPage() {
   const router = useRouter();
-  const employerData = useEmployerDataStore((s) => s.employerData);
   const organizationInfo = useEmployerDataStore(
     (s) => s.employerData?.organizationInfo
   ) ?? {
@@ -57,8 +49,6 @@ export default function OrganisationInfoPage() {
   );
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [pendingSignup, setPendingSignup] =
-    useState<PendingEmployerSignup | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
@@ -69,27 +59,24 @@ export default function OrganisationInfoPage() {
   const industryRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
-    const pendingData = sessionStorage.getItem("et_pending_employer_signup");
-    if (!pendingData) {
-      router.replace("/signup-employer");
-      return;
-    }
-    try {
-      const parsed = JSON.parse(pendingData);
-      if (!parsed.email || !parsed.password) {
-        router.replace("/signup-employer");
-        return;
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          router.replace("/login-employer");
+        }
+      } catch {
+        router.replace("/login-employer");
       }
-      setPendingSignup(parsed);
-    } catch {
-      router.replace("/signup-employer");
-    }
+    };
+
+    checkSession();
   }, [router]);
 
-  const welcomeName =
-    pendingSignup?.fullName?.trim() ||
-    pendingSignup?.employerName?.trim() ||
-    "Employer";
+  const welcomeName = organizationInfo.organizationName.trim() || "Employer";
 
   const clearFieldError = (field: keyof FieldErrors) => {
     setFieldErrors((prev) => {
@@ -153,31 +140,9 @@ export default function OrganisationInfoPage() {
       return;
     }
 
-    if (!pendingSignup) {
-      router.replace("/signup-employer");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      // First, log the user in to establish a session
-      const loginResponse = await fetch("/api/auth/login", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: pendingSignup.email,
-          password: pendingSignup.password,
-        }),
-      });
-
-      if (!loginResponse.ok) {
-        const loginError = await loginResponse.json().catch(() => ({}));
-        console.error("Login failed:", loginError);
-        throw new Error("Failed to authenticate. Please try logging in again.");
-      }
-
       // Create organization via the organizations API endpoint
       try {
         const response = await fetch("/api/organizations", {
@@ -215,8 +180,6 @@ export default function OrganisationInfoPage() {
         );
       }
 
-      // Clear pending signup from sessionStorage
-      sessionStorage.removeItem("et_pending_employer_signup");
       setFieldErrors({});
       router.push("/employer/dashboard");
     } catch (error) {
