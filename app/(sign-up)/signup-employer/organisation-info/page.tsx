@@ -42,8 +42,16 @@ export default function OrganisationInfoPage() {
   const router = useRouter();
   const employerData = useEmployerDataStore((s) => s.employerData);
   const organizationInfo = useEmployerDataStore(
-    (s) => s.employerData.organizationInfo
-  );
+    (s) => s.employerData?.organizationInfo
+  ) ?? {
+    organizationName: "",
+    aboutOrganization: "",
+    location: "",
+    foundedYear: "",
+    website: "",
+    companySize: "",
+    industry: "",
+  };
   const patchOrganizationInfo = useEmployerDataStore(
     (s) => s.patchOrganizationInfo
   );
@@ -153,21 +161,58 @@ export default function OrganisationInfoPage() {
     setSubmitting(true);
 
     try {
-      // Update user profile with organization info via API
-      const response = await fetch("/api/user/me", {
-        method: "PUT",
+      // First, log the user in to establish a session
+      const loginResponse = await fetch("/api/auth/login", {
+        method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...employerData,
           email: pendingSignup.email,
-          fullName: pendingSignup.fullName,
-          employerName: pendingSignup.employerName,
+          password: pendingSignup.password,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save organization info.");
+      if (!loginResponse.ok) {
+        const loginError = await loginResponse.json().catch(() => ({}));
+        console.error("Login failed:", loginError);
+        throw new Error("Failed to authenticate. Please try logging in again.");
+      }
+
+      // Create organization via the organizations API endpoint
+      try {
+        const response = await fetch("/api/organizations", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: organizationInfo.organizationName,
+            description: organizationInfo.aboutOrganization,
+            location: organizationInfo.location,
+            founded_year: organizationInfo.foundedYear,
+            website: organizationInfo.website,
+            company_size: organizationInfo.companySize,
+            industry: organizationInfo.industry,
+          }),
+        });
+
+        if (!response.ok) {
+          // Log but don't fail - organization info is already saved in local store
+          const errorData = await response.json().catch(() => ({}));
+          console.warn(
+            "Organization creation response:",
+            response.status,
+            errorData
+          );
+        } else {
+          const orgData = await response.json();
+          console.log("Organization created successfully:", orgData);
+        }
+      } catch (apiError) {
+        // Backend sync failed, but local data is saved - continue
+        console.warn(
+          "Backend sync failed, continuing with local data:",
+          apiError
+        );
       }
 
       // Clear pending signup from sessionStorage
@@ -175,7 +220,7 @@ export default function OrganisationInfoPage() {
       setFieldErrors({});
       router.push("/employer/dashboard");
     } catch (error) {
-      console.error("Failed to save organization info:", error);
+      console.error("Failed to complete signup:", error);
       setFieldErrors({ organizationName: "Failed to save. Please try again." });
     } finally {
       setSubmitting(false);

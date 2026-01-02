@@ -44,7 +44,13 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`,
   },
   // Other APIs
-  organization: `${BACKEND_URL}/api/organization/`,
+  organizations: {
+    list: `${BACKEND_URL}/api/organization/organizations/`,
+    detail: (pk: string) =>
+      `${BACKEND_URL}/api/organization/organizations/${pk}/`,
+    createInvite: (pk: string) =>
+      `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
+  },
   channels: `${BACKEND_URL}/api/channels/`,
   candidates: `${BACKEND_URL}/api/candidates/`,
 } as const;
