@@ -22,6 +22,9 @@ type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const initialSteps: Step[] = [
   {
     id: 1,
@@ -48,26 +51,59 @@ export default function ManualResumeFill() {
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [finishing, setFinishing] = useState(false);
+  const [candidateSlug, setCandidateSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     const checkSession = async () => {
       try {
-        const response = await fetch("/api/user/me", {
+        const response = await fetch("/api/candidates/profiles/", {
           credentials: "include",
         });
 
         if (!response.ok) {
-          router.replace("/login-talent");
+          const nextPath = encodeURIComponent("/signup/manual-resume-fill");
+          router.replace(`/login-talent?next=${nextPath}`);
           return;
         }
 
-        const data = await response.json().catch(() => null);
+          const data = await response.json().catch(() => null);
+          let profile: Record<string, unknown> | null = null;
 
-        if (active) {
-          const email =
-            data && typeof data.email === "string" ? data.email : "";
+          if (Array.isArray(data)) {
+            profile = isRecord(data[0]) ? data[0] : null;
+          } else if (isRecord(data)) {
+            if (Array.isArray(data.results)) {
+              const first = data.results[0];
+              profile = isRecord(first) ? first : data;
+            } else {
+              profile = data;
+            }
+          }
+
+          if (active) {
+            const email =
+              profile &&
+              (typeof profile.email === "string"
+                ? profile.email
+                : isRecord(profile.user) &&
+                  typeof profile.user.email === "string"
+                ? profile.user.email
+                : "");
+            const slug =
+              profile &&
+              (typeof profile.slug === "string"
+                ? profile.slug
+                : typeof profile.candidateSlug === "string"
+                ? profile.candidateSlug
+                : typeof profile.candidate_slug === "string"
+                ? profile.candidate_slug
+                : null);
+
+          if (slug) {
+            setCandidateSlug(slug);
+          }
 
           if (email) {
             setUserData((prev) => {
@@ -82,7 +118,8 @@ export default function ManualResumeFill() {
           setLoading(false);
         }
       } catch {
-        router.replace("/login-talent");
+        const nextPath = encodeURIComponent("/signup/manual-resume-fill");
+        router.replace(`/login-talent?next=${nextPath}`);
       }
     };
 
@@ -518,6 +555,13 @@ export default function ManualResumeFill() {
         return;
       }
 
+      if (!candidateSlug) {
+        setFinishError(
+          "Unable to save profile. Missing candidate information."
+        );
+        return;
+      }
+
       const finalizedData = {
         ...userData,
         basicInfo: {
@@ -526,12 +570,15 @@ export default function ManualResumeFill() {
         },
       };
 
-      const response = await fetch("/api/user/me", {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalizedData),
-      });
+      const response = await fetch(
+        `/api/candidates/profiles/${candidateSlug}/`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalizedData),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

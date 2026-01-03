@@ -17,6 +17,14 @@ export async function POST(request: NextRequest) {
   try {
     const cookies = request.headers.get("cookie") || "";
     const temporaryToken = request.headers.get("X-Signup-Token");
+    const candidateSlug = request.headers.get("X-Candidate-Slug");
+
+    if (!candidateSlug) {
+      return NextResponse.json(
+        { error: "Candidate slug not provided", success: false },
+        { status: 400 }
+      );
+    }
 
     // Get the form data from the request (contains the file)
     const formData = await request.formData();
@@ -52,8 +60,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Construct the correct Django backend URL with the candidate slug
+    const backendUrl = `${API_ENDPOINTS.candidateProfiles.parseResume(
+      candidateSlug
+    )}`;
+    console.log("[resume/parse] Calling backend URL:", backendUrl);
+
     // Forward the file to Django backend for parsing
-    const backendResponse = await fetch(API_ENDPOINTS.resume.parse, {
+    const backendResponse = await fetch(backendUrl, {
       method: "POST",
       headers,
       credentials: "include",

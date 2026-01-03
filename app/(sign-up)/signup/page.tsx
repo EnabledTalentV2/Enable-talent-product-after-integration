@@ -132,6 +132,7 @@ export default function SignUpPage() {
           email: trimmedEmail,
           password,
           confirm_password: password,
+          role: "candidate",
         }),
       });
 

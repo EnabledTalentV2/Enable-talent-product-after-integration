@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -14,6 +14,7 @@ const inputClasses =
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,7 +78,10 @@ export default function LoginPage() {
         setUserData(() => data);
       }
 
-      router.push("/dashboard");
+      const nextPath = searchParams.get("next");
+      const redirectTarget =
+        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
+      router.push(redirectTarget);
     } catch (err: unknown) {
       console.error(err);
       setError("Something went wrong. Please try again.");

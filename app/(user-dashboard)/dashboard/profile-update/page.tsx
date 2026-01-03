@@ -153,7 +153,7 @@ export default function ProfileUpdatePage() {
 
     try {
       const response = await fetch("/api/user/me", {
-        method: "PATCH",
+        method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),

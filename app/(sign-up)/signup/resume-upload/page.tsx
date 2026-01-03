@@ -133,6 +133,7 @@ export default function ResumeUpload() {
   const [error, setError] = useState<string | null>(null);
   const [parseWarning, setParseWarning] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [candidateSlug, setCandidateSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -148,10 +149,57 @@ export default function ResumeUpload() {
           return;
         }
 
+        const userData = await response.json();
+        console.log("[Resume Upload] User data from /api/user/me:", userData);
+
         if (active) {
+          let slug: string | null = null;
+
+          // Try multiple possible paths for candidate slug
+          if (userData.candidateProfile?.slug) {
+            slug = userData.candidateProfile.slug;
+            console.log(
+              "[Resume Upload] Found slug in candidateProfile:",
+              slug
+            );
+          } else if (userData.candidate_profile?.slug) {
+            slug = userData.candidate_profile.slug;
+            console.log(
+              "[Resume Upload] Found slug in candidate_profile:",
+              slug
+            );
+          } else if (userData.candidate?.slug) {
+            slug = userData.candidate.slug;
+            console.log("[Resume Upload] Found slug in candidate:", slug);
+          } else if (userData.slug) {
+            slug = userData.slug;
+            console.log("[Resume Upload] Found slug at root level:", slug);
+          } else if (userData.profile?.slug) {
+            slug = userData.profile.slug;
+            console.log("[Resume Upload] Found slug in profile:", slug);
+          } else if (userData.candidateSlug) {
+            slug = userData.candidateSlug;
+            console.log("[Resume Upload] Found slug as candidateSlug:", slug);
+          } else if (userData.candidate_profile_slug) {
+            slug = userData.candidate_profile_slug;
+            console.log(
+              "[Resume Upload] Found slug as candidate_profile_slug:",
+              slug
+            );
+          } else {
+            console.warn(
+              "[Resume Upload] No candidate slug found. Available keys:",
+              Object.keys(userData)
+            );
+          }
+
+          if (slug) {
+            setCandidateSlug(slug);
+          }
           setLoading(false);
         }
-      } catch {
+      } catch (err) {
+        console.error("[Resume Upload] Session check error:", err);
         router.replace("/login-talent");
       }
     };
@@ -187,6 +235,11 @@ export default function ResumeUpload() {
       return;
     }
 
+    if (!candidateSlug) {
+      setError("Unable to process your profile. Please refresh the page.");
+      return;
+    }
+
     setError(null);
     setParseWarning(null);
     setSelectedFileName(file.name);
@@ -202,6 +255,9 @@ export default function ResumeUpload() {
       const response = await fetch("/api/resume/parse", {
         method: "POST",
         body: formData,
+        headers: {
+          "X-Candidate-Slug": candidateSlug,
+        },
         credentials: "include",
       });
 
