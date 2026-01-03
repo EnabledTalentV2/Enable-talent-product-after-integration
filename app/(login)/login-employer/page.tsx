@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+import { useLoginUser } from "@/lib/hooks/useLoginUser";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
@@ -18,8 +19,7 @@ export default function EmployerLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loginUser, isLoading, error, setError } = useLoginUser();
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const hasError = Boolean(error);
 
@@ -32,11 +32,10 @@ export default function EmployerLoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (submitting) {
+    if (isLoading) {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     const trimmedEmail = email.trim();
@@ -48,43 +47,21 @@ export default function EmployerLoginPage() {
     }
 
     try {
-      // Call the backend API for login
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password: password,
-        }),
+      const result = await loginUser({
+        email: trimmedEmail,
+        password: password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle different error responses from backend
-        const errorMessage =
-          data.detail ||
-          data.error ||
-          data.message ||
-          "Invalid email or password.";
-        setError(errorMessage);
+      if (!result.data) {
         return;
       }
 
-      // Update employer data store with response data if available
-      if (data) {
-        setEmployerData(() => data);
-      }
+      setEmployerData((prev) => result.data as typeof prev);
 
       router.push("/employer/dashboard");
     } catch (err: unknown) {
       console.error(err);
       setError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -244,10 +221,10 @@ export default function EmployerLoginPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={isLoading}
                 className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? "Signing in..." : "Login"}
+                {isLoading ? "Signing in..." : "Login"}
               </button>
             </form>
 

@@ -11,6 +11,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { useCandidateSignupUser } from "@/lib/hooks/useCandidateSignupUser";
+import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
+import { apiRequest } from "@/lib/api-client";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
@@ -40,7 +43,9 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const { signupCandidate, error: serverError, setError: setServerError } =
+    useCandidateSignupUser();
+  const { loginCandidate } = useCandidateLoginUser();
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
@@ -76,7 +81,6 @@ export default function SignUpPage() {
       return next;
     });
   };
-
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -124,62 +128,32 @@ export default function SignUpPage() {
         },
       }));
 
-      const signupResponse = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password,
-          confirm_password: password,
-          role: "candidate",
-        }),
+      const signupResult = await signupCandidate({
+        email: trimmedEmail,
+        password,
+        confirm_password: password,
       });
 
-      if (!signupResponse.ok) {
-        const errorData = await signupResponse.json().catch(() => ({}));
-        let errorMessage = "Signup failed. Please try again.";
-        if (typeof errorData === "object" && errorData !== null) {
-          const messages = Object.entries(errorData)
-            .map(([field, msgs]) => {
-              if (Array.isArray(msgs)) {
-                return `${field}: ${msgs.join(", ")}`;
-              }
-              return `${field}: ${msgs}`;
-            })
-            .join(". ");
-          if (messages) {
-            errorMessage = messages;
-          } else if (errorData.detail || errorData.error || errorData.message) {
-            errorMessage =
-              errorData.detail || errorData.error || errorData.message;
-          }
-        }
-        setServerError(errorMessage);
+      if (!signupResult.data) {
         return;
       }
 
-      const sessionResponse = await fetch("/api/user/me", {
-        credentials: "include",
-      });
+      let hasSession = true;
+      try {
+        await apiRequest<unknown>("/api/user/me", { method: "GET" });
+      } catch {
+        hasSession = false;
+      }
 
-      if (!sessionResponse.ok) {
-        const loginResponse = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            email: trimmedEmail,
-            password,
-          }),
+      if (!hasSession) {
+        const loginResult = await loginCandidate({
+          email: trimmedEmail,
+          password,
         });
 
-        if (!loginResponse.ok) {
-          const loginError = await loginResponse.json().catch(() => ({}));
+        if (!loginResult.data) {
           const message =
-            loginError.detail ||
-            loginError.error ||
-            loginError.message ||
+            loginResult.error ||
             "Account created, but we couldn't sign you in. Please log in.";
           setServerError(message);
           return;

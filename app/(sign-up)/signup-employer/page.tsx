@@ -13,6 +13,9 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
+import { useSignupUser } from "@/lib/hooks/useSignupUser";
+import { useLoginUser } from "@/lib/hooks/useLoginUser";
+import { apiRequest } from "@/lib/api-client";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -40,7 +43,9 @@ export default function SignupEmployerPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [error, setError] = useState(""); // General error message for API failures
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signupUser, error, setError } = useSignupUser();
+  const { loginUser } = useLoginUser();
 
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const employerNameRef = useRef<HTMLInputElement | null>(null);
@@ -82,8 +87,9 @@ export default function SignupEmployerPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
     setFieldErrors({});
-    setError(""); // Clear any previous errors
+    setError(null);
 
     const trimmedName = fullName.trim();
     const trimmedEmployerName = employerName.trim();
@@ -128,60 +134,38 @@ export default function SignupEmployerPage() {
       return;
     }
 
-    // Send signup request to backend
+    setIsSubmitting(true);
+
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password,
-          confirm_password: password, // Django requires password confirmation
-          fullName: trimmedName,
-          employerName: trimmedEmployerName,
-          role: "employer",
-        }),
+      const signupResult = await signupUser({
+        email: trimmedEmail,
+        password,
+        confirm_password: password,
+        fullName: trimmedName,
+        employerName: trimmedEmployerName,
+        role: "employer",
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        // Handle Django validation errors
-        if (typeof errorData === "object") {
-          const errorMessages = Object.entries(errorData)
-            .map(([field, messages]) => {
-              const msgArray = Array.isArray(messages) ? messages : [messages];
-              return `${field}: ${msgArray.join(", ")}`;
-            })
-            .join("\n");
-          setError(errorMessages || "Signup failed. Please try again.");
-        } else {
-          setError(errorData.message || "Signup failed. Please try again.");
-        }
+      if (!signupResult.data) {
         return;
       }
 
-      const sessionResponse = await fetch("/api/user/me", {
-        credentials: "include",
-      });
+      let hasSession = true;
+      try {
+        await apiRequest<unknown>("/api/user/me", { method: "GET" });
+      } catch {
+        hasSession = false;
+      }
 
-      if (!sessionResponse.ok) {
-        const loginResponse = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            email: trimmedEmail,
-            password,
-          }),
+      if (!hasSession) {
+        const loginResult = await loginUser({
+          email: trimmedEmail,
+          password,
         });
 
-        if (!loginResponse.ok) {
-          const loginError = await loginResponse.json().catch(() => ({}));
+        if (!loginResult.data) {
           const message =
-            loginError.detail ||
-            loginError.error ||
-            loginError.message ||
+            loginResult.error ||
             "Account created, but we couldn't sign you in. Please log in.";
           setError(message);
           return;
@@ -192,6 +176,8 @@ export default function SignupEmployerPage() {
     } catch (err) {
       console.error("Signup error:", err);
       setError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -537,9 +523,10 @@ export default function SignupEmployerPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                disabled={isSubmitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create account
+                {isSubmitting ? "Creating account..." : "Create account"}
               </button>
 
               <p className="mt-2 text-center text-[11px] text-gray-500">

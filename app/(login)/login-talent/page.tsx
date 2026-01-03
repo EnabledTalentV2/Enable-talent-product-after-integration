@@ -6,6 +6,7 @@ import Image from "next/image";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
@@ -19,8 +20,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loginCandidate, isLoading, error, setError } =
+    useCandidateLoginUser();
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const hasError = Boolean(error);
 
@@ -33,11 +34,10 @@ export default function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (submitting) {
+    if (isLoading) {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     try {
@@ -47,36 +47,16 @@ export default function LoginPage() {
         return;
       }
 
-      // Call the backend API for login
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password: password,
-        }),
+      const result = await loginCandidate({
+        email: trimmedEmail,
+        password: password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle different error responses from backend
-        const errorMessage =
-          data.detail ||
-          data.error ||
-          data.message ||
-          "Invalid email or password.";
-        setError(errorMessage);
+      if (!result.data) {
         return;
       }
 
-      // Update user data store with response data if available
-      if (data) {
-        setUserData(() => data);
-      }
+      setUserData((prev) => result.data as typeof prev);
 
       const nextPath = searchParams.get("next");
       const redirectTarget =
@@ -85,8 +65,6 @@ export default function LoginPage() {
     } catch (err: unknown) {
       console.error(err);
       setError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -242,10 +220,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={isLoading}
                 className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? "Signing in..." : "Login"}
+                {isLoading ? "Signing in..." : "Login"}
               </button>
             </form>
 

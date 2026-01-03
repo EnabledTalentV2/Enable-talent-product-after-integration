@@ -16,14 +16,13 @@ import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
+import { useUpdateCandidateProfile } from "@/lib/hooks/useUpdateCandidateProfile";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const initialSteps: Step[] = [
   {
@@ -49,8 +48,13 @@ export default function ManualResumeFill() {
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const { fetchCandidateProfile } = useFetchCandidateProfile();
+  const {
+    updateCandidateProfile,
+    isLoading: isUpdating,
+    clearError: clearUpdateError,
+  } = useUpdateCandidateProfile();
   const [loading, setLoading] = useState(true);
-  const [finishing, setFinishing] = useState(false);
   const [candidateSlug, setCandidateSlug] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,65 +62,33 @@ export default function ManualResumeFill() {
 
     const checkSession = async () => {
       try {
-        const response = await fetch("/api/candidates/profiles/", {
-          credentials: "include",
-        });
+        const result = await fetchCandidateProfile();
 
-        if (!response.ok) {
+        if (!result.data) {
           const nextPath = encodeURIComponent("/signup/manual-resume-fill");
           router.replace(`/login-talent?next=${nextPath}`);
           return;
         }
 
-          const data = await response.json().catch(() => null);
-          let profile: Record<string, unknown> | null = null;
+        if (!active) return;
 
-          if (Array.isArray(data)) {
-            profile = isRecord(data[0]) ? data[0] : null;
-          } else if (isRecord(data)) {
-            if (Array.isArray(data.results)) {
-              const first = data.results[0];
-              profile = isRecord(first) ? first : data;
-            } else {
-              profile = data;
-            }
-          }
+        const { email, slug } = result.data;
 
-          if (active) {
-            const email =
-              profile &&
-              (typeof profile.email === "string"
-                ? profile.email
-                : isRecord(profile.user) &&
-                  typeof profile.user.email === "string"
-                ? profile.user.email
-                : "");
-            const slug =
-              profile &&
-              (typeof profile.slug === "string"
-                ? profile.slug
-                : typeof profile.candidateSlug === "string"
-                ? profile.candidateSlug
-                : typeof profile.candidate_slug === "string"
-                ? profile.candidate_slug
-                : null);
-
-          if (slug) {
-            setCandidateSlug(slug);
-          }
-
-          if (email) {
-            setUserData((prev) => {
-              if (prev.basicInfo.email) return prev;
-              return {
-                ...prev,
-                basicInfo: { ...prev.basicInfo, email },
-              };
-            });
-          }
-
-          setLoading(false);
+        if (slug) {
+          setCandidateSlug(slug);
         }
+
+        if (email) {
+          setUserData((prev) => {
+            if (prev.basicInfo.email) return prev;
+            return {
+              ...prev,
+              basicInfo: { ...prev.basicInfo, email },
+            };
+          });
+        }
+
+        setLoading(false);
       } catch {
         const nextPath = encodeURIComponent("/signup/manual-resume-fill");
         router.replace(`/login-talent?next=${nextPath}`);
@@ -128,7 +100,7 @@ export default function ManualResumeFill() {
     return () => {
       active = false;
     };
-  }, [router, setUserData]);
+  }, [fetchCandidateProfile, router, setUserData]);
 
   const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<
@@ -543,9 +515,9 @@ export default function ManualResumeFill() {
   };
 
   const handleFinish = async () => {
-    if (finishing) return;
-    setFinishing(true);
+    if (isUpdating) return;
     setFinishError(null);
+    clearUpdateError();
 
     try {
       const email = userData.basicInfo.email.trim();
@@ -570,52 +542,32 @@ export default function ManualResumeFill() {
         },
       };
 
-      const response = await fetch(
-        `/api/candidates/profiles/${candidateSlug}/`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalizedData),
-        }
-      );
+      const updateResult = await updateCandidateProfile({
+        slug: candidateSlug,
+        data: finalizedData,
+        method: "PUT",
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        let errorMessage = "Unable to save your profile. Please try again.";
-        if (typeof errorData === "object" && errorData !== null) {
-          const messages = Object.entries(errorData)
-            .map(([field, msgs]) => {
-              if (Array.isArray(msgs)) {
-                return `${field}: ${msgs.join(", ")}`;
-              }
-              return `${field}: ${msgs}`;
-            })
-            .join(". ");
-          if (messages) {
-            errorMessage = messages;
-          } else if (errorData.detail || errorData.error || errorData.message) {
-            errorMessage =
-              errorData.detail || errorData.error || errorData.message;
-          }
-        }
-        setFinishError(errorMessage);
+      if (!updateResult.data) {
+        setFinishError(
+          updateResult.error ||
+            "Unable to save your profile. Please try again."
+        );
         return;
       }
 
-      const data = await response.json();
-      setUserData(() => data || finalizedData);
+      setUserData(
+        (prev) => (updateResult.data ?? finalizedData) as typeof prev
+      );
 
       router.push("/dashboard");
     } catch (err) {
       setFinishError("Unable to complete signup. Please try again.");
-    } finally {
-      setFinishing(false);
     }
   };
 
   const handleSaveAndNext = async () => {
-    if (activeIndex === -1 || finishing) return;
+    if (activeIndex === -1 || isUpdating) return;
     const isValid = validateStep(activeStep.key);
 
     if (!isValid) {
@@ -1409,12 +1361,12 @@ export default function ManualResumeFill() {
                   onClick={handleSaveAndNext}
                   className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={
-                    finishing ||
+                    isUpdating ||
                     (activeStep.key === "reviewAgree" &&
                       !userData.reviewAgree.agree)
                   }
                 >
-                  {finishing && isLastStep
+                  {isUpdating && isLastStep
                     ? "Finishing..."
                     : isLastStep
                     ? "Finish"

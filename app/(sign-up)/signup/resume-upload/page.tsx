@@ -255,9 +255,7 @@ export default function ResumeUpload() {
       const response = await fetch("/api/resume/parse", {
         method: "POST",
         body: formData,
-        headers: {
-          "X-Candidate-Slug": candidateSlug,
-        },
+        headers: { "X-Candidate-Slug": candidateSlug },
         credentials: "include",
       });
 
