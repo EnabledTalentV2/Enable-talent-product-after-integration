@@ -16,7 +16,6 @@ export const API_ENDPOINTS = {
     login: `${BACKEND_URL}/api/auth/session/login/`,
     logout: `${BACKEND_URL}/api/auth/session/logout/`,
     signup: `${BACKEND_URL}/api/auth/signup/`,
-    signupInit: `${BACKEND_URL}/api/auth/signup-init/`, // Returns temporary token for resume parsing
     verifyEmail: `${BACKEND_URL}/api/auth/verify-email/`,
     resendVerification: `${BACKEND_URL}/api/auth/resend-verification/`,
     changePassword: `${BACKEND_URL}/api/auth/change-password/`,
@@ -30,7 +29,7 @@ export const API_ENDPOINTS = {
     list: `${BACKEND_URL}/api/auth/users/`,
     detail: (pk: string) => `${BACKEND_URL}/api/auth/users/${pk}/`,
   },
-  // Resume parsing (requires temporary signup token)
+  // Resume parsing
   resume: {
     parse: `${BACKEND_URL}/api/candidates/parse-resume/`,
   },

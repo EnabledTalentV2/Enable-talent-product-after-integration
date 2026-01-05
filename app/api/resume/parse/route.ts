@@ -4,19 +4,14 @@ import { API_ENDPOINTS } from "@/lib/api-config";
 /**
  * POST /api/resume/parse
  *
- * Option B: Uses temporary signup token for authentication during signup flow.
+ * Uses cookie-based session authentication when available.
  *
  * The request can include:
  * - FormData with 'file' (the resume file)
- * - Header 'X-Signup-Token' (temporary token from /api/auth/signup-init)
- *
- * If X-Signup-Token is provided, it will be used for authentication.
- * Otherwise, falls back to cookie-based session authentication.
  */
 export async function POST(request: NextRequest) {
   try {
     const cookies = request.headers.get("cookie") || "";
-    const temporaryToken = request.headers.get("X-Signup-Token");
     const candidateSlug = request.headers.get("X-Candidate-Slug");
 
     if (!candidateSlug) {
@@ -44,13 +39,7 @@ export async function POST(request: NextRequest) {
     // Build headers for backend request
     const headers: HeadersInit = {};
 
-    if (temporaryToken) {
-      // Option B: Use temporary signup token for authentication
-      console.log(
-        "[resume/parse] Using temporary signup token for authentication"
-      );
-      headers["Authorization"] = `Bearer ${temporaryToken}`;
-    } else if (cookies) {
+    if (cookies) {
       // Fallback: Use session cookies (for logged-in users)
       console.log("[resume/parse] Using cookie-based authentication");
       headers["Cookie"] = cookies;
@@ -87,9 +76,7 @@ export async function POST(request: NextRequest) {
         errorData.detail || errorData.error || "Failed to parse resume";
 
       if (backendResponse.status === 401) {
-        errorMessage = temporaryToken
-          ? "Temporary token expired or invalid. Please restart signup."
-          : "Authentication required for resume parsing.";
+        errorMessage = "Authentication required for resume parsing.";
       } else if (backendResponse.status === 404) {
         errorMessage =
           "Resume parsing endpoint not available. Backend may not have this feature enabled.";
