@@ -7,6 +7,11 @@ import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
+import {
+  ensureCandidateProfileSlug,
+  fetchCandidateProfileDetail,
+} from "@/lib/candidateProfile";
+import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
@@ -17,6 +22,11 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
+  const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
+  const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
+  const setCandidateError = useCandidateProfileStore((s) => s.setError);
+  const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +67,31 @@ function LoginPageContent() {
       }
 
       setUserData((prev) => result.data as typeof prev);
+
+      resetCandidateProfile();
+      setCandidateLoading(true);
+      setCandidateError(null);
+      try {
+        const slug = await ensureCandidateProfileSlug({
+          logLabel: "Login Talent",
+        });
+        if (slug) {
+          setCandidateSlug(slug);
+          const profile = await fetchCandidateProfileDetail(
+            slug,
+            "Login Talent"
+          );
+          if (profile) {
+            setCandidateProfile(profile);
+          } else {
+            setCandidateError("Unable to load candidate profile.");
+          }
+        } else {
+          setCandidateError("Unable to load candidate profile.");
+        }
+      } finally {
+        setCandidateLoading(false);
+      }
 
       const nextPath = searchParams.get("next");
       const redirectTarget =
