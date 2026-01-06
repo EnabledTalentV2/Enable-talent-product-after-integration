@@ -7,11 +7,8 @@ export type SignupUserPayload = {
   email: string;
   password: string;
   confirm_password: string;
-  user_type?: string;
-  role?: "candidate" | "employer";
   newsletter?: boolean;
-  fullName?: string;
-  employerName?: string;
+  invite_code?: string;
 };
 
 export function useSignupUser() {

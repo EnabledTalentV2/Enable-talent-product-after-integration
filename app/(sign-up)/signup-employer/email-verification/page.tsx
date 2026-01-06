@@ -4,6 +4,7 @@ import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import { Suspense, useState, useEffect } from "react";
+import { apiRequest } from "@/lib/api-client";
 
 function VerificationContent() {
   const router = useRouter();
@@ -61,10 +62,8 @@ function VerificationContent() {
     setResendStatus("idle");
 
     try {
-      await fetch("/api/auth/resend-verification", {
+      await apiRequest("/api/auth/resend-verification", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ email: pendingEmail }),
       });
 

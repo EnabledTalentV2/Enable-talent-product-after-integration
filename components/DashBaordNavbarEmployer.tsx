@@ -6,6 +6,7 @@ import { Bell, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+import { apiRequest } from "@/lib/api-client";
 
 export default function DashBoardNavbarEmployer() {
   const router = useRouter();
@@ -14,9 +15,8 @@ export default function DashBoardNavbarEmployer() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      await apiRequest("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
       });
     } finally {
       resetEmployerData();

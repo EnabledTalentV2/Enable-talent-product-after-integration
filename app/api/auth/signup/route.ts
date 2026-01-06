@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import {
+  API_ENDPOINTS,
+  backendFetch,
+  forwardCookiesToResponse,
+} from "@/lib/api-config";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +20,7 @@ export async function POST(request: NextRequest) {
       cookies
     );
 
-    const data = await backendResponse.json();
+    const data = await backendResponse.json().catch(() => ({}));
 
     // Create response with same status as backend
     const response = NextResponse.json(data, {
@@ -24,10 +28,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Forward Set-Cookie headers from backend if any
-    const setCookie = backendResponse.headers.get("set-cookie");
-    if (setCookie) {
-      response.headers.set("Set-Cookie", setCookie);
-    }
+    forwardCookiesToResponse(backendResponse, response);
 
     return response;
   } catch (error) {

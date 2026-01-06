@@ -13,8 +13,8 @@ export const BACKEND_URL =
 export const API_ENDPOINTS = {
   // Authentication
   auth: {
-    login: `${BACKEND_URL}/api/auth/session/login/`,
-    logout: `${BACKEND_URL}/api/auth/session/logout/`,
+    login: `${BACKEND_URL}/api/auth/token/`,
+    logout: `${BACKEND_URL}/api/auth/logout/`,
     signup: `${BACKEND_URL}/api/auth/signup/`,
     verifyEmail: `${BACKEND_URL}/api/auth/verify-email/`,
     resendVerification: `${BACKEND_URL}/api/auth/resend-verification/`,
@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
     csrf: `${BACKEND_URL}/api/auth/csrf/`,
     token: `${BACKEND_URL}/api/auth/token/`,
     tokenRefresh: `${BACKEND_URL}/api/auth/token/refresh/`,
+    addFeedback: `${BACKEND_URL}/api/auth/add-feedback/`,
   },
   // User management
   users: {
@@ -30,9 +31,7 @@ export const API_ENDPOINTS = {
     detail: (pk: string) => `${BACKEND_URL}/api/auth/users/${pk}/`,
   },
   // Resume parsing
-  resume: {
-    parse: `${BACKEND_URL}/api/candidates/parse-resume/`,
-  },
+  resume: {},
   // Candidate profiles
   candidateProfiles: {
     list: `${BACKEND_URL}/api/candidates/profiles/`,
@@ -41,6 +40,8 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parse-resume/`,
     parsingStatus: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`,
+    verifyProfile: (slug: string) =>
+      `${BACKEND_URL}/api/candidates/profiles/${slug}/verify-profile/`,
   },
   // Other APIs
   organizations: {
@@ -60,10 +61,27 @@ export const API_ENDPOINTS = {
  */
 export const defaultFetchOptions: RequestInit = {
   credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-  },
 };
+
+const CSRF_COOKIE_NAME = "csrftoken";
+
+const getCookieValue = (cookieHeader: string, name: string): string | null => {
+  if (!cookieHeader) return null;
+  const entries = cookieHeader.split(";").map((entry) => entry.trim());
+  for (const entry of entries) {
+    if (!entry) continue;
+    const [key, ...rest] = entry.split("=");
+    if (key === name) {
+      return rest.join("=") ? decodeURIComponent(rest.join("=")) : "";
+    }
+  }
+  return null;
+};
+
+const isWriteMethod = (method?: string) =>
+  ["POST", "PUT", "PATCH", "DELETE"].includes(
+    (method || "GET").toUpperCase()
+  );
 
 /**
  * Helper function to make API requests to the Django backend
@@ -75,15 +93,28 @@ export async function backendFetch(
   incomingCookies?: string
 ): Promise<Response> {
   const headers = new Headers(options.headers);
+  const hasBody = options.body !== undefined && options.body !== null;
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
 
   // Set content type if not already set
-  if (!headers.has("Content-Type") && options.body) {
+  if (hasBody && !isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
   // Forward cookies from incoming request to backend
   if (incomingCookies) {
     headers.set("Cookie", incomingCookies);
+  }
+
+  // Add CSRF token for write requests if available
+  if (isWriteMethod(options.method) && !headers.has("X-CSRFToken")) {
+    const csrfToken = incomingCookies
+      ? getCookieValue(incomingCookies, CSRF_COOKIE_NAME)
+      : null;
+    if (csrfToken) {
+      headers.set("X-CSRFToken", csrfToken);
+    }
   }
 
   const response = await fetch(endpoint, {
@@ -101,10 +132,17 @@ export async function backendFetch(
 export function extractSetCookieHeaders(backendResponse: Response): string[] {
   const setCookieHeaders: string[] = [];
 
-  // Get all Set-Cookie headers from the backend response
+  const headers = backendResponse.headers as Headers & {
+    getSetCookie?: () => string[];
+  };
+  const allCookies = headers.getSetCookie?.();
+  if (allCookies && allCookies.length > 0) {
+    setCookieHeaders.push(...allCookies);
+    return setCookieHeaders;
+  }
+
   const setCookieHeader = backendResponse.headers.get("set-cookie");
   if (setCookieHeader) {
-    // Handle multiple cookies (they may be comma-separated or multiple headers)
     setCookieHeaders.push(setCookieHeader);
   }
 

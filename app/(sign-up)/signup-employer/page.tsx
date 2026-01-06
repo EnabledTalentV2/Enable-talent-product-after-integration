@@ -141,9 +141,6 @@ export default function SignupEmployerPage() {
         email: trimmedEmail,
         password,
         confirm_password: password,
-        fullName: trimmedName,
-        employerName: trimmedEmployerName,
-        role: "employer",
       });
 
       if (!signupResult.data) {

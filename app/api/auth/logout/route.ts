@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import {
+  API_ENDPOINTS,
+  backendFetch,
+  forwardCookiesToResponse,
+} from "@/lib/api-config";
 
 // Cookie names to clear (must match AUTH_COOKIE_NAMES in proxy.ts)
-const AUTH_COOKIE_NAMES = ["access_token", "jwt", "token", "sessionid"];
+const AUTH_COOKIE_NAMES = [
+  "access_token",
+  "refresh_token",
+  "jwt",
+  "token",
+  "sessionid",
+];
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,10 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Forward Set-Cookie headers from backend (clears the JWT cookie)
-    const setCookie = backendResponse.headers.get("set-cookie");
-    if (setCookie) {
-      response.headers.set("Set-Cookie", setCookie);
-    }
+    forwardCookiesToResponse(backendResponse, response);
 
     // Clear ALL possible auth cookies as fallback
     for (const cookieName of AUTH_COOKIE_NAMES) {

@@ -9,8 +9,45 @@ export type ApiResult<T> = {
   error: string | null;
 };
 
+const CSRF_COOKIE_NAME = "csrftoken";
+let csrfPromise: Promise<void> | null = null;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
+
+const getCookieValue = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const entries = document.cookie.split(";").map((entry) => entry.trim());
+  for (const entry of entries) {
+    if (!entry) continue;
+    const [key, ...rest] = entry.split("=");
+    if (key === name) {
+      return rest.join("=") ? decodeURIComponent(rest.join("=")) : "";
+    }
+  }
+  return null;
+};
+
+const isWriteMethod = (method?: string) =>
+  ["POST", "PUT", "PATCH", "DELETE"].includes(
+    (method || "GET").toUpperCase()
+  );
+
+const ensureCsrfToken = async (): Promise<void> => {
+  if (typeof window === "undefined") return;
+  if (getCookieValue(CSRF_COOKIE_NAME)) return;
+  if (!csrfPromise) {
+    csrfPromise = fetch("/api/auth/csrf", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then(() => undefined)
+      .finally(() => {
+        csrfPromise = null;
+      });
+  }
+  await csrfPromise;
+};
 
 const stringifyValue = (value: unknown): string => {
   if (typeof value === "string") return value;
@@ -73,6 +110,15 @@ export async function apiRequest<T>(
 
   if (hasBody && !isFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  const method = (init.method || "GET").toUpperCase();
+  if (isWriteMethod(method)) {
+    await ensureCsrfToken();
+    const csrfToken = getCookieValue(CSRF_COOKIE_NAME);
+    if (csrfToken && !headers.has("X-CSRFToken")) {
+      headers.set("X-CSRFToken", csrfToken);
+    }
   }
 
   const response = await fetch(input, {

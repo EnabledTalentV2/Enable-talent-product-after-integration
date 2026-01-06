@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { apiRequest } from "@/lib/api-client";
 import {
   computeProfileCompletion,
   computeProfileSectionCompletion,
@@ -151,19 +152,11 @@ export default function ProfileEditPage() {
     setSaveSuccess(null);
 
     try {
-      const response = await fetch("/api/user/me", {
+      const updatedData = await apiRequest<unknown>("/api/user/me", {
         method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save profile.");
-      }
-
-      const updatedData = await response.json();
-      setUserData(() => updatedData);
+      setUserData(() => updatedData as typeof userData);
 
       setSaveSuccess("Profile saved.");
       if (redirect) {

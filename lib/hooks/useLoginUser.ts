@@ -6,7 +6,6 @@ import { apiRequest, getApiErrorMessage, type ApiResult } from "@/lib/api-client
 export type LoginUserPayload = {
   email: string;
   password: string;
-  user_type?: string;
 };
 
 export function useLoginUser() {

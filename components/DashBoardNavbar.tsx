@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Bell, LogOut, Search, User } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
+import { apiRequest } from "@/lib/api-client";
 
 export default function DashBoardNavbar() {
   const router = useRouter();
@@ -12,9 +13,8 @@ export default function DashBoardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      await apiRequest("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
       });
     } finally {
       resetUserData();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ENDPOINTS } from "@/lib/api-config";
+import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
 
 /**
  * POST /api/resume/parse
@@ -11,8 +11,8 @@ import { API_ENDPOINTS } from "@/lib/api-config";
  */
 export async function POST(request: NextRequest) {
   try {
-    const cookies = request.headers.get("cookie") || "";
     const candidateSlug = request.headers.get("X-Candidate-Slug");
+    const cookies = request.headers.get("cookie") || "";
 
     if (!candidateSlug) {
       return NextResponse.json(
@@ -32,42 +32,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a new FormData to send to Django backend
     const backendFormData = new FormData();
-    backendFormData.append("file", file);
+    backendFormData.append("resume_file", file);
+    backendFormData.append("accommodation_needs", "PREFER_TO_DISCUSS_LATER");
 
-    // Build headers for backend request
-    const headers: HeadersInit = {};
+    const uploadResponse = await backendFetch(
+      API_ENDPOINTS.candidateProfiles.detail(candidateSlug),
+      {
+        method: "PATCH",
+        body: backendFormData,
+      },
+      cookies
+    );
 
-    if (cookies) {
-      // Fallback: Use session cookies (for logged-in users)
-      console.log("[resume/parse] Using cookie-based authentication");
-      headers["Cookie"] = cookies;
-    } else {
-      console.log(
-        "[resume/parse] No authentication provided - proceeding anyway (backend may reject)"
-      );
-    }
-
-    // Construct the correct Django backend URL with the candidate slug
-    const backendUrl = `${API_ENDPOINTS.candidateProfiles.parseResume(
-      candidateSlug
-    )}`;
-    console.log("[resume/parse] Calling backend URL:", backendUrl);
-
-    // Forward the file to Django backend for parsing
-    const backendResponse = await fetch(backendUrl, {
-      method: "POST",
-      headers,
-      credentials: "include",
-      body: backendFormData,
-    });
-
-    if (!backendResponse.ok) {
-      const errorData = await backendResponse.json().catch(() => ({}));
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
       console.error(
-        "[resume/parse] Backend error:",
-        backendResponse.status,
+        "[resume/parse] Upload error:",
+        uploadResponse.status,
         errorData
       );
 
@@ -75,9 +57,9 @@ export async function POST(request: NextRequest) {
       let errorMessage =
         errorData.detail || errorData.error || "Failed to parse resume";
 
-      if (backendResponse.status === 401) {
+      if (uploadResponse.status === 401) {
         errorMessage = "Authentication required for resume parsing.";
-      } else if (backendResponse.status === 404) {
+      } else if (uploadResponse.status === 404) {
         errorMessage =
           "Resume parsing endpoint not available. Backend may not have this feature enabled.";
       }
@@ -86,19 +68,29 @@ export async function POST(request: NextRequest) {
         {
           error: errorMessage,
           success: false,
-          status: backendResponse.status,
+          status: uploadResponse.status,
         },
-        { status: backendResponse.status }
+        { status: uploadResponse.status }
       );
     }
 
-    const data = await backendResponse.json();
-    console.log("[resume/parse] Successfully parsed resume");
+    const parseResponse = await backendFetch(
+      API_ENDPOINTS.candidateProfiles.parseResume(candidateSlug),
+      {
+        method: "POST",
+      },
+      cookies
+    );
 
-    return NextResponse.json({
-      success: true,
-      data: data,
-    });
+    const data = await parseResponse.json().catch(() => ({}));
+
+    return NextResponse.json(
+      {
+        success: parseResponse.ok,
+        data,
+      },
+      { status: parseResponse.status }
+    );
   } catch (error) {
     console.error("[resume/parse] Error:", error);
     return NextResponse.json(

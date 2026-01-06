@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import {
+  API_ENDPOINTS,
+  backendFetch,
+  forwardCookiesToResponse,
+} from "@/lib/api-config";
 
 /**
  * CSRF Token endpoint
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
       cookies
     );
 
-    const data = await backendResponse.json();
+    const data = await backendResponse.json().catch(() => ({}));
 
     // Create response with same status as backend
     const response = NextResponse.json(data, {
@@ -27,10 +31,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Forward Set-Cookie headers (contains csrftoken)
-    const setCookie = backendResponse.headers.get("set-cookie");
-    if (setCookie) {
-      response.headers.set("Set-Cookie", setCookie);
-    }
+    forwardCookiesToResponse(backendResponse, response);
 
     return response;
   } catch (error) {

@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
 
 type RouteContext = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const cookies = request.headers.get("cookie") || "";
-    const slug = context.params.slug;
+    const { slug } = await context.params;
 
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
@@ -34,20 +34,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const body = await request.json();
     const cookies = request.headers.get("cookie") || "";
-    const slug = context.params.slug;
+    const { slug } = await context.params;
+    const contentType = request.headers.get("content-type") || "";
+    const isMultipart = contentType.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json();
 
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
       {
         method: "PUT",
-        body: JSON.stringify(body),
+        body: isMultipart ? body : JSON.stringify(body),
       },
       cookies
     );
 
-    const data = await backendResponse.json();
+    const data = await backendResponse.json().catch(() => ({}));
 
     return NextResponse.json(data, {
       status: backendResponse.status,
@@ -63,20 +65,22 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const body = await request.json();
     const cookies = request.headers.get("cookie") || "";
-    const slug = context.params.slug;
+    const { slug } = await context.params;
+    const contentType = request.headers.get("content-type") || "";
+    const isMultipart = contentType.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json();
 
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
       {
         method: "PATCH",
-        body: JSON.stringify(body),
+        body: isMultipart ? body : JSON.stringify(body),
       },
       cookies
     );
 
-    const data = await backendResponse.json();
+    const data = await backendResponse.json().catch(() => ({}));
 
     return NextResponse.json(data, {
       status: backendResponse.status,

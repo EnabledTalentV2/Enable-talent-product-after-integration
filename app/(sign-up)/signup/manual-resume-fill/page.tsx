@@ -17,7 +17,7 @@ import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
-import { useUpdateCandidateProfile } from "@/lib/hooks/useUpdateCandidateProfile";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
@@ -43,17 +43,85 @@ const initialSteps: Step[] = [
   { id: 10, label: "Review And Agree", key: "reviewAgree", status: "pending" },
 ];
 
+const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
+
+const normalizeSkills = (skillsText: string, primaryList?: string[]) => {
+  const splitter = (value: string) =>
+    value
+      .split(/[,;\n]+/)
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+
+  const textEntries = splitter(skillsText || "");
+  const primaryEntries = Array.isArray(primaryList)
+    ? primaryList.flatMap(splitter)
+    : [];
+
+  return Array.from(new Set([...primaryEntries, ...textEntries]));
+};
+
+const toYearMonth = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{4}-\d{2})/);
+  return match ? match[1] : trimmed;
+};
+
+const getCurrentYearMonth = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+};
+
+const buildVerifyProfilePayload = (data: UserData) => {
+  const linkedin = (
+    data.basicInfo.linkedinUrl || data.basicInfo.socialProfile || ""
+  ).trim();
+  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
+  const workEntries =
+    data.workExperience.experienceType === "fresher"
+      ? []
+      : data.workExperience.entries;
+  const workExperience = workEntries
+    .map((entry) => {
+      const startDate = toYearMonth(entry.from);
+      const endDate = entry.current
+        ? getCurrentYearMonth()
+        : toYearMonth(entry.to);
+
+      return {
+        company: entry.company.trim(),
+        role: entry.role.trim(),
+        start_date: startDate,
+        end_date: endDate || undefined,
+      };
+    })
+    .filter((entry) => entry.company && entry.role && entry.start_date);
+
+  const payload: Record<string, unknown> = {};
+
+  if (skills.length) {
+    payload.skills = skills;
+  }
+
+  if (workExperience.length) {
+    payload.work_experience = workExperience;
+  }
+
+  if (linkedin) {
+    payload.linkedin = linkedin;
+  }
+
+  return payload;
+};
+
 export default function ManualResumeFill() {
   const router = useRouter();
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
   const { fetchCandidateProfile } = useFetchCandidateProfile();
-  const {
-    updateCandidateProfile,
-    isLoading: isUpdating,
-    clearError: clearUpdateError,
-  } = useUpdateCandidateProfile();
+  const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [candidateSlug, setCandidateSlug] = useState<string | null>(null);
 
@@ -73,9 +141,34 @@ export default function ManualResumeFill() {
         if (!active) return;
 
         const { email, slug } = result.data;
+        let resolvedSlug = slug ?? null;
 
-        if (slug) {
-          setCandidateSlug(slug);
+        const createCandidateProfile = async (): Promise<string | null> => {
+          try {
+            const formData = new FormData();
+            formData.append("accommodation_needs", DEFAULT_ACCOMMODATION_NEEDS);
+            await apiRequest<unknown>("/api/candidates/profiles/", {
+              method: "POST",
+              body: formData,
+            });
+            const refreshed = await fetchCandidateProfile();
+            return refreshed.data?.slug ?? null;
+          } catch (error) {
+            console.warn("[Manual Resume Fill] Profile creation failed", error);
+            return null;
+          }
+        };
+
+        if (!resolvedSlug) {
+          resolvedSlug = await createCandidateProfile();
+        }
+
+        if (resolvedSlug) {
+          setCandidateSlug(resolvedSlug);
+        } else {
+          setFinishError(
+            "Unable to create your profile. Please refresh the page."
+          );
         }
 
         if (email) {
@@ -517,52 +610,50 @@ export default function ManualResumeFill() {
   const handleFinish = async () => {
     if (isUpdating) return;
     setFinishError(null);
-    clearUpdateError();
+
+    const email = userData.basicInfo.email.trim();
+
+    if (!email) {
+      setFinishError("Missing email. Please log in again.");
+      return;
+    }
+
+    if (!candidateSlug) {
+      setFinishError("Unable to save profile. Missing candidate information.");
+      return;
+    }
+
+    const finalizedData = {
+      ...userData,
+      basicInfo: {
+        ...userData.basicInfo,
+        email,
+      },
+    };
+
+    setIsUpdating(true);
 
     try {
-      const email = userData.basicInfo.email.trim();
+      const payload = buildVerifyProfilePayload(finalizedData);
 
-      if (!email) {
-        setFinishError("Missing email. Please log in again.");
-        return;
-      }
-
-      if (!candidateSlug) {
-        setFinishError(
-          "Unable to save profile. Missing candidate information."
-        );
-        return;
-      }
-
-      const finalizedData = {
-        ...userData,
-        basicInfo: {
-          ...userData.basicInfo,
-          email,
-        },
-      };
-
-      const updateResult = await updateCandidateProfile({
-        slug: candidateSlug,
-        data: finalizedData,
-        method: "PUT",
-      });
-
-      if (!updateResult.data) {
-        setFinishError(
-          updateResult.error ||
-            "Unable to save your profile. Please try again."
-        );
-        return;
-      }
-
-      setUserData(
-        (prev) => (updateResult.data ?? finalizedData) as typeof prev
+      await apiRequest<unknown>(
+        `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }
       );
 
+      setUserData((prev) => finalizedData as typeof prev);
       router.push("/dashboard");
     } catch (err) {
-      setFinishError("Unable to complete signup. Please try again.");
+      const message = getApiErrorMessage(
+        err,
+        "Unable to complete signup. Please try again."
+      );
+      setFinishError(message);
+    } finally {
+      setIsUpdating(false);
     }
   };
 

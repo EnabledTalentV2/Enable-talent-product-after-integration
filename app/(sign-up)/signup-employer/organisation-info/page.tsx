@@ -13,6 +13,7 @@ import {
   type RefObject,
 } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api-client";
 
 type FieldErrors = Partial<{
   organizationName: string;
@@ -30,6 +31,29 @@ const inputClasses = (hasError?: boolean) =>
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
       : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
   }`;
+
+const COMPANY_SIZE_OPTIONS = [
+  { label: "1 - 10", value: "1-10", id: 1 },
+  { label: "10 - 100", value: "10-100", id: 2 },
+  { label: "100 - 1000", value: "100-1000", id: 3 },
+  { label: "1000 - 10000", value: "1000-10000", id: 4 },
+] as const;
+
+const INDUSTRY_OPTIONS = [
+  { label: "Information Technology", id: 1 },
+  { label: "Healthcare", id: 2 },
+  { label: "Finance", id: 3 },
+  { label: "Education", id: 4 },
+  { label: "Other", id: 5 },
+] as const;
+
+const COMPANY_SIZE_CHOICES = Object.fromEntries(
+  COMPANY_SIZE_OPTIONS.map((option) => [option.value, option.id])
+) as Record<string, number>;
+
+const INDUSTRY_CHOICES = Object.fromEntries(
+  INDUSTRY_OPTIONS.map((option) => [option.label, option.id])
+) as Record<string, number>;
 
 export default function OrganisationInfoPage() {
   const router = useRouter();
@@ -94,6 +118,8 @@ export default function OrganisationInfoPage() {
     const trimmedAbout = organizationInfo.aboutOrganization.trim();
     const trimmedLocation = organizationInfo.location.trim();
     const trimmedWebsite = organizationInfo.website.trim();
+    const companySizeChoice = COMPANY_SIZE_CHOICES[organizationInfo.companySize];
+    const industryChoice = INDUSTRY_CHOICES[organizationInfo.industry];
 
     const nextErrors: FieldErrors = {};
     if (!trimmedOrgName)
@@ -104,9 +130,9 @@ export default function OrganisationInfoPage() {
     if (!organizationInfo.foundedYear)
       nextErrors.foundedYear = "Founded date is required.";
     if (!trimmedWebsite) nextErrors.website = "Website is required.";
-    if (!organizationInfo.companySize)
+    if (!companySizeChoice)
       nextErrors.companySize = "Please select company size.";
-    if (!organizationInfo.industry)
+    if (!industryChoice)
       nextErrors.industry = "Please select an industry.";
 
     if (Object.keys(nextErrors).length > 0) {
@@ -145,33 +171,21 @@ export default function OrganisationInfoPage() {
     try {
       // Create organization via the organizations API endpoint
       try {
-        const response = await fetch("/api/organizations", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: organizationInfo.organizationName,
-            description: organizationInfo.aboutOrganization,
-            location: organizationInfo.location,
-            founded_year: organizationInfo.foundedYear,
-            website: organizationInfo.website,
-            company_size: organizationInfo.companySize,
-            industry: organizationInfo.industry,
-          }),
-        });
-
-        if (!response.ok) {
-          // Log but don't fail - organization info is already saved in local store
-          const errorData = await response.json().catch(() => ({}));
-          console.warn(
-            "Organization creation response:",
-            response.status,
-            errorData
-          );
-        } else {
-          const orgData = await response.json();
-          console.log("Organization created successfully:", orgData);
+        const formData = new FormData();
+        formData.append("name", trimmedOrgName);
+        formData.append("industry", String(industryChoice ?? ""));
+        formData.append("employee_size", String(companySizeChoice ?? ""));
+        formData.append("headquarter_location", trimmedLocation);
+        formData.append("about", trimmedAbout);
+        if (trimmedWebsite) {
+          formData.append("url", trimmedWebsite);
         }
+
+        const orgData = await apiRequest<unknown>("/api/organizations", {
+          method: "POST",
+          body: formData,
+        });
+        console.log("Organization created successfully:", orgData);
       } catch (apiError) {
         // Backend sync failed, but local data is saved - continue
         console.warn(
@@ -446,12 +460,7 @@ export default function OrganisationInfoPage() {
                   Company Size
                 </legend>
                 <div className="flex flex-wrap gap-6">
-                  {[
-                    { label: "1 - 10", value: "1-10" },
-                    { label: "10 - 100", value: "10-100" },
-                    { label: "100 - 1000", value: "100-1000" },
-                    { label: "1000 - 10000", value: "1000-10000" },
-                  ].map((size) => (
+                  {COMPANY_SIZE_OPTIONS.map((size) => (
                     <label
                       key={size.value}
                       className="flex items-center gap-2 cursor-pointer"
@@ -516,11 +525,9 @@ export default function OrganisationInfoPage() {
                       patchOrganizationInfo({ industry: event.target.value });
                     }}
                   >
-                    <option>Information Technology</option>
-                    <option>Healthcare</option>
-                    <option>Finance</option>
-                    <option>Education</option>
-                    <option>Other</option>
+                    {INDUSTRY_OPTIONS.map((option) => (
+                      <option key={option.id}>{option.label}</option>
+                    ))}
                   </select>
                   <ChevronDown
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
