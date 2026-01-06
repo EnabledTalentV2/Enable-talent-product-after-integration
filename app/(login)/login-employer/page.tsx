@@ -42,7 +42,6 @@ export default function EmployerLoginPage() {
 
     if (!trimmedEmail || !password) {
       setError("Please enter both email and password.");
-      setSubmitting(false);
       return;
     }
 
