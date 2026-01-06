@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
 

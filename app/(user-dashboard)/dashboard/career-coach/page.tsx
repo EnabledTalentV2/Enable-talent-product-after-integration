@@ -2,10 +2,16 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { BriefcaseBusiness, FileText, MessageSquareText, Sparkles } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  FileText,
+  MessageSquareText,
+  Sparkles,
+} from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 const quickPrompts = [
   "Review my resume summary for clarity",
@@ -15,8 +21,43 @@ const quickPrompts = [
 ];
 
 export default function CareerCoachPage() {
-  const userData = useUserDataStore((s) => s.userData);
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
 
   return (
     <section className="mx-auto max-w-360 space-y-6 py-10">
@@ -30,8 +71,9 @@ export default function CareerCoachPage() {
               <h1 className="text-2xl font-bold">AI Career Coach</h1>
             </div>
             <p className="max-w-2xl text-base text-slate-600">
-              Get personalized guidance on your resume, interview prep, and job search
-              strategy. This is a placeholder until the coach is wired to the backend.
+              Get personalized guidance on your resume, interview prep, and job
+              search strategy. This is a placeholder until the coach is wired to
+              the backend.
             </p>
           </div>
           <Link
@@ -75,13 +117,16 @@ export default function CareerCoachPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="rounded-[28px] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Session Preview</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Session Preview
+          </h2>
           <div className="mt-4 space-y-4 text-sm text-slate-600">
             <div className="rounded-2xl bg-slate-100 px-4 py-3">
               I want to sharpen my resume summary for design roles.
             </div>
             <div className="rounded-2xl bg-amber-50 px-4 py-3 text-slate-700">
-              Great, I can help with that. Share your summary and the role you are targeting.
+              Great, I can help with that. Share your summary and the role you
+              are targeting.
             </div>
             <div className="rounded-2xl bg-slate-100 px-4 py-3">
               Can you also suggest the top three achievements to highlight?
@@ -93,7 +138,9 @@ export default function CareerCoachPage() {
         </div>
 
         <div className="rounded-[28px] bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Quick Prompts</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Quick Prompts
+          </h2>
           <p className="mt-2 text-sm text-slate-500">
             Use these to jump-start your first coaching session.
           </p>

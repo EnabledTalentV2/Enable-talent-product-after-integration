@@ -3,8 +3,8 @@
 import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
-import { Suspense, useState } from "react";
-import { getPendingEmployerSignup } from "@/lib/localEmployerStore";
+import { Suspense, useState, useEffect } from "react";
+import { apiRequest } from "@/lib/api-client";
 
 function VerificationContent() {
   const router = useRouter();
@@ -14,10 +14,46 @@ function VerificationContent() {
   const [resendStatus, setResendStatus] = useState<"idle" | "sent" | "error">(
     "idle"
   );
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadEmail = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (active) {
+            setPendingEmail(null);
+          }
+          return;
+        }
+
+        const data = await response.json().catch(() => null);
+        if (active) {
+          const email =
+            data && typeof data.email === "string" ? data.email : null;
+          setPendingEmail(email);
+        }
+      } catch {
+        if (active) {
+          setPendingEmail(null);
+        }
+      }
+    };
+
+    loadEmail();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleResendEmail = async () => {
-    const pending = getPendingEmployerSignup();
-    if (!pending?.email) {
+    if (!pendingEmail) {
       setResendStatus("error");
       return;
     }
@@ -26,15 +62,11 @@ function VerificationContent() {
     setResendStatus("idle");
 
     try {
-      // Simulate API call to future backend endpoint
-      await fetch("/api/auth/resend-verification", {
+      await apiRequest("/api/auth/resend-verification", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pending.email }),
+        body: JSON.stringify({ email: pendingEmail }),
       });
 
-      // For now, we simulate success regardless of the 404 since the route isn't built yet
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setResendStatus("sent");
 
       // Reset status after 5 seconds

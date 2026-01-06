@@ -11,8 +11,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { setPendingSignup } from "@/lib/localUserStore";
-import { Eye, EyeOff } from "lucide-react";
+import { useCandidateSignupUser } from "@/lib/hooks/useCandidateSignupUser";
+import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
+import { apiRequest } from "@/lib/api-client";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 
@@ -40,6 +42,10 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signupCandidate, error: serverError, setError: setServerError } =
+    useCandidateSignupUser();
+  const { loginCandidate } = useCandidateLoginUser();
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
@@ -76,9 +82,11 @@ export default function SignUpPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
     setFieldErrors({});
+    setServerError(null);
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
@@ -104,21 +112,61 @@ export default function SignUpPage() {
       return;
     }
 
-    const [firstName, ...rest] = trimmedName.split(/\s+/);
-    const lastName = rest.join(" ");
+    setIsSubmitting(true);
 
-    setUserData((prev) => ({
-      ...prev,
-      basicInfo: {
-        ...prev.basicInfo,
-        firstName: firstName || prev.basicInfo.firstName,
-        lastName,
+    try {
+      const [firstName, ...rest] = trimmedName.split(/\s+/);
+      const lastName = rest.join(" ");
+
+      setUserData((prev) => ({
+        ...prev,
+        basicInfo: {
+          ...prev.basicInfo,
+          firstName: firstName || prev.basicInfo.firstName,
+          lastName,
+          email: trimmedEmail,
+        },
+      }));
+
+      const signupResult = await signupCandidate({
         email: trimmedEmail,
-      },
-    }));
+        password,
+        confirm_password: password,
+      });
 
-    setPendingSignup({ email: trimmedEmail, password });
-    router.push("/signup/resume-upload");
+      if (!signupResult.data) {
+        return;
+      }
+
+      let hasSession = true;
+      try {
+        await apiRequest<unknown>("/api/user/me", { method: "GET" });
+      } catch {
+        hasSession = false;
+      }
+
+      if (!hasSession) {
+        const loginResult = await loginCandidate({
+          email: trimmedEmail,
+          password,
+        });
+
+        if (!loginResult.data) {
+          const message =
+            loginResult.error ||
+            "Account created, but we couldn't sign you in. Please log in.";
+          setServerError(message);
+          return;
+        }
+      }
+
+      router.push("/signup/resume-upload");
+    } catch (error) {
+      console.error("[signup] Error:", error);
+      setServerError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -203,6 +251,15 @@ export default function SignUpPage() {
                       );
                     })}
                   </ul>
+                </div>
+              ) : null}
+              {serverError ? (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Error</p>
+                  <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
                 </div>
               ) : null}
               <div className="space-y-1">
@@ -297,7 +354,9 @@ export default function SignUpPage() {
                 </label>
                 <div className="relative">
                   <input
-                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
+                    className={`${inputClasses(
+                      Boolean(fieldErrors.password)
+                    )} pr-14`}
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
@@ -402,9 +461,17 @@ export default function SignUpPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white"
+                disabled={isSubmitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create account
+                {isSubmitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating account...
+                  </span>
+                ) : (
+                  "Create account"
+                )}
               </button>
 
               <p className="text-[11px] text-center text-slate-500 mt-2">
@@ -425,11 +492,17 @@ export default function SignUpPage() {
 
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
-                <Link href="/terms" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/terms"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/privacy"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Privacy Policy
                 </Link>
               </p>

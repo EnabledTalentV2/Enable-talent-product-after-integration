@@ -13,7 +13,9 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
-import { setPendingEmployerSignup } from "@/lib/localEmployerStore";
+import { useSignupUser } from "@/lib/hooks/useSignupUser";
+import { useLoginUser } from "@/lib/hooks/useLoginUser";
+import { apiRequest } from "@/lib/api-client";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -41,6 +43,9 @@ export default function SignupEmployerPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signupUser, error, setError } = useSignupUser();
+  const { loginUser } = useLoginUser();
 
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const employerNameRef = useRef<HTMLInputElement | null>(null);
@@ -80,9 +85,11 @@ export default function SignupEmployerPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
     setFieldErrors({});
+    setError(null);
 
     const trimmedName = fullName.trim();
     const trimmedEmployerName = employerName.trim();
@@ -127,26 +134,48 @@ export default function SignupEmployerPage() {
       return;
     }
 
-    // Proceed with signup logic
-    setPendingEmployerSignup({
-      email: trimmedEmail,
-      password,
-      fullName: trimmedName,
-      employerName: trimmedEmployerName,
-    });
+    setIsSubmitting(true);
 
-    // Simulate API call to set HTTP-only cookie
-    fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        basicInfo: { firstName: trimmedName, email: trimmedEmail },
-        employerName: trimmedEmployerName,
-        role: "employer",
-      }),
-    }).then(() => {
-      router.push("/signup-employer/email-verification");
-    });
+    try {
+      const signupResult = await signupUser({
+        email: trimmedEmail,
+        password,
+        confirm_password: password,
+      });
+
+      if (!signupResult.data) {
+        return;
+      }
+
+      let hasSession = true;
+      try {
+        await apiRequest<unknown>("/api/user/me", { method: "GET" });
+      } catch {
+        hasSession = false;
+      }
+
+      if (!hasSession) {
+        const loginResult = await loginUser({
+          email: trimmedEmail,
+          password,
+        });
+
+        if (!loginResult.data) {
+          const message =
+            loginResult.error ||
+            "Account created, but we couldn't sign you in. Please log in.";
+          setError(message);
+          return;
+        }
+      }
+
+      router.push("/signup-employer/organisation-info");
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -235,6 +264,15 @@ export default function SignupEmployerPage() {
                   </ul>
                 </div>
               ) : null}
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Error</p>
+                  <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                </div>
+              )}
               <div className="space-y-1">
                 <label
                   className="block text-[16px] font-semibold text-gray-900"
@@ -374,7 +412,9 @@ export default function SignupEmployerPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
-                    className={`${inputClasses(Boolean(fieldErrors.password))} pr-14`}
+                    className={`${inputClasses(
+                      Boolean(fieldErrors.password)
+                    )} pr-14`}
                     id="employer-password"
                     name="password"
                     autoComplete="new-password"
@@ -480,9 +520,10 @@ export default function SignupEmployerPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                disabled={isSubmitting}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Create account
+                {isSubmitting ? "Creating account..." : "Create account"}
               </button>
 
               <p className="mt-2 text-center text-[11px] text-gray-500">
@@ -504,11 +545,17 @@ export default function SignupEmployerPage() {
 
             <div className="mt-6 text-center text-[11px] text-gray-500">
               By clicking login, you agree to our{" "}
-              <Link href="/terms" className="underline text-gray-600 hover:text-gray-700">
+              <Link
+                href="/terms"
+                className="underline text-gray-600 hover:text-gray-700"
+              >
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="underline text-gray-600 hover:text-gray-700">
+              <Link
+                href="/privacy"
+                className="underline text-gray-600 hover:text-gray-700"
+              >
                 Privacy Policy
               </Link>
             </div>

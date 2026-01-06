@@ -2,12 +2,6 @@
 
 import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import {
-  clearPendingEmployerSignup,
-  getPendingEmployerSignup,
-  saveEmployer,
-  setCurrentEmployer,
-} from "@/lib/localEmployerStore";
 import defaultImage from "@/public/Placeholder.png";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
@@ -19,6 +13,7 @@ import {
   type RefObject,
 } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api-client";
 
 type FieldErrors = Partial<{
   organizationName: string;
@@ -37,18 +32,48 @@ const inputClasses = (hasError?: boolean) =>
       : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
   }`;
 
+const COMPANY_SIZE_OPTIONS = [
+  { label: "1 - 10", value: "1-10", id: 1 },
+  { label: "10 - 100", value: "10-100", id: 2 },
+  { label: "100 - 1000", value: "100-1000", id: 3 },
+  { label: "1000 - 10000", value: "1000-10000", id: 4 },
+] as const;
+
+const INDUSTRY_OPTIONS = [
+  { label: "Information Technology", id: 1 },
+  { label: "Healthcare", id: 2 },
+  { label: "Finance", id: 3 },
+  { label: "Education", id: 4 },
+  { label: "Other", id: 5 },
+] as const;
+
+const COMPANY_SIZE_CHOICES = Object.fromEntries(
+  COMPANY_SIZE_OPTIONS.map((option) => [option.value, option.id])
+) as Record<string, number>;
+
+const INDUSTRY_CHOICES = Object.fromEntries(
+  INDUSTRY_OPTIONS.map((option) => [option.label, option.id])
+) as Record<string, number>;
+
 export default function OrganisationInfoPage() {
   const router = useRouter();
-  const employerData = useEmployerDataStore((s) => s.employerData);
   const organizationInfo = useEmployerDataStore(
-    (s) => s.employerData.organizationInfo
-  );
+    (s) => s.employerData?.organizationInfo
+  ) ?? {
+    organizationName: "",
+    aboutOrganization: "",
+    location: "",
+    foundedYear: "",
+    website: "",
+    companySize: "",
+    industry: "",
+  };
   const patchOrganizationInfo = useEmployerDataStore(
     (s) => s.patchOrganizationInfo
   );
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [pendingSignup] = useState(() => getPendingEmployerSignup());
+  const [submitting, setSubmitting] = useState(false);
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
@@ -58,15 +83,24 @@ export default function OrganisationInfoPage() {
   const industryRef = useRef<HTMLSelectElement | null>(null);
 
   useEffect(() => {
-    if (!pendingSignup) {
-      router.replace("/signup-employer");
-    }
-  }, [pendingSignup, router]);
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
 
-  const welcomeName =
-    pendingSignup?.fullName?.trim() ||
-    pendingSignup?.employerName?.trim() ||
-    "Employer";
+        if (!response.ok) {
+          router.replace("/login-employer");
+        }
+      } catch {
+        router.replace("/login-employer");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  const welcomeName = organizationInfo.organizationName.trim() || "Employer";
 
   const clearFieldError = (field: keyof FieldErrors) => {
     setFieldErrors((prev) => {
@@ -77,13 +111,15 @@ export default function OrganisationInfoPage() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedOrgName = organizationInfo.organizationName.trim();
     const trimmedAbout = organizationInfo.aboutOrganization.trim();
     const trimmedLocation = organizationInfo.location.trim();
     const trimmedWebsite = organizationInfo.website.trim();
+    const companySizeChoice = COMPANY_SIZE_CHOICES[organizationInfo.companySize];
+    const industryChoice = INDUSTRY_CHOICES[organizationInfo.industry];
 
     const nextErrors: FieldErrors = {};
     if (!trimmedOrgName)
@@ -94,9 +130,9 @@ export default function OrganisationInfoPage() {
     if (!organizationInfo.foundedYear)
       nextErrors.foundedYear = "Founded date is required.";
     if (!trimmedWebsite) nextErrors.website = "Website is required.";
-    if (!organizationInfo.companySize)
+    if (!companySizeChoice)
       nextErrors.companySize = "Please select company size.";
-    if (!organizationInfo.industry)
+    if (!industryChoice)
       nextErrors.industry = "Please select an industry.";
 
     if (Object.keys(nextErrors).length > 0) {
@@ -130,23 +166,42 @@ export default function OrganisationInfoPage() {
       return;
     }
 
-    const pending = getPendingEmployerSignup();
-    if (!pending) {
-      router.replace("/signup-employer");
-      return;
-    }
+    setSubmitting(true);
 
-    saveEmployer({
-      email: pending.email,
-      password: pending.password,
-      employerData,
-      fullName: pending.fullName,
-      employerName: pending.employerName,
-    });
-    setCurrentEmployer(pending.email);
-    clearPendingEmployerSignup();
-    setFieldErrors({});
-    router.push("/employer/dashboard");
+    try {
+      // Create organization via the organizations API endpoint
+      try {
+        const formData = new FormData();
+        formData.append("name", trimmedOrgName);
+        formData.append("industry", String(industryChoice ?? ""));
+        formData.append("employee_size", String(companySizeChoice ?? ""));
+        formData.append("headquarter_location", trimmedLocation);
+        formData.append("about", trimmedAbout);
+        if (trimmedWebsite) {
+          formData.append("url", trimmedWebsite);
+        }
+
+        const orgData = await apiRequest<unknown>("/api/organizations", {
+          method: "POST",
+          body: formData,
+        });
+        console.log("Organization created successfully:", orgData);
+      } catch (apiError) {
+        // Backend sync failed, but local data is saved - continue
+        console.warn(
+          "Backend sync failed, continuing with local data:",
+          apiError
+        );
+      }
+
+      setFieldErrors({});
+      router.push("/employer/dashboard");
+    } catch (error) {
+      console.error("Failed to complete signup:", error);
+      setFieldErrors({ organizationName: "Failed to save. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -308,7 +363,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.location}
                   aria-invalid={Boolean(fieldErrors.location)}
                   aria-describedby={
-                    fieldErrors.location ? "organization-location-error" : undefined
+                    fieldErrors.location
+                      ? "organization-location-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("location");
@@ -341,7 +398,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.foundedYear}
                   aria-invalid={Boolean(fieldErrors.foundedYear)}
                   aria-describedby={
-                    fieldErrors.foundedYear ? "organization-founded-error" : undefined
+                    fieldErrors.foundedYear
+                      ? "organization-founded-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("foundedYear");
@@ -375,7 +434,9 @@ export default function OrganisationInfoPage() {
                   value={organizationInfo.website}
                   aria-invalid={Boolean(fieldErrors.website)}
                   aria-describedby={
-                    fieldErrors.website ? "organization-website-error" : undefined
+                    fieldErrors.website
+                      ? "organization-website-error"
+                      : undefined
                   }
                   onChange={(event) => {
                     clearFieldError("website");
@@ -399,12 +460,7 @@ export default function OrganisationInfoPage() {
                   Company Size
                 </legend>
                 <div className="flex flex-wrap gap-6">
-                  {[
-                    { label: "1 - 10", value: "1-10" },
-                    { label: "10 - 100", value: "10-100" },
-                    { label: "100 - 1000", value: "100-1000" },
-                    { label: "1000 - 10000", value: "1000-10000" },
-                  ].map((size) => (
+                  {COMPANY_SIZE_OPTIONS.map((size) => (
                     <label
                       key={size.value}
                       className="flex items-center gap-2 cursor-pointer"
@@ -460,18 +516,18 @@ export default function OrganisationInfoPage() {
                     value={organizationInfo.industry}
                     aria-invalid={Boolean(fieldErrors.industry)}
                     aria-describedby={
-                      fieldErrors.industry ? "organization-industry-error" : undefined
+                      fieldErrors.industry
+                        ? "organization-industry-error"
+                        : undefined
                     }
                     onChange={(event) => {
                       clearFieldError("industry");
                       patchOrganizationInfo({ industry: event.target.value });
                     }}
                   >
-                    <option>Information Technology</option>
-                    <option>Healthcare</option>
-                    <option>Finance</option>
-                    <option>Education</option>
-                    <option>Other</option>
+                    {INDUSTRY_OPTIONS.map((option) => (
+                      <option key={option.id}>{option.label}</option>
+                    ))}
                   </select>
                   <ChevronDown
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"

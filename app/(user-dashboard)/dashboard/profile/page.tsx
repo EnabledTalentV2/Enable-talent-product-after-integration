@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 import Link from "next/link";
 import {
   Mail,
@@ -21,7 +23,40 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { userData } = useUserDataStore();
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
+
   const {
     basicInfo,
     education,

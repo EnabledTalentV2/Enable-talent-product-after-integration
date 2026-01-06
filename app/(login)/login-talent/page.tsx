@@ -1,30 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import {
-  clearCurrentUser,
-  getUserByEmail,
-  setCurrentUser,
-} from "@/lib/localUserStore";
+import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { loginCandidate, isLoading, error, setError } =
+    useCandidateLoginUser();
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const hasError = Boolean(error);
 
@@ -37,11 +34,10 @@ export default function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (submitting) {
+    if (isLoading) {
       return;
     }
 
-    setSubmitting(true);
     setError(null);
 
     try {
@@ -51,22 +47,24 @@ export default function LoginPage() {
         return;
       }
 
-      clearCurrentUser();
-      const storedUser = getUserByEmail(trimmedEmail);
+      const result = await loginCandidate({
+        email: trimmedEmail,
+        password: password,
+      });
 
-      if (!storedUser || storedUser.password !== password) {
-        setError("Invalid email or password.");
+      if (!result.data) {
         return;
       }
 
-      setCurrentUser(storedUser.email);
-      setUserData(() => storedUser.userData);
-      router.push("/dashboard");
+      setUserData((prev) => result.data as typeof prev);
+
+      const nextPath = searchParams.get("next");
+      const redirectTarget =
+        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
+      router.push(redirectTarget);
     } catch (err: unknown) {
       console.error(err);
       setError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -222,10 +220,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={isLoading}
                 className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {submitting ? "Signing in..." : "Login"}
+                {isLoading ? "Signing in..." : "Login"}
               </button>
             </form>
 
@@ -242,11 +240,17 @@ export default function LoginPage() {
 
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
-                <Link href="/terms" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/terms"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="underline text-slate-600 hover:text-slate-700">
+                <Link
+                  href="/privacy"
+                  className="underline text-slate-600 hover:text-slate-700"
+                >
                   Privacy Policy
                 </Link>
               </p>
@@ -255,5 +259,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

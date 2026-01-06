@@ -8,10 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import {
-  getEmployerByEmail,
-  setCurrentEmployer,
-} from "@/lib/localEmployerStore";
+import { useLoginUser } from "@/lib/hooks/useLoginUser";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
@@ -22,7 +19,7 @@ export default function EmployerLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const { loginUser, isLoading, error, setError } = useLoginUser();
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const hasError = Boolean(error);
 
@@ -32,8 +29,13 @@ export default function EmployerLoginPage() {
     }
   }, [hasError]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (isLoading) {
+      return;
+    }
+
     setError(null);
 
     const trimmedEmail = email.trim();
@@ -43,15 +45,23 @@ export default function EmployerLoginPage() {
       return;
     }
 
-    const storedEmployer = getEmployerByEmail(trimmedEmail);
-    if (!storedEmployer || storedEmployer.password !== password) {
-      setError("Invalid email or password.");
-      return;
-    }
+    try {
+      const result = await loginUser({
+        email: trimmedEmail,
+        password: password,
+      });
 
-    setCurrentEmployer(trimmedEmail);
-    setEmployerData(() => storedEmployer.employerData);
-    router.push("/employer/dashboard");
+      if (!result.data) {
+        return;
+      }
+
+      setEmployerData((prev) => result.data as typeof prev);
+
+      router.push("/employer/dashboard");
+    } catch (err: unknown) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -210,9 +220,10 @@ export default function EmployerLoginPage() {
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                disabled={isLoading}
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Login
+                {isLoading ? "Signing in..." : "Login"}
               </button>
             </form>
 

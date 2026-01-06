@@ -52,7 +52,8 @@ export const useEmployerDataStore = create<EmployerDataStore>()(
           employerData: {
             ...state.employerData,
             organizationInfo: {
-              ...state.employerData.organizationInfo,
+              ...(state.employerData.organizationInfo ??
+                initialEmployerData.organizationInfo),
               ...patch,
             },
           },
@@ -63,6 +64,22 @@ export const useEmployerDataStore = create<EmployerDataStore>()(
       name: "et_employer_data",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ employerData: state.employerData }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as
+          | Partial<EmployerDataStore>
+          | undefined;
+        return {
+          ...currentState,
+          employerData: {
+            ...initialEmployerData,
+            ...persisted?.employerData,
+            organizationInfo: {
+              ...initialEmployerData.organizationInfo,
+              ...persisted?.employerData?.organizationInfo,
+            },
+          },
+        };
+      },
     }
   )
 );

@@ -15,20 +15,10 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
-import {
-  clearPendingSignup,
-  getCurrentUser,
-  getPendingSignup,
-  saveUser,
-  setCurrentUser,
-} from "@/lib/localUserStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
-import type {
-  Step,
-  StepKey,
-  StepStatus,
-  UserData,
-} from "@/components/signup/types";
+import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
+import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
@@ -53,22 +43,157 @@ const initialSteps: Step[] = [
   { id: 10, label: "Review And Agree", key: "reviewAgree", status: "pending" },
 ];
 
+const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
+
+const normalizeSkills = (skillsText: string, primaryList?: string[]) => {
+  const splitter = (value: string) =>
+    value
+      .split(/[,;\n]+/)
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+
+  const textEntries = splitter(skillsText || "");
+  const primaryEntries = Array.isArray(primaryList)
+    ? primaryList.flatMap(splitter)
+    : [];
+
+  return Array.from(new Set([...primaryEntries, ...textEntries]));
+};
+
+const toYearMonth = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{4}-\d{2})/);
+  return match ? match[1] : trimmed;
+};
+
+const getCurrentYearMonth = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+};
+
+const buildVerifyProfilePayload = (data: UserData) => {
+  const linkedin = (
+    data.basicInfo.linkedinUrl || data.basicInfo.socialProfile || ""
+  ).trim();
+  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
+  const workEntries =
+    data.workExperience.experienceType === "fresher"
+      ? []
+      : data.workExperience.entries;
+  const workExperience = workEntries
+    .map((entry) => {
+      const startDate = toYearMonth(entry.from);
+      const endDate = entry.current
+        ? getCurrentYearMonth()
+        : toYearMonth(entry.to);
+
+      return {
+        company: entry.company.trim(),
+        role: entry.role.trim(),
+        start_date: startDate,
+        end_date: endDate || undefined,
+      };
+    })
+    .filter((entry) => entry.company && entry.role && entry.start_date);
+
+  const payload: Record<string, unknown> = {};
+
+  if (skills.length) {
+    payload.skills = skills;
+  }
+
+  if (workExperience.length) {
+    payload.work_experience = workExperience;
+  }
+
+  if (linkedin) {
+    payload.linkedin = linkedin;
+  }
+
+  return payload;
+};
+
 export default function ManualResumeFill() {
   const router = useRouter();
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const { fetchCandidateProfile } = useFetchCandidateProfile();
+  const [isUpdating, setIsUpdating] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [finishing, setFinishing] = useState(false);
+  const [candidateSlug, setCandidateSlug] = useState<string | null>(null);
 
   useEffect(() => {
-    const pending = getPendingSignup();
-    if (!pending) {
-      router.replace("/signup");
-      return;
-    }
-    setLoading(false);
-  }, [router]);
+    let active = true;
+
+    const checkSession = async () => {
+      try {
+        const result = await fetchCandidateProfile();
+
+        if (!result.data) {
+          const nextPath = encodeURIComponent("/signup/manual-resume-fill");
+          router.replace(`/login-talent?next=${nextPath}`);
+          return;
+        }
+
+        if (!active) return;
+
+        const { email, slug } = result.data;
+        let resolvedSlug = slug ?? null;
+
+        const createCandidateProfile = async (): Promise<string | null> => {
+          try {
+            const formData = new FormData();
+            formData.append("accommodation_needs", DEFAULT_ACCOMMODATION_NEEDS);
+            await apiRequest<unknown>("/api/candidates/profiles/", {
+              method: "POST",
+              body: formData,
+            });
+            const refreshed = await fetchCandidateProfile();
+            return refreshed.data?.slug ?? null;
+          } catch (error) {
+            console.warn("[Manual Resume Fill] Profile creation failed", error);
+            return null;
+          }
+        };
+
+        if (!resolvedSlug) {
+          resolvedSlug = await createCandidateProfile();
+        }
+
+        if (resolvedSlug) {
+          setCandidateSlug(resolvedSlug);
+        } else {
+          setFinishError(
+            "Unable to create your profile. Please refresh the page."
+          );
+        }
+
+        if (email) {
+          setUserData((prev) => {
+            if (prev.basicInfo.email) return prev;
+            return {
+              ...prev,
+              basicInfo: { ...prev.basicInfo, email },
+            };
+          });
+        }
+
+        setLoading(false);
+      } catch {
+        const nextPath = encodeURIComponent("/signup/manual-resume-fill");
+        router.replace(`/login-talent?next=${nextPath}`);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      active = false;
+    };
+  }, [fetchCandidateProfile, router, setUserData]);
 
   const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<
@@ -483,88 +608,57 @@ export default function ManualResumeFill() {
   };
 
   const handleFinish = async () => {
-    if (finishing) return;
-    setFinishing(true);
+    if (isUpdating) return;
     setFinishError(null);
 
+    const email = userData.basicInfo.email.trim();
+
+    if (!email) {
+      setFinishError("Missing email. Please log in again.");
+      return;
+    }
+
+    if (!candidateSlug) {
+      setFinishError("Unable to save profile. Missing candidate information.");
+      return;
+    }
+
+    const finalizedData = {
+      ...userData,
+      basicInfo: {
+        ...userData.basicInfo,
+        email,
+      },
+    };
+
+    setIsUpdating(true);
+
     try {
-      const pending = getPendingSignup();
-      const currentUser = getCurrentUser();
+      const payload = buildVerifyProfilePayload(finalizedData);
 
-      if (!pending && !currentUser) {
-        setFinishError(
-          "No active signup or logged-in user found. Please start from signup or login."
-        );
-        return;
-      }
-
-      const emailFromPending = pending?.email?.trim();
-      const passwordFromPending = pending?.password || "";
-      const emailFromCurrent = currentUser?.email?.trim();
-      const passwordFromCurrent = currentUser?.password || "";
-
-      const email =
-        emailFromPending || emailFromCurrent || userData.basicInfo.email.trim();
-      const password = pending ? passwordFromPending : passwordFromCurrent;
-
-      if (!email) {
-        setFinishError("Missing email. Please start from the signup page.");
-        return;
-      }
-
-      if (pending && !password) {
-        setFinishError("Missing password. Please start from the signup page.");
-        return;
-      }
-
-      const finalizedData = {
-        ...userData,
-        basicInfo: {
-          ...userData.basicInfo,
-          email,
-        },
-      };
-
-      if (pending) {
-        saveUser({ email, password, userData: finalizedData });
-        clearPendingSignup();
-      } else if (currentUser) {
-        saveUser({
-          email: emailFromCurrent || email,
-          password: passwordFromCurrent,
-          userData: finalizedData,
-        });
-      }
-
-      setCurrentUser(email);
-      setUserData(() => finalizedData);
-
-      try {
-        const response = await fetch("/api/auth/signup", {
+      await apiRequest<unknown>(
+        `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
+        {
           method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalizedData),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(() => data);
+          body: JSON.stringify(payload),
         }
-      } catch {
-        // Local storage already saved; ignore backend mock failures.
-      }
+      );
 
+      setUserData((prev) => finalizedData as typeof prev);
       router.push("/dashboard");
     } catch (err) {
-      setFinishError("Unable to complete signup. Please try again.");
+      const message = getApiErrorMessage(
+        err,
+        "Unable to complete signup. Please try again."
+      );
+      setFinishError(message);
     } finally {
-      setFinishing(false);
+      setIsUpdating(false);
     }
   };
 
   const handleSaveAndNext = async () => {
-    if (activeIndex === -1 || finishing) return;
+    if (activeIndex === -1 || isUpdating) return;
     const isValid = validateStep(activeStep.key);
 
     if (!isValid) {
@@ -1308,7 +1402,7 @@ export default function ManualResumeFill() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFF6FF]">
-        <div className="text-slate-500">Verifying signup session...</div>
+        <div className="text-slate-500">Verifying session...</div>
       </div>
     );
   }
@@ -1358,12 +1452,12 @@ export default function ManualResumeFill() {
                   onClick={handleSaveAndNext}
                   className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={
-                    finishing ||
+                    isUpdating ||
                     (activeStep.key === "reviewAgree" &&
                       !userData.reviewAgree.agree)
                   }
                 >
-                  {finishing && isLastStep
+                  {isUpdating && isLastStep
                     ? "Finishing..."
                     : isLastStep
                     ? "Finish"

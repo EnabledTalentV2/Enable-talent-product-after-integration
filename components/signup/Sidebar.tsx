@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { AlertCircle, Check } from 'lucide-react';
-import type { Step } from './types';
+import type { Step } from "@/lib/types/user";
 
 type SidebarProps = {
   steps: Step[];

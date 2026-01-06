@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import type { UserData } from "../types";
+import type { UserData } from "@/lib/types/user";
 
 type SkillData = UserData["skills"] & { primaryList?: string[] };
 
@@ -15,11 +15,18 @@ export default function Skills({ data, errors, onChange }: Props) {
   const skillList = data.primaryList || [];
   const errorCount = errors?.skills ? 1 : 0;
 
+  const splitSkills = (value: string) =>
+    value
+      .split(/[,;\n]+/)
+      .map((skill) => skill.trim())
+      .filter(Boolean);
+
   const addSkill = () => {
-    const value = data.skills.trim();
-    if (!value) return;
-    if (skillList.includes(value)) return;
-    onChange({ primaryList: [...skillList, value], skills: "" });
+    const entries = splitSkills(data.skills);
+    if (!entries.length) return;
+    const nextSkills = entries.filter((skill) => !skillList.includes(skill));
+    if (!nextSkills.length) return;
+    onChange({ primaryList: [...skillList, ...nextSkills], skills: "" });
   };
 
   const removeSkill = (skill: string) => {

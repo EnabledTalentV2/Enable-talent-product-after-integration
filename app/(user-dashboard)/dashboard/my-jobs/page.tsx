@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Banknote, MapPin } from "lucide-react";
@@ -6,6 +6,7 @@ import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type JobStatus = "Applied" | "Accepted" | "Rejected";
 
@@ -73,7 +74,8 @@ const jobs: Job[] = [
     jobType: "Contract",
     workMode: "Onsite",
     yearsExperience: "8 years",
-    about: "Join a fast-paced retail design team focused on customer-centric journeys.",
+    about:
+      "Join a fast-paced retail design team focused on customer-centric journeys.",
     description: [
       "Define UX patterns that support global e-commerce workflows.",
       "Partner with research to refine journeys and reduce friction.",
@@ -99,7 +101,8 @@ const jobs: Job[] = [
     jobType: "Part Time",
     workMode: "Remote",
     yearsExperience: "6 years",
-    about: "Help craft discovery-first experiences for inspiration-seeking users.",
+    about:
+      "Help craft discovery-first experiences for inspiration-seeking users.",
     description: [
       "Create interaction models that improve content discovery.",
       "Design experiments and measure engagement improvements.",
@@ -125,7 +128,8 @@ const jobs: Job[] = [
     jobType: "Full Time",
     workMode: "Hybrid",
     yearsExperience: "10 years",
-    about: "Design collaboration tools that enable teams to build community together.",
+    about:
+      "Design collaboration tools that enable teams to build community together.",
     description: [
       "Own end-to-end UX for collaboration and messaging workflows.",
       "Build prototypes to validate complex interaction flows.",
@@ -142,12 +146,48 @@ const jobs: Job[] = [
 const filters = ["All", "Applied", "Accepted", "Rejected"] as const;
 
 export default function MyJobsPage() {
-  const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
+  const [activeFilter, setActiveFilter] =
+    useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const didMountRef = useRef(false);
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
   const appliedJobs = useAppliedJobsStore((s) => s.appliedJobs);
-  const { percent: profilePercent } = useMemo(() => computeProfileCompletion(userData), [userData]);
+  const { percent: profilePercent } = useMemo(
+    () => computeProfileCompletion(userData),
+    [userData]
+  );
 
   const appliedJobEntries = useMemo(
     () =>
@@ -174,7 +214,9 @@ export default function MyJobsPage() {
 
   const allJobs = useMemo(() => {
     const existingIds = new Set(jobs.map((job) => job.id));
-    const uniqueApplied = appliedJobEntries.filter((job) => !existingIds.has(job.id));
+    const uniqueApplied = appliedJobEntries.filter(
+      (job) => !existingIds.has(job.id)
+    );
     return [...uniqueApplied, ...jobs];
   }, [appliedJobEntries]);
 
@@ -198,7 +240,8 @@ export default function MyJobsPage() {
     return allJobs.filter((job) => job.applicationStatus === activeFilter);
   }, [activeFilter, allJobs]);
 
-  const activeJob = filteredJobs.find((job) => job.id === selectedId) ?? filteredJobs[0];
+  const activeJob =
+    filteredJobs.find((job) => job.id === selectedId) ?? filteredJobs[0];
   const activeJobId = activeJob?.id ?? selectedId;
 
   useEffect(() => {
@@ -253,15 +296,23 @@ export default function MyJobsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-5">
               {job.logo ? (
-                <img src={job.logo} alt={job.company} className="h-16 w-16 object-contain" />
+                <img
+                  src={job.logo}
+                  alt={job.company}
+                  className="h-16 w-16 object-contain"
+                />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
                   {job.company.charAt(0)}
                 </div>
               )}
               <div>
-                <h2 className="text-3xl font-bold text-slate-900">{job.title}</h2>
-                <p className="text-lg font-medium text-slate-500">{job.company}</p>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  {job.title}
+                </h2>
+                <p className="text-lg font-medium text-slate-500">
+                  {job.company}
+                </p>
               </div>
             </div>
             <span className="rounded-full bg-[#ECFDF5] px-4 py-1 text-base font-bold text-[#10B981]">
@@ -271,19 +322,29 @@ export default function MyJobsPage() {
 
           <div className="grid grid-cols-2 gap-8 border-b border-slate-100 pb-10 md:grid-cols-4">
             <div>
-              <p className="mb-1 text-base font-medium text-slate-400">Job Type</p>
+              <p className="mb-1 text-base font-medium text-slate-400">
+                Job Type
+              </p>
               <p className="text-lg font-bold text-slate-900">{jobTypeLabel}</p>
             </div>
             <div>
-              <p className="mb-1 text-base font-medium text-slate-400">Location</p>
+              <p className="mb-1 text-base font-medium text-slate-400">
+                Location
+              </p>
               <p className="text-lg font-bold text-slate-900">{job.location}</p>
             </div>
             <div>
-              <p className="mb-1 text-base font-medium text-slate-400">Work Mode</p>
-              <p className="text-lg font-bold text-slate-900">{workModeLabel}</p>
+              <p className="mb-1 text-base font-medium text-slate-400">
+                Work Mode
+              </p>
+              <p className="text-lg font-bold text-slate-900">
+                {workModeLabel}
+              </p>
             </div>
             <div>
-              <p className="mb-1 text-base font-medium text-slate-400">Years of Experience</p>
+              <p className="mb-1 text-base font-medium text-slate-400">
+                Years of Experience
+              </p>
               <p className="text-lg font-bold text-slate-900">{yearsLabel}</p>
             </div>
           </div>
@@ -307,7 +368,9 @@ export default function MyJobsPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-slate-600">Details will be shared after you apply.</p>
+              <p className="text-slate-600">
+                Details will be shared after you apply.
+              </p>
             )}
           </div>
 
@@ -320,7 +383,9 @@ export default function MyJobsPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-slate-600">Details will be shared after you apply.</p>
+              <p className="text-slate-600">
+                Details will be shared after you apply.
+              </p>
             )}
           </div>
         </div>
@@ -330,24 +395,24 @@ export default function MyJobsPage() {
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
-    <DashboardProfilePrompt percent={profilePercent} />
-    <div className=" ">
-      <div className="mx-auto ">
-        <div className="mb-6 flex flex-wrap gap-3">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`rounded-xl px-6 py-2.5 text-base font-bold transition ${
-                activeFilter === filter
-                  ? "bg-[#C27803] text-white"
-                  : "bg-[#E2E8F0] text-slate-900 hover:bg-slate-200"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
+      <DashboardProfilePrompt percent={profilePercent} />
+      <div className=" ">
+        <div className="mx-auto ">
+          <div className="mb-6 flex flex-wrap gap-3">
+            {filters.map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`rounded-xl px-6 py-2.5 text-base font-bold transition ${
+                  activeFilter === filter
+                    ? "bg-[#C27803] text-white"
+                    : "bg-[#E2E8F0] text-slate-900 hover:bg-slate-200"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
 
           <div className="flex flex-col gap-6 lg:flex-row">
             <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
@@ -355,7 +420,8 @@ export default function MyJobsPage() {
                 const isSelected = selectedId === job.id;
                 const postedLabel = job.posted ?? "Applied recently";
                 const salaryLabel = job.salary ?? "Not disclosed";
-                const matchLabel = typeof job.match === "number" ? `${job.match}%` : "--";
+                const matchLabel =
+                  typeof job.match === "number" ? `${job.match}%` : "--";
                 return (
                   <div key={job.id} className="space-y-4">
                     <button
@@ -365,7 +431,9 @@ export default function MyJobsPage() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-base font-medium text-slate-400">{postedLabel}</span>
+                        <span className="text-base font-medium text-slate-400">
+                          {postedLabel}
+                        </span>
                         <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
                           {job.status}
                         </span>
@@ -384,8 +452,12 @@ export default function MyJobsPage() {
                           </div>
                         )}
                         <div>
-                          <h3 className="text-xl font-bold text-slate-900">{job.title}</h3>
-                          <p className="font-medium text-slate-500">{job.company}</p>
+                          <h3 className="text-xl font-bold text-slate-900">
+                            {job.title}
+                          </h3>
+                          <p className="font-medium text-slate-500">
+                            {job.company}
+                          </p>
                         </div>
                       </div>
 
@@ -393,16 +465,24 @@ export default function MyJobsPage() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-slate-500">
                             <MapPin size={18} className="text-orange-400" />
-                            <span className="text-base font-medium">{job.location}</span>
+                            <span className="text-base font-medium">
+                              {job.location}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-slate-500">
                             <Banknote size={18} className="text-orange-400" />
-                            <span className="text-base font-medium">{salaryLabel}</span>
+                            <span className="text-base font-medium">
+                              {salaryLabel}
+                            </span>
                           </div>
                         </div>
                         <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
-                          <p className="text-lg font-bold text-slate-900">{matchLabel}</p>
-                          <p className="text-sm font-bold uppercase tracking-wider text-slate-700">Matching</p>
+                          <p className="text-lg font-bold text-slate-900">
+                            {matchLabel}
+                          </p>
+                          <p className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                            Matching
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -421,18 +501,16 @@ export default function MyJobsPage() {
               })}
             </div>
 
-          <div
-            id={activeJob ? `job-details-desktop-${activeJob.id}` : undefined}
-            tabIndex={-1}
-            className="hidden lg:block lg:flex-1"
-          >
-            {activeJob && <JobDetailsPanel job={activeJob} />}
+            <div
+              id={activeJob ? `job-details-desktop-${activeJob.id}` : undefined}
+              tabIndex={-1}
+              className="hidden lg:block lg:flex-1"
+            >
+              {activeJob && <JobDetailsPanel job={activeJob} />}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 }
-
-

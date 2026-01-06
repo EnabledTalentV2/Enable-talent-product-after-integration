@@ -1,4 +1,4 @@
-import type { UserData } from "@/components/signup/types";
+import type { UserData } from "@/lib/types/user";
 
 type Counts = { total: number; filled: number };
 type SectionCounts = {

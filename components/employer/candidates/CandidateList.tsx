@@ -1,5 +1,5 @@
 import React from "react";
-import { Candidate } from "@/app/(employer)/employer/dashboard/candidates/types";
+import { Candidate } from "@/lib/types/candidates";
 import CandidateListItem from "./CandidateListItem";
 
 interface CandidateListProps {

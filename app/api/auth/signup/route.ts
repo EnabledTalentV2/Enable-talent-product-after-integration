@@ -1,22 +1,41 @@
-import { NextResponse } from "next/server";
-import type { UserData } from "@/components/signup/types";
-import { setMockUserData } from "@/lib/mockUserSession";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  API_ENDPOINTS,
+  backendFetch,
+  forwardCookiesToResponse,
+} from "@/lib/api-config";
 
-export async function POST(request: Request) {
-  const data = (await request.json()) as UserData;
-  setMockUserData(data);
-  setMockUserData(data);
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const cookies = request.headers.get("cookie") || "";
 
-  const response = NextResponse.json(data);
-  response.cookies.set({
-    name: "token",
-    value: "dummy-jwt-token",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: 60 * 60,
-    path: "/",
-  });
+    // Forward the signup request to Django backend
+    const backendResponse = await backendFetch(
+      API_ENDPOINTS.auth.signup,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+      cookies
+    );
 
-  return response;
+    const data = await backendResponse.json().catch(() => ({}));
+
+    // Create response with same status as backend
+    const response = NextResponse.json(data, {
+      status: backendResponse.status,
+    });
+
+    // Forward Set-Cookie headers from backend if any
+    forwardCookiesToResponse(backendResponse, response);
+
+    return response;
+  } catch (error) {
+    console.error("Signup error:", error);
+    return NextResponse.json(
+      { error: "Failed to connect to authentication service" },
+      { status: 500 }
+    );
+  }
 }

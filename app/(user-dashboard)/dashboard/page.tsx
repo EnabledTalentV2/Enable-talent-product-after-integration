@@ -7,17 +7,10 @@ import EngagementTrendChart from "@/components/EngagementTrendChart";
 import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
+import { getNotifications, requestNote } from "@/lib/notifications";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
-
-type Notification = {
-  id: string;
-  company: string;
-  message: string;
-  time: string;
-  type: "request" | "info";
-  unread?: boolean;
-};
+import { initialUserData } from "@/lib/userDataDefaults";
 
 type RecentMatch = {
   id: string;
@@ -128,37 +121,6 @@ const recentMatches: RecentMatch[] = [
   },
 ];
 
-const notifications: Notification[] = [
-  {
-    id: "meta-invite",
-    company: "Meta",
-    message:
-      "Recruiter from Meta sent an invitation request for a matching job",
-    time: "3 minutes ago",
-    type: "request",
-    unread: true,
-  },
-  {
-    id: "amazon-invite",
-    company: "Amazon",
-    message:
-      "Recruiter from Amazon sent an invitation request for a matching job",
-    time: "5 minutes ago",
-    type: "request",
-    unread: true,
-  },
-  {
-    id: "google-view",
-    company: "Google",
-    message: "Talent recruiter from Google viewed your profile",
-    time: "10 minutes ago",
-    type: "info",
-  },
-];
-
-const requestNote =
-  "You have 48 hours to accept the job request. After that, it will automatically decline.";
-
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
   Google: "bg-amber-100 text-amber-700",
@@ -179,11 +141,46 @@ const formatDelta = (value: number) => ({
 });
 
 export default function DashboardPage() {
-  const userData = useUserDataStore((s) => s.userData);
+  const rawUserData = useUserDataStore((s) => s.userData);
   const [activeMetric, setActiveMetric] =
     useState<keyof typeof engagementSeries>("views");
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
+  const notifications = getNotifications({ limit: 3 });
+
+  // Merge with defaults to ensure all nested objects exist
+  const userData = useMemo(
+    () => ({
+      ...initialUserData,
+      ...rawUserData,
+      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
+      workExperience: {
+        ...initialUserData.workExperience,
+        ...rawUserData?.workExperience,
+      },
+      education: { ...initialUserData.education, ...rawUserData?.education },
+      skills: { ...initialUserData.skills, ...rawUserData?.skills },
+      projects: { ...initialUserData.projects, ...rawUserData?.projects },
+      achievements: {
+        ...initialUserData.achievements,
+        ...rawUserData?.achievements,
+      },
+      certification: {
+        ...initialUserData.certification,
+        ...rawUserData?.certification,
+      },
+      preference: { ...initialUserData.preference, ...rawUserData?.preference },
+      otherDetails: {
+        ...initialUserData.otherDetails,
+        ...rawUserData?.otherDetails,
+      },
+      reviewAgree: {
+        ...initialUserData.reviewAgree,
+        ...rawUserData?.reviewAgree,
+      },
+    }),
+    [rawUserData]
+  );
 
   const { percent: profilePercent } = useMemo(
     () => computeProfileCompletion(userData),
@@ -436,5 +433,3 @@ export default function DashboardPage() {
     </section>
   );
 }
-
-
