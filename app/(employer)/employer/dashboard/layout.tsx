@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import DashboardSubNavEmployer from "@/components/DashBoardSubNavEmployer";
 import DashBoardNavbarEmployer from "@/components/DashBaordNavbarEmployer";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
-import { useEmployerDataStore } from "@/lib/employerDataStore";
 
 export default function EmployerDashboardLayout({
   children,
@@ -15,7 +14,6 @@ export default function EmployerDashboardLayout({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const fetchJobs = useEmployerJobsStore((state) => state.fetchJobs);
-  const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
 
   useEffect(() => {
     let active = true;
@@ -36,9 +34,7 @@ export default function EmployerDashboardLayout({
           return;
         }
 
-        const data = await response.json();
         if (active) {
-          setEmployerData(() => data);
           // Fetch jobs after auth is confirmed
           fetchJobs()
             .catch(() => {})
@@ -57,7 +53,7 @@ export default function EmployerDashboardLayout({
     return () => {
       active = false;
     };
-  }, [fetchJobs, router, setEmployerData]);
+  }, [fetchJobs, router]);
 
   if (loading) {
     return (
