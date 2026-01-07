@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { X, Search, Check } from "lucide-react";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
-import { formatPostedTime, formatExperienceLabel } from "@/lib/employerJobsUtils";
-import { getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
+import {
+  emptyJobStats,
+  formatPostedTime,
+  formatExperienceLabel,
+} from "@/lib/employerJobsUtils";
 
 interface SendInvitesModalProps {
   isOpen: boolean;
@@ -133,7 +136,7 @@ export default function SendInvitesModal({
             ) : (
               filteredJobs.map((job) => {
                 const isSelected = selectedJobIds.includes(job.id);
-                const stats = getJobStats(job.id);
+                const stats = emptyJobStats();
                 return (
                   <button
                     key={job.id}

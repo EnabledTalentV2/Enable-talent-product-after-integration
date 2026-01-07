@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
 export type EmployerOrganizationInfo = {
   organizationName: string;
@@ -21,11 +20,11 @@ const initialEmployerData: EmployerData = {
   organizationInfo: {
     organizationName: "",
     aboutOrganization: "",
-    location: "Allentown, New Mexico 31134",
+    location: "",
     foundedYear: "",
     website: "",
     companySize: "",
-    industry: "Information Technology",
+    industry: "",
   },
 };
 
@@ -37,49 +36,24 @@ type EmployerDataStore = {
   resetEmployerData: () => void;
 };
 
-export const useEmployerDataStore = create<EmployerDataStore>()(
-  persist(
-    (set) => ({
-      employerData: initialEmployerData,
-      setEmployerData: (updater) =>
-        set((state) => ({ employerData: updater(state.employerData) })),
-      patchEmployerData: (patch) =>
-        set((state) => ({
-          employerData: { ...state.employerData, ...patch },
-        })),
-      patchOrganizationInfo: (patch) =>
-        set((state) => ({
-          employerData: {
-            ...state.employerData,
-            organizationInfo: {
-              ...(state.employerData.organizationInfo ??
-                initialEmployerData.organizationInfo),
-              ...patch,
-            },
-          },
-        })),
-      resetEmployerData: () => set({ employerData: initialEmployerData }),
-    }),
-    {
-      name: "et_employer_data",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ employerData: state.employerData }),
-      merge: (persistedState, currentState) => {
-        const persisted = persistedState as
-          | Partial<EmployerDataStore>
-          | undefined;
-        return {
-          ...currentState,
-          employerData: {
-            ...initialEmployerData,
-            ...persisted?.employerData,
-            organizationInfo: {
-              ...initialEmployerData.organizationInfo,
-              ...persisted?.employerData?.organizationInfo,
-            },
-          },
-        };
+export const useEmployerDataStore = create<EmployerDataStore>((set) => ({
+  employerData: initialEmployerData,
+  setEmployerData: (updater) =>
+    set((state) => ({ employerData: updater(state.employerData) })),
+  patchEmployerData: (patch) =>
+    set((state) => ({
+      employerData: { ...state.employerData, ...patch },
+    })),
+  patchOrganizationInfo: (patch) =>
+    set((state) => ({
+      employerData: {
+        ...state.employerData,
+        organizationInfo: {
+          ...(state.employerData.organizationInfo ??
+            initialEmployerData.organizationInfo),
+          ...patch,
+        },
       },
-    }
-  )
-);
+    })),
+  resetEmployerData: () => set({ employerData: initialEmployerData }),
+}));

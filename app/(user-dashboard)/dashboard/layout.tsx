@@ -7,6 +7,11 @@ import DashboardSubnav from "@/components/DashboardSubnav";
 import BackendValidationBanner from "@/components/BackendValidationBanner";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
+  ensureCandidateProfileSlug,
+  fetchCandidateProfileDetail,
+} from "@/lib/candidateProfile";
+import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
+import {
   validateBackendData,
   logValidationToConsole,
   type ValidationResult,
@@ -110,6 +115,11 @@ export default function DashboardLayoutPage({
 }) {
   const router = useRouter();
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
+  const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
+  const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
+  const setCandidateError = useCandidateProfileStore((s) => s.setError);
+  const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const [loading, setLoading] = useState(true);
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
@@ -135,6 +145,59 @@ export default function DashboardLayoutPage({
 
         const rawData = await response.json();
 
+        const refreshCandidateProfile = async (userData: unknown) => {
+          const candidateFlag =
+            typeof userData === "object" &&
+            userData !== null &&
+            "is_candidate" in userData
+              ? Boolean((userData as { is_candidate?: boolean }).is_candidate)
+              : null;
+
+          if (candidateFlag === false) {
+            if (active) {
+              resetCandidateProfile();
+            }
+            return;
+          }
+
+          if (active) {
+            setCandidateLoading(true);
+            setCandidateError(null);
+          }
+
+          try {
+            const slug = await ensureCandidateProfileSlug({
+              logLabel: "Dashboard",
+            });
+
+            if (!active) return;
+
+            if (!slug) {
+              setCandidateError("Unable to load candidate profile.");
+              return;
+            }
+
+            setCandidateSlug(slug);
+
+            const profile = await fetchCandidateProfileDetail(
+              slug,
+              "Dashboard"
+            );
+
+            if (!active) return;
+
+            if (profile) {
+              setCandidateProfile(profile);
+            } else {
+              setCandidateError("Unable to load candidate profile.");
+            }
+          } finally {
+            if (active) {
+              setCandidateLoading(false);
+            }
+          }
+        };
+
         if (active) {
           // Validate backend data and log in development
           if (process.env.NODE_ENV === "development") {
@@ -148,6 +211,8 @@ export default function DashboardLayoutPage({
           setUserData(() => transformedData);
           setLoading(false);
         }
+
+        void refreshCandidateProfile(rawData);
       } catch (error) {
         console.error("Auth check failed:", error);
         router.replace("/login-talent");

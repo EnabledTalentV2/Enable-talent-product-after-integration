@@ -6,9 +6,8 @@ import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
 import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
 import { CandidateProfile, CandidateStage } from "@/lib/types/candidates";
-import { MOCK_CANDIDATES, getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
-import { toJobHeaderInfo } from "@/lib/employerJobsUtils";
+import { emptyJobStats, toJobHeaderInfo } from "@/lib/employerJobsUtils";
 
 const TABS = [
   { id: "accepted", label: "Accepted" },
@@ -17,17 +16,11 @@ const TABS = [
   { id: "matching", label: "Matching" },
 ] as const;
 
-// --- Service Simulation ---
-
 const fetchCandidates = async (
-  jobId: string,
-  stage: CandidateStage
+  _jobId: string,
+  _stage: CandidateStage
 ): Promise<CandidateProfile[]> => {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  // Filter from SHARED database by Job ID AND Stage
-  return MOCK_CANDIDATES.filter((c) => c.jobId === jobId && c.stage === stage);
+  return [];
 };
 
 export default function CandidatesPage() {
@@ -51,13 +44,7 @@ export default function CandidatesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Calculate stats dynamically for the current job
-  const jobStats = useMemo(() => {
-    if (!currentJobId || !currentJob) {
-      return { accepted: 0, declined: 0, requestsSent: 0, matchingCandidates: 0 };
-    }
-
-    return getJobStats(currentJobId);
-  }, [currentJob, currentJobId]);
+  const jobStats = useMemo(() => emptyJobStats(), []);
 
   useEffect(() => {
     if (!currentJobId) return;

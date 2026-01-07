@@ -7,9 +7,12 @@ import CandidateCard from "@/components/employer/dashboard/CandidateCard";
 import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
-import { MOCK_CANDIDATES, getJobStats } from "./mock-db";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
-import { formatExperienceLabel, formatPostedTime } from "@/lib/employerJobsUtils";
+import {
+  emptyJobStats,
+  formatExperienceLabel,
+  formatPostedTime,
+} from "@/lib/employerJobsUtils";
 
 // --- Types ---
 
@@ -51,47 +54,11 @@ type AttentionItem = {
   text: string;
 };
 
-// --- Mock Data ---
-
-const acceptanceRateSeries = {
-  rate: {
-    label: "Acceptance Rate",
-    points: [
-      { label: "Mar", actual: 65, expected: 60 },
-      { label: "Apr", actual: 68, expected: 62 },
-      { label: "May", actual: 75, expected: 65 },
-      { label: "Jun", actual: 72, expected: 68 },
-      { label: "Jul", actual: 80, expected: 70 },
-      { label: "Aug", actual: 82, expected: 72 },
-      { label: "Sep", actual: 85, expected: 75 },
-      { label: "Oct", actual: 83, expected: 78 },
-      { label: "Nov", actual: 78, expected: 80 },
-      { label: "Dec", actual: 75, expected: 78 },
-      { label: "Jan", actual: 72, expected: 75 },
-      { label: "Feb", actual: 70, expected: 72 },
-    ],
-  },
-};
+const acceptanceRatePoints: AcceptanceRatePoint[] = [];
 
 const timeRanges = ["1W", "1M", "3M", "1Y"] as const;
 
-const attentionItems: AttentionItem[] = [
-  {
-    id: "pending-review",
-    tone: "warning",
-    text: "3 candidates pending review",
-  },
-  {
-    id: "job-deadline",
-    tone: "danger",
-    text: "1 job nearing deadline",
-  },
-  {
-    id: "low-match",
-    tone: "neutral",
-    text: 'Low match rate for "SE Role"',
-  },
-];
+const attentionItems: AttentionItem[] = [];
 
 // --- Helpers ---
 
@@ -106,11 +73,6 @@ const getBrandKey = (company: string) => company.split(" ")[0] || company;
 const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
-const formatDelta = (value: number) => ({
-  label: `${value >= 0 ? "+" : "-"}${Math.abs(value)} vs last month`,
-  className: value >= 0 ? "text-emerald-600" : "text-red-600",
-});
-
 export default function EmployerDashboardPage() {
   const jobs = useEmployerJobsStore((state) => state.jobs);
   const [activeRange, setActiveRange] =
@@ -118,7 +80,7 @@ export default function EmployerDashboardPage() {
 
   // Filter points based on activeRange
   const filteredPoints = useMemo(() => {
-    const allPoints = acceptanceRateSeries.rate.points;
+    const allPoints = acceptanceRatePoints;
     switch (activeRange) {
       case "1W":
         return allPoints.slice(-1); // Show last month as proxy for 1W
@@ -131,21 +93,17 @@ export default function EmployerDashboardPage() {
         return [...allPoints];
     }
   }, [activeRange]);
+  const hasChartData = filteredPoints.length > 0;
 
-  const jobIds = useMemo(() => new Set(jobs.map((job) => job.id)), [jobs]);
   const totalActiveJobs = jobs.filter((job) => job.status === "Active").length;
-  const totalAcceptedCandidates = MOCK_CANDIDATES.filter(
-    (c) => jobIds.has(c.jobId) && c.stage === "accepted"
-  ).length;
-  const totalMatchingCandidates = MOCK_CANDIDATES.filter(
-    (c) => jobIds.has(c.jobId) && c.stage === "matching"
-  ).length;
+  const totalAcceptedCandidates = 0;
+  const totalMatchingCandidates = 0;
 
   const recentJobs = useMemo<RecentJob[]>(() => {
     return [...jobs]
       .sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt))
       .map((job) => {
-        const stats = getJobStats(job.id);
+        const stats = emptyJobStats();
         return {
           id: job.id,
           role: job.title,
@@ -163,37 +121,16 @@ export default function EmployerDashboardPage() {
       });
   }, [jobs]);
 
-  const acceptedCandidates = useMemo<AcceptedCandidate[]>(() => {
-    return MOCK_CANDIDATES.filter(
-      (candidate) =>
-        jobIds.has(candidate.jobId) && candidate.stage === "accepted"
-    ).map((candidate) => ({
-      id: candidate.id,
-      name: candidate.name,
-      role: candidate.role,
-      location: candidate.location,
-      experience: candidate.experience,
-      matchPercent: candidate.matchPercentage,
-      status:
-        candidate.status === "Active" || candidate.status === "Inactive"
-          ? candidate.status
-          : "Active",
-      avatarUrl: candidate.avatarUrl,
-    }));
-  }, [jobIds]);
+  const acceptedCandidates: AcceptedCandidate[] = [];
 
-  const activeJobsDelta = formatDelta(-6);
-  const candidatesAcceptedDelta = formatDelta(20);
   const summaryMetrics = [
     {
       label: "Active Jobs",
       value: totalActiveJobs.toString(),
-      delta: activeJobsDelta,
     },
     {
       label: "Candidates accepted",
       value: totalAcceptedCandidates.toString(),
-      delta: candidatesAcceptedDelta,
     },
   ];
 
@@ -217,37 +154,47 @@ export default function EmployerDashboardPage() {
           </div>
 
           <div className="mt-6 h-56 sm:h-64">
-            <EngagementTrendChart points={filteredPoints} metricLabel="rate" />
+            {hasChartData ? (
+              <EngagementTrendChart points={filteredPoints} metricLabel="rate" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                No acceptance data yet.
+              </div>
+            )}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
-            <span className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-sm bg-[#E6A24E]" />
-              Projected
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-sm bg-[#4F7DF3]" />
-              Actual
-            </span>
-            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto sm:ml-auto">
-              <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-sm bg-emerald-400" />
-                Good: ≥ 80%
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-sm bg-amber-400" />
-                Moderate: 60-79%
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-sm bg-red-400" />
-                Poor: &lt; 60%
-              </span>
-            </div>
-          </div>
-          <p className="mt-3 text-sm text-slate-400">
-            Projected rate based on historical performance, role complexity, and
-            market benchmarks
-          </p>
+          {hasChartData ? (
+            <>
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                <span className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-sm bg-[#E6A24E]" />
+                  Projected
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-sm bg-[#4F7DF3]" />
+                  Actual
+                </span>
+                <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto sm:ml-auto">
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-sm bg-emerald-400" />
+                    Good: &gt;= 80%
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-sm bg-amber-400" />
+                    Moderate: 60-79%
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-sm bg-red-400" />
+                    Poor: &lt; 60%
+                  </span>
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-slate-400">
+                Projected rate based on historical performance, role complexity,
+                and market benchmarks
+              </p>
+            </>
+          ) : null}
         </div>
 
         {/* Right Column: Stats & Attention */}

@@ -17,6 +17,7 @@ import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
+import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
@@ -42,8 +43,6 @@ const initialSteps: Step[] = [
   { id: 9, label: "Other Details", key: "otherDetails", status: "pending" },
   { id: 10, label: "Review And Agree", key: "reviewAgree", status: "pending" },
 ];
-
-const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
 
 const normalizeSkills = (skillsText: string, primaryList?: string[]) => {
   const splitter = (value: string) =>
@@ -140,28 +139,13 @@ export default function ManualResumeFill() {
 
         if (!active) return;
 
-        const { email, slug } = result.data;
-        let resolvedSlug = slug ?? null;
+        const { email, raw } = result.data;
+        const resolvedSlug = await ensureCandidateProfileSlug({
+          initialProfiles: raw,
+          logLabel: "Manual Resume Fill",
+        });
 
-        const createCandidateProfile = async (): Promise<string | null> => {
-          try {
-            const formData = new FormData();
-            formData.append("accommodation_needs", DEFAULT_ACCOMMODATION_NEEDS);
-            await apiRequest<unknown>("/api/candidates/profiles/", {
-              method: "POST",
-              body: formData,
-            });
-            const refreshed = await fetchCandidateProfile();
-            return refreshed.data?.slug ?? null;
-          } catch (error) {
-            console.warn("[Manual Resume Fill] Profile creation failed", error);
-            return null;
-          }
-        };
-
-        if (!resolvedSlug) {
-          resolvedSlug = await createCandidateProfile();
-        }
+        if (!active) return;
 
         if (resolvedSlug) {
           setCandidateSlug(resolvedSlug);

@@ -1,5 +1,18 @@
 import type { EmployerJob, JobFormValues } from "@/lib/employerJobsTypes";
-import { getJobStats } from "@/app/(employer)/employer/dashboard/mock-db";
+
+export type JobStats = {
+  accepted: number;
+  declined: number;
+  requestsSent: number;
+  matchingCandidates: number;
+};
+
+export const emptyJobStats = (): JobStats => ({
+  accepted: 0,
+  declined: 0,
+  requestsSent: 0,
+  matchingCandidates: 0,
+});
 
 const stripBullet = (value: string) =>
   value.replace(/^\s*[-*]\s?/, "").trim();
@@ -33,7 +46,7 @@ export const formatExperienceLabel = (experience: string) => {
 };
 
 export const toListedJob = (job: EmployerJob) => {
-  const stats = getJobStats(job.id);
+  const stats = emptyJobStats();
   return {
     id: job.id,
     role: job.title,
@@ -52,7 +65,7 @@ export const toListedJob = (job: EmployerJob) => {
 };
 
 export const toJobDetail = (job: EmployerJob) => {
-  const stats = getJobStats(job.id);
+  const stats = emptyJobStats();
   const descriptionLines = splitLines(job.description);
   const requirementLines = splitLines(job.requirements);
 

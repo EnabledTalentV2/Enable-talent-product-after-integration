@@ -1,26 +1,75 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { ArrowRight, Pencil } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+import { apiRequest } from "@/lib/api-client";
+import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
 import logoPlaceholder from "@/public/logo/logo-placeholder.png"; // Assuming this path based on previous context, or I will use a text placeholder if image fails.
 
 export default function EmployerCompanyProfilePage() {
-  const { employerData } = useEmployerDataStore();
-  const { organizationInfo } = employerData;
-
-  // Fallback data if store is empty (for visualization purposes if user hasn't filled it)
-  const displayData = {
-    name: organizationInfo.organizationName || "Meta",
-    industry: organizationInfo.industry || "Software development company",
-    about:
-      organizationInfo.aboutOrganization ||
-      "In an era marked by rapid technological advancement and ever-evolving business landscapes, the quest for top-tier talent remains a cornerstone of organizational success.\n\nRecognizing this imperative, [Company Name] emerges as a beacon of innovation in the realm of recruitment. With a commitment to excellence and a passion for connecting talent with opportunity, we have established ourselves as a trusted partner for companies seeking to build high-performing teams and individuals embarking on transformative career journeys.\n\nAt the heart of ethos lies a deep-seated belief in the power of human potential. We understand that behind every resume is a story waiting to be told, a skill set waiting to be unleashed, and a dream waiting to be realized. With this understanding as our guiding principle, we have curated a suite of services and tools designed to unlock this potential and facilitate meaningful connections between employers and candidates.",
-    location: organizationInfo.location || "Toronto",
-    founded: organizationInfo.foundedYear || "2004",
-    employees: organizationInfo.companySize || "1000 - 10000",
-    website: organizationInfo.website || "www.meta.com",
+  const employerData = useEmployerDataStore((s) => s.employerData);
+  const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
+  const organizationInfo = employerData?.organizationInfo ?? {
+    organizationName: "",
+    aboutOrganization: "",
+    location: "",
+    foundedYear: "",
+    website: "",
+    companySize: "",
+    industry: "",
   };
+  const hasOrgData =
+    Boolean(organizationInfo.organizationName) ||
+    Boolean(organizationInfo.industry) ||
+    Boolean(organizationInfo.aboutOrganization) ||
+    Boolean(organizationInfo.location) ||
+    Boolean(organizationInfo.website) ||
+    Boolean(organizationInfo.companySize) ||
+    Boolean(organizationInfo.foundedYear);
+
+  useEffect(() => {
+    if (hasOrgData) return;
+    let active = true;
+
+    const loadOrganization = async () => {
+      try {
+        const data = await apiRequest<unknown>("/api/organizations", {
+          method: "GET",
+        });
+        const nextOrganization = toEmployerOrganizationInfo(data);
+        if (!nextOrganization || !active) return;
+        setEmployerData((prev) => ({
+          ...prev,
+          organizationInfo: {
+            ...prev.organizationInfo,
+            ...nextOrganization,
+          },
+        }));
+      } catch (error) {
+        console.error("Failed to load organization profile:", error);
+      }
+    };
+
+    loadOrganization();
+
+    return () => {
+      active = false;
+    };
+  }, [hasOrgData, setEmployerData]);
+
+  const displayData = {
+    name: organizationInfo.organizationName || "Company name not set",
+    industry: organizationInfo.industry || "Industry not set",
+    about:
+      organizationInfo.aboutOrganization || "No company description available.",
+    location: organizationInfo.location || "Location not set",
+    founded: organizationInfo.foundedYear || "Founded year not set",
+    employees: organizationInfo.companySize || "Company size not set",
+    website: organizationInfo.website || "",
+  };
+  const hasWebsite = Boolean(displayData.website.trim());
 
   return (
     <section className="mx-auto max-w-[1200px] space-y-6 py-8 px-6 ">
@@ -101,18 +150,22 @@ export default function EmployerCompanyProfilePage() {
           <div className="relative overflow-hidden rounded-[24px] bg-[#D67443] p-6 text-white shadow-sm">
             <div className="relative z-10">
               <p className="text-sm font-medium text-white/90">Website</p>
-              <a
-                href={
-                  displayData.website.startsWith("http")
-                    ? displayData.website
-                    : `https://${displayData.website}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 block text-xl font-bold hover:underline truncate"
-              >
-                {displayData.website}
-              </a>
+              {hasWebsite ? (
+                <a
+                  href={
+                    displayData.website.startsWith("http")
+                      ? displayData.website
+                      : `https://${displayData.website}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block text-xl font-bold hover:underline truncate"
+                >
+                  {displayData.website}
+                </a>
+              ) : (
+                <p className="mt-1 text-xl font-bold">Not provided</p>
+              )}
             </div>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2">
               <ArrowRight className="h-5 w-5 text-white" />
@@ -124,7 +177,7 @@ export default function EmployerCompanyProfilePage() {
       {/* Footer */}
       <div className="mt-12 text-center text-sm text-slate-500">
         <p>
-          © 2025 {displayData.name}. All rights reserved. You may print or
+          Copyright 2025 Enabled Talent. All rights reserved. You may print or
           download extracts for personal, non-commercial use only, and must
           acknowledge the website as the source.
         </p>

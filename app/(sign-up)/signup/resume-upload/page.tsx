@@ -4,6 +4,10 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/signup/Navbar";
 import Link from "next/link";
+import {
+  DEFAULT_ACCOMMODATION_NEEDS,
+  ensureCandidateProfileSlug,
+} from "@/lib/candidateProfile";
 import { useUserDataStore } from "@/lib/userDataStore";
 import type { UserData } from "@/lib/types/user";
 import { apiRequest } from "@/lib/api-client";
@@ -26,7 +30,6 @@ const allowedMimeTypes = new Set([
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
-const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -312,44 +315,6 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
-const getCandidateSlug = (payload: unknown): string | null => {
-  if (Array.isArray(payload)) {
-    const first = payload[0];
-    return isRecord(first)
-      ? typeof first.slug === "string"
-        ? first.slug
-        : typeof first.candidateSlug === "string"
-        ? first.candidateSlug
-        : typeof first.candidate_slug === "string"
-        ? first.candidate_slug
-        : null
-      : null;
-  }
-
-  if (!isRecord(payload)) return null;
-
-  if (Array.isArray(payload.results)) {
-    const first = payload.results[0];
-    if (isRecord(first)) {
-      return typeof first.slug === "string"
-        ? first.slug
-        : typeof first.candidateSlug === "string"
-        ? first.candidateSlug
-        : typeof first.candidate_slug === "string"
-        ? first.candidate_slug
-        : null;
-    }
-  }
-
-  return typeof payload.slug === "string"
-    ? payload.slug
-    : typeof payload.candidateSlug === "string"
-    ? payload.candidateSlug
-    : typeof payload.candidate_slug === "string"
-    ? payload.candidate_slug
-    : null;
-};
-
 const getParsingStatus = (payload: unknown): string | null => {
   if (!isRecord(payload)) return null;
   const status =
@@ -393,44 +358,11 @@ export default function ResumeUpload() {
         const userData = await response.json().catch(() => ({}));
         const isCandidate = Boolean(userData?.is_candidate);
 
-        const fetchCandidateSlug = async (): Promise<string | null> => {
-          try {
-            const profileData = await apiRequest<unknown>(
-              "/api/candidates/profiles/",
-              { method: "GET" }
-            );
-            return getCandidateSlug(profileData);
-          } catch (err) {
-            console.warn("[Resume Upload] Failed to fetch candidate profile");
-            return null;
-          }
-        };
-
-        const createCandidateProfile = async (): Promise<string | null> => {
-          try {
-            const formData = new FormData();
-            formData.append("accommodation_needs", DEFAULT_ACCOMMODATION_NEEDS);
-            const profileData = await apiRequest<unknown>(
-              "/api/candidates/profiles/",
-              {
-                method: "POST",
-                body: formData,
-              }
-            );
-            const slug = getCandidateSlug(profileData);
-            return slug || (await fetchCandidateSlug());
-          } catch (err) {
-            console.warn("[Resume Upload] Failed to create candidate profile");
-            return null;
-          }
-        };
-
         if (!active) return;
 
-        let slug = await fetchCandidateSlug();
-        if (!slug) {
-          slug = await createCandidateProfile();
-        }
+        const slug = await ensureCandidateProfileSlug({
+          logLabel: "Resume Upload",
+        });
 
         if (!active) return;
 

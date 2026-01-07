@@ -9,12 +9,19 @@ import { apiRequest } from "@/lib/api-client";
 function VerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isVerified = searchParams.get("verified") === "true";
+  const queryVerified = searchParams.get("verified") === "true";
+  const [isVerified, setIsVerified] = useState(queryVerified);
   const [isResending, setIsResending] = useState(false);
   const [resendStatus, setResendStatus] = useState<"idle" | "sent" | "error">(
     "idle"
   );
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (queryVerified) {
+      setIsVerified(true);
+    }
+  }, [queryVerified]);
 
   useEffect(() => {
     let active = true;
@@ -34,9 +41,23 @@ function VerificationContent() {
 
         const data = await response.json().catch(() => null);
         if (active) {
+          const record =
+            data && typeof data === "object"
+              ? (data as Record<string, unknown>)
+              : null;
           const email =
-            data && typeof data.email === "string" ? data.email : null;
+            record && typeof record.email === "string" ? record.email : null;
+          const verified =
+            record && typeof record.is_verified === "boolean"
+              ? record.is_verified
+              : record && typeof record.isVerified === "boolean"
+              ? record.isVerified
+              : null;
+
           setPendingEmail(email);
+          if (verified !== null) {
+            setIsVerified(verified || queryVerified);
+          }
         }
       } catch {
         if (active) {
@@ -50,7 +71,7 @@ function VerificationContent() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [queryVerified]);
 
   const handleResendEmail = async () => {
     if (!pendingEmail) {
@@ -87,8 +108,8 @@ function VerificationContent() {
           </h1>
 
           <p className="text-gray-500 mb-10 max-w-md text-lg">
-            Check your inbox. If you don't see the email within a few minutes,
-            check your spam folder or click 'Resend Email'.
+            Check your inbox. If you don&apos;t see the email within a few minutes,
+            check your spam folder or click &apos;Resend Email&apos;.
           </p>
 
           <div className="flex flex-col items-center gap-6">

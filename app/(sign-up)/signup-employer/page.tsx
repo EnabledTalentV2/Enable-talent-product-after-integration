@@ -169,7 +169,7 @@ export default function SignupEmployerPage() {
         }
       }
 
-      router.push("/signup-employer/organisation-info");
+      router.push("/signup-employer/email-verification");
     } catch (err) {
       console.error("Signup error:", err);
       setError("Network error. Please try again.");
