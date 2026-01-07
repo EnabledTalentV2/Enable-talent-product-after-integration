@@ -7,7 +7,15 @@ import logoPlaceholder from "@/public/logo/logo-placeholder.png"; // Assuming th
 
 export default function EmployerCompanyProfilePage() {
   const { employerData } = useEmployerDataStore();
-  const { organizationInfo } = employerData;
+  const organizationInfo = employerData?.organizationInfo ?? {
+    organizationName: "",
+    aboutOrganization: "",
+    location: "",
+    foundedYear: "",
+    website: "",
+    companySize: "",
+    industry: "",
+  };
 
   // Fallback data if store is empty (for visualization purposes if user hasn't filled it)
   const displayData = {

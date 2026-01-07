@@ -13,7 +13,7 @@ import {
   type RefObject,
 } from "react";
 import { useRouter } from "next/navigation";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage, isApiError } from "@/lib/api-client";
 
 type FieldErrors = Partial<{
   organizationName: string;
@@ -24,6 +24,47 @@ type FieldErrors = Partial<{
   companySize: string;
   industry: string;
 }>;
+
+const extractErrorText = (value: unknown) => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value
+      .filter((entry): entry is string => typeof entry === "string")
+      .join(" ");
+  }
+  return "";
+};
+
+const toFieldErrorsFromApi = (error: unknown): FieldErrors => {
+  if (!isApiError(error)) return {};
+  if (!error.data || typeof error.data !== "object") return {};
+
+  const data = error.data as Record<string, unknown>;
+  const nextErrors: FieldErrors = {};
+
+  const nameMessage = extractErrorText(data.name);
+  if (nameMessage) nextErrors.organizationName = nameMessage;
+
+  const aboutMessage = extractErrorText(data.about);
+  if (aboutMessage) nextErrors.aboutOrganization = aboutMessage;
+
+  const locationMessage = extractErrorText(data.headquarter_location);
+  if (locationMessage) nextErrors.location = locationMessage;
+
+  const foundedMessage = extractErrorText(data.foundedYear);
+  if (foundedMessage) nextErrors.foundedYear = foundedMessage;
+
+  const websiteMessage = extractErrorText(data.url);
+  if (websiteMessage) nextErrors.website = websiteMessage;
+
+  const sizeMessage = extractErrorText(data.employee_size);
+  if (sizeMessage) nextErrors.companySize = sizeMessage;
+
+  const industryMessage = extractErrorText(data.industry);
+  if (industryMessage) nextErrors.industry = industryMessage;
+
+  return nextErrors;
+};
 
 const inputClasses = (hasError?: boolean) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 ${
@@ -73,6 +114,7 @@ export default function OrganisationInfoPage() {
   );
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
@@ -113,6 +155,7 @@ export default function OrganisationInfoPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmitError(null);
 
     const trimmedOrgName = organizationInfo.organizationName.trim();
     const trimmedAbout = organizationInfo.aboutOrganization.trim();
@@ -169,36 +212,35 @@ export default function OrganisationInfoPage() {
     setSubmitting(true);
 
     try {
-      // Create organization via the organizations API endpoint
-      try {
-        const formData = new FormData();
-        formData.append("name", trimmedOrgName);
-        formData.append("industry", String(industryChoice ?? ""));
-        formData.append("employee_size", String(companySizeChoice ?? ""));
-        formData.append("headquarter_location", trimmedLocation);
-        formData.append("about", trimmedAbout);
-        if (trimmedWebsite) {
-          formData.append("url", trimmedWebsite);
-        }
-
-        const orgData = await apiRequest<unknown>("/api/organizations", {
-          method: "POST",
-          body: formData,
-        });
-        console.log("Organization created successfully:", orgData);
-      } catch (apiError) {
-        // Backend sync failed, but local data is saved - continue
-        console.warn(
-          "Backend sync failed, continuing with local data:",
-          apiError
-        );
+      const formData = new FormData();
+      formData.append("name", trimmedOrgName);
+      formData.append("industry", String(industryChoice ?? ""));
+      formData.append("employee_size", String(companySizeChoice ?? ""));
+      formData.append("headquarter_location", trimmedLocation);
+      formData.append("about", trimmedAbout);
+      if (trimmedWebsite) {
+        formData.append("url", trimmedWebsite);
       }
+
+      const orgData = await apiRequest<unknown>("/api/organizations", {
+        method: "POST",
+        body: formData,
+      });
+      console.log("Organization created successfully:", orgData);
 
       setFieldErrors({});
       router.push("/employer/dashboard");
     } catch (error) {
       console.error("Failed to complete signup:", error);
-      setFieldErrors({ organizationName: "Failed to save. Please try again." });
+      const message = getApiErrorMessage(
+        error,
+        "Failed to save. Please try again."
+      );
+      setSubmitError(message);
+      const apiFieldErrors = toFieldErrorsFromApi(error);
+      if (Object.keys(apiFieldErrors).length > 0) {
+        setFieldErrors(apiFieldErrors);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -270,6 +312,15 @@ export default function OrganisationInfoPage() {
             </h1>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
+              {submitError ? (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  <p className="font-semibold">Unable to save</p>
+                  <p className="mt-1 whitespace-pre-wrap">{submitError}</p>
+                </div>
+              ) : null}
               {/* Organization Name */}
               <div className="space-y-2">
                 <label
