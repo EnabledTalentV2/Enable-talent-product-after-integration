@@ -2,8 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, ChevronDown } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+
+const COMPANY_SIZE_OPTIONS = [
+  { label: "1 - 10", value: "1-10", id: 1 },
+  { label: "10 - 100", value: "10-100", id: 2 },
+  { label: "100 - 1000", value: "100-1000", id: 3 },
+  { label: "1000 - 10000", value: "1000-10000", id: 4 },
+] as const;
+
+const INDUSTRY_OPTIONS = [
+  { label: "Information Technology", id: 1 },
+  { label: "Healthcare", id: 2 },
+  { label: "Finance", id: 3 },
+  { label: "Education", id: 4 },
+  { label: "Other", id: 5 },
+] as const;
 
 export default function CompanyProfileEditPage() {
   const router = useRouter();
@@ -35,7 +50,7 @@ export default function CompanyProfileEditPage() {
   }, [organizationInfo]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -72,132 +87,162 @@ export default function CompanyProfileEditPage() {
         onSubmit={handleSubmit}
         className="space-y-6 rounded-[28px] bg-white p-8 shadow-sm"
       >
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <label
-              htmlFor="organizationName"
-              className="text-sm font-medium text-slate-700"
-            >
-              Company Name
-            </label>
-            <input
-              type="text"
-              id="organizationName"
-              name="organizationName"
-              value={formData.organizationName}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. Meta"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label
-              htmlFor="industry"
-              className="text-sm font-medium text-slate-700"
-            >
-              Industry
-            </label>
-            <input
-              type="text"
-              id="industry"
-              name="industry"
-              value={formData.industry}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. Software Development"
-            />
-          </div>
+        {/* Organization Name */}
+        <div className="space-y-2">
+          <label
+            htmlFor="organizationName"
+            className="text-sm font-medium text-slate-700"
+          >
+            Organization name
+          </label>
+          <input
+            type="text"
+            id="organizationName"
+            name="organizationName"
+            value={formData.organizationName}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Enter organization name"
+          />
         </div>
 
+        {/* About Organization */}
         <div className="space-y-2">
           <label
             htmlFor="aboutOrganization"
             className="text-sm font-medium text-slate-700"
           >
-            About
+            About Organization
           </label>
           <textarea
             id="aboutOrganization"
             name="aboutOrganization"
             value={formData.aboutOrganization}
             onChange={handleChange}
-            rows={6}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Tell us about your company..."
+            rows={4}
+            className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Enter description about company"
           />
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <label
-              htmlFor="location"
-              className="text-sm font-medium text-slate-700"
-            >
-              Location
-            </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. Toronto"
-            />
-          </div>
+        {/* Location */}
+        <div className="space-y-2">
+          <label
+            htmlFor="location"
+            className="text-sm font-medium text-slate-700"
+          >
+            Location
+          </label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Enter location"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="foundedYear"
-              className="text-sm font-medium text-slate-700"
-            >
-              Founded Year
-            </label>
-            <input
-              type="text"
-              id="foundedYear"
-              name="foundedYear"
-              value={formData.foundedYear}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. 2004"
-            />
-          </div>
+        {/* Founded Year */}
+        <div className="space-y-2">
+          <label
+            htmlFor="foundedYear"
+            className="text-sm font-medium text-slate-700"
+          >
+            Founded year
+          </label>
+          <input
+            type="date"
+            id="foundedYear"
+            name="foundedYear"
+            value={formData.foundedYear}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="companySize"
-              className="text-sm font-medium text-slate-700"
-            >
-              Employees
-            </label>
-            <input
-              type="text"
-              id="companySize"
-              name="companySize"
-              value={formData.companySize}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. 1000 - 10000"
-            />
-          </div>
+        {/* Website */}
+        <div className="space-y-2">
+          <label
+            htmlFor="website"
+            className="text-sm font-medium text-slate-700"
+          >
+            Website
+          </label>
+          <input
+            type="text"
+            id="website"
+            name="website"
+            value={formData.website}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Enter website link"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="website"
-              className="text-sm font-medium text-slate-700"
-            >
-              Website
-            </label>
-            <input
-              type="text"
-              id="website"
-              name="website"
-              value={formData.website}
+        {/* Company Size */}
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-slate-700">
+            Company Size
+          </legend>
+          <div className="flex flex-wrap gap-6">
+            {COMPANY_SIZE_OPTIONS.map((size) => (
+              <label
+                key={size.value}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="companySize"
+                  value={size.value}
+                  checked={formData.companySize === size.value}
+                  onChange={handleChange}
+                  className="sr-only peer"
+                />
+                <div
+                  className={`h-5 w-5 rounded-full border flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 ${
+                    formData.companySize === size.value
+                      ? "border-blue-500"
+                      : "border-slate-300"
+                  }`}
+                >
+                  {formData.companySize === size.value && (
+                    <div className="h-3 w-3 rounded-full bg-blue-500" />
+                  )}
+                </div>
+                <span className="text-slate-600">{size.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        {/* Industry */}
+        <div className="space-y-2">
+          <label
+            htmlFor="industry"
+            className="text-sm font-medium text-slate-700"
+          >
+            Industry
+          </label>
+          <div className="relative">
+            <select
+              id="industry"
+              name="industry"
+              className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              value={formData.industry}
               onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="e.g. www.meta.com"
+            >
+              <option value="">Select industry</option>
+              {INDUSTRY_OPTIONS.map((option) => (
+                <option key={option.id} value={option.label}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              size={20}
             />
           </div>
         </div>
