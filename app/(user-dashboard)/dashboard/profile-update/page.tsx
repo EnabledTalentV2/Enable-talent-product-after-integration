@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, isApiError } from "@/lib/api-client";
 import {
   computeProfileCompletion,
   computeProfileSectionCompletion,
@@ -92,6 +92,7 @@ export default function ProfileUpdatePage() {
     [rawUserData]
   );
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const resetUserData = useUserDataStore((s) => s.resetUserData);
   const candidateSlug = useCandidateProfileStore((s) => s.slug);
   const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
   const [loading, setLoading] = useState(true);
@@ -193,6 +194,11 @@ export default function ProfileUpdatePage() {
         router.push("/dashboard");
       }
     } catch (err) {
+      if (isApiError(err) && err.status === 401) {
+        resetUserData();
+        router.replace("/login-talent?next=/dashboard/profile-update");
+        return;
+      }
       setSaveError("Unable to save profile. Please try again.");
     } finally {
       setSaving(false);
