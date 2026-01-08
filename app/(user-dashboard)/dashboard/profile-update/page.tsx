@@ -10,6 +10,12 @@ import {
 } from "@/lib/profileCompletion";
 import type { StepKey } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
+import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
+import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
+import {
+  buildCandidateProfileUpdatePayload,
+  buildVerifyProfilePayload,
+} from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -86,6 +92,8 @@ export default function ProfileUpdatePage() {
     [rawUserData]
   );
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const candidateSlug = useCandidateProfileStore((s) => s.slug);
+  const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -109,28 +117,29 @@ export default function ProfileUpdatePage() {
   useEffect(() => {
     let active = true;
 
-    const loadUser = async () => {
+    const ensureSlug = async () => {
+      if (candidateSlug) {
+        if (active) {
+          setError(null);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
-        const response = await fetch("/api/user/me", {
-          credentials: "include",
+        const slug = await ensureCandidateProfileSlug({
+          logLabel: "Profile Update",
         });
-        if (response.status === 401) {
-          router.replace("/login-talent");
+        if (!active) return;
+        if (!slug) {
+          setError("Unable to load candidate profile.");
           return;
         }
-
-        if (!response.ok) {
-          throw new Error("Failed to load user data.");
-        }
-
-        const data = await response.json();
+        setCandidateSlug(slug);
+        setError(null);
+      } catch {
         if (active) {
-          setUserData(() => data);
-          setError(null);
-        }
-      } catch (err) {
-        if (active) {
-          setError("Unable to load your profile right now.");
+          setError("Unable to load candidate profile.");
         }
       } finally {
         if (active) {
@@ -139,25 +148,45 @@ export default function ProfileUpdatePage() {
       }
     };
 
-    loadUser();
+    ensureSlug();
 
     return () => {
       active = false;
     };
-  }, [router, setUserData]);
+  }, [candidateSlug, setCandidateSlug]);
 
   const handleSave = async (redirect: boolean) => {
     if (saving) return;
+    if (!candidateSlug) {
+      setSaveError("Unable to save profile. Missing candidate information.");
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
 
     try {
-      const updatedData = await apiRequest<unknown>("/api/user/me", {
-        method: "PUT",
-        body: JSON.stringify(userData),
-      });
-      setUserData(() => updatedData as typeof userData);
+      const verifyPayload = buildVerifyProfilePayload(userData);
+      if (Object.keys(verifyPayload).length > 0) {
+        await apiRequest<unknown>(
+          `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
+          {
+            method: "POST",
+            body: JSON.stringify(verifyPayload),
+          }
+        );
+      }
+
+      const candidatePayload = buildCandidateProfileUpdatePayload(userData);
+      if (Object.keys(candidatePayload).length > 0) {
+        await apiRequest<unknown>(
+          `/api/candidates/profiles/${candidateSlug}/`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(candidatePayload),
+          }
+        );
+      }
 
       setSaveSuccess("Profile saved.");
       if (redirect) {
