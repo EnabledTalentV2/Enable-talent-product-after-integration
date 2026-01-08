@@ -36,90 +36,19 @@ type AttentionItem = {
 const engagementSeries = {
   views: {
     label: "Profile views",
-    points: [
-      { label: "Mar", actual: 18, expected: 14 },
-      { label: "Apr", actual: 14, expected: 15 },
-      { label: "May", actual: 20, expected: 16 },
-      { label: "Jun", actual: 22, expected: 18 },
-      { label: "Jul", actual: 19, expected: 19 },
-      { label: "Aug", actual: 21, expected: 19 },
-      { label: "Sep", actual: 23, expected: 20 },
-      { label: "Oct", actual: 24, expected: 22 },
-      { label: "Nov", actual: 20, expected: 21 },
-      { label: "Dec", actual: 18, expected: 20 },
-      { label: "Jan", actual: 17, expected: 19 },
-      { label: "Feb", actual: 15, expected: 18 },
-    ],
+    points: [],
   },
   invites: {
     label: "Job Invites",
-    points: [
-      { label: "Mar", actual: 4, expected: 3 },
-      { label: "Apr", actual: 3, expected: 3 },
-      { label: "May", actual: 6, expected: 4 },
-      { label: "Jun", actual: 5, expected: 4 },
-      { label: "Jul", actual: 4, expected: 4 },
-      { label: "Aug", actual: 5, expected: 4 },
-      { label: "Sep", actual: 6, expected: 5 },
-      { label: "Oct", actual: 6, expected: 5 },
-      { label: "Nov", actual: 5, expected: 5 },
-      { label: "Dec", actual: 4, expected: 4 },
-      { label: "Jan", actual: 4, expected: 4 },
-      { label: "Feb", actual: 3, expected: 3 },
-    ],
+    points: [],
   },
 } as const;
 
 const timeRanges = ["1W", "1M", "3M", "1Y"] as const;
 
-const attentionItems: AttentionItem[] = [
-  {
-    id: "profile-completeness",
-    tone: "warning",
-    text: "Profile completeness at 68%",
-  },
-  {
-    id: "recent-invites",
-    tone: "danger",
-    text: "No responses to 2 recent invites",
-  },
-  {
-    id: "skill-gap",
-    tone: "neutral",
-    text: 'Skill gap for "Senior UX" role at Google',
-  },
-];
+const attentionItems: AttentionItem[] = [];
 
-const recentMatches: RecentMatch[] = [
-  {
-    id: "ux-designer-meta",
-    role: "UX Designer",
-    company: "Meta",
-    location: "Allentown, New Mexico 31134",
-    type: "Full Time",
-    experience: "Exp: 5+ Years",
-    matchPercent: 97,
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-  {
-    id: "senior-ux-google",
-    role: "Senior UX Engineer",
-    company: "Google LLC",
-    location: "Allentown, New Mexico 31134",
-    type: "Hybrid",
-    experience: "Exp: 4+ Years",
-    matchPercent: 84,
-    stats: {
-      accepted: 56,
-      declined: 367,
-      matching: 97,
-    },
-  },
-];
+const recentMatches: RecentMatch[] = [];
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
@@ -134,11 +63,6 @@ const getBrandStyle = (company: string) =>
 
 const getCompanyInitial = (company: string) =>
   getBrandKey(company).slice(0, 1).toUpperCase();
-
-const formatDelta = (value: number) => ({
-  label: `${value >= 0 ? "+" : "-"}${Math.abs(value)}% vs last month`,
-  className: value >= 0 ? "text-emerald-600" : "text-red-600",
-});
 
 export default function DashboardPage() {
   const rawUserData = useUserDataStore((s) => s.userData);
@@ -186,7 +110,7 @@ export default function DashboardPage() {
     () => computeProfileCompletion(userData),
     [userData]
   );
-  const profileMatchStrength = Math.round(profilePercent) || 87;
+  const profileMatchStrength = Math.round(profilePercent);
 
   // Filter points based on activeRange
   const filteredPoints = useMemo(() => {
@@ -207,12 +131,11 @@ export default function DashboardPage() {
   const metricLabel = engagementSeries[activeMetric].label;
   const metricLabelLower = metricLabel.toLowerCase();
   const unreadCount = notifications.filter((notice) => notice.unread).length;
-  const recruiterViewsDelta = formatDelta(-5);
-  const jobInvitesDelta = formatDelta(20);
-  const summaryMetrics = [
-    { label: "Recruiter views", value: "18", delta: recruiterViewsDelta },
-    { label: "Job invitations", value: "4", delta: jobInvitesDelta },
-  ];
+  const summaryMetrics = [];
+  const hasEngagementData = filteredPoints.length > 0;
+  const hasMatches = recentMatches.length > 0;
+  const hasNotifications = notifications.length > 0;
+  const matchCount = recentMatches.length;
 
   return (
     <section className="mx-auto max-w-360 space-y-8 py-10">
@@ -254,45 +177,57 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="mt-6 h-64">
-            <EngagementTrendChart
-              points={filteredPoints}
-              metricLabel={metricLabelLower}
-            />
-          </div>
+          {hasEngagementData ? (
+            <>
+              <div className="mt-6 h-64">
+                <EngagementTrendChart
+                  points={filteredPoints}
+                  metricLabel={metricLabelLower}
+                />
+              </div>
 
-          <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#E6A24E]" />
-              Expected {metricLabelLower}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-[#4F7DF3]" />
-              Actual {metricLabelLower}
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-sm bg-emerald-400" />
-              Strong (&gt;=80%) of expected
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-sm bg-amber-400" />
-              Average (60-79%) of expected
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-sm bg-red-400" />
-              Low (&lt;60%) of expected
-            </span>
-          </div>
-          <p className="mt-3 text-sm text-slate-400">
-            Expected based on role &amp; market
-          </p>
+              <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#E6A24E]" />
+                  Expected {metricLabelLower}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#4F7DF3]" />
+                  Actual {metricLabelLower}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-sm bg-emerald-400" />
+                  Strong (&gt;=80%) of expected
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-sm bg-amber-400" />
+                  Average (60-79%) of expected
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-sm bg-red-400" />
+                  Low (&lt;60%) of expected
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-slate-400">
+                Expected based on role &amp; market
+              </p>
+            </>
+          ) : (
+            <div className="mt-6 flex h-64 items-center justify-center rounded-2xl border border-dashed border-slate-200 text-sm text-slate-400">
+              No engagement data yet.
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
           <DashboardSummaryCard
             title="Profile Match Strength"
             value={`${profileMatchStrength}%`}
-            subtitle="Across 12 active job matches"
+            subtitle={
+              matchCount > 0
+                ? `Across ${matchCount} active job matches`
+                : "No active job matches yet"
+            }
             metrics={summaryMetrics}
           />
 
@@ -308,62 +243,72 @@ export default function DashboardPage() {
             </h2>
           </div>
           <div className="space-y-4">
-            {recentMatches.map((match) => (
-              <div
-                key={match.id}
-                className="rounded-[28px] bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
-                        match.company
-                      )}`}
-                    >
-                      {getCompanyInitial(match.company)}
+            {hasMatches ? (
+              recentMatches.map((match) => (
+                <div
+                  key={match.id}
+                  className="rounded-[28px] bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
+                          match.company
+                        )}`}
+                      >
+                        {getCompanyInitial(match.company)}
+                      </div>
+                      <div>
+                        <p className="text-base font-semibold text-slate-900">
+                          {match.role}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {match.company}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-base font-semibold text-slate-900">
-                        {match.role}
-                      </p>
-                      <p className="text-sm text-slate-500">{match.company}</p>
+                    <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-800">
+                      {match.matchPercent}% Matching
                     </div>
                   </div>
-                  <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-800">
-                    {match.matchPercent}% Matching
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-3 py-1">
+                      {match.type}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">
+                      {match.experience}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-slate-500">
+                    {match.location}
+                  </p>
+                  <div className="mt-4 flex items-center gap-6 text-sm text-slate-500">
+                    <span>
+                      Accepted:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {match.stats.accepted}
+                      </span>
+                    </span>
+                    <span>
+                      Declined:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {match.stats.declined}
+                      </span>
+                    </span>
+                    <span>
+                      Matching:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {match.stats.matching}
+                      </span>
+                    </span>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-3 py-1">
-                    {match.type}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1">
-                    {match.experience}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-slate-500">{match.location}</p>
-                <div className="mt-4 flex items-center gap-6 text-sm text-slate-500">
-                  <span>
-                    Accepted:{" "}
-                    <span className="font-semibold text-slate-700">
-                      {match.stats.accepted}
-                    </span>
-                  </span>
-                  <span>
-                    Declined:{" "}
-                    <span className="font-semibold text-slate-700">
-                      {match.stats.declined}
-                    </span>
-                  </span>
-                  <span>
-                    Matching:{" "}
-                    <span className="font-semibold text-slate-700">
-                      {match.stats.matching}
-                    </span>
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+                No matches yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -377,56 +322,62 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="space-y-4">
-            {notifications.map((notice) => (
-              <div
-                key={notice.id}
-                className="rounded-[28px] bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
-                        notice.company
-                      )}`}
-                    >
-                      {getCompanyInitial(notice.company)}
+            {hasNotifications ? (
+              notifications.map((notice) => (
+                <div
+                  key={notice.id}
+                  className="rounded-[28px] bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
+                          notice.company
+                        )}`}
+                      >
+                        {getCompanyInitial(notice.company)}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-base font-medium text-slate-900">
+                          {notice.message}
+                        </p>
+                        <p className="text-sm text-slate-400">{notice.time}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-base font-medium text-slate-900">
-                        {notice.message}
-                      </p>
-                      <p className="text-sm text-slate-400">{notice.time}</p>
-                    </div>
+                    {notice.unread ? (
+                      <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                    ) : null}
                   </div>
-                  {notice.unread ? (
-                    <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+
+                  {notice.type === "request" ? (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                        >
+                          Accept request
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                        >
+                          Decline request
+                        </button>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
+                        <AlertCircle className="mt-0.5 h-4 w-4" />
+                        <span>{requestNote}</span>
+                      </div>
+                    </div>
                   ) : null}
                 </div>
-
-                {notice.type === "request" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                      >
-                        Accept request
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                      >
-                        Decline request
-                      </button>
-                    </div>
-                    <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
-                      <AlertCircle className="mt-0.5 h-4 w-4" />
-                      <span>{requestNote}</span>
-                    </div>
-                  </div>
-                ) : null}
+              ))
+            ) : (
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+                No notifications yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

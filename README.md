@@ -127,7 +127,6 @@ app/                                    # Next.js App Router
       candidates/[jobId]/page.tsx       # Candidate management per job
       company-profile/page.tsx          # Company info
       company-profile-edit/page.tsx     # Edit company info
-      mock-db.ts                        # Dashboard mock data
 
   (user-dashboard)/
     dashboard/
@@ -201,7 +200,7 @@ lib/                                    # Utility functions and stores
   api-config.ts                         # Backend API endpoints + helpers
   api-client.ts                         # Frontend API client
   backendDataValidator.ts               # Backend data validation utilities
-  notifications.ts                      # Mock notifications
+  notifications.ts                      # Notification helpers
   hooks/                                # Auth + profile hooks
   types/                                # Shared types
 
@@ -214,10 +213,7 @@ lib/                                    # Utility functions and stores
   employerJobsStore.ts                  # Employer jobs state
   employerJobsTypes.ts                  # Job type definitions
   employerJobsUtils.ts                  # Job utility functions
-  localEmployerStore.ts                 # Local storage for employers
-
   profileCompletion.ts                  # Profile progress tracking
-  mockUserSession.ts                    # Mock session data
 
 public/                                 # Static assets
   logo/                                 # Brand logos
@@ -261,11 +257,9 @@ proxy.ts                                # Route guard helper
 - Next.js route handlers in `app/api/*` proxy requests and forward cookies/CSRF
 - CSRF handling in `lib/api-client.ts` for client-side requests
 
-### Local State & Mock Data
+### Local State
 
 - Zustand stores for talent profiles, employer profiles, applied jobs, and job listings
-- Local storage persistence for applied jobs and employer job postings
-- Mock session data and dashboard mock candidates for UI scaffolding
 
 ## Accessibility
 

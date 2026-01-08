@@ -503,42 +503,48 @@ export default function HomePageDashboard() {
           </div>
 
           <div className="space-y-4">
-            {notifications.map((notice) => (
-              <div
-                key={notice.id}
-                className="rounded-[28px] bg-white p-5 shadow-sm"
-              >
-                <div className="space-y-1">
-                  <p className="text-base font-medium text-slate-900">
-                    {notice.message}
-                  </p>
-                  <p className="text-sm text-slate-400">{notice.time}</p>
-                </div>
-
-                {notice.type === "request" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                    <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
-                      <AlertCircle className="mt-0.5 h-4 w-4" />
-                      <span>{requestNote}</span>
-                    </div>
+            {notifications.length > 0 ? (
+              notifications.map((notice) => (
+                <div
+                  key={notice.id}
+                  className="rounded-[28px] bg-white p-5 shadow-sm"
+                >
+                  <div className="space-y-1">
+                    <p className="text-base font-medium text-slate-900">
+                      {notice.message}
+                    </p>
+                    <p className="text-sm text-slate-400">{notice.time}</p>
                   </div>
-                ) : null}
+
+                  {notice.type === "request" ? (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
+                        <AlertCircle className="mt-0.5 h-4 w-4" />
+                        <span>{requestNote}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+                No notifications yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
