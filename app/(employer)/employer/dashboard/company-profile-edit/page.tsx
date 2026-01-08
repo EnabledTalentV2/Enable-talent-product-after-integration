@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, ChevronDown } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 
 const COMPANY_SIZE_OPTIONS = [
   { label: "1 - 10", value: "1-10", id: 1 },
@@ -20,6 +21,14 @@ const INDUSTRY_OPTIONS = [
   { label: "Other", id: 5 },
 ] as const;
 
+const COMPANY_SIZE_CHOICES = Object.fromEntries(
+  COMPANY_SIZE_OPTIONS.map((option) => [option.value, option.id])
+) as Record<string, number>;
+
+const INDUSTRY_CHOICES = Object.fromEntries(
+  INDUSTRY_OPTIONS.map((option) => [option.label, option.id])
+) as Record<string, number>;
+
 export default function CompanyProfileEditPage() {
   const router = useRouter();
   const { employerData, setEmployerData } = useEmployerDataStore();
@@ -34,9 +43,57 @@ export default function CompanyProfileEditPage() {
     companySize: "",
     website: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load organization data if not present
+  useEffect(() => {
+    const loadData = async () => {
+      if (organizationInfo?.organizationId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const data = await apiRequest<unknown>("/api/organizations", {
+          method: "GET",
+        });
+
+        console.log("Fetched organization data:", data);
+
+        // Use the same utility to parse the data
+        const { toEmployerOrganizationInfo } = await import("@/lib/organizationUtils");
+        const parsedInfo = toEmployerOrganizationInfo(data);
+
+        if (parsedInfo) {
+          setEmployerData((prev) => ({
+            ...prev,
+            organizationInfo: {
+              ...prev.organizationInfo,
+              ...parsedInfo,
+            },
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to load organization:", error);
+        setSubmitError("Failed to load organization data. Please refresh the page.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [organizationInfo?.organizationId, setEmployerData]);
 
   useEffect(() => {
     if (organizationInfo) {
+      console.log("=== LOADING FORM DATA ===");
+      console.log("Organization Info:", organizationInfo);
+      console.log("Founded Year value:", organizationInfo.foundedYear);
+      console.log("Company Size value:", organizationInfo.companySize);
+      console.log("Industry value:", organizationInfo.industry);
+
       setFormData({
         organizationName: organizationInfo.organizationName || "",
         industry: organizationInfo.industry || "",
@@ -45,6 +102,12 @@ export default function CompanyProfileEditPage() {
         foundedYear: organizationInfo.foundedYear || "",
         companySize: organizationInfo.companySize || "",
         website: organizationInfo.website || "",
+      });
+
+      console.log("Form data after setting:", {
+        foundedYear: organizationInfo.foundedYear,
+        companySize: organizationInfo.companySize,
+        industry: organizationInfo.industry,
       });
     }
   }, [organizationInfo]);
@@ -56,18 +119,130 @@ export default function CompanyProfileEditPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmployerData((prev) => ({
-      ...prev,
-      organizationInfo: {
-        ...prev.organizationInfo,
-        ...formData,
-      },
-    }));
-    // In a real app, you would also make an API call here to save to the backend
-    router.push("/employer/dashboard/company-profile");
+    setSubmitError(null);
+
+    console.log("=== FORM SUBMIT STARTED ===");
+    console.log("Form Data:", formData);
+    console.log("Organization Info:", organizationInfo);
+
+    // Check if we have organization ID
+    const organizationId = organizationInfo?.organizationId;
+    console.log("Organization ID:", organizationId);
+
+    if (!organizationId) {
+      setSubmitError("Organization ID not found. Please try refreshing the page.");
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.organizationName.trim()) {
+      setSubmitError("Organization name is required.");
+      return;
+    }
+    if (!formData.aboutOrganization.trim()) {
+      setSubmitError("About organization is required.");
+      return;
+    }
+    if (!formData.location.trim()) {
+      setSubmitError("Location is required.");
+      return;
+    }
+    // Note: Founded year is optional - backend doesn't support it yet
+    if (!formData.website.trim()) {
+      setSubmitError("Website is required.");
+      return;
+    }
+    if (!formData.companySize) {
+      setSubmitError("Company size is required.");
+      return;
+    }
+    if (!formData.industry) {
+      setSubmitError("Industry is required.");
+      return;
+    }
+
+    setSubmitting(true);
+    console.log("Submitting set to true");
+
+    try {
+      // Map frontend fields to backend fields
+      const companySizeChoice = COMPANY_SIZE_CHOICES[formData.companySize];
+      const industryChoice = INDUSTRY_CHOICES[formData.industry];
+
+      console.log("Company Size Choice:", companySizeChoice);
+      console.log("Industry Choice:", industryChoice);
+
+      // Validate that we have valid choices
+      if (!companySizeChoice) {
+        setSubmitError("Invalid company size selection. Please select a valid company size.");
+        setSubmitting(false);
+        return;
+      }
+      if (!industryChoice) {
+        setSubmitError("Invalid industry selection. Please select a valid industry.");
+        setSubmitting(false);
+        return;
+      }
+
+      const requestFormData = new FormData();
+      requestFormData.append("name", formData.organizationName.trim());
+      requestFormData.append("about", formData.aboutOrganization.trim());
+      requestFormData.append("headquarter_location", formData.location.trim());
+      requestFormData.append("url", formData.website.trim());
+      requestFormData.append("employee_size", String(companySizeChoice ?? ""));
+      requestFormData.append("industry", String(industryChoice ?? ""));
+
+      console.log("Request FormData entries:");
+      for (const [key, value] of requestFormData.entries()) {
+        console.log(`  ${key}: ${value}`);
+      }
+
+      console.log(`Making PATCH request to: /api/organizations/${organizationId}`);
+
+      const updatedData = await apiRequest<unknown>(
+        `/api/organizations/${organizationId}`,
+        {
+          method: "PATCH",
+          body: requestFormData,
+        }
+      );
+
+      console.log("Organization updated successfully:", updatedData);
+
+      // Update local store
+      setEmployerData((prev) => ({
+        ...prev,
+        organizationInfo: {
+          ...prev.organizationInfo,
+          ...formData,
+        },
+      }));
+
+      // Redirect to profile page
+      router.push("/employer/dashboard/company-profile");
+    } catch (error) {
+      console.error("Failed to update organization:", error);
+      const message = getApiErrorMessage(
+        error,
+        "Failed to save changes. Please try again."
+      );
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-3xl py-10 px-6">
+        <div className="rounded-[28px] bg-white p-8 shadow-sm text-center">
+          <p className="text-slate-600">Loading organization data...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-3xl py-10 px-6">
@@ -87,6 +262,16 @@ export default function CompanyProfileEditPage() {
         onSubmit={handleSubmit}
         className="space-y-6 rounded-[28px] bg-white p-8 shadow-sm"
       >
+        {submitError && (
+          <div
+            role="alert"
+            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          >
+            <p className="font-semibold">Unable to save</p>
+            <p className="mt-1 whitespace-pre-wrap">{submitError}</p>
+          </div>
+        )}
+
         {/* Organization Name */}
         <div className="space-y-2">
           <label
@@ -251,16 +436,18 @@ export default function CompanyProfileEditPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+            disabled={submitting}
+            className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-xl bg-[#C27803] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            disabled={submitting}
+            className="flex items-center gap-2 rounded-xl bg-[#C27803] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="h-4 w-4" />
-            Save Changes
+            {submitting ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>

@@ -69,6 +69,8 @@ export const toEmployerOrganizationInfo = (
   const record = getFirstOrganization(payload);
   if (!record) return null;
 
+  const organizationId =
+    typeof record.id === "number" ? record.id : undefined;
   const organizationName = toStringValue(
     record.name ?? record.organizationName ?? record.organization_name
   );
@@ -109,6 +111,7 @@ export const toEmployerOrganizationInfo = (
   if (!hasAny) return null;
 
   return {
+    organizationId,
     organizationName,
     aboutOrganization,
     location,
