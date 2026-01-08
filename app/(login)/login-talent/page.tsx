@@ -11,6 +11,7 @@ import {
   ensureCandidateProfileSlug,
   fetchCandidateProfileDetail,
 } from "@/lib/candidateProfile";
+import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -21,7 +22,7 @@ const inputClasses =
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setUserData = useUserDataStore((s) => s.setUserData);
+  const patchUserData = useUserDataStore((s) => s.patchUserData);
   const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
   const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
   const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
@@ -66,8 +67,6 @@ function LoginPageContent() {
         return;
       }
 
-      setUserData((prev) => result.data as typeof prev);
-
       resetCandidateProfile();
       setCandidateLoading(true);
       setCandidateError(null);
@@ -83,6 +82,10 @@ function LoginPageContent() {
           );
           if (profile) {
             setCandidateProfile(profile);
+            const mapped = mapCandidateProfileToUserData(profile);
+            if (Object.keys(mapped).length > 0) {
+              patchUserData(mapped);
+            }
           } else {
             setCandidateError("Unable to load candidate profile.");
           }

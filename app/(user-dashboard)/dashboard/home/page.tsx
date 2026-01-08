@@ -30,11 +30,11 @@ const isLikelyImageSource = (value?: string) => {
 };
 
 const toTrimmed = (value?: string) => value?.trim() ?? "";
+const fallbackText = "Data unavailable";
 
 export default function HomePageDashboard() {
   const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
-  const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAboutExpanded, setIsAboutExpanded] = useState(true);
@@ -95,9 +95,8 @@ export default function HomePageDashboard() {
           throw new Error("Failed to load user data.");
         }
 
-        const data = await response.json();
+        await response.json();
         if (active) {
-          setUserData(() => data);
           setError(null);
         }
       } catch (err) {
@@ -116,17 +115,17 @@ export default function HomePageDashboard() {
     return () => {
       active = false;
     };
-  }, [router, setUserData]);
+  }, [router]);
 
   const profileName =
     [userData.basicInfo.firstName, userData.basicInfo.lastName]
       .map(toTrimmed)
       .filter(Boolean)
-      .join(" ") || "User";
+      .join(" ") || fallbackText;
   const profileRole =
     toTrimmed(userData.workExperience.entries[0]?.role) ||
-    userData.skills.primaryList?.[0] ||
-    "Job seeker";
+    toTrimmed(userData.skills.primaryList?.[0]) ||
+    fallbackText;
   const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
   const profileImage = isLikelyImageSource(profilePhoto)
     ? profilePhoto
@@ -423,7 +422,7 @@ export default function HomePageDashboard() {
                     </p>
                   ))
                 ) : (
-                  <p className="text-slate-400">No details added yet.</p>
+                  <p className="text-slate-400">{fallbackText}.</p>
                 )}
               </div>
             ) : null}
@@ -482,7 +481,7 @@ export default function HomePageDashboard() {
                         section.count > 0 ? (
                         <p>{section.count} items available.</p>
                       ) : (
-                        <p>No details added yet.</p>
+                        <p>{fallbackText}.</p>
                       )}
                     </div>
                   ) : null}
