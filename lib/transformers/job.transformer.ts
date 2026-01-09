@@ -71,6 +71,35 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
   // Extract posted date
   const postedAt = toString(tryFields(raw, "created_at", "posted_at", "postedAt")) || new Date().toISOString();
 
+  // Extract skills - backend returns array of {id, name} objects
+  const skills: string[] = [];
+  if (Array.isArray(raw.skills)) {
+    raw.skills.forEach((skill: any) => {
+      if (typeof skill === "string") {
+        skills.push(skill);
+      } else if (skill && typeof skill.name === "string") {
+        skills.push(skill.name);
+      }
+    });
+  }
+
+  // Extract visa required
+  const visaRequired = Boolean(raw.visa_required);
+
+  // Extract ranking data
+  const rankingStatus = toString(raw.ranking_status);
+  const candidateRankingData = raw.candidate_ranking_data;
+
+  // Extract user info
+  const user = raw.user ? {
+    id: raw.user.id,
+    first_name: raw.user.first_name,
+    last_name: raw.user.last_name,
+    email: raw.user.email,
+    is_verified: raw.user.is_verified,
+    is_candidate: raw.user.is_candidate,
+  } : undefined;
+
   return {
     id,
     title,
@@ -87,6 +116,11 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
     salary,
     status,
     postedAt,
+    skills,
+    visaRequired,
+    rankingStatus,
+    candidateRankingData,
+    user,
   };
 };
 
@@ -105,6 +139,9 @@ export const transformJobToBackend = (values: JobFormValues): BackendJobPayload 
   // Parse salary to number
   const salaryNum = parseSalary(values.salary);
 
+  // Extract skills array (filter out empty strings)
+  const skills = (values.skills || []).filter(skill => skill.trim().length > 0);
+
   return {
     title: values.title,
     job_desc: jobDesc,
@@ -113,7 +150,7 @@ export const transformJobToBackend = (values: JobFormValues): BackendJobPayload 
     job_type: employmentTypeMapper.toBackend(values.employmentType),
     estimated_salary: salaryNum,
     visa_required: false, // Default value
-    skills: [], // Empty array for now
+    skills: skills,
     experience: values.experience || undefined,
     preferred_language: values.preferredLanguage || undefined,
     is_urgent: yesNoToBoolean(values.urgentHiring),
@@ -152,5 +189,6 @@ export const transformJobToFormValues = (job: EmployerJob): JobFormValues => {
     description: job.description,
     requirements: job.requirements || "",
     salary: job.salary || "",
+    skills: job.skills || [],
   };
 };

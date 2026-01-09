@@ -73,9 +73,27 @@ export const BackendJobSchema = z.object({
   declined_count: z.number().optional(),
   matching_candidates_count: z.number().optional(),
 
-  // Skills
-  skills: z.array(z.string()).optional(),
+  // Skills - backend returns array of objects with id and name
+  skills: z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+  })).optional(),
   visa_required: z.boolean().optional(),
+
+  // User who created the job
+  user: z.object({
+    id: z.number(),
+    first_name: z.string(),
+    last_name: z.string(),
+    email: z.string(),
+    is_verified: z.boolean(),
+    is_candidate: z.boolean(),
+  }).optional(),
+
+  // Ranking data
+  candidate_ranking_data: z.any().optional(),
+  ranking_status: z.string().optional(),
+  ranking_task_id: z.string().nullable().optional(),
 });
 
 /**
@@ -116,6 +134,7 @@ export const JobFormValuesSchema = z.object({
   description: z.string().min(1, "Description is required"),
   requirements: z.string().optional().default(""),
   salary: z.string().optional().default(""),
+  skills: z.array(z.string()).optional().default([]),
 });
 
 /**

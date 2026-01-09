@@ -39,6 +39,9 @@ export const toBackendJobPayload = (values: JobFormValues) => {
     salaryValue = salaryNum;
   }
 
+  // Extract skills array (filter out empty strings)
+  const skills = (values.skills || []).filter(skill => skill.trim().length > 0);
+
   return {
     title: values.title,
     job_desc: jobDesc,
@@ -47,7 +50,7 @@ export const toBackendJobPayload = (values: JobFormValues) => {
     job_type: EMPLOYMENT_TYPE_TO_BACKEND[values.employmentType] || 1,
     estimated_salary: salaryValue,
     visa_required: false, // Default value, not collected in form
-    skills: [], // Empty array, not collected in form yet
+    skills: skills,
   };
 };
 
@@ -167,6 +170,18 @@ const parseJobFromBackend = (
     | "Closed"
     | "Draft";
 
+  // Extract skills - backend returns array of {id, name} objects
+  const skills: string[] = [];
+  if (Array.isArray(record.skills)) {
+    record.skills.forEach((skill: any) => {
+      if (typeof skill === "string") {
+        skills.push(skill);
+      } else if (isRecord(skill) && typeof skill.name === "string") {
+        skills.push(skill.name);
+      }
+    });
+  }
+
   return {
     id,
     title,
@@ -183,6 +198,7 @@ const parseJobFromBackend = (
     salary,
     status: status || "Active",
     postedAt: postedAt || new Date().toISOString(),
+    skills,
   };
 };
 
@@ -321,4 +337,5 @@ export const toJobFormValues = (job: EmployerJob): JobFormValues => ({
   description: job.description || "",
   requirements: job.requirements || "",
   salary: job.salary || "",
+  skills: job.skills || [],
 });

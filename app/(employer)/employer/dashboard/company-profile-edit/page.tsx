@@ -127,14 +127,11 @@ export default function CompanyProfileEditPage() {
     console.log("Form Data:", formData);
     console.log("Organization Info:", organizationInfo);
 
-    // Check if we have organization ID
+    // Check if we have organization ID (for update) or need to create new
     const organizationId = organizationInfo?.organizationId;
+    const isCreatingNew = !organizationId;
     console.log("Organization ID:", organizationId);
-
-    if (!organizationId) {
-      setSubmitError("Organization ID not found. Please try refreshing the page.");
-      return;
-    }
+    console.log("Creating new organization:", isCreatingNew);
 
     // Validate required fields
     if (!formData.organizationName.trim()) {
@@ -199,17 +196,25 @@ export default function CompanyProfileEditPage() {
         console.log(`  ${key}: ${value}`);
       }
 
-      console.log(`Making PATCH request to: /api/organizations/${organizationId}`);
-
-      const updatedData = await apiRequest<unknown>(
-        `/api/organizations/${organizationId}`,
-        {
-          method: "PATCH",
+      let updatedData;
+      if (isCreatingNew) {
+        console.log("Making POST request to: /api/organizations");
+        updatedData = await apiRequest<unknown>("/api/organizations", {
+          method: "POST",
           body: requestFormData,
-        }
-      );
-
-      console.log("Organization updated successfully:", updatedData);
+        });
+        console.log("Organization created successfully:", updatedData);
+      } else {
+        console.log(`Making PATCH request to: /api/organizations/${organizationId}`);
+        updatedData = await apiRequest<unknown>(
+          `/api/organizations/${organizationId}`,
+          {
+            method: "PATCH",
+            body: requestFormData,
+          }
+        );
+        console.log("Organization updated successfully:", updatedData);
+      }
 
       // Update local store
       setEmployerData((prev) => ({
@@ -220,14 +225,18 @@ export default function CompanyProfileEditPage() {
         },
       }));
 
-      // Redirect to profile page
-      router.push("/employer/dashboard/company-profile");
+      // Redirect to profile page or post jobs page
+      if (isCreatingNew) {
+        router.push("/employer/dashboard/post-jobs");
+      } else {
+        router.push("/employer/dashboard/company-profile");
+      }
     } catch (error) {
-      console.error("Failed to update organization:", error);
-      const message = getApiErrorMessage(
-        error,
-        "Failed to save changes. Please try again."
-      );
+      console.error(`Failed to ${isCreatingNew ? "create" : "update"} organization:`, error);
+      const defaultMessage = isCreatingNew
+        ? "Failed to create organization. Please try again."
+        : "Failed to save changes. Please try again.";
+      const message = getApiErrorMessage(error, defaultMessage);
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -244,6 +253,8 @@ export default function CompanyProfileEditPage() {
     );
   }
 
+  const isCreatingNew = !organizationInfo?.organizationId;
+
   return (
     <section className="mx-auto max-w-3xl py-10 px-6">
       <div className="mb-8 flex items-center gap-4">
@@ -254,7 +265,7 @@ export default function CompanyProfileEditPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-2xl font-bold text-slate-900">
-          Edit Company Profile
+          {isCreatingNew ? "Create Company Profile" : "Edit Company Profile"}
         </h1>
       </div>
 
@@ -447,7 +458,10 @@ export default function CompanyProfileEditPage() {
             className="flex items-center gap-2 rounded-xl bg-[#C27803] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="h-4 w-4" />
-            {submitting ? "Saving..." : "Save Changes"}
+            {submitting
+              ? "Saving..."
+              : (isCreatingNew ? "Create Organization" : "Save Changes")
+            }
           </button>
         </div>
       </form>

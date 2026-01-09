@@ -36,6 +36,7 @@ const emptyValues: JobFormValues = {
   description: "",
   requirements: "",
   salary: "",
+  skills: [],
 };
 
 export default function JobForm({
@@ -49,6 +50,7 @@ export default function JobForm({
     ...initialValues,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => {
     setValues({ ...emptyValues, ...initialValues });
@@ -62,6 +64,31 @@ export default function JobForm({
   ) => {
     const { name, value } = event.target;
     setValues((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddSkill = () => {
+    const skill = skillInput.trim();
+    if (skill && !(values.skills || []).includes(skill)) {
+      setValues((prev) => ({
+        ...prev,
+        skills: [...(prev.skills || []), skill],
+      }));
+      setSkillInput("");
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    setValues((prev) => ({
+      ...prev,
+      skills: (prev.skills || []).filter((skill) => skill !== skillToRemove),
+    }));
+  };
+
+  const handleSkillKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddSkill();
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -321,6 +348,71 @@ export default function JobForm({
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
           placeholder={`List the key requirements for the role.\n- 5+ years of relevant experience\n- Strong portfolio or work samples\n- Experience with design systems`}
         />
+      </div>
+
+      {/* Skills */}
+      <div>
+        <label
+          htmlFor={`${formId}-skills`}
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Required Skills
+        </label>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input
+              id={`${formId}-skills`}
+              type="text"
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={handleSkillKeyDown}
+              placeholder="e.g. React, TypeScript, Python"
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
+            />
+            <button
+              type="button"
+              onClick={handleAddSkill}
+              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors"
+            >
+              Add
+            </button>
+          </div>
+          {(values.skills || []).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {(values.skills || []).map((skill) => (
+                <span
+                  key={skill}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSkill(skill)}
+                    className="hover:text-blue-900"
+                    aria-label={`Remove ${skill}`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-gray-500">
+            Add skills one at a time. Press Enter or click Add button.
+          </p>
+        </div>
       </div>
 
       {/* Estimated Salary */}
