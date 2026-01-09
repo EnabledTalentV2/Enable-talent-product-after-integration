@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, Globe, MapPin, Users } from "lucide-react";
+import { Calendar, Globe, MapPin, Users, Search } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 import { initialUserData } from "@/lib/userDataDefaults";
+import { useCandidateJobs } from "@/lib/hooks/useCandidateJobs";
+import type { EmployerJob } from "@/lib/employerJobsTypes";
 
 type CompanyProfile = {
   id: string;
@@ -42,16 +44,64 @@ type CompanyJob = {
   company: CompanyProfile;
 };
 
-const jobs: CompanyJob[] = [];
-
 const getStatusStyles = (status: CompanyJob["status"]) =>
   status === "Active"
     ? "bg-[#ECFDF5] text-[#10B981]"
     : "bg-slate-100 text-slate-500";
 
+// Helper function to transform EmployerJob to CompanyJob format
+const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
+  // Parse description and requirements from string to array
+  const descriptionArray = job.description
+    ? job.description.split('\n').filter(line => line.trim())
+    : [];
+  const requirementsArray = job.requirements
+    ? job.requirements.split('\n').filter(line => line.trim())
+    : [];
+
+  return {
+    id: String(job.id),
+    title: job.title,
+    status: job.status === "Active" || job.status === "Closed" ? job.status : "Active",
+    location: job.location || "Not specified",
+    match: undefined, // TODO: Calculate match percentage based on user profile
+    jobType: job.employmentType || "Full-time",
+    workMode: job.workArrangement || "Remote",
+    yearsExperience: job.experience || "Not specified",
+    salary: job.salary || "Not disclosed",
+    posted: job.postedAt || "Recently posted",
+    description: descriptionArray,
+    requirements: requirementsArray,
+    company: {
+      id: job.company || String(job.id),
+      name: job.company || "Company Name",
+      industry: "Technology", // TODO: Get from backend when available
+      logo: undefined,
+      hiringCount: 1, // TODO: Get actual count from backend
+      lastActive: "Active now",
+      hiringStatus: "Actively hiring",
+      about: [job.description || "No description available"],
+      details: {
+        location: job.location || "Not specified",
+        industry: "Technology", // TODO: Get from backend
+        founded: "2020", // TODO: Get from backend
+        employeeSize: "50-100", // TODO: Get from backend
+        website: "example.com", // TODO: Get from backend
+      },
+    },
+  };
+};
+
 export default function CompaniesPage() {
-  const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
+  const { data: jobsData, isLoading, error } = useCandidateJobs();
+  const allJobs = useMemo(
+    () => (jobsData || []).map(transformToCompanyJob),
+    [jobsData]
+  );
+
+  const [selectedId, setSelectedId] = useState("");
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const detailsRef = useRef<HTMLDivElement | null>(null);
   const rawUserData = useUserDataStore((s) => s.userData);
   const userData = useMemo(
@@ -93,9 +143,34 @@ export default function CompaniesPage() {
     [userData]
   );
 
+  // Filter jobs based on search query
+  const jobs = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allJobs;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return allJobs.filter((job) => {
+      const titleMatch = job.title.toLowerCase().includes(query);
+      const companyMatch = job.company.name.toLowerCase().includes(query);
+      const locationMatch = job.location.toLowerCase().includes(query);
+      const jobTypeMatch = job.jobType.toLowerCase().includes(query);
+      const workModeMatch = job.workMode.toLowerCase().includes(query);
+
+      return titleMatch || companyMatch || locationMatch || jobTypeMatch || workModeMatch;
+    });
+  }, [allJobs, searchQuery]);
+
+  // Set initial selection when jobs load
+  useEffect(() => {
+    if (jobs.length > 0 && !selectedId) {
+      setSelectedId(jobs[0].id);
+    }
+  }, [jobs, selectedId]);
+
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === selectedId) ?? jobs[0],
-    [selectedId]
+    [jobs, selectedId]
   );
   const activeCompany = activeJob?.company;
   const appliedJobIds = useMemo(
@@ -159,11 +234,51 @@ export default function CompaniesPage() {
   return (
     <section className="mx-auto max-w-360 space-y-6">
       <DashboardProfilePrompt percent={profilePercent} />
-      <div>
-        <div className="mx-auto max-w-360">
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
-              {hasJobs ? (
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="rounded-[32px] bg-white p-8 text-center shadow-sm">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#C27803] border-r-transparent"></div>
+          <p className="mt-4 text-slate-600">Loading job opportunities...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="rounded-[32px] bg-red-50 p-6 shadow-sm">
+          <p className="font-semibold text-red-800">Failed to load jobs</p>
+          <p className="mt-2 text-sm text-red-600">
+            {error instanceof Error ? error.message : "Please try again later"}
+          </p>
+        </div>
+      )}
+
+      {/* Jobs Content */}
+      {!isLoading && !error && (
+        <div>
+          <div className="mx-auto max-w-360">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search by job title, company, location, or job type..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-full border border-slate-200 bg-white px-4 py-3 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/30"
+                />
+                <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              </div>
+              {searchQuery && (
+                <p className="mt-2 text-sm text-slate-600">
+                  Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-6 lg:flex-row">
+              <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
+                {hasJobs ? (
                 jobs.map((job) => {
                   const isSelected = selectedId === job.id;
                   const matchLabel =
@@ -245,7 +360,9 @@ export default function CompaniesPage() {
                 })
               ) : (
                 <div className="rounded-[32px] bg-white p-6 text-sm text-slate-500 shadow-sm">
-                  No companies available yet.
+                  {searchQuery
+                    ? `No jobs found matching "${searchQuery}". Try a different search term.`
+                    : "No job opportunities available yet."}
                 </div>
               )}
             </div>
@@ -451,6 +568,7 @@ export default function CompaniesPage() {
           </div>
         </div>
       </div>
+      )}
     </section>
   );
 }
