@@ -7,6 +7,7 @@ import Link from "next/link";
 import JobForm from "@/components/employer/dashboard/JobForm";
 import Toast from "@/components/Toast";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { getApiErrorMessage } from "@/lib/api-client";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 
 export default function PostJobsPage() {
@@ -16,10 +17,17 @@ export default function PostJobsPage() {
 
   const handleSubmit = async (values: JobFormValues) => {
     try {
+      console.log("[Post Jobs] Submitting job:", values);
       await createJob(values);
+      console.log("[Post Jobs] Job created successfully, redirecting...");
       router.push("/employer/dashboard/listed-jobs");
     } catch (error) {
-      setToastMessage("Unable to post this job. Please try again.");
+      console.error("[Post Jobs] Failed to create job:", error);
+      const message = getApiErrorMessage(
+        error,
+        "Unable to post this job. Please try again."
+      );
+      setToastMessage(message);
     }
   };
 

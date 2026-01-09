@@ -131,7 +131,7 @@ export default function DashboardPage() {
   const metricLabel = engagementSeries[activeMetric].label;
   const metricLabelLower = metricLabel.toLowerCase();
   const unreadCount = notifications.filter((notice) => notice.unread).length;
-  const summaryMetrics = [];
+  const summaryMetrics: Array<{ label: string; value: string | number }> = [];
   const hasEngagementData = filteredPoints.length > 0;
   const hasMatches = recentMatches.length > 0;
   const hasNotifications = notifications.length > 0;
