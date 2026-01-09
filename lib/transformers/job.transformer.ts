@@ -1,0 +1,156 @@
+import type { BackendJob, JobFormValues, BackendJobPayload } from "@/lib/schemas/job.schema";
+import type { EmployerJob } from "@/lib/employerJobsTypes";
+import {
+  tryFields,
+  toString,
+  employmentTypeMapper,
+  workArrangementMapper,
+  jobStatusMapper,
+  booleanToYesNo,
+  yesNoToBoolean,
+  parseSalary,
+  isRecord,
+  extractArray,
+} from "./fieldMappers";
+
+/**
+ * Transform backend job to frontend format
+ */
+export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
+  // Extract ID
+  const id = String(raw.id);
+
+  // Extract title
+  const title = raw.title || "";
+
+  // Extract company from organization object or direct field
+  let company = "";
+  if (raw.organization) {
+    company = raw.organization.name;
+  }
+  if (!company) {
+    company = toString(tryFields(raw, "company_name", "company"));
+  }
+
+  // Extract location and address
+  const location = toString(raw.location);
+  const address = toString(raw.address);
+
+  // Extract experience
+  const experience = toString(tryFields(raw, "experience", "experience_required"));
+
+  // Transform employment type (handles multiple field names and formats)
+  const rawEmploymentType = tryFields(raw, "job_type", "employment_type", "employmentType");
+  const employmentType = employmentTypeMapper.toFrontend(rawEmploymentType);
+
+  // Transform work arrangement (handles multiple field names and formats)
+  const rawWorkArrangement = tryFields(raw, "workplace_type", "work_arrangement", "workArrangement");
+  const workArrangement = workArrangementMapper.toFrontend(rawWorkArrangement);
+
+  // Extract preferred language
+  const preferredLanguage = toString(tryFields(raw, "preferred_language", "language"));
+
+  // Extract urgent hiring flag
+  const rawUrgent = tryFields(raw, "is_urgent", "urgent_hiring");
+  const urgentHiring = booleanToYesNo(rawUrgent);
+
+  // Extract description (handles multiple field names)
+  const description = toString(tryFields(raw, "job_desc", "description", "job_description"));
+
+  // Extract requirements
+  const requirements = toString(raw.requirements);
+
+  // Extract salary
+  const rawSalary = tryFields(raw, "estimated_salary", "salary", "salary_range");
+  const salary = toString(rawSalary);
+
+  // Extract status
+  const rawStatus = tryFields(raw, "status", "is_active");
+  const status = jobStatusMapper.toFrontend(rawStatus);
+
+  // Extract posted date
+  const postedAt = toString(tryFields(raw, "created_at", "posted_at", "postedAt")) || new Date().toISOString();
+
+  return {
+    id,
+    title,
+    company,
+    location,
+    address,
+    experience,
+    employmentType,
+    workArrangement,
+    preferredLanguage,
+    urgentHiring,
+    description,
+    requirements,
+    salary,
+    status,
+    postedAt,
+  };
+};
+
+/**
+ * Transform frontend form values to backend payload
+ */
+export const transformJobToBackend = (values: JobFormValues): BackendJobPayload => {
+  // Combine description and requirements into single job_desc field
+  let jobDesc = values.description || "";
+  if (values.requirements) {
+    jobDesc = jobDesc
+      ? `${jobDesc}\n\nRequirements:\n${values.requirements}`
+      : `Requirements:\n${values.requirements}`;
+  }
+
+  // Parse salary to number
+  const salaryNum = parseSalary(values.salary);
+
+  return {
+    title: values.title,
+    job_desc: jobDesc,
+    workplace_type: workArrangementMapper.toBackend(values.workArrangement),
+    location: values.location,
+    job_type: employmentTypeMapper.toBackend(values.employmentType),
+    estimated_salary: salaryNum,
+    visa_required: false, // Default value
+    skills: [], // Empty array for now
+    experience: values.experience || undefined,
+    preferred_language: values.preferredLanguage || undefined,
+    is_urgent: yesNoToBoolean(values.urgentHiring),
+  };
+};
+
+/**
+ * Transform array of backend jobs to frontend format
+ * Handles various response wrapper formats
+ */
+export const transformJobsArray = (payload: unknown): EmployerJob[] => {
+  // Extract array from various wrapper formats
+  const jobs = extractArray<BackendJob>(payload, ["results", "jobs", "data", "job_posts"]);
+
+  // Transform each job
+  return jobs
+    .filter(isRecord)
+    .map(transformJobFromBackend)
+    .filter((job): job is EmployerJob => job !== null && job.id !== "");
+};
+
+/**
+ * Transform EmployerJob to JobFormValues for editing
+ */
+export const transformJobToFormValues = (job: EmployerJob): JobFormValues => {
+  return {
+    title: job.title,
+    company: job.company,
+    location: job.location,
+    address: job.address || "",
+    experience: job.experience || "",
+    employmentType: job.employmentType,
+    workArrangement: job.workArrangement,
+    preferredLanguage: job.preferredLanguage || "",
+    urgentHiring: job.urgentHiring || "No",
+    description: job.description,
+    requirements: job.requirements || "",
+    salary: job.salary || "",
+  };
+};
