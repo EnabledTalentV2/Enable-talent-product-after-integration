@@ -211,6 +211,12 @@ export const parseJobsArray = (payload: unknown): EmployerJob[] => {
       .filter((job): job is EmployerJob => job !== null);
   }
 
+  // Handle single job object (e.g., POST response returning one job)
+  if (isRecord(payload) && typeof payload.id === "number") {
+    const job = parseJobFromBackend(payload);
+    return job ? [job] : [];
+  }
+
   // Handle wrapped in object (e.g., { results: [...] })
   if (isRecord(payload)) {
     const candidates = [
