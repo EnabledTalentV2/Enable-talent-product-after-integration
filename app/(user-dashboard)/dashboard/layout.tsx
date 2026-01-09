@@ -11,6 +11,7 @@ import {
   fetchCandidateProfileDetail,
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
+import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
 import {
   validateBackendData,
   logValidationToConsole,
@@ -115,6 +116,7 @@ export default function DashboardLayoutPage({
 }) {
   const router = useRouter();
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const patchUserData = useUserDataStore((s) => s.patchUserData);
   const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
   const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
   const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
@@ -188,6 +190,10 @@ export default function DashboardLayoutPage({
 
             if (profile) {
               setCandidateProfile(profile);
+              const mapped = mapCandidateProfileToUserData(profile);
+              if (Object.keys(mapped).length > 0) {
+                patchUserData(mapped);
+              }
             } else {
               setCandidateError("Unable to load candidate profile.");
             }
@@ -224,7 +230,7 @@ export default function DashboardLayoutPage({
     return () => {
       active = false;
     };
-  }, [router, setUserData]);
+  }, [router, setUserData, patchUserData]);
 
   if (loading) {
     return (

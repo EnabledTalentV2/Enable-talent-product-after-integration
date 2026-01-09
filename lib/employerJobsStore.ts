@@ -2,6 +2,8 @@
 
 import { create } from "zustand";
 import type { EmployerJob, JobFormValues } from "@/lib/employerJobsTypes";
+import { apiRequest } from "@/lib/api-client";
+import { parseJobsArray, toBackendJobPayload } from "@/lib/employerJobsUtils";
 
 type EmployerJobsStore = {
   jobs: EmployerJob[];
@@ -9,30 +11,9 @@ type EmployerJobsStore = {
   hasFetched: boolean;
   fetchJobs: () => Promise<void>;
   createJob: (values: JobFormValues) => Promise<EmployerJob>;
-  updateJob: (jobId: string, values: JobFormValues) => Promise<EmployerJob>;
+  updateJob: (jobId: string | number, values: JobFormValues) => Promise<EmployerJob>;
   resetJobs: () => void;
 };
-
-const createJobId = (title: string, existingJobs: EmployerJob[]) => {
-  const slug = title
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const baseId = slug || "job";
-  const isAvailable = !existingJobs.some((job) => job.id === baseId);
-  return isAvailable ? baseId : `${baseId}-${Date.now().toString(36)}`;
-};
-
-const buildJob = (
-  values: JobFormValues,
-  existingJobs: EmployerJob[]
-): EmployerJob => ({
-  ...values,
-  id: createJobId(values.title, existingJobs),
-  status: "Active",
-  postedAt: new Date().toISOString(),
-});
 
 export const useEmployerJobsStore = create<EmployerJobsStore>((set, get) => ({
   jobs: [],
@@ -40,14 +21,55 @@ export const useEmployerJobsStore = create<EmployerJobsStore>((set, get) => ({
   hasFetched: false,
   fetchJobs: async () => {
     set({ isLoading: true });
-    set({ isLoading: false, hasFetched: true });
+    try {
+      console.log("[Jobs Store] Fetching jobs from API...");
+      const data = await apiRequest<unknown>("/api/jobs", { method: "GET" });
+      console.log("[Jobs Store] Received data:", data);
+
+      const parsedJobs = parseJobsArray(data);
+      console.log("[Jobs Store] Parsed jobs:", parsedJobs.length);
+
+      set({ jobs: parsedJobs, hasFetched: true, isLoading: false });
+    } catch (error) {
+      console.error("[Jobs Store] Failed to fetch jobs:", error);
+      set({ jobs: [], hasFetched: true, isLoading: false });
+    }
   },
   createJob: async (values) => {
-    const previousJobs = get().jobs;
-    const newJob = buildJob(values, previousJobs);
-    const nextJobs = [newJob, ...previousJobs];
-    set({ jobs: nextJobs, hasFetched: true });
-    return newJob;
+    try {
+      console.log("[Jobs Store] Creating job...", values);
+
+      // Map frontend values to backend format
+      const backendPayload = toBackendJobPayload(values);
+      console.log("[Jobs Store] Backend payload:", backendPayload);
+
+      // Call backend API
+      const response = await apiRequest<unknown>("/api/jobs", {
+        method: "POST",
+        body: JSON.stringify(backendPayload),
+      });
+
+      console.log("[Jobs Store] Backend response:", response);
+
+      // Parse response - backend returns single job object
+      const parsedJobs = parseJobsArray(response);
+      if (parsedJobs.length === 0) {
+        throw new Error("Failed to parse created job from backend response");
+      }
+
+      const newJob = parsedJobs[0];
+      console.log("[Jobs Store] Parsed new job:", newJob);
+
+      // Add to store
+      const previousJobs = get().jobs;
+      const nextJobs = [newJob, ...previousJobs];
+      set({ jobs: nextJobs, hasFetched: true });
+
+      return newJob;
+    } catch (error) {
+      console.error("[Jobs Store] Failed to create job:", error);
+      throw error; // Re-throw to show error toast in UI
+    }
   },
   updateJob: async (jobId, values) => {
     const previousJobs = get().jobs;

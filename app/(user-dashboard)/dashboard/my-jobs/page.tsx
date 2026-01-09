@@ -29,119 +29,7 @@ type Job = {
   requirements?: string[];
 };
 
-const jobs: Job[] = [
-  {
-    id: "google-ux",
-    title: "UI/UX Designer",
-    company: "Google LLC",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/3/3c/Google_Favicon_2025.svg",
-    posted: "Posted 12 hrs ago",
-    status: "Active",
-    location: "Allentown, New Mexico 31134",
-    salary: "$2000-4500",
-    match: 97,
-    applicationStatus: "Accepted",
-    jobType: "Full Time",
-    workMode: "Hybrid",
-    yearsExperience: "12 years",
-    about:
-      "We are desertcart, an e-commerce and logistics company based in Dubai, serving customers across 160+ countries worldwide. We are changing the way people shop internationally making it faster, more reliable, and cheaper, and want you to be a part of it.",
-    description: [
-      "Create wireframes, prototypes, and user flows to visualize and communicate design concepts.",
-      "Collaborate with cross-functional teams including product managers, developers, and other designers to ensure seamless implementation.",
-      "Translate research insights into actionable design solutions that enhance user satisfaction and engagement.",
-    ],
-    requirements: [
-      "7+ years of experience evolving and scaling high-performing design systems in a highly matrixed company",
-      "3+ years of experience in people leadership, with experience in hiring, leading, and coaching high performing teams",
-      "Solid understanding of Design Systems - creating, designing, governing, and scaling reusable component libraries - and an ability to communicate its value to a large, complex organizations",
-      "Understanding of best practices and process around governance and maintenance of large-scale design systems",
-      "Influence strategy by developing partnerships, engaging and collaborating effectively with design, product, and engineering",
-      "Operate comfortably in agile environments (e.g. sprints), helping the team prioritize work considering needs, resources and capacity",
-    ],
-  },
-  {
-    id: "amazon-ux",
-    title: "UI/UX Designer",
-    company: "Amazon",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-    posted: "Posted 12 hrs ago",
-    status: "Active",
-    location: "Allentown, New Mexico 31134",
-    salary: "$2000-4500",
-    match: 92,
-    applicationStatus: "Rejected",
-    jobType: "Contract",
-    workMode: "Onsite",
-    yearsExperience: "8 years",
-    about:
-      "Join a fast-paced retail design team focused on customer-centric journeys.",
-    description: [
-      "Define UX patterns that support global e-commerce workflows.",
-      "Partner with research to refine journeys and reduce friction.",
-      "Align product roadmap with measurable experience improvements.",
-    ],
-    requirements: [
-      "5+ years in UX or product design.",
-      "Experience with experimentation and analytics.",
-      "Ability to communicate trade-offs to stakeholders.",
-    ],
-  },
-  {
-    id: "pinterest-ux",
-    title: "UI/UX Designer",
-    company: "Pinterest",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Pinterest-logo.png",
-    posted: "Posted 12 hrs ago",
-    status: "Active",
-    location: "Allentown, New Mexico 31134",
-    salary: "$2000-4500",
-    match: 95,
-    applicationStatus: "Accepted",
-    jobType: "Part Time",
-    workMode: "Remote",
-    yearsExperience: "6 years",
-    about:
-      "Help craft discovery-first experiences for inspiration-seeking users.",
-    description: [
-      "Create interaction models that improve content discovery.",
-      "Design experiments and measure engagement improvements.",
-      "Collaborate with content strategy on storytelling.",
-    ],
-    requirements: [
-      "Portfolio showing strong visual and UX fundamentals.",
-      "Experience designing for personalization.",
-      "Comfort with rapid iteration cycles.",
-    ],
-  },
-  {
-    id: "meta-ux",
-    title: "UI/UX Designer",
-    company: "Facebook",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
-    posted: "Posted 12 hrs ago",
-    status: "Active",
-    location: "Allentown, New Mexico 31134",
-    salary: "$2000-4500",
-    match: 89,
-    applicationStatus: "Rejected",
-    jobType: "Full Time",
-    workMode: "Hybrid",
-    yearsExperience: "10 years",
-    about:
-      "Design collaboration tools that enable teams to build community together.",
-    description: [
-      "Own end-to-end UX for collaboration and messaging workflows.",
-      "Build prototypes to validate complex interaction flows.",
-      "Drive alignment with engineering on feasible solutions.",
-    ],
-    requirements: [
-      "7+ years of experience designing consumer products.",
-      "Proficiency in Figma and prototyping tools.",
-      "Strong communication and facilitation skills.",
-    ],
-  },
-];
+const jobs: Job[] = [];
 
 const filters = ["All", "Applied", "Accepted", "Rejected"] as const;
 
@@ -243,6 +131,11 @@ export default function MyJobsPage() {
   const activeJob =
     filteredJobs.find((job) => job.id === selectedId) ?? filteredJobs[0];
   const activeJobId = activeJob?.id ?? selectedId;
+  const hasJobs = filteredJobs.length > 0;
+  const emptyLabel =
+    activeFilter === "All"
+      ? "No job applications yet."
+      : `No ${activeFilter.toLowerCase()} jobs yet.`;
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -416,89 +309,95 @@ export default function MyJobsPage() {
 
           <div className="flex flex-col gap-6 lg:flex-row">
             <div className="w-full space-y-4 lg:w-[450px] lg:shrink-0">
-              {filteredJobs.map((job) => {
-                const isSelected = selectedId === job.id;
-                const postedLabel = job.posted ?? "Applied recently";
-                const salaryLabel = job.salary ?? "Not disclosed";
-                const matchLabel =
-                  typeof job.match === "number" ? `${job.match}%` : "--";
-                return (
-                  <div key={job.id} className="space-y-4">
-                    <button
-                      onClick={() => handleSelect(job.id)}
-                      className={`relative w-full rounded-[32px] border-2 bg-white p-5 text-left shadow-sm transition-all sm:p-6 ${
-                        isSelected ? "border-[#C27803]" : "border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-base font-medium text-slate-400">
-                          {postedLabel}
-                        </span>
-                        <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
-                          {job.status}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 flex items-center gap-4">
-                        {job.logo ? (
-                          <img
-                            src={job.logo}
-                            alt={job.company}
-                            className="h-12 w-12 object-contain"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-600">
-                            {job.company.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-900">
-                            {job.title}
-                          </h3>
-                          <p className="font-medium text-slate-500">
-                            {job.company}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-6 flex items-end justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <MapPin size={18} className="text-orange-400" />
-                            <span className="text-base font-medium">
-                              {job.location}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-500">
-                            <Banknote size={18} className="text-orange-400" />
-                            <span className="text-base font-medium">
-                              {salaryLabel}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
-                          <p className="text-lg font-bold text-slate-900">
-                            {matchLabel}
-                          </p>
-                          <p className="text-sm font-bold uppercase tracking-wider text-slate-700">
-                            Matching
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-
-                    {isSelected && (
-                      <div
-                        id={`job-details-inline-${job.id}`}
-                        tabIndex={-1}
-                        className="lg:hidden"
+              {hasJobs ? (
+                filteredJobs.map((job) => {
+                  const isSelected = selectedId === job.id;
+                  const postedLabel = job.posted ?? "Applied recently";
+                  const salaryLabel = job.salary ?? "Not disclosed";
+                  const matchLabel =
+                    typeof job.match === "number" ? `${job.match}%` : "--";
+                  return (
+                    <div key={job.id} className="space-y-4">
+                      <button
+                        onClick={() => handleSelect(job.id)}
+                        className={`relative w-full rounded-[32px] border-2 bg-white p-5 text-left shadow-sm transition-all sm:p-6 ${
+                          isSelected ? "border-[#C27803]" : "border-transparent"
+                        }`}
                       >
-                        <JobDetailsPanel job={job} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-medium text-slate-400">
+                            {postedLabel}
+                          </span>
+                          <span className="rounded-full bg-[#ECFDF5] px-3 py-1 text-sm font-bold text-[#10B981]">
+                            {job.status}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-4">
+                          {job.logo ? (
+                            <img
+                              src={job.logo}
+                              alt={job.company}
+                              className="h-12 w-12 object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-600">
+                              {job.company.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900">
+                              {job.title}
+                            </h3>
+                            <p className="font-medium text-slate-500">
+                              {job.company}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 flex items-end justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <MapPin size={18} className="text-orange-400" />
+                              <span className="text-base font-medium">
+                                {job.location}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500">
+                              <Banknote size={18} className="text-orange-400" />
+                              <span className="text-base font-medium">
+                                {salaryLabel}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="rounded-2xl bg-[#FEF3C7] px-4 py-3 text-center">
+                            <p className="text-lg font-bold text-slate-900">
+                              {matchLabel}
+                            </p>
+                            <p className="text-sm font-bold uppercase tracking-wider text-slate-700">
+                              Matching
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+
+                      {isSelected && (
+                        <div
+                          id={`job-details-inline-${job.id}`}
+                          tabIndex={-1}
+                          className="lg:hidden"
+                        >
+                          <JobDetailsPanel job={job} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="rounded-[32px] bg-white p-6 text-sm text-slate-500 shadow-sm">
+                  {emptyLabel}
+                </div>
+              )}
             </div>
 
             <div
@@ -506,7 +405,13 @@ export default function MyJobsPage() {
               tabIndex={-1}
               className="hidden lg:block lg:flex-1"
             >
-              {activeJob && <JobDetailsPanel job={activeJob} />}
+              {activeJob ? (
+                <JobDetailsPanel job={activeJob} />
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-[40px] bg-white p-6 text-sm text-slate-500 shadow-sm md:p-10">
+                  {emptyLabel}
+                </div>
+              )}
             </div>
           </div>
         </div>

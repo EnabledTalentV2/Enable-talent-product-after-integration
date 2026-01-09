@@ -30,11 +30,11 @@ const isLikelyImageSource = (value?: string) => {
 };
 
 const toTrimmed = (value?: string) => value?.trim() ?? "";
+const fallbackText = "Data unavailable";
 
 export default function HomePageDashboard() {
   const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
-  const setUserData = useUserDataStore((s) => s.setUserData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAboutExpanded, setIsAboutExpanded] = useState(true);
@@ -95,9 +95,8 @@ export default function HomePageDashboard() {
           throw new Error("Failed to load user data.");
         }
 
-        const data = await response.json();
+        await response.json();
         if (active) {
-          setUserData(() => data);
           setError(null);
         }
       } catch (err) {
@@ -116,17 +115,17 @@ export default function HomePageDashboard() {
     return () => {
       active = false;
     };
-  }, [router, setUserData]);
+  }, [router]);
 
   const profileName =
     [userData.basicInfo.firstName, userData.basicInfo.lastName]
       .map(toTrimmed)
       .filter(Boolean)
-      .join(" ") || "User";
+      .join(" ") || fallbackText;
   const profileRole =
     toTrimmed(userData.workExperience.entries[0]?.role) ||
-    userData.skills.primaryList?.[0] ||
-    "Job seeker";
+    toTrimmed(userData.skills.primaryList?.[0]) ||
+    fallbackText;
   const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
   const profileImage = isLikelyImageSource(profilePhoto)
     ? profilePhoto
@@ -423,7 +422,7 @@ export default function HomePageDashboard() {
                     </p>
                   ))
                 ) : (
-                  <p className="text-slate-400">No details added yet.</p>
+                  <p className="text-slate-400">{fallbackText}.</p>
                 )}
               </div>
             ) : null}
@@ -482,7 +481,7 @@ export default function HomePageDashboard() {
                         section.count > 0 ? (
                         <p>{section.count} items available.</p>
                       ) : (
-                        <p>No details added yet.</p>
+                        <p>{fallbackText}.</p>
                       )}
                     </div>
                   ) : null}
@@ -503,42 +502,48 @@ export default function HomePageDashboard() {
           </div>
 
           <div className="space-y-4">
-            {notifications.map((notice) => (
-              <div
-                key={notice.id}
-                className="rounded-[28px] bg-white p-5 shadow-sm"
-              >
-                <div className="space-y-1">
-                  <p className="text-base font-medium text-slate-900">
-                    {notice.message}
-                  </p>
-                  <p className="text-sm text-slate-400">{notice.time}</p>
-                </div>
-
-                {notice.type === "request" ? (
-                  <div className="mt-4 space-y-3">
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                    <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
-                      <AlertCircle className="mt-0.5 h-4 w-4" />
-                      <span>{requestNote}</span>
-                    </div>
+            {notifications.length > 0 ? (
+              notifications.map((notice) => (
+                <div
+                  key={notice.id}
+                  className="rounded-[28px] bg-white p-5 shadow-sm"
+                >
+                  <div className="space-y-1">
+                    <p className="text-base font-medium text-slate-900">
+                      {notice.message}
+                    </p>
+                    <p className="text-sm text-slate-400">{notice.time}</p>
                   </div>
-                ) : null}
+
+                  {notice.type === "request" ? (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                      <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
+                        <AlertCircle className="mt-0.5 h-4 w-4" />
+                        <span>{requestNote}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+                No notifications yet.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

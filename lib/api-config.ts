@@ -51,6 +51,10 @@ export const API_ENDPOINTS = {
     createInvite: (pk: string) =>
       `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
   },
+  jobs: {
+    list: `${BACKEND_URL}/api/channels/jobs/`,
+    detail: (pk: string) => `${BACKEND_URL}/api/channels/jobs/${pk}/`,
+  },
   channels: `${BACKEND_URL}/api/channels/`,
   candidates: `${BACKEND_URL}/api/candidates/`,
 } as const;

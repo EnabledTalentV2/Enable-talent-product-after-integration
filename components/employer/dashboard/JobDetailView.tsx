@@ -2,7 +2,7 @@ import { Pencil, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface JobDetail {
-  id: string;
+  id: string | number;
   role: string;
   company: string;
   location: string;

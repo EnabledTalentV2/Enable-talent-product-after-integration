@@ -63,11 +63,12 @@ export default function SendInvitesModal({
 
   if (!isOpen) return null;
 
-  const toggleJobSelection = (jobId: string) => {
+  const toggleJobSelection = (jobId: string | number) => {
+    const normalizedId = String(jobId);
     setSelectedJobIds((prev) =>
-      prev.includes(jobId)
-        ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId]
+      prev.includes(normalizedId)
+        ? prev.filter((id) => id !== normalizedId)
+        : [...prev, normalizedId]
     );
   };
 
@@ -135,12 +136,13 @@ export default function SendInvitesModal({
               </div>
             ) : (
               filteredJobs.map((job) => {
-                const isSelected = selectedJobIds.includes(job.id);
+                const jobId = String(job.id);
+                const isSelected = selectedJobIds.includes(jobId);
                 const stats = emptyJobStats();
                 return (
                   <button
-                    key={job.id}
-                    onClick={() => toggleJobSelection(job.id)}
+                    key={jobId}
+                    onClick={() => toggleJobSelection(jobId)}
                     type="button"
                     aria-pressed={isSelected}
                     className={`w-full text-left cursor-pointer rounded-2xl border-2 p-4 transition-all ${

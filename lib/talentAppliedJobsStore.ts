@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 
 export type AppliedJob = {
   id: string;
@@ -30,22 +29,13 @@ type AppliedJobsStore = {
   applyJob: (job: AppliedJob) => void;
 };
 
-export const useAppliedJobsStore = create<AppliedJobsStore>()(
-  persist(
-    (set) => ({
-      appliedJobs: [],
-      applyJob: (job) =>
-        set((state) => {
-          if (state.appliedJobs.some((item) => item.id === job.id)) {
-            return state;
-          }
-          return { appliedJobs: [job, ...state.appliedJobs] };
-        }),
+export const useAppliedJobsStore = create<AppliedJobsStore>((set) => ({
+  appliedJobs: [],
+  applyJob: (job) =>
+    set((state) => {
+      if (state.appliedJobs.some((item) => item.id === job.id)) {
+        return state;
+      }
+      return { appliedJobs: [job, ...state.appliedJobs] };
     }),
-    {
-      name: "et_applied_jobs",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ appliedJobs: state.appliedJobs }),
-    }
-  )
-);
+}));

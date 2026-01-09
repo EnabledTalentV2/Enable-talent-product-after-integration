@@ -20,9 +20,18 @@ const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
 export default function ListedJobsPage() {
-  const { jobs, hasFetched } = useEmployerJobsStore();
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const { jobs, hasFetched, fetchJobs } = useEmployerJobsStore();
+  const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
+    null
+  );
   const didMountRef = useRef(false);
+
+  // Fetch jobs on mount
+  useEffect(() => {
+    if (!hasFetched) {
+      fetchJobs();
+    }
+  }, [hasFetched, fetchJobs]);
 
   const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
   const selectedJob = useMemo(() => {

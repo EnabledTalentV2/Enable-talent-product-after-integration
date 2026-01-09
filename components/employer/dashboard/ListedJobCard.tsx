@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 
 interface ListedJob {
-  id: string;
+  id: string | number;
   role: string;
   company: string;
   location: string;

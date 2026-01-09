@@ -14,7 +14,7 @@ export type JobFormValues = {
 };
 
 export type EmployerJob = JobFormValues & {
-  id: string;
+  id: string | number; // Support both string (frontend-generated) and number (backend)
   status: "Active" | "Closed" | "Draft";
   postedAt: string;
 };

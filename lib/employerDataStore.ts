@@ -3,6 +3,7 @@
 import { create } from "zustand";
 
 export type EmployerOrganizationInfo = {
+  organizationId?: number;
   organizationName: string;
   aboutOrganization: string;
   location: string;

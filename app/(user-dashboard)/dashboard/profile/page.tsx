@@ -22,6 +22,13 @@ import {
   Pencil,
 } from "lucide-react";
 
+const fallbackText = "Data unavailable";
+const toTrimmed = (value?: string) => value?.trim() ?? "";
+const withFallback = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  return trimmed ? trimmed : fallbackText;
+};
+
 export default function ProfilePage() {
   const rawUserData = useUserDataStore((s) => s.userData);
   const userData = useMemo(
@@ -68,6 +75,49 @@ export default function ProfilePage() {
     preference,
     otherDetails,
   } = userData;
+  const displayName =
+    [basicInfo.firstName, basicInfo.lastName]
+      .map(toTrimmed)
+      .filter(Boolean)
+      .join(" ") || fallbackText;
+  const careerStageLabel = withFallback(otherDetails.careerStage);
+  const emailLabel = withFallback(basicInfo.email);
+  const phoneLabel = withFallback(basicInfo.phone);
+  const locationLabel = withFallback(basicInfo.location);
+  const linkedInUrl = toTrimmed(basicInfo.linkedinUrl);
+  const workEntries = workExperience.entries.filter(
+    (entry) =>
+      toTrimmed(entry.role) ||
+      toTrimmed(entry.company) ||
+      toTrimmed(entry.description) ||
+      toTrimmed(entry.from) ||
+      toTrimmed(entry.to)
+  );
+  const projectEntries = projects.entries.filter(
+    (project) =>
+      toTrimmed(project.projectName) ||
+      toTrimmed(project.projectDescription)
+  );
+  const primarySkills = (skills.primaryList ?? [])
+    .map(toTrimmed)
+    .filter(Boolean);
+  const certificationEntries = certification.entries.filter(
+    (cert) =>
+      toTrimmed(cert.name) ||
+      toTrimmed(cert.organization) ||
+      toTrimmed(cert.issueDate)
+  );
+  const languageEntries = otherDetails.languages.filter((lang) =>
+    toTrimmed(lang.language)
+  );
+  const jobTypeList = preference.jobType.map(toTrimmed).filter(Boolean);
+  const companySizeList = preference.companySize.map(toTrimmed).filter(Boolean);
+  const desiredSalaryLabel = withFallback(otherDetails.desiredSalary);
+  const availabilityLabel = withFallback(otherDetails.availability);
+  const courseLabel = withFallback(education.courseName);
+  const majorLabel = withFallback(education.major);
+  const institutionLabel = withFallback(education.institution);
+  const graduationLabel = withFallback(education.graduationDate);
 
   return (
     <div className="max-w-360 mx-auto space-y-8 py-8">
@@ -89,10 +139,10 @@ export default function ProfilePage() {
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">
-                  {basicInfo.firstName} {basicInfo.lastName}
+                  {displayName}
                 </h1>
                 <p className="text-lg text-slate-500 font-medium">
-                  {otherDetails.careerStage}
+                  {careerStageLabel}
                 </p>
               </div>
               <Link
@@ -107,27 +157,32 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2 text-slate-600">
                 <Mail size={18} className="text-orange-500" />
-                <span>{basicInfo.email}</span>
+                <span>{emailLabel}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-600">
                 <Phone size={18} className="text-orange-500" />
-                <span>{basicInfo.phone}</span>
+                <span>{phoneLabel}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-600">
                 <MapPin size={18} className="text-orange-500" />
-                <span>{basicInfo.location}</span>
+                <span>{locationLabel}</span>
               </div>
-              {basicInfo.linkedinUrl && (
+              {linkedInUrl ? (
                 <div className="flex items-center gap-2 text-slate-600">
                   <Linkedin size={18} className="text-orange-500" />
                   <a
-                    href={basicInfo.linkedinUrl}
+                    href={linkedInUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-orange-600 transition-colors"
                   >
                     LinkedIn Profile
                   </a>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Linkedin size={18} className="text-orange-500" />
+                  <span>{fallbackText}</span>
                 </div>
               )}
             </div>
@@ -146,37 +201,46 @@ export default function ProfilePage() {
                 Work Experience
               </h2>
             </div>
-            {workExperience.experienceType === "fresher" ? (
-              <p className="text-slate-500 italic">
-                Fresher - No work experience listed.
-              </p>
+            {workEntries.length === 0 ? (
+              <p className="text-slate-500 italic">{fallbackText}.</p>
             ) : (
               <div className="space-y-8">
-                {workExperience.entries.map((exp, idx) => (
-                  <div
-                    key={idx}
-                    className="relative pl-8 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-orange-100 last:before:hidden"
-                  >
-                    <div className="absolute left-[-4px] top-2 w-2.5 h-2.5 rounded-full bg-orange-500" />
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-start flex-wrap gap-2">
-                        <h3 className="font-bold text-slate-800 text-lg">
-                          {exp.role}
-                        </h3>
-                        <span className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                          {exp.from} - {exp.current ? "Present" : exp.to}
-                        </span>
+                {workEntries.map((exp, idx) => {
+                  const roleLabel = toTrimmed(exp.role) || fallbackText;
+                  const companyLabel = toTrimmed(exp.company) || fallbackText;
+                  const fromLabel = toTrimmed(exp.from) || fallbackText;
+                  const toLabel = exp.current
+                    ? "Present"
+                    : toTrimmed(exp.to) || fallbackText;
+                  const descriptionLabel =
+                    toTrimmed(exp.description) || fallbackText;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="relative pl-8 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-orange-100 last:before:hidden"
+                    >
+                      <div className="absolute left-[-4px] top-2 w-2.5 h-2.5 rounded-full bg-orange-500" />
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start flex-wrap gap-2">
+                          <h3 className="font-bold text-slate-800 text-lg">
+                            {roleLabel}
+                          </h3>
+                          <span className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                            {fromLabel} - {toLabel}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-600 font-medium">
+                          <Building2 size={16} />
+                          <span>{companyLabel}</span>
+                        </div>
+                        <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                          {descriptionLabel}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-600 font-medium">
-                        <Building2 size={16} />
-                        <span>{exp.company}</span>
-                      </div>
-                      <p className="text-slate-600 leading-relaxed whitespace-pre-line">
-                        {exp.description}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -187,30 +251,41 @@ export default function ProfilePage() {
               <FolderKanban className="text-orange-600" />
               <h2 className="text-xl font-bold text-slate-900">Projects</h2>
             </div>
-            {projects.noProjects || projects.entries.length === 0 ? (
-              <p className="text-slate-500 italic">No projects listed.</p>
+            {projectEntries.length === 0 ? (
+              <p className="text-slate-500 italic">{fallbackText}.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {projects.entries.map((project, idx) => (
-                  <div
-                    key={idx}
-                    className="p-6 rounded-2xl bg-slate-50 border border-slate-100 space-y-3"
-                  >
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-slate-800">
-                        {project.projectName}
-                      </h3>
-                      <Calendar size={16} className="text-slate-400" />
+                {projectEntries.map((project, idx) => {
+                  const projectNameLabel =
+                    toTrimmed(project.projectName) || fallbackText;
+                  const projectDescLabel =
+                    toTrimmed(project.projectDescription) || fallbackText;
+                  const projectFromLabel =
+                    toTrimmed(project.from) || fallbackText;
+                  const projectToLabel = project.current
+                    ? "Present"
+                    : toTrimmed(project.to) || fallbackText;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-6 rounded-2xl bg-slate-50 border border-slate-100 space-y-3"
+                    >
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-bold text-slate-800">
+                          {projectNameLabel}
+                        </h3>
+                        <Calendar size={16} className="text-slate-400" />
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium">
+                        {projectFromLabel} - {projectToLabel}
+                      </p>
+                      <p className="text-slate-600 text-sm leading-relaxed">
+                        {projectDescLabel}
+                      </p>
                     </div>
-                    <p className="text-sm text-slate-500 font-medium">
-                      {project.from} -{" "}
-                      {project.current ? "Present" : project.to}
-                    </p>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      {project.projectDescription}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -225,14 +300,14 @@ export default function ProfilePage() {
               <div className="flex justify-between items-start flex-wrap gap-2">
                 <div>
                   <h3 className="font-bold text-slate-800 text-lg">
-                    {education.courseName} in {education.major}
+                    {courseLabel} in {majorLabel}
                   </h3>
                   <p className="text-slate-600 font-medium">
-                    {education.institution}
+                    {institutionLabel}
                   </p>
                 </div>
                 <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                  Graduated: {education.graduationDate}
+                  Graduated: {graduationLabel}
                 </span>
               </div>
             </div>
@@ -248,16 +323,17 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold text-slate-900">Skills</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {skills.primaryList?.map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-sm font-semibold border border-orange-100"
-                >
-                  {skill}
-                </span>
-              ))}
-              {(!skills.primaryList || skills.primaryList.length === 0) && (
-                <p className="text-slate-500 italic">No skills listed.</p>
+              {primarySkills.length > 0 ? (
+                primarySkills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-sm font-semibold border border-orange-100"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <p className="text-slate-500 italic">{fallbackText}.</p>
               )}
             </div>
           </section>
@@ -270,31 +346,36 @@ export default function ProfilePage() {
                 Certifications
               </h2>
             </div>
-            {certification.noCertification ||
-            certification.entries.length === 0 ? (
-              <p className="text-slate-500 italic">No certifications listed.</p>
+            {certificationEntries.length === 0 ? (
+              <p className="text-slate-500 italic">{fallbackText}.</p>
             ) : (
               <div className="space-y-4">
-                {certification.entries.map((cert, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <h3 className="font-bold text-slate-800 text-sm">
-                      {cert.name}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {cert.organization} • {cert.issueDate}
-                    </p>
-                    {cert.credentialIdUrl && (
-                      <a
-                        href={cert.credentialIdUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-orange-600 hover:underline"
-                      >
-                        View Credential
-                      </a>
-                    )}
-                  </div>
-                ))}
+                {certificationEntries.map((cert, idx) => {
+                  const certName = toTrimmed(cert.name) || fallbackText;
+                  const certOrg = toTrimmed(cert.organization) || fallbackText;
+                  const certDate = toTrimmed(cert.issueDate) || fallbackText;
+
+                  return (
+                    <div key={idx} className="space-y-1">
+                      <h3 className="font-bold text-slate-800 text-sm">
+                        {certName}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        {certOrg} - {certDate}
+                      </p>
+                      {cert.credentialIdUrl && (
+                        <a
+                          href={cert.credentialIdUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-orange-600 hover:underline"
+                        >
+                          View Credential
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -306,24 +387,39 @@ export default function ProfilePage() {
               <h2 className="text-xl font-bold text-slate-900">Languages</h2>
             </div>
             <div className="space-y-4">
-              {otherDetails.languages.map((lang, idx) => (
-                <div key={idx} className="flex justify-between items-center">
-                  <span className="font-bold text-slate-800">
-                    {lang.language}
-                  </span>
-                  <div className="flex gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                      S: {lang.speaking}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                      R: {lang.reading}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                      W: {lang.writing}
-                    </span>
-                  </div>
-                </div>
-              ))}
+              {languageEntries.length > 0 ? (
+                languageEntries.map((lang, idx) => {
+                  const languageLabel =
+                    toTrimmed(lang.language) || fallbackText;
+                  const speakingLabel =
+                    toTrimmed(lang.speaking) || fallbackText;
+                  const readingLabel =
+                    toTrimmed(lang.reading) || fallbackText;
+                  const writingLabel =
+                    toTrimmed(lang.writing) || fallbackText;
+
+                  return (
+                    <div key={idx} className="flex justify-between items-center">
+                      <span className="font-bold text-slate-800">
+                        {languageLabel}
+                      </span>
+                      <div className="flex gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                          S: {speakingLabel}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                          R: {readingLabel}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                          W: {writingLabel}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-slate-500 italic">{fallbackText}.</p>
+              )}
             </div>
           </section>
 
@@ -339,14 +435,20 @@ export default function ProfilePage() {
                   Job Types
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {preference.jobType.map((type, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
-                    >
-                      {type}
+                  {jobTypeList.length > 0 ? (
+                    jobTypeList.map((type, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
+                      >
+                        {type}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {fallbackText}
                     </span>
-                  ))}
+                  )}
                 </div>
               </div>
               <div>
@@ -354,14 +456,20 @@ export default function ProfilePage() {
                   Company Size
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {preference.companySize.map((size, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
-                    >
-                      {size}
+                  {companySizeList.length > 0 ? (
+                    companySizeList.map((size, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
+                      >
+                        {size}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {fallbackText}
                     </span>
-                  ))}
+                  )}
                 </div>
               </div>
               <div className="pt-2 border-t border-slate-50">
@@ -369,13 +477,13 @@ export default function ProfilePage() {
                   <span className="font-bold text-slate-800">
                     Desired Salary:
                   </span>{" "}
-                  {otherDetails.desiredSalary}
+                  {desiredSalaryLabel}
                 </p>
                 <p className="text-sm text-slate-600">
                   <span className="font-bold text-slate-800">
                     Availability:
                   </span>{" "}
-                  {otherDetails.availability}
+                  {availabilityLabel}
                 </p>
               </div>
             </div>
