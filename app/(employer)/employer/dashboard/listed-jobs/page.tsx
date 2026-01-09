@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
-import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { useJobs } from "@/lib/hooks/useJobs";
 import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 
 const brandStyles: Record<string, string> = {
@@ -20,18 +20,13 @@ const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
 export default function ListedJobsPage() {
-  const { jobs, hasFetched, fetchJobs } = useEmployerJobsStore();
+  // Use React Query hook - automatic fetching, caching, and error handling
+  const { data: jobs = [], isLoading, error } = useJobs();
+
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
   );
   const didMountRef = useRef(false);
-
-  // Fetch jobs on mount
-  useEffect(() => {
-    if (!hasFetched) {
-      fetchJobs();
-    }
-  }, [hasFetched, fetchJobs]);
 
   const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
   const selectedJob = useMemo(() => {
@@ -89,7 +84,8 @@ export default function ListedJobsPage() {
     });
   }, [selectedJobId]);
 
-  if (!hasFetched) {
+  // Show loading state
+  if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-120px)] items-center justify-center text-slate-500">
         Loading listed jobs...
@@ -97,7 +93,18 @@ export default function ListedJobsPage() {
     );
   }
 
-  if (hasFetched && listedJobs.length === 0) {
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-500">
+        <p className="text-lg font-medium text-red-600">Failed to load jobs</p>
+        <p className="text-sm">{error.message}</p>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (listedJobs.length === 0) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 py-16 text-center">
         <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-700">
