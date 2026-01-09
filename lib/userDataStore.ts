@@ -4,16 +4,17 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { initialUserData } from "@/lib/userDataDefaults";
 import type { UserData } from "@/lib/types/user";
+import type { DeepPartialUserData } from "@/lib/candidateProfileUtils";
 
 type UserDataStore = {
   userData: UserData;
   setUserData: (updater: (prev: UserData) => UserData) => void;
-  patchUserData: (patch: Partial<UserData>) => void;
+  patchUserData: (patch: Partial<UserData> | DeepPartialUserData) => void;
   resetUserData: () => void;
 };
 
 const normalizeUserData = (
-  value: Partial<UserData> | null | undefined
+  value: Partial<UserData> | DeepPartialUserData | null | undefined
 ): UserData => {
   const safe = value && typeof value === "object" ? value : {};
 

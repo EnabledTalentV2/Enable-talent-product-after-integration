@@ -72,9 +72,22 @@ const hasValue = (value: unknown): boolean => {
   return value !== null && value !== undefined;
 };
 
+export type DeepPartialUserData = {
+  basicInfo?: Partial<UserData["basicInfo"]>;
+  education?: Partial<UserData["education"]>;
+  workExperience?: Partial<UserData["workExperience"]>;
+  skills?: Partial<UserData["skills"]>;
+  projects?: Partial<UserData["projects"]>;
+  achievements?: Partial<UserData["achievements"]>;
+  certification?: Partial<UserData["certification"]>;
+  preference?: Partial<UserData["preference"]>;
+  otherDetails?: Partial<UserData["otherDetails"]>;
+  reviewAgree?: Partial<UserData["reviewAgree"]>;
+};
+
 export const mapCandidateProfileToUserData = (
   payload: unknown
-): Partial<UserData> => {
+): DeepPartialUserData => {
   if (!isRecord(payload)) return {};
 
   const user = isRecord(payload.user) ? payload.user : null;
@@ -113,7 +126,7 @@ export const mapCandidateProfileToUserData = (
     otherDetails.availability = "Immediately / Available now";
   }
 
-  const result: Partial<UserData> = {};
+  const result: DeepPartialUserData = {};
   if (hasValue(basicInfo)) {
     result.basicInfo = basicInfo;
   }

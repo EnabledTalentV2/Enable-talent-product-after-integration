@@ -21,7 +21,9 @@ const getBrandStyle = (company: string) =>
 
 export default function ListedJobsPage() {
   const { jobs, hasFetched, fetchJobs } = useEmployerJobsStore();
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
+    null
+  );
   const didMountRef = useRef(false);
 
   // Fetch jobs on mount

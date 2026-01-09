@@ -23,7 +23,7 @@ type AcceptanceRatePoint = {
 };
 
 type RecentJob = {
-  id: string;
+  id: string | number;
   role: string;
   company: string;
   location: string;
