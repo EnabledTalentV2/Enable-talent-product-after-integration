@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npx tsc:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\vipin\\OneDrive\\Desktop\\Enabled Talent\\Project 2\\Product Enabled Talent\\product\\app\\api\\candidates"
     ]
   }
 }
