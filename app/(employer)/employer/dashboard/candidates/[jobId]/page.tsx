@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
-import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
 import CandidateRankingPanel from "@/components/employer/ai/CandidateRankingPanel";
 import { CandidateProfile, CandidateStage } from "@/lib/types/candidates";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
@@ -40,9 +39,6 @@ export default function CandidatesPage() {
   const [activeTab, setActiveTab] =
     useState<(typeof TABS)[number]["id"]>("ai_ranking");
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
-    null
-  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Calculate stats dynamically for the current job
@@ -68,12 +64,6 @@ export default function CandidatesPage() {
         const data = await fetchCandidates(currentJobId, activeTab);
         if (isMounted) {
           setCandidates(data);
-          // Auto-select the first candidate if available
-          if (data.length > 0) {
-            setSelectedCandidateId(data[0].id);
-          } else {
-            setSelectedCandidateId(null);
-          }
         }
       } catch (error) {
         console.error("Failed to fetch candidates", error);
@@ -90,9 +80,6 @@ export default function CandidatesPage() {
       isMounted = false;
     };
   }, [activeTab, currentJobId, currentJob]);
-
-  const selectedCandidate =
-    candidates.find((c) => c.id === selectedCandidateId) || null;
 
   if (!currentJobId || !hasFetched) {
     return (
@@ -120,8 +107,8 @@ export default function CandidatesPage() {
         <JobHeader jobInfo={jobHeaderInfo} stats={jobStats} />
       </div>
 
-      {/* Main Content: Split View */}
-      <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
+      {/* Main Content: Full Width Layout */}
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
         {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide shrink-0">
           {TABS.map((tab) => (
@@ -147,40 +134,32 @@ export default function CandidatesPage() {
               onCandidateSelect={(candidateIdOrSlug) => {
                 console.log("Selected candidate:", candidateIdOrSlug);
                 // Navigate to candidate profile
-                // If backend provides slug, it will be a string, otherwise it's the ID (number)
                 router.push(`/employer/dashboard/candidates/profile/${candidateIdOrSlug}`);
               }}
             />
           </div>
         ) : (
-          <>
-            {/* Left Column: List */}
-            <div className="flex flex-1 flex-col gap-4 lg:max-w-[480px]">
-              {/* Candidate List */}
-              <div className="min-h-0 flex-1 rounded-[28px] bg-white p-4 shadow-sm relative">
-                {isLoading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-[28px]">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#C27803]"></div>
-                  </div>
-                ) : candidates.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-slate-500">
-                    No candidates found in this category.
-                  </div>
-                ) : (
-                  <CandidateList
-                    candidates={candidates}
-                    selectedId={selectedCandidateId}
-                    onSelect={setSelectedCandidateId}
-                  />
-                )}
+          /* Candidate List View */
+          <div className="min-h-0 flex-1 rounded-[28px] bg-white p-4 shadow-sm relative">
+            {isLoading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-[28px]">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#C27803]"></div>
               </div>
-            </div>
-
-            {/* Right Column: Detail View */}
-            <div className="hidden min-h-0 flex-1 lg:block">
-              <CandidateDetail candidate={selectedCandidate} />
-            </div>
-          </>
+            ) : candidates.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-slate-500">
+                No candidates found in this category.
+              </div>
+            ) : (
+              <CandidateList
+                candidates={candidates}
+                selectedId={null}
+                onSelect={(id) => {
+                  // Navigate to candidate profile on click
+                  router.push(`/employer/dashboard/candidates/profile/${id}`);
+                }}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>
