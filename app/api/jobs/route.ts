@@ -14,14 +14,38 @@ export async function GET(request: NextRequest) {
       cookies
     );
 
-    const data = await backendResponse.json();
-    console.log("[Jobs API] GET <-", backendResponse.status);
+    console.log("[Jobs API] GET <- Status:", backendResponse.status);
+
+    // Get response text first, then try to parse as JSON
+    const responseText = await backendResponse.text();
+
+    if (backendResponse.status >= 400) {
+      console.error("[Jobs API] Backend error response:", responseText.substring(0, 1000));
+    }
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log("[Jobs API] Parsed response data");
+    } catch (parseError) {
+      console.error("[Jobs API] Failed to parse backend response as JSON");
+      console.error("[Jobs API] Response text:", responseText.substring(0, 500));
+      data = {
+        error: "Backend returned non-JSON response",
+        details: responseText.substring(0, 200),
+        status: backendResponse.status
+      };
+    }
 
     return NextResponse.json(data, {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Get jobs error:", error);
+    console.error("[Jobs API] Get jobs error:", error);
+    console.error("[Jobs API] Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { error: "Failed to fetch jobs" },
       { status: 500 }
