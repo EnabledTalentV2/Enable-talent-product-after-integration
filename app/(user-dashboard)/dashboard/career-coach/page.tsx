@@ -72,8 +72,7 @@ export default function CareerCoachPage() {
             </div>
             <p className="max-w-2xl text-base text-slate-600">
               Get personalized guidance on your resume, interview prep, and job
-              search strategy. This is a placeholder until the coach is wired to
-              the backend.
+              search strategy powered by AI.
             </p>
           </div>
           <Link

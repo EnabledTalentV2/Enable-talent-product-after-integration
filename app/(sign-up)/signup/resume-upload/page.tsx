@@ -10,7 +10,7 @@ import {
 } from "@/lib/candidateProfile";
 import { useUserDataStore } from "@/lib/userDataStore";
 import type { UserData } from "@/lib/types/user";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, handleSessionExpiry } from "@/lib/api-client";
 
 // Resume upload configuration
 const allowedExtensions = [
@@ -395,7 +395,13 @@ export default function ResumeUpload() {
         });
 
         if (!response.ok) {
-          router.replace("/login-talent");
+          console.log(
+            "[Resume Upload] Session check failed with status:",
+            response.status
+          );
+          // Add return URL for better UX
+          const returnUrl = encodeURIComponent("/signup/resume-upload");
+          router.replace(`/login-talent?returnUrl=${returnUrl}`);
           return;
         }
 
@@ -424,7 +430,8 @@ export default function ResumeUpload() {
         setLoading(false);
       } catch (err) {
         console.error("[Resume Upload] Session check error:", err);
-        router.replace("/login-talent");
+        const returnUrl = encodeURIComponent("/signup/resume-upload");
+        router.replace(`/login-talent?returnUrl=${returnUrl}`);
       }
     };
 
@@ -448,6 +455,42 @@ export default function ResumeUpload() {
     fileInputRef.current?.click();
   };
 
+  /**
+   * Check parsing status once to see if data is already available
+   */
+  const checkParsingStatus = async (
+    slug: string
+  ): Promise<UserDataPatch | null> => {
+    try {
+      console.log("[Resume Upload] Checking current parsing status");
+      const statusData = await apiRequest<unknown>(
+        `/api/candidates/profiles/${slug}/parsing-status/`,
+        { method: "GET" }
+      );
+      const patch = extractUserDataPatch(statusData);
+      if (Object.keys(patch).length > 0) {
+        console.log(
+          "[Resume Upload] Found existing parsed data in status check"
+        );
+        return patch;
+      }
+
+      const status = getParsingStatus(statusData);
+      console.log("[Resume Upload] Current parsing status:", status || "none");
+      return null;
+    } catch (err) {
+      // Check if session expired
+      if (handleSessionExpiry(err, router)) {
+        throw err; // Re-throw to stop execution
+      }
+      console.warn("[Resume Upload] Status check error:", err);
+      return null;
+    }
+  };
+
+  /**
+   * Poll for parsed data after triggering parse
+   */
   const pollForParsedData = async (
     slug: string
   ): Promise<UserDataPatch | null> => {
@@ -479,6 +522,10 @@ export default function ResumeUpload() {
           return null;
         }
       } catch (err) {
+        // Check if session expired
+        if (handleSessionExpiry(err, router)) {
+          throw err; // Re-throw to stop polling
+        }
         console.warn(
           `[Resume Upload] Parsing status error (attempt ${attempt + 1}):`,
           err
@@ -587,6 +634,12 @@ export default function ResumeUpload() {
         });
         console.log("[Resume Upload] Resume URL saved to profile");
       } catch (err) {
+        // Check if session expired
+        if (handleSessionExpiry(err, router)) {
+          setError("Your session expired. Redirecting to login...");
+          return;
+        }
+
         const message = getErrorMessage(err);
         console.error("[Resume Upload] Failed to save resume URL:", err);
         setParseWarning(
@@ -597,58 +650,75 @@ export default function ResumeUpload() {
         return;
       }
 
-      // Step 3: Trigger resume parsing
+      // Step 3: Check if resume is already parsed (from previous attempt)
       setUploadStage("parsing");
-      console.log("[Resume Upload] Triggering resume parsing");
+      console.log("[Resume Upload] Step 3: Checking existing parsing status");
 
-      let parseResponse: unknown | null = null;
-
-      try {
-        parseResponse = await apiRequest<unknown>(
-          `/api/candidates/profiles/${candidateSlug}/parse-resume/`,
-          {
-            method: "POST",
-          }
+      const initialCheck = await checkParsingStatus(candidateSlug);
+      if (initialCheck && Object.keys(initialCheck).length > 0) {
+        console.log(
+          "[Resume Upload] Resume already parsed! Using existing data"
         );
-        console.log("[Resume Upload] Parse request completed");
-      } catch (err) {
-        const message = getErrorMessage(err).toLowerCase();
-        console.warn("[Resume Upload] Parse request error:", message);
-
-        // If already parsed, continue to polling; otherwise, rethrow
-        if (!message.includes("already parsed")) {
-          // Log the error but don't fail completely - try polling
-          console.error(
-            "[Resume Upload] Parse endpoint failed, will try polling:",
-            err
-          );
-        }
-      }
-
-      // Step 4: Check immediate parse response
-      const parsePatch = parseResponse
-        ? extractUserDataPatch(parseResponse)
-        : null;
-
-      if (parsePatch && Object.keys(parsePatch).length > 0) {
-        console.log("[Resume Upload] Received immediate parse results");
-        setUserData((prev) => mergeUserData(prev, parsePatch));
+        setUserData((prev) => mergeUserData(prev, initialCheck));
         parsedSuccessfully = true;
       } else {
-        // Step 5: Poll for parsing status
-        setUploadStage("polling");
-        console.log("[Resume Upload] Starting polling for parsed data");
-        const patch = await pollForParsedData(candidateSlug);
-        if (patch && Object.keys(patch).length > 0) {
-          console.log("[Resume Upload] Received parsed data from polling");
-          setUserData((prev) => mergeUserData(prev, patch));
+        // Step 4: Trigger resume parsing
+        console.log("[Resume Upload] Step 4: Triggering new parse request");
+
+        let parseResponse: unknown | null = null;
+
+        try {
+          parseResponse = await apiRequest<unknown>(
+            `/api/candidates/profiles/${candidateSlug}/parse-resume/`,
+            {
+              method: "POST",
+            }
+          );
+          console.log("[Resume Upload] Parse request completed");
+        } catch (err) {
+          // Check if session expired
+          if (handleSessionExpiry(err, router)) {
+            setError("Your session expired. Redirecting to login...");
+            return;
+          }
+
+          const message = getErrorMessage(err).toLowerCase();
+          console.warn("[Resume Upload] Parse request error:", message);
+
+          // If already parsed, continue to polling
+          if (!message.includes("already parsed")) {
+            console.error(
+              "[Resume Upload] Parse endpoint failed, will try polling:",
+              err
+            );
+          }
+        }
+
+        // Step 5: Check immediate parse response
+        const parsePatch = parseResponse
+          ? extractUserDataPatch(parseResponse)
+          : null;
+
+        if (parsePatch && Object.keys(parsePatch).length > 0) {
+          console.log("[Resume Upload] Received immediate parse results");
+          setUserData((prev) => mergeUserData(prev, parsePatch));
           parsedSuccessfully = true;
         } else {
-          console.warn("[Resume Upload] No parsed data received from polling");
+          // Step 6: Poll for parsing status
+          setUploadStage("polling");
+          console.log("[Resume Upload] Step 6: Polling for parsed data");
+          const patch = await pollForParsedData(candidateSlug);
+          if (patch && Object.keys(patch).length > 0) {
+            console.log("[Resume Upload] Received parsed data from polling");
+            setUserData((prev) => mergeUserData(prev, patch));
+            parsedSuccessfully = true;
+          } else {
+            console.warn("[Resume Upload] No parsed data received from polling");
+          }
         }
       }
 
-      // Step 6: Handle results
+      // Step 7: Handle results
       if (!parsedSuccessfully) {
         console.log(
           "[Resume Upload] Parsing failed or timed out, showing manual fill option"
@@ -661,6 +731,12 @@ export default function ResumeUpload() {
         router.push("/signup/manual-resume-fill");
       }
     } catch (err) {
+      // Check if session expired
+      if (handleSessionExpiry(err, router)) {
+        setError("Your session expired. Redirecting to login...");
+        return;
+      }
+
       const message = getErrorMessage(err);
       console.error("[Resume Upload] Unexpected error during upload:", err);
       setParseWarning(

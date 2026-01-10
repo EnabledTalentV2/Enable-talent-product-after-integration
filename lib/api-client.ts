@@ -4,6 +4,10 @@ export type ApiError = {
   data?: unknown;
 };
 
+export type SessionExpiredError = ApiError & {
+  isSessionExpired: true;
+};
+
 export type ApiResult<T> = {
   data: T | null;
   error: string | null;
@@ -86,10 +90,59 @@ export const isApiError = (error: unknown): error is ApiError =>
   typeof error.message === "string" &&
   typeof error.status === "number";
 
+export const isSessionExpiredError = (
+  error: unknown
+): error is SessionExpiredError =>
+  isRecord(error) &&
+  typeof error.message === "string" &&
+  typeof error.status === "number" &&
+  error.isSessionExpired === true;
+
 export const getApiErrorMessage = (error: unknown, fallback: string): string => {
   if (isApiError(error)) return error.message || fallback;
   if (error instanceof Error) return error.message || fallback;
   return fallback;
+};
+
+/**
+ * Helper to handle session expiry errors by redirecting to login
+ * Returns true if error was a session expiry (and redirect was triggered)
+ */
+export const handleSessionExpiry = (
+  error: unknown,
+  router: { push: (path: string) => void }
+): boolean => {
+  if (isSessionExpiredError(error)) {
+    console.warn("[Session] Session expired, redirecting to login");
+
+    // Get current path for return URL
+    const currentPath =
+      typeof window !== "undefined" ? window.location.pathname : "";
+    const returnUrl = currentPath && currentPath !== "/login-talent"
+      ? `?returnUrl=${encodeURIComponent(currentPath)}`
+      : "";
+
+    router.push(`/login-talent${returnUrl}`);
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Check if an error message indicates authentication failure
+ */
+const isAuthenticationError = (message: string, status: number): boolean => {
+  if (status !== 401) return false;
+
+  const lowerMessage = message.toLowerCase();
+  return (
+    lowerMessage.includes("authentication") ||
+    lowerMessage.includes("credentials") ||
+    lowerMessage.includes("not provided") ||
+    lowerMessage.includes("unauthorized") ||
+    lowerMessage.includes("session expired") ||
+    lowerMessage.includes("login required")
+  );
 };
 
 const parseJsonResponse = async (response: Response): Promise<unknown> => {
@@ -130,9 +183,24 @@ export async function apiRequest<T>(
   const data = await parseJsonResponse(response);
 
   if (!response.ok) {
+    const message = extractErrorMessage(
+      data,
+      response.statusText || "Request failed"
+    );
+
+    // Check if this is a session expiry error (401 with auth-related message)
+    if (isAuthenticationError(message, response.status)) {
+      throw {
+        status: response.status,
+        message: message,
+        data,
+        isSessionExpired: true,
+      } satisfies SessionExpiredError;
+    }
+
     throw {
       status: response.status,
-      message: extractErrorMessage(data, response.statusText || "Request failed"),
+      message: message,
       data,
     } satisfies ApiError;
   }
