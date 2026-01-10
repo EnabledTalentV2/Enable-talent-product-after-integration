@@ -267,7 +267,7 @@ export async function proxy(request: NextRequest) {
     }
     // Prevent employers from accessing job seeker routes
     if (isJobSeekerRoute && userRole === "employer") {
-      return NextResponse.redirect(new URL("/employer", request.url));
+      return NextResponse.redirect(new URL("/employer/dashboard", request.url));
     }
   }
 
@@ -279,7 +279,7 @@ export async function proxy(request: NextRequest) {
       pathname === "/signup-employer")
   ) {
     if (userRole === "employer") {
-      return NextResponse.redirect(new URL("/employer", request.url));
+      return NextResponse.redirect(new URL("/employer/dashboard", request.url));
     }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

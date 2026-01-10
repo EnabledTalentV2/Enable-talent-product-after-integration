@@ -42,6 +42,8 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`,
     verifyProfile: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/verify-profile/`,
+    careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
+    resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
   },
   // Other APIs
   organizations: {

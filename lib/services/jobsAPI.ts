@@ -1,7 +1,7 @@
 import { apiRequest } from "@/lib/api-client";
 import type { JobFormValues } from "@/lib/schemas/job.schema";
 import type { EmployerJob } from "@/lib/employerJobsTypes";
-import { BackendJobsResponseSchema } from "@/lib/schemas/job.schema";
+import { BackendJobsResponseSchema, BackendJobSchema } from "@/lib/schemas/job.schema";
 import {
   transformJobsArray,
   transformJobFromBackend,
@@ -43,8 +43,11 @@ export const jobsAPI = {
         method: "GET",
       });
 
+      // Validate response structure with Zod
+      const validated = BackendJobSchema.parse(raw);
+
       // Transform single job
-      return transformJobFromBackend(raw as any);
+      return transformJobFromBackend(validated);
     } catch (error) {
       console.error(`Failed to fetch job ${id}:`, error);
       throw error;
@@ -68,8 +71,11 @@ export const jobsAPI = {
         body: JSON.stringify(payload),
       });
 
+      // Validate response structure with Zod
+      const validated = BackendJobSchema.parse(raw);
+
       // Transform response back to frontend format
-      return transformJobFromBackend(raw as any);
+      return transformJobFromBackend(validated);
     } catch (error) {
       console.error("Failed to create job:", error);
       throw error;
@@ -96,8 +102,11 @@ export const jobsAPI = {
         body: JSON.stringify(payload),
       });
 
+      // Validate response structure with Zod
+      const validated = BackendJobSchema.parse(raw);
+
       // Transform response back to frontend format
-      return transformJobFromBackend(raw as any);
+      return transformJobFromBackend(validated);
     } catch (error) {
       console.error(`Failed to update job ${id}:`, error);
       throw error;

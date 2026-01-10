@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
+import { useCareerCoach } from "@/lib/hooks/useCareerCoach";
+import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
+import { handleSessionExpiry } from "@/lib/api-client";
 
 type ChatMessage = {
   id: string;
@@ -15,6 +20,7 @@ type ChatMessage = {
 };
 
 const STORAGE_KEY = "et_career_coach_chat";
+const THREAD_ID_KEY = "et_career_coach_thread_id";
 
 const defaultMessages: ChatMessage[] = [
   {
@@ -32,24 +38,8 @@ const quickPrompts = [
   "Suggest stronger achievement bullets",
 ];
 
-const pickCoachReply = (input: string) => {
-  const normalized = input.toLowerCase();
-  if (normalized.includes("resume") || normalized.includes("summary")) {
-    return "Share your summary and the role you want. I will tighten the language and highlight impact.";
-  }
-  if (normalized.includes("interview")) {
-    return "Great. What role and level are you preparing for? I will build a focused prep plan.";
-  }
-  if (normalized.includes("profile") || normalized.includes("tailor")) {
-    return "Tell me the top 3 roles you want. I will map your strengths to those requirements.";
-  }
-  if (normalized.includes("achievement") || normalized.includes("bullet")) {
-    return "List your top projects or wins. I will help you craft results-driven bullets.";
-  }
-  return "Got it. What outcome do you want from this session?";
-};
-
 export default function CareerCoachStartPage() {
+  const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
   const userData = useMemo(
     () => ({
@@ -87,29 +77,54 @@ export default function CareerCoachStartPage() {
     () => computeProfileCompletion(userData),
     [userData]
   );
+
+  // Hooks for API interaction
+  const { data: profileData, fetchCandidateProfile } = useFetchCandidateProfile();
+  const { sendCareerCoachMessage, isLoading: isSendingMessage } = useCareerCoach();
+
+  // State management
   const [messages, setMessages] = useState<ChatMessage[]>(defaultMessages);
   const [draft, setDraft] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [resumeSlug, setResumeSlug] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Fetch candidate profile on mount to get resume slug
+  useEffect(() => {
+    fetchCandidateProfile();
+  }, [fetchCandidateProfile]);
+
+  // Update resume slug when profile data is available
+  useEffect(() => {
+    if (profileData?.slug) {
+      setResumeSlug(profileData.slug);
+    }
+  }, [profileData]);
+
+  // Load messages from localStorage
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(stored) as ChatMessage[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setMessages(parsed);
+    const storedThreadId = window.localStorage.getItem(THREAD_ID_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as ChatMessage[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      } catch {
+        // Ignore invalid local data.
       }
-    } catch {
-      // Ignore invalid local data.
+    }
+    if (storedThreadId) {
+      setThreadId(storedThreadId);
     }
   }, []);
 
+  // Save messages to localStorage
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -117,18 +132,33 @@ export default function CareerCoachStartPage() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
+  // Save thread ID to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined" || !threadId) {
+      return;
+    }
+    window.localStorage.setItem(THREAD_ID_KEY, threadId);
+  }, [threadId]);
+
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "end",
     });
-  }, [messages, isTyping]);
+  }, [messages, isSendingMessage]);
 
-  const sendMessage = (content: string) => {
+  const sendMessage = async (content: string) => {
     const trimmed = content.trim();
-    if (!trimmed || isTyping) {
+    if (!trimmed || isSendingMessage) {
       return;
     }
+
+    if (!resumeSlug) {
+      alert("Unable to send message. Profile not loaded yet.");
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -136,17 +166,62 @@ export default function CareerCoachStartPage() {
     };
     setMessages((prev) => [...prev, userMessage]);
     setDraft("");
-    setIsTyping(true);
 
-    window.setTimeout(() => {
+    // Send to API
+    console.log("[Career Coach] Sending message:", {
+      input_text: trimmed,
+      resume_slug: resumeSlug,
+      thread_id: threadId,
+    });
+
+    const result = await sendCareerCoachMessage({
+      input_text: trimmed,
+      resume_slug: resumeSlug,
+      thread_id: threadId,
+    });
+
+    console.log("[Career Coach] API result:", result);
+
+    if (result.error) {
+      console.error("[Career Coach] Error:", result.error);
+
+      // Check if session expired
+      if (handleSessionExpiry(result.error, router)) {
+        return;
+      }
+
+      // Show error message in chat
+      const errorMessage: ChatMessage = {
+        id: `error-${Date.now()}`,
+        role: "coach",
+        content: `Sorry, I encountered an error: ${result.error}`,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } else if (result.data) {
+      console.log("[Career Coach] Success! Response:", result.data);
+
+      // Update thread ID if it's new
+      if (result.data.thread_id && result.data.thread_id !== threadId) {
+        console.log("[Career Coach] Updating thread ID:", result.data.thread_id);
+        setThreadId(result.data.thread_id);
+      }
+
+      // Add coach response
       const coachMessage: ChatMessage = {
         id: `coach-${Date.now()}`,
         role: "coach",
-        content: pickCoachReply(trimmed),
+        content: result.data.output,
       };
+      console.log("[Career Coach] Adding coach message:", coachMessage);
       setMessages((prev) => [...prev, coachMessage]);
-      setIsTyping(false);
-    }, 650);
+    } else {
+      console.warn("[Career Coach] No data and no error in result");
+    }
+
+    // Refocus the textarea after message is sent
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 100);
   };
 
   const handleSubmit = () => {
@@ -166,8 +241,10 @@ export default function CareerCoachStartPage() {
 
   const handleReset = () => {
     setMessages(defaultMessages);
+    setThreadId(null);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(THREAD_ID_KEY);
     }
   };
 
@@ -184,15 +261,15 @@ export default function CareerCoachStartPage() {
             <ArrowLeft size={16} />
             Back to Coach
           </Link>
-          <div className="flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1 text-xs font-semibold text-amber-700">
+          <div className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-1 text-xs font-semibold text-green-700">
             <Sparkles size={14} />
-            Demo mode (offline)
+            AI-Powered
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
           <h1 className="text-2xl font-bold text-slate-900">Start Coaching</h1>
           <p className="text-sm text-slate-500">
-            This session runs locally and will connect to the backend later.
+            Get personalized career guidance powered by AI. Your conversation is saved automatically.
           </p>
         </div>
       </div>
@@ -220,10 +297,26 @@ export default function CareerCoachStartPage() {
                     : "ml-auto bg-amber-100 text-slate-900"
                 }`}
               >
-                {message.content}
+                {message.role === "coach" ? (
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
+                        li: ({ children }) => <li className="mb-1">{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  message.content
+                )}
               </div>
             ))}
-            {isTyping && (
+            {isSendingMessage && (
               <div className="max-w-[70%] rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-500">
                 Coach is typing...
               </div>
@@ -236,6 +329,7 @@ export default function CareerCoachStartPage() {
               Coach input
             </label>
             <textarea
+              ref={textareaRef}
               id="coach-input"
               rows={3}
               value={draft}
@@ -251,9 +345,9 @@ export default function CareerCoachStartPage() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!draft.trim() || isTyping}
+                disabled={!draft.trim() || isSendingMessage}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  !draft.trim() || isTyping
+                  !draft.trim() || isSendingMessage
                     ? "cursor-not-allowed bg-slate-100 text-slate-400"
                     : "bg-[#C27803] text-white hover:bg-[#A56303]"
                 }`}
