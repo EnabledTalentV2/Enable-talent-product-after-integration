@@ -91,9 +91,10 @@ export async function POST(request: NextRequest) {
       console.log("[Jobs API] Backend response data:", data);
     } catch (parseError) {
       console.error("[Jobs API] Failed to parse backend response as JSON");
+      console.error("[Jobs API] Full error response:", responseText);
       data = {
         error: "Backend returned non-JSON response",
-        details: responseText.substring(0, 200),
+        details: responseText.substring(0, 500),
         status: backendResponse.status
       };
     }

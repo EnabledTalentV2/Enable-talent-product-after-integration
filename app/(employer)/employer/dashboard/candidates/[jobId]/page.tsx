@@ -4,12 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
-import CandidateDetail from "@/components/employer/candidates/CandidateDetail";
+import CandidateRankingPanel from "@/components/employer/ai/CandidateRankingPanel";
 import { CandidateProfile, CandidateStage } from "@/lib/types/candidates";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { emptyJobStats, toJobHeaderInfo } from "@/lib/employerJobsUtils";
 
 const TABS = [
+  { id: "ai_ranking", label: "✨ AI Ranking" },
   { id: "accepted", label: "Accepted" },
   { id: "declined", label: "Declined" },
   { id: "request_sent", label: "Request sent" },
@@ -36,11 +37,8 @@ export default function CandidatesPage() {
   }, [currentJobId, jobs]);
 
   const [activeTab, setActiveTab] =
-    useState<(typeof TABS)[number]["id"]>("matching");
+    useState<(typeof TABS)[number]["id"]>("ai_ranking");
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
-    null
-  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Calculate stats dynamically for the current job
@@ -58,20 +56,20 @@ export default function CandidatesPage() {
       return;
     }
 
+    // Skip fetching candidates for AI ranking tab
+    if (activeTab === "ai_ranking") {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
     const loadCandidates = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchCandidates(currentJobId, activeTab);
+        const data = await fetchCandidates(currentJobId, activeTab as CandidateStage);
         if (isMounted) {
           setCandidates(data);
-          // Auto-select the first candidate if available
-          if (data.length > 0) {
-            setSelectedCandidateId(data[0].id);
-          } else {
-            setSelectedCandidateId(null);
-          }
         }
       } catch (error) {
         console.error("Failed to fetch candidates", error);
@@ -88,9 +86,6 @@ export default function CandidatesPage() {
       isMounted = false;
     };
   }, [activeTab, currentJobId, currentJob]);
-
-  const selectedCandidate =
-    candidates.find((c) => c.id === selectedCandidateId) || null;
 
   if (!currentJobId || !hasFetched) {
     return (
@@ -118,28 +113,39 @@ export default function CandidatesPage() {
         <JobHeader jobInfo={jobHeaderInfo} stats={jobStats} />
       </div>
 
-      {/* Main Content: Split View */}
-      <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
-        {/* Left Column: List */}
-        <div className="flex flex-1 flex-col gap-4 lg:max-w-[480px]">
-          {/* Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`whitespace-nowrap rounded-xl px-6 py-2 text-sm font-semibold transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-[#C27803] text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+      {/* Main Content: Full Width Layout */}
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
+        {/* Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide shrink-0">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`whitespace-nowrap rounded-xl px-6 py-2 text-sm font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? "bg-[#C27803] text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-          {/* Candidate List */}
+        {/* AI Ranking View */}
+        {activeTab === "ai_ranking" ? (
+          <div className="flex-1 overflow-auto">
+            <CandidateRankingPanel
+              jobId={currentJobId}
+              onCandidateSelect={(candidateIdOrSlug) => {
+                console.log("Selected candidate:", candidateIdOrSlug);
+                // Navigate to candidate profile
+                router.push(`/employer/dashboard/candidates/profile/${candidateIdOrSlug}`);
+              }}
+            />
+          </div>
+        ) : (
+          /* Candidate List View */
           <div className="min-h-0 flex-1 rounded-[28px] bg-white p-4 shadow-sm relative">
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-[28px]">
@@ -152,17 +158,15 @@ export default function CandidatesPage() {
             ) : (
               <CandidateList
                 candidates={candidates}
-                selectedId={selectedCandidateId}
-                onSelect={setSelectedCandidateId}
+                selectedId={null}
+                onSelect={(id) => {
+                  // Navigate to candidate profile on click
+                  router.push(`/employer/dashboard/candidates/profile/${id}`);
+                }}
               />
             )}
           </div>
-        </div>
-
-        {/* Right Column: Detail View */}
-        <div className="hidden min-h-0 flex-1 lg:block">
-          <CandidateDetail candidate={selectedCandidate} />
-        </div>
+        )}
       </div>
     </div>
   );

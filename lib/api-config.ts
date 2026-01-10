@@ -56,6 +56,13 @@ export const API_ENDPOINTS = {
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,
     detail: (pk: string) => `${BACKEND_URL}/api/channels/jobs/${pk}/`,
+    rankCandidates: (id: string) =>
+      `${BACKEND_URL}/api/channels/jobs/${id}/rank-candidates/`,
+    rankingData: (id: string) =>
+      `${BACKEND_URL}/api/channels/jobs/${id}/ranking-data/`,
+  },
+  agent: {
+    search: `${BACKEND_URL}/api/channels/agent/`,
   },
   channels: `${BACKEND_URL}/api/channels/`,
   candidates: `${BACKEND_URL}/api/candidates/`,
