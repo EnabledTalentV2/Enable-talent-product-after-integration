@@ -142,7 +142,7 @@ export const transformJobToBackend = (values: JobFormValues): BackendJobPayload 
   // Extract skills array (filter out empty strings)
   const skills = (values.skills || []).filter(skill => skill.trim().length > 0);
 
-  return {
+  const payload: BackendJobPayload = {
     title: values.title,
     job_desc: jobDesc,
     workplace_type: workArrangementMapper.toBackend(values.workArrangement),
@@ -150,11 +150,24 @@ export const transformJobToBackend = (values: JobFormValues): BackendJobPayload 
     job_type: employmentTypeMapper.toBackend(values.employmentType),
     estimated_salary: salaryNum,
     visa_required: false, // Default value
-    skills: skills,
     experience: values.experience || undefined,
     preferred_language: values.preferredLanguage || undefined,
     is_urgent: yesNoToBoolean(values.urgentHiring),
   };
+
+  // NOTE: Skills are temporarily disabled until we implement skill ID mapping
+  // The backend expects skill IDs (numbers), not skill names (strings)
+  // TODO:
+  // 1. Create GET /api/skills endpoint to fetch available skills
+  // 2. Map skill names to IDs before sending to backend
+  // 3. Uncomment the code below once skill ID mapping is implemented
+
+  // Only include skills if there are any
+  // if (skills.length > 0) {
+  //   payload.skills = skills;
+  // }
+
+  return payload;
 };
 
 /**
