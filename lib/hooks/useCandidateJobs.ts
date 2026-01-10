@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { candidateJobsAPI } from "@/lib/services/candidateJobsAPI";
 
 /**
@@ -32,5 +32,21 @@ export function useSearchCandidateJobs(query: string) {
     queryFn: () => candidateJobsAPI.search(query),
     enabled: !!query.trim(),
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook to apply to a job
+ * Mutation that submits job application and invalidates queries
+ */
+export function useApplyToJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (jobId: string | number) => candidateJobsAPI.apply(jobId),
+    onSuccess: () => {
+      // Invalidate browse query to refresh job list
+      queryClient.invalidateQueries({ queryKey: candidateJobsKeys.browse() });
+    },
   });
 }

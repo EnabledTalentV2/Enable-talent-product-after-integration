@@ -7,7 +7,7 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 import { initialUserData } from "@/lib/userDataDefaults";
-import { useCandidateJobs } from "@/lib/hooks/useCandidateJobs";
+import { useCandidateJobs, useApplyToJob } from "@/lib/hooks/useCandidateJobs";
 import type { EmployerJob } from "@/lib/employerJobsTypes";
 
 type CompanyProfile = {
@@ -94,6 +94,7 @@ const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
 
 export default function CompaniesPage() {
   const { data: jobsData, isLoading, error } = useCandidateJobs();
+  const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
   const allJobs = useMemo(
     () => (jobsData || []).map(transformToCompanyJob),
     [jobsData]
@@ -208,26 +209,38 @@ export default function CompaniesPage() {
       return;
     }
 
-    applyJob({
-      id: activeJob.id,
-      title: activeJob.title,
-      status: activeJob.status,
-      location: activeJob.location,
-      match: activeJob.match,
-      companyId: activeCompany.id,
-      companyName: activeCompany.name,
-      companyLogo: activeCompany.logo,
-      companyIndustry: activeCompany.industry,
-      hiringCount: activeCompany.hiringCount,
-      lastActive: activeCompany.lastActive,
-      posted: activeJob.posted,
-      salary: activeJob.salary,
-      jobType: activeJob.jobType,
-      workMode: activeJob.workMode,
-      yearsExperience: activeJob.yearsExperience,
-      about: activeCompany.about[0],
-      description: activeJob.description,
-      requirements: activeJob.requirements,
+    // Submit application to backend
+    applyToJob(activeJob.id, {
+      onSuccess: (data) => {
+        console.log("Application submitted successfully:", data);
+
+        // Also store in local state for UI feedback
+        applyJob({
+          id: activeJob.id,
+          title: activeJob.title,
+          status: activeJob.status,
+          location: activeJob.location,
+          match: activeJob.match,
+          companyId: activeCompany.id,
+          companyName: activeCompany.name,
+          companyLogo: activeCompany.logo,
+          companyIndustry: activeCompany.industry,
+          hiringCount: activeCompany.hiringCount,
+          lastActive: activeCompany.lastActive,
+          posted: activeJob.posted,
+          salary: activeJob.salary,
+          jobType: activeJob.jobType,
+          workMode: activeJob.workMode,
+          yearsExperience: activeJob.yearsExperience,
+          about: activeCompany.about[0],
+          description: activeJob.description,
+          requirements: activeJob.requirements,
+        });
+      },
+      onError: (error) => {
+        console.error("Failed to apply to job:", error);
+        alert("Failed to submit application. Please try again.");
+      },
     });
   };
 
@@ -408,14 +421,16 @@ export default function CompaniesPage() {
                       <button
                         type="button"
                         onClick={handleApply}
-                        disabled={!canApply}
+                        disabled={!canApply || isApplying}
                         className={`rounded-full px-6 py-2 text-base font-bold transition ${
-                          canApply
+                          canApply && !isApplying
                             ? "bg-[#C27803] text-white hover:bg-[#A56303]"
                             : "cursor-not-allowed bg-slate-200 text-slate-500"
                         }`}
                       >
-                        {isApplied
+                        {isApplying
+                          ? "Applying..."
+                          : isApplied
                           ? "Applied"
                           : activeJob.status === "Active"
                           ? "Apply now"

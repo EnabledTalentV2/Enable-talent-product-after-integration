@@ -51,4 +51,32 @@ export const candidateJobsAPI = {
       throw error;
     }
   },
+
+  /**
+   * Apply to a job
+   * Submits candidate application to a specific job posting
+   */
+  apply: async (jobId: string | number): Promise<{
+    message: string;
+    application_id: number;
+    status: string;
+  }> => {
+    try {
+      const response = await apiRequest<{
+        message: string;
+        application_id: number;
+        status: string;
+      }>(`/api/jobs/${jobId}/apply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      return response;
+    } catch (error) {
+      console.error(`Failed to apply to job ${jobId}:`, error);
+      throw error;
+    }
+  },
 };
