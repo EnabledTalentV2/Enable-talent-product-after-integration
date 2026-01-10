@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
+import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
 import {
   MapPin,
   Briefcase,
@@ -297,6 +298,14 @@ export default function CandidateProfilePage() {
           </div>
         </div>
       )}
+
+      {/* AI Resume Chat */}
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm" style={{ height: "600px" }}>
+        <ResumeChatPanel
+          resumeSlug={slug || ""}
+          candidateName={`${candidate.first_name} ${candidate.last_name}`}
+        />
+      </div>
     </div>
   );
 }

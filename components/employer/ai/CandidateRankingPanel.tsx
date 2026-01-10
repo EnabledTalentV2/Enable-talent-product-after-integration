@@ -1,0 +1,232 @@
+"use client";
+
+import React, { useEffect } from "react";
+import { useAIRanking } from "@/lib/hooks/useAIRanking";
+import type { RankedCandidate } from "@/lib/types/ai-features";
+
+interface CandidateRankingPanelProps {
+  jobId: string;
+  onCandidateSelect?: (candidateIdOrSlug: number | string) => void;
+}
+
+export default function CandidateRankingPanel({
+  jobId,
+  onCandidateSelect,
+}: CandidateRankingPanelProps) {
+  const {
+    isRanking,
+    rankingStatus,
+    rankedCandidates,
+    error,
+    triggerRanking,
+    fetchRankingData,
+    clearError,
+  } = useAIRanking();
+
+  // Fetch existing ranking data on mount
+  useEffect(() => {
+    if (jobId) {
+      fetchRankingData(jobId);
+    }
+  }, [jobId, fetchRankingData]);
+
+  const handleTriggerRanking = async () => {
+    await triggerRanking(jobId);
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 0.8) return "text-green-600";
+    if (score >= 0.6) return "text-yellow-600";
+    return "text-gray-600";
+  };
+
+  const getScoreBadge = (score: number, index: number): string | null => {
+    if (index === 0 && score >= 0.9) return "🥇 Best Match";
+    if (index === 1 && score >= 0.8) return "🥈 Great Match";
+    if (index === 2 && score >= 0.7) return "🥉 Good Match";
+    return null;
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <span>✨</span>
+            <span>AI Candidate Ranking</span>
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Let AI analyze and rank candidates based on job requirements
+          </p>
+        </div>
+        <button
+          onClick={handleTriggerRanking}
+          disabled={isRanking}
+          className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+            isRanking
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          {isRanking ? (
+            <span className="flex items-center gap-2">
+              <svg
+                className="animate-spin h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Ranking...
+            </span>
+          ) : (
+            "Rank Candidates"
+          )}
+        </button>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start justify-between">
+          <div className="flex items-start gap-2">
+            <span className="text-red-600 text-xl">⚠️</span>
+            <div>
+              <p className="text-sm font-medium text-red-800">Error</p>
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          </div>
+          <button
+            onClick={clearError}
+            className="text-red-400 hover:text-red-600"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isRanking && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-pulse space-y-4 w-full">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
+          <p className="mt-6 text-gray-600">
+            AI is analyzing candidates... This may take up to 60 seconds.
+          </p>
+        </div>
+      )}
+
+      {/* Ranked Candidates List */}
+      {!isRanking && rankedCandidates.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 mb-4">
+            Found {rankedCandidates.length} ranked candidate
+            {rankedCandidates.length !== 1 ? "s" : ""}
+          </p>
+          {rankedCandidates.map((candidate, index) => {
+            const scorePercent = Math.round(candidate.score * 100);
+            const badge = getScoreBadge(candidate.score, index);
+
+            return (
+              <div
+                key={candidate.candidate_id}
+                className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => onCandidateSelect?.(candidate.candidate_slug || candidate.candidate_id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg font-semibold text-gray-700">
+                        #{index + 1}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        Candidate ID: {candidate.candidate_id}
+                      </span>
+                      {badge && (
+                        <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-medium rounded">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2">
+                      <span className="font-medium">Match Reason:</span>{" "}
+                      {candidate.match_reason}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end ml-4">
+                    <div
+                      className={`text-3xl font-bold ${getScoreColor(
+                        candidate.score
+                      )}`}
+                    >
+                      {scorePercent}%
+                    </div>
+                    <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
+                      <div
+                        className={`h-2 rounded-full ${
+                          candidate.score >= 0.8
+                            ? "bg-green-500"
+                            : candidate.score >= 0.6
+                            ? "bg-yellow-500"
+                            : "bg-gray-400"
+                        }`}
+                        style={{ width: `${scorePercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isRanking &&
+        rankedCandidates.length === 0 &&
+        rankingStatus === "not_started" && (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🤖</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Ranking Yet
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Click "Rank Candidates" to let AI analyze and score candidates
+              for this job.
+            </p>
+          </div>
+        )}
+
+      {/* No Candidates State */}
+      {!isRanking &&
+        rankedCandidates.length === 0 &&
+        rankingStatus === "completed" && (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Candidates Found
+            </h3>
+            <p className="text-gray-600">
+              There are no candidates available for ranking at this time.
+            </p>
+          </div>
+        )}
+    </div>
+  );
+}
