@@ -56,12 +56,18 @@ export default function CandidatesPage() {
       return;
     }
 
+    // Skip fetching candidates for AI ranking tab
+    if (activeTab === "ai_ranking") {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
     const loadCandidates = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchCandidates(currentJobId, activeTab);
+        const data = await fetchCandidates(currentJobId, activeTab as CandidateStage);
         if (isMounted) {
           setCandidates(data);
         }
