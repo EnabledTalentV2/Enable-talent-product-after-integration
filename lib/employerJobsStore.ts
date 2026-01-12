@@ -5,6 +5,13 @@ import type { EmployerJob, JobFormValues } from "@/lib/employerJobsTypes";
 import { apiRequest } from "@/lib/api-client";
 import { parseJobsArray, toBackendJobPayload } from "@/lib/employerJobsUtils";
 
+// Callback to invalidate React Query cache
+let invalidateJobsCache: (() => void) | null = null;
+
+export function setJobsCacheInvalidator(invalidator: () => void) {
+  invalidateJobsCache = invalidator;
+}
+
 type EmployerJobsStore = {
   jobs: EmployerJob[];
   isLoading: boolean;
@@ -108,6 +115,11 @@ export const useEmployerJobsStore = create<EmployerJobsStore>((set, get) => ({
       nextJobs[jobIndex] = updatedJob;
       set({ jobs: nextJobs, hasFetched: true });
 
+      // Invalidate React Query cache if available
+      if (invalidateJobsCache) {
+        invalidateJobsCache();
+      }
+
       return updatedJob;
     } catch (error) {
       console.error("[Jobs Store] Failed to update job:", error);
@@ -129,6 +141,11 @@ export const useEmployerJobsStore = create<EmployerJobsStore>((set, get) => ({
       const previousJobs = get().jobs;
       const nextJobs = previousJobs.filter((job) => job.id !== jobId);
       set({ jobs: nextJobs, hasFetched: true });
+
+      // Invalidate React Query cache if available
+      if (invalidateJobsCache) {
+        invalidateJobsCache();
+      }
     } catch (error) {
       console.error("[Jobs Store] Failed to delete job:", error);
       throw error; // Re-throw to show error toast in UI

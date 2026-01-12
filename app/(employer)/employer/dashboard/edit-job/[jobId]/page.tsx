@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import JobForm from "@/components/employer/dashboard/JobForm";
 import Toast from "@/components/Toast";
-import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
+import { jobsKeys } from "@/lib/hooks/useJobs";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 import { toJobFormValues } from "@/lib/employerJobsUtils";
 
@@ -16,9 +18,17 @@ export default function EditJobPage() {
   const jobIdParam = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
   const jobId = typeof jobIdParam === "string" ? jobIdParam : "";
   const { jobs, updateJob, hasFetched } = useEmployerJobsStore();
+  const queryClient = useQueryClient();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const job = jobs.find((entry) => entry.id === jobId) ?? null;
+
+  // Set up cache invalidator for Zustand store
+  useEffect(() => {
+    setJobsCacheInvalidator(() => {
+      queryClient.invalidateQueries({ queryKey: jobsKeys.lists() });
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     if (!jobId) return;

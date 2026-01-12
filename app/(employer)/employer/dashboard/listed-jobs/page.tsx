@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
-import { useJobs } from "@/lib/hooks/useJobs";
+import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
 import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
-import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
@@ -24,11 +25,19 @@ export default function ListedJobsPage() {
   // Use React Query hook - automatic fetching, caching, and error handling
   const { data: jobs = [], isLoading, error } = useJobs();
   const { deleteJob } = useEmployerJobsStore();
+  const queryClient = useQueryClient();
 
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
   );
   const didMountRef = useRef(false);
+
+  // Set up cache invalidator for Zustand store
+  useEffect(() => {
+    setJobsCacheInvalidator(() => {
+      queryClient.invalidateQueries({ queryKey: jobsKeys.lists() });
+    });
+  }, [queryClient]);
 
   const handleDeleteJob = async (jobId: string | number) => {
     try {
