@@ -126,7 +126,7 @@ export default function ApplicantsList({
                   jobId={jobId}
                   applicationId={application.id.toString()}
                   variant="compact"
-                  currentStatus={application.status}
+                  currentStatus={undefined}
                   onDecisionUpdate={onDecisionUpdate}
                 />
               </div>
