@@ -1,8 +1,9 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
+import CandidateDecisionButtons from "@/components/employer/candidates/CandidateDecisionButtons";
 import {
   MapPin,
   Briefcase,
@@ -19,7 +20,9 @@ import Link from "next/link";
 
 export default function CandidateProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  const jobId = searchParams.get("jobId") || "";
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
 
@@ -116,6 +119,24 @@ export default function CandidateProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Candidate Decision Actions */}
+      {jobId && (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-bold text-slate-900">
+            Candidate Decision
+          </h2>
+          <CandidateDecisionButtons
+            jobId={jobId}
+            applicationId={slug || ""}
+            onDecisionUpdate={(status) => {
+              console.log("Decision updated to:", status);
+              // Optionally refresh candidate data or show success message
+            }}
+            variant="full"
+          />
+        </div>
+      )}
 
       {/* Work Preferences */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

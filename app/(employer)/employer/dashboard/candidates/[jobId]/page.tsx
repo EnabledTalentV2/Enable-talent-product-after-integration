@@ -139,8 +139,8 @@ export default function CandidatesPage() {
               jobId={currentJobId}
               onCandidateSelect={(candidateIdOrSlug) => {
                 console.log("Selected candidate:", candidateIdOrSlug);
-                // Navigate to candidate profile
-                router.push(`/employer/dashboard/candidates/profile/${candidateIdOrSlug}`);
+                // Navigate to candidate profile with jobId
+                router.push(`/employer/dashboard/candidates/profile/${candidateIdOrSlug}?jobId=${currentJobId}`);
               }}
             />
           </div>
@@ -160,8 +160,8 @@ export default function CandidatesPage() {
                 candidates={candidates}
                 selectedId={null}
                 onSelect={(id) => {
-                  // Navigate to candidate profile on click
-                  router.push(`/employer/dashboard/candidates/profile/${id}`);
+                  // Navigate to candidate profile with jobId
+                  router.push(`/employer/dashboard/candidates/profile/${id}?jobId=${currentJobId}`);
                 }}
               />
             )}
