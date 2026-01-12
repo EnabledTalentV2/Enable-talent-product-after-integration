@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
@@ -70,6 +71,8 @@ export default function DashboardPage() {
     useState<keyof typeof engagementSeries>("views");
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
   const notifications = getNotifications({ limit: 3 });
 
   // Merge with defaults to ensure all nested objects exist
@@ -130,12 +133,36 @@ export default function DashboardPage() {
 
   const metricLabel = engagementSeries[activeMetric].label;
   const metricLabelLower = metricLabel.toLowerCase();
-  const unreadCount = notifications.filter((notice) => notice.unread).length;
+
+  // Filter notifications and matches based on search query
+  const filteredNotifications = useMemo(() => {
+    if (!searchQuery.trim()) return notifications;
+
+    const query = searchQuery.toLowerCase();
+    return notifications.filter((notice) =>
+      notice.company.toLowerCase().includes(query) ||
+      notice.message.toLowerCase().includes(query)
+    );
+  }, [notifications, searchQuery]);
+
+  const filteredMatches = useMemo(() => {
+    if (!searchQuery.trim()) return recentMatches;
+
+    const query = searchQuery.toLowerCase();
+    return recentMatches.filter((match) =>
+      match.role.toLowerCase().includes(query) ||
+      match.company.toLowerCase().includes(query) ||
+      match.location.toLowerCase().includes(query) ||
+      match.type.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  const unreadCount = filteredNotifications.filter((notice) => notice.unread).length;
   const summaryMetrics: Array<{ label: string; value: string | number }> = [];
   const hasEngagementData = filteredPoints.length > 0;
-  const hasMatches = recentMatches.length > 0;
-  const hasNotifications = notifications.length > 0;
-  const matchCount = recentMatches.length;
+  const hasMatches = filteredMatches.length > 0;
+  const hasNotifications = filteredNotifications.length > 0;
+  const matchCount = filteredMatches.length;
 
   return (
     <section className="mx-auto max-w-360 space-y-8 py-10">
@@ -241,10 +268,15 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">
               Recent Matches
             </h2>
+            {searchQuery && (
+              <span className="text-sm text-slate-600">
+                {filteredMatches.length} result{filteredMatches.length !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           <div className="space-y-4">
             {hasMatches ? (
-              recentMatches.map((match) => (
+              filteredMatches.map((match) => (
                 <div
                   key={match.id}
                   className="rounded-[28px] bg-white p-5 shadow-sm"
@@ -306,7 +338,9 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
-                No matches yet.
+                {searchQuery
+                  ? `No matches found for "${searchQuery}".`
+                  : "No matches yet."}
               </div>
             )}
           </div>
@@ -320,10 +354,15 @@ export default function DashboardPage() {
             <span className="text-base text-slate-500">
               ({unreadCount} Unread)
             </span>
+            {searchQuery && (
+              <span className="text-sm text-slate-600">
+                {filteredNotifications.length} result{filteredNotifications.length !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           <div className="space-y-4">
             {hasNotifications ? (
-              notifications.map((notice) => (
+              filteredNotifications.map((notice) => (
                 <div
                   key={notice.id}
                   className="rounded-[28px] bg-white p-5 shadow-sm"
@@ -375,7 +414,9 @@ export default function DashboardPage() {
               ))
             ) : (
               <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
-                No notifications yet.
+                {searchQuery
+                  ? `No notifications found for "${searchQuery}".`
+                  : "No notifications yet."}
               </div>
             )}
           </div>

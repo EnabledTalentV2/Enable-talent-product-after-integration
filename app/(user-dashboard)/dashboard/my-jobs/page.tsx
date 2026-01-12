@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapPin, Search, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
@@ -61,7 +62,8 @@ export default function MyJobsPage() {
   const [selectedId, setSelectedId] = useState("");
   const [applications, setApplications] = useState<CandidateApplication[]>([]);
   const [isLoadingApplications, setIsLoadingApplications] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
   const detailsRef = useRef<HTMLDivElement | null>(null);
 
   const rawUserData = useUserDataStore((s) => s.userData);
@@ -357,24 +359,14 @@ export default function MyJobsPage() {
             ))}
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search by job title, company, location, or job type..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-full border border-slate-200 bg-white px-4 py-3 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/30"
-              />
-              <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            </div>
-            {searchQuery && (
-              <p className="mt-2 text-sm text-slate-600">
+          {/* Search Results Info */}
+          {searchQuery && (
+            <div className="mb-6">
+              <p className="text-sm text-slate-600">
                 Found {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} matching "{searchQuery}"
               </p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Jobs List and Details */}
           <div className="flex flex-col gap-6 lg:flex-row">
