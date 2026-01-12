@@ -23,6 +23,11 @@ export default function CandidateProfilePage() {
   const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const jobId = searchParams.get("jobId") || "";
+  const applicationId = searchParams.get("applicationId") || "";
+
+  // Debug logging
+  console.log("[CandidateProfile] URL Params:", { slug, jobId, applicationId });
+  console.log("[CandidateProfile] Full search params:", Object.fromEntries(searchParams.entries()));
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
 
@@ -126,9 +131,18 @@ export default function CandidateProfilePage() {
           <h2 className="mb-4 text-xl font-bold text-slate-900">
             Candidate Decision
           </h2>
+          {!applicationId && (
+            <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Warning:</strong> No application ID found in URL. Using candidate slug instead.
+                <br />
+                <span className="text-xs">Expected URL format: ?jobId={jobId}&applicationId=[number]</span>
+              </p>
+            </div>
+          )}
           <CandidateDecisionButtons
             jobId={jobId}
-            applicationId={slug || ""}
+            applicationId={applicationId || slug || ""}
             onDecisionUpdate={(status) => {
               console.log("Decision updated to:", status);
               // Optionally refresh candidate data or show success message

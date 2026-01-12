@@ -147,6 +147,7 @@ export function useAIRanking() {
         );
 
         console.log("[useAIRanking] Ranking data fetched:", response);
+        console.log("[useAIRanking] First candidate:", response.ranked_candidates?.[0]);
 
         if (response.ranked_candidates) {
           setRankedCandidates(response.ranked_candidates);

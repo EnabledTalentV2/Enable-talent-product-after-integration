@@ -11,6 +11,7 @@ import { CandidateProfile } from "./candidates";
 export interface RankedCandidate {
   candidate_id: number;
   candidate_slug?: string; // Slug for navigation (if backend provides it)
+  application_id?: number; // JobApplication ID for decision endpoint
   score: number; // 0.0 to 1.0 (will be displayed as percentage)
   match_reason: string;
 }
