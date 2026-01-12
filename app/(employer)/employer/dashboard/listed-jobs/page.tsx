@@ -7,6 +7,7 @@ import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
 import { useJobs } from "@/lib/hooks/useJobs";
 import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
@@ -22,11 +23,25 @@ const getBrandStyle = (company: string) =>
 export default function ListedJobsPage() {
   // Use React Query hook - automatic fetching, caching, and error handling
   const { data: jobs = [], isLoading, error } = useJobs();
+  const { deleteJob } = useEmployerJobsStore();
 
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
   );
   const didMountRef = useRef(false);
+
+  const handleDeleteJob = async (jobId: string | number) => {
+    try {
+      await deleteJob(jobId);
+      // If we deleted the selected job, clear selection
+      if (selectedJobId === jobId) {
+        setSelectedJobId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+      alert("Failed to delete job. Please try again.");
+    }
+  };
 
   const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
   const selectedJob = useMemo(() => {
@@ -171,6 +186,7 @@ export default function ListedJobsPage() {
                         <JobDetailView
                           job={selectedJob}
                           getBrandStyle={getBrandStyle}
+                          onDelete={handleDeleteJob}
                         />
                       )}
                     </div>
@@ -188,7 +204,7 @@ export default function ListedJobsPage() {
             tabIndex={-1}
             className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10"
           >
-            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} />
+            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} onDelete={handleDeleteJob} />
           </div>
         )}
       </div>
