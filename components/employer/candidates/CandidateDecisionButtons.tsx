@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, UserCheck, Loader2 } from "lucide-react";
 
 interface CandidateDecisionButtonsProps {
   jobId: string;
-  applicationId: string;
+  applicationId: string | number;
   currentStatus?: CandidateDecisionStatus;
   onDecisionUpdate?: (status: CandidateDecisionStatus) => void;
   variant?: "full" | "compact";
@@ -49,13 +49,16 @@ export default function CandidateDecisionButtons({
     setShowConfirmation(null);
     clearError();
 
+    // Convert applicationId to string for API call
+    const appIdString = String(applicationId);
+
     let result;
     if (status === "shortlisted") {
-      result = await shortlistCandidate(jobId, applicationId);
+      result = await shortlistCandidate(jobId, appIdString);
     } else if (status === "rejected") {
-      result = await rejectCandidate(jobId, applicationId);
+      result = await rejectCandidate(jobId, appIdString);
     } else {
-      result = await hireCandidate(jobId, applicationId);
+      result = await hireCandidate(jobId, appIdString);
     }
 
     if (result.data) {

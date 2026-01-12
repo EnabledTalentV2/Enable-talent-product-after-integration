@@ -52,6 +52,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
 
     console.log("[Ranking Data API] Backend response data:", data);
+    console.log("[Ranking Data API] First candidate from backend:", data.ranked_candidates?.[0]);
+    console.log("[Ranking Data API] Has application_id?:", data.ranked_candidates?.[0]?.hasOwnProperty('application_id'));
 
     return NextResponse.json(data, {
       status: backendResponse.status,

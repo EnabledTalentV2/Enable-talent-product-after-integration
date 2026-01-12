@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
-export async function POST(
+export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; applicationId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: jobId, applicationId } = await params;
+    const { id: jobId } = await params;
 
     // Get cookies for authentication
     const cookies = request.cookies;
@@ -21,21 +21,16 @@ export async function POST(
       );
     }
 
-    // Parse request body
-    const body = await request.json();
+    const backendUrl = `${BACKEND_URL}/api/channels/jobs/${jobId}/applications/`;
+    console.log("Fetching applications from:", backendUrl);
 
-    const backendUrl = `${BACKEND_URL}/api/channels/jobs/${jobId}/applications/${applicationId}/decision/`;
-    console.log("Posting decision to:", backendUrl);
-    console.log("Decision payload:", body);
-
-    // Post decision to backend
+    // Fetch applications from backend
     const response = await fetch(backendUrl, {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(body),
     });
 
     console.log("Backend response status:", response.status);
@@ -52,16 +47,16 @@ export async function POST(
       }
 
       return NextResponse.json(
-        { error: errorData.detail || "Failed to update decision" },
+        { error: errorData.detail || "Failed to fetch applications" },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    console.log("Successfully updated decision:", data);
+    console.log("Successfully fetched applications:", data.length || 0, "items");
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error updating decision:", error);
+    console.error("Error fetching applications:", error);
     return NextResponse.json(
       { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

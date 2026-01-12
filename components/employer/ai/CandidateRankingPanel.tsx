@@ -6,7 +6,7 @@ import type { RankedCandidate } from "@/lib/types/ai-features";
 
 interface CandidateRankingPanelProps {
   jobId: string;
-  onCandidateSelect?: (candidateIdOrSlug: number | string) => void;
+  onCandidateSelect?: (candidateIdOrSlug: number | string, applicationId?: number) => void;
 }
 
 export default function CandidateRankingPanel({
@@ -147,7 +147,7 @@ export default function CandidateRankingPanel({
               <div
                 key={candidate.candidate_id}
                 className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => onCandidateSelect?.(candidate.candidate_slug || candidate.candidate_id)}
+                onClick={() => onCandidateSelect?.(candidate.candidate_slug || candidate.candidate_id, candidate.application_id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

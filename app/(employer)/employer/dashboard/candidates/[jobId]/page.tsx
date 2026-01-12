@@ -5,16 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
 import CandidateRankingPanel from "@/components/employer/ai/CandidateRankingPanel";
+import ApplicantsList, { Application } from "@/components/employer/candidates/ApplicantsList";
 import { CandidateProfile, CandidateStage } from "@/lib/types/candidates";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { emptyJobStats, toJobHeaderInfo } from "@/lib/employerJobsUtils";
 
 const TABS = [
-  { id: "ai_ranking", label: "✨ AI Ranking" },
-  { id: "accepted", label: "Accepted" },
-  { id: "declined", label: "Declined" },
-  { id: "request_sent", label: "Request sent" },
-  { id: "matching", label: "Matching" },
+  { id: "ai_ranking", label: "✨ AI Ranking", status: null },
+  { id: "applicants", label: "Applicants", status: "applied" },
+  { id: "accepted", label: "Accepted", status: "shortlisted" },
+  { id: "declined", label: "Declined", status: "rejected" },
+  { id: "hired", label: "Hired", status: "hired" },
 ] as const;
 
 const fetchCandidates = async (
@@ -22,6 +23,31 @@ const fetchCandidates = async (
   _stage: CandidateStage
 ): Promise<CandidateProfile[]> => {
   return [];
+};
+
+const fetchApplications = async (
+  jobId: string
+): Promise<{ data: Application[]; error?: string }> => {
+  try {
+    console.log("Fetching applications for job:", jobId);
+    const response = await fetch(`/api/jobs/${jobId}/applications`);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Failed to fetch applications:", response.status, errorData);
+
+      const errorMessage = errorData.error || `HTTP ${response.status}: Failed to fetch applications`;
+      return { data: [], error: errorMessage };
+    }
+
+    const data = await response.json();
+    console.log("Fetched applications:", data);
+    return { data, error: undefined };
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    const errorMessage = error instanceof Error ? error.message : "Network error";
+    return { data: [], error: errorMessage };
+  }
 };
 
 export default function CandidatesPage() {
@@ -39,7 +65,18 @@ export default function CandidatesPage() {
   const [activeTab, setActiveTab] =
     useState<(typeof TABS)[number]["id"]>("ai_ranking");
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
+  const [allApplications, setAllApplications] = useState<Application[]>([]);
+  const [applicationsError, setApplicationsError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filter applications based on active tab
+  const filteredApplications = useMemo(() => {
+    const currentTabConfig = TABS.find(tab => tab.id === activeTab);
+    if (!currentTabConfig || !currentTabConfig.status) {
+      return allApplications;
+    }
+    return allApplications.filter(app => app.status === currentTabConfig.status);
+  }, [allApplications, activeTab]);
 
   // Calculate stats dynamically for the current job
   const jobStats = useMemo(() => emptyJobStats(), []);
@@ -56,7 +93,7 @@ export default function CandidatesPage() {
       return;
     }
 
-    // Skip fetching candidates for AI ranking tab
+    // Skip fetching for AI ranking tab
     if (activeTab === "ai_ranking") {
       setIsLoading(false);
       return;
@@ -64,15 +101,27 @@ export default function CandidatesPage() {
 
     let isMounted = true;
 
-    const loadCandidates = async () => {
+    const loadData = async () => {
       setIsLoading(true);
+      setApplicationsError(undefined);
       try {
-        const data = await fetchCandidates(currentJobId, activeTab as CandidateStage);
-        if (isMounted) {
-          setCandidates(data);
+        // Fetch applications for all application-based tabs
+        const currentTabConfig = TABS.find(tab => tab.id === activeTab);
+        if (currentTabConfig && currentTabConfig.status !== null) {
+          const result = await fetchApplications(currentJobId);
+          if (isMounted) {
+            setAllApplications(result.data);
+            setApplicationsError(result.error);
+          }
+        } else {
+          // Fetch candidates for other tabs (if needed in future)
+          const candidatesData = await fetchCandidates(currentJobId, activeTab as CandidateStage);
+          if (isMounted) {
+            setCandidates(candidatesData);
+          }
         }
       } catch (error) {
-        console.error("Failed to fetch candidates", error);
+        console.error("Failed to fetch data", error);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -80,7 +129,7 @@ export default function CandidatesPage() {
       }
     };
 
-    loadCandidates();
+    loadData();
 
     return () => {
       isMounted = false;
@@ -137,12 +186,63 @@ export default function CandidatesPage() {
           <div className="flex-1 overflow-auto">
             <CandidateRankingPanel
               jobId={currentJobId}
-              onCandidateSelect={(candidateIdOrSlug) => {
-                console.log("Selected candidate:", candidateIdOrSlug);
-                // Navigate to candidate profile with jobId
-                router.push(`/employer/dashboard/candidates/profile/${candidateIdOrSlug}?jobId=${currentJobId}`);
+              onCandidateSelect={(candidateIdOrSlug, applicationId) => {
+                console.log("Selected candidate:", candidateIdOrSlug, "Application ID:", applicationId);
+                // Navigate to candidate profile with jobId and applicationId
+                const url = `/employer/dashboard/candidates/profile/${candidateIdOrSlug}?jobId=${currentJobId}${applicationId ? `&applicationId=${applicationId}` : ''}`;
+                router.push(url);
               }}
             />
+          </div>
+        ) : activeTab === "applicants" || activeTab === "accepted" || activeTab === "declined" || activeTab === "hired" ? (
+          /* Applications View - for all application-based tabs */
+          <div className="min-h-0 flex-1 overflow-auto rounded-[28px] bg-white p-6 shadow-sm">
+            {applicationsError ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="rounded-lg bg-red-50 border border-red-200 p-6 max-w-md">
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0">
+                      <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-red-800 mb-1">
+                        Failed to load applications
+                      </h3>
+                      <p className="text-sm text-red-700">
+                        {applicationsError}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setApplicationsError(undefined);
+                    fetchApplications(currentJobId).then((result) => {
+                      setAllApplications(result.data);
+                      setApplicationsError(result.error);
+                    });
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <ApplicantsList
+                applications={filteredApplications}
+                jobId={currentJobId}
+                isLoading={isLoading}
+                onDecisionUpdate={() => {
+                  // Reload applications after decision update
+                  fetchApplications(currentJobId).then((result) => {
+                    setAllApplications(result.data);
+                    setApplicationsError(result.error);
+                  });
+                }}
+              />
+            )}
           </div>
         ) : (
           /* Candidate List View */

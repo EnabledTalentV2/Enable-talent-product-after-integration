@@ -11,8 +11,8 @@ export interface CandidateDecisionRequest {
 export interface CandidateDecisionResponse {
   message?: string;
   status: CandidateDecisionStatus;
-  application_id: string;
-  job_id: string;
+  application_id: string | number;
+  job_id: string | number;
 }
 
 export interface DecisionActionParams {
