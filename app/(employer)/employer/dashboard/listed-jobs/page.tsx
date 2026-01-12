@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
@@ -26,6 +27,8 @@ export default function ListedJobsPage() {
   const { data: jobs = [], isLoading, error } = useJobs();
   const { deleteJob } = useEmployerJobsStore();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const jobIdFromUrl = searchParams.get("jobId");
 
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
@@ -65,13 +68,22 @@ export default function ListedJobsPage() {
       return;
     }
 
+    // If jobId is in URL, select that job
+    if (jobIdFromUrl) {
+      const jobExists = jobs.some((job) => String(job.id) === jobIdFromUrl);
+      if (jobExists) {
+        setSelectedJobId(jobIdFromUrl);
+        return;
+      }
+    }
+
     setSelectedJobId((current) => {
       if (current && jobs.some((job) => job.id === current)) {
         return current;
       }
       return jobs[0].id;
     });
-  }, [jobs]);
+  }, [jobs, jobIdFromUrl]);
 
   useEffect(() => {
     if (!didMountRef.current) {

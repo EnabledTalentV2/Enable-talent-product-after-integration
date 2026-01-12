@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import Link from "next/link";
 
 interface RecentJob {
   id: string | number;
@@ -25,7 +26,10 @@ export default function RecentJobCard({
   getBrandStyle,
 }: RecentJobCardProps) {
   return (
-    <div className="rounded-[28px] bg-white p-5 shadow-sm">
+    <Link
+      href={`/employer/dashboard/listed-jobs?jobId=${job.id}`}
+      className="block rounded-[28px] bg-white p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+    >
       <p className="text-xs text-slate-400 mb-3">{job.postedTime}</p>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -77,6 +81,6 @@ export default function RecentJobCard({
           </span>
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
