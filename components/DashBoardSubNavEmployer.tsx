@@ -49,7 +49,8 @@ export default function DashboardSubNavEmployer() {
   return (
     <div className="flex justify-center bg-[#EEF5FF] px-6 pb-6 md:px-12">
       <div className="flex w-full max-w-8xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Desktop Navigation Links - Hidden on Mobile */}
+        <div className="hidden md:flex flex-wrap items-center gap-3">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.isActive(pathname);
@@ -70,6 +71,7 @@ export default function DashboardSubNavEmployer() {
           })}
         </div>
 
+        {/* Search Bar - Visible on All Screen Sizes */}
         <div className="w-full md:w-[420px]">
           <div className="relative w-full">
             <input
