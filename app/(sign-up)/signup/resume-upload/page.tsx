@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/signup/Navbar";
 import Link from "next/link";
+import { X } from "lucide-react";
 import {
   DEFAULT_ACCOMMODATION_NEEDS,
   ensureCandidateProfileSlug,
@@ -835,9 +836,10 @@ export default function ResumeUpload() {
                   type="button"
                   onClick={handleRemoveFile}
                   disabled={isUploading}
-                  className="text-slate-400 underline-offset-4 hover:text-slate-600 hover:underline disabled:cursor-not-allowed disabled:opacity-70"
+                  className="flex items-center justify-center rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+                  aria-label="Remove file"
                 >
-                  Remove file
+                  <X size={18} strokeWidth={2} />
                 </button>
               </div>
             ) : null}

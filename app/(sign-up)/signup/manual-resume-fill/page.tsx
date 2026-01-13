@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/signup/Navbar";
 import Header from "@/components/signup/Header";
 import Sidebar from "@/components/signup/Sidebar";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
@@ -1392,9 +1393,12 @@ export default function ManualResumeFill() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EFF6FF] px-4 py-6 md:px-10 md:py-10 text-slate-800 flex justify-center">
-      <div className="max-w-7xl w-full flex flex-col gap-6">
-        <Header percent={profilePercent} />
+    <div className="min-h-screen bg-[#EFF6FF] text-slate-800 flex flex-col">
+      <Navbar />
+
+      <div className="flex-1 px-4 py-6 md:px-10 md:py-10 flex justify-center">
+        <div className="max-w-7xl w-full flex flex-col gap-6">
+          <Header percent={profilePercent} />
 
         <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <Sidebar steps={stepsState} />
@@ -1451,6 +1455,7 @@ export default function ManualResumeFill() {
             </form>
           </main>
         </section>
+        </div>
       </div>
     </div>
   );
