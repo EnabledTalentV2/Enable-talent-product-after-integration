@@ -35,15 +35,19 @@ export default function CandidateRankingPanel({
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 0.8) return "text-green-600";
-    if (score >= 0.6) return "text-yellow-600";
+    // Normalize score to 0-100 range
+    const normalizedScore = score > 1 ? score : score * 100;
+    if (normalizedScore >= 80) return "text-green-600";
+    if (normalizedScore >= 60) return "text-yellow-600";
     return "text-gray-600";
   };
 
   const getScoreBadge = (score: number, index: number): string | null => {
-    if (index === 0 && score >= 0.9) return "🥇 Best Match";
-    if (index === 1 && score >= 0.8) return "🥈 Great Match";
-    if (index === 2 && score >= 0.7) return "🥉 Good Match";
+    // Normalize score to 0-100 range
+    const normalizedScore = score > 1 ? score : score * 100;
+    if (index === 0 && normalizedScore >= 90) return "🥇 Best Match";
+    if (index === 1 && normalizedScore >= 80) return "🥈 Great Match";
+    if (index === 2 && normalizedScore >= 70) return "🥉 Good Match";
     return null;
   };
 
@@ -140,7 +144,10 @@ export default function CandidateRankingPanel({
             {rankedCandidates.length !== 1 ? "s" : ""}
           </p>
           {rankedCandidates.map((candidate, index) => {
-            const scorePercent = Math.round(candidate.score * 100);
+            // Handle both formats: decimal (0.0-1.0) and percentage (0-100)
+            const scorePercent = candidate.score > 1
+              ? Math.round(candidate.score)
+              : Math.round(candidate.score * 100);
             const badge = getScoreBadge(candidate.score, index);
 
             return (
@@ -180,9 +187,9 @@ export default function CandidateRankingPanel({
                     <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
                       <div
                         className={`h-2 rounded-full ${
-                          candidate.score >= 0.8
+                          scorePercent >= 80
                             ? "bg-green-500"
-                            : candidate.score >= 0.6
+                            : scorePercent >= 60
                             ? "bg-yellow-500"
                             : "bg-gray-400"
                         }`}

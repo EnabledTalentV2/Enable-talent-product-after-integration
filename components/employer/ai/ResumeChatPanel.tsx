@@ -111,12 +111,12 @@ export default function ResumeChatPanel({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-6xl mb-4">🤖</div>
+            <div className="text-6xl mb-4 mt-28">🤖</div>
             <h4 className="text-lg font-medium text-gray-900 mb-2">
               Start a conversation
             </h4>
             <p className="text-sm text-gray-600 text-center mb-6">
-              Ask me anything about this candidate's background, skills, or
+              Ask me anything about this candidate&apos;s background, skills, or
               experience
             </p>
 
