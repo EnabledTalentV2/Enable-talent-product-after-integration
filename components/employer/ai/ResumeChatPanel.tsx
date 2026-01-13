@@ -116,7 +116,7 @@ export default function ResumeChatPanel({
               Start a conversation
             </h4>
             <p className="text-sm text-gray-600 text-center mb-6">
-              Ask me anything about this candidate's background, skills, or
+              Ask me anything about this candidate&apos;s background, skills, or
               experience
             </p>
 
