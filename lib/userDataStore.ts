@@ -59,6 +59,9 @@ const normalizeUserData = (
         : initialUserData.otherDetails.languages,
     },
     reviewAgree: { ...initialUserData.reviewAgree, ...safe.reviewAgree },
+    accessibilityNeeds: safe.accessibilityNeeds
+      ? { ...initialUserData.accessibilityNeeds, ...safe.accessibilityNeeds }
+      : initialUserData.accessibilityNeeds,
   };
 };
 

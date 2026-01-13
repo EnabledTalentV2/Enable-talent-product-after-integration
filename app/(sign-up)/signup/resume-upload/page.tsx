@@ -334,6 +334,7 @@ export default function ResumeUpload() {
   const router = useRouter();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const resetUserData = useUserDataStore((s) => s.resetUserData);
+  const userData = useUserDataStore((s) => s.userData);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -609,7 +610,26 @@ export default function ResumeUpload() {
 
       const uploadData = new FormData();
       uploadData.append("resume_file", resumeUrl);
-      uploadData.append("accommodation_needs", DEFAULT_ACCOMMODATION_NEEDS);
+
+      // Use accessibility data from user if available
+      const accommodationNeeds = userData.accessibilityNeeds?.accommodationNeed
+        ? userData.accessibilityNeeds.accommodationNeed.toUpperCase()
+        : DEFAULT_ACCOMMODATION_NEEDS;
+      uploadData.append("accommodation_needs", accommodationNeeds);
+
+      // If user has selected specific accessibility categories and accommodations,
+      // store them as JSON for potential backend use
+      if (userData.accessibilityNeeds && (
+        userData.accessibilityNeeds.categories.length > 0 ||
+        userData.accessibilityNeeds.accommodations.length > 0
+      )) {
+        uploadData.append("accessibility_data", JSON.stringify({
+          categories: userData.accessibilityNeeds.categories,
+          disclosurePreference: userData.accessibilityNeeds.disclosurePreference,
+          accommodations: userData.accessibilityNeeds.accommodations,
+        }));
+      }
+
       // Clear old parsed data to force re-parsing
       uploadData.append("resume_data", "null");
       uploadData.append("parsing_status", "not_parsed");
@@ -637,73 +657,30 @@ export default function ResumeUpload() {
         return;
       }
 
-      // Step 3: Trigger resume parsing (skip old data check since we just uploaded a NEW file)
+      // Step 3: Trigger resume parsing in background (don't wait for results)
       setUploadStage("parsing");
-      console.log("[Resume Upload] Step 3: Triggering new parse request for newly uploaded file");
-
-      let parseResponse: unknown | null = null;
+      console.log("[Resume Upload] Step 3: Triggering resume parsing in background");
 
       try {
-        parseResponse = await apiRequest<unknown>(
+        // Start parsing but don't wait for results
+        apiRequest<unknown>(
           `/api/candidates/profiles/${candidateSlug}/parse-resume/`,
           {
             method: "POST",
           }
-        );
-        console.log("[Resume Upload] Parse request completed");
+        ).then(() => {
+          console.log("[Resume Upload] Parse request initiated successfully");
+        }).catch((err) => {
+          console.warn("[Resume Upload] Parse request error (non-blocking):", err);
+        });
+
+        // Immediately navigate to accessibility needs while parsing happens in background
+        console.log("[Resume Upload] Resume uploaded successfully, navigating to accessibility needs");
+        router.push("/signup/accessability-needs");
       } catch (err) {
-        // Check if session expired
-        if (handleSessionExpiry(err, router)) {
-          setError("Your session expired. Redirecting to login...");
-          return;
-        }
-
-        const message = getErrorMessage(err).toLowerCase();
-        console.warn("[Resume Upload] Parse request error:", message);
-
-        // If already parsed, continue to polling
-        if (!message.includes("already parsed")) {
-          console.error(
-            "[Resume Upload] Parse endpoint failed, will try polling:",
-            err
-          );
-        }
-      }
-
-      // Step 4: Check immediate parse response
-      const parsePatch = parseResponse
-        ? extractUserDataPatch(parseResponse)
-        : null;
-
-      if (parsePatch && Object.keys(parsePatch).length > 0) {
-        console.log("[Resume Upload] Received immediate parse results");
-        setUserData((prev) => mergeUserData(prev, parsePatch));
-        parsedSuccessfully = true;
-      } else {
-        // Step 5: Poll for parsing status
-        setUploadStage("polling");
-        console.log("[Resume Upload] Step 5: Polling for parsed data");
-        const patch = await pollForParsedData(candidateSlug);
-        if (patch && Object.keys(patch).length > 0) {
-          console.log("[Resume Upload] Received parsed data from polling");
-          setUserData((prev) => mergeUserData(prev, patch));
-          parsedSuccessfully = true;
-        } else {
-          console.warn("[Resume Upload] No parsed data received from polling");
-        }
-      }
-
-      // Step 6: Handle results
-      if (!parsedSuccessfully) {
-        console.log(
-          "[Resume Upload] Parsing failed or timed out, showing manual fill option"
-        );
-        setParseWarning(
-          "We couldn't automatically parse your resume. This might be due to the file format or network issues. Please click the button below to fill in your details manually."
-        );
-      } else {
-        console.log("[Resume Upload] Parsing successful, proceeding to next step");
-        router.push("/signup/manual-resume-fill");
+        console.error("[Resume Upload] Unexpected error:", err);
+        // Even if there's an error, navigate to accessibility needs
+        router.push("/signup/accessability-needs");
       }
     } catch (err) {
       // Check if session expired

@@ -102,4 +102,10 @@ export type UserData = {
     desiredSalary: string;
   };
   reviewAgree: { agree: boolean; discover: string; comments: string };
+  accessibilityNeeds?: {
+    categories: string[];
+    accommodationNeed: string;
+    disclosurePreference: string;
+    accommodations: string[];
+  };
 };
