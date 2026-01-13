@@ -177,7 +177,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+    <main id="main-content" className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}

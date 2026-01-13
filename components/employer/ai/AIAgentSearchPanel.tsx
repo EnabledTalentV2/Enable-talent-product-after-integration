@@ -234,7 +234,7 @@ export default function AIAgentSearchPanel() {
                         {candidate.avatarUrl && (
                           <img
                             src={candidate.avatarUrl}
-                            alt={candidate.name}
+                            alt={`Profile photo of ${candidate.name}`}
                             className="w-10 h-10 rounded-full"
                           />
                         )}

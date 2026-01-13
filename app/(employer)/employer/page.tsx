@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 export default function Employers() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#F0F4F8] p-6">
+    <main id="main-content" className="flex min-h-screen flex-col items-center justify-center bg-[#F0F4F8] p-6">
       <div className="w-full max-w-2xl space-y-8 text-center">
         <div className="flex justify-center">
           <Image

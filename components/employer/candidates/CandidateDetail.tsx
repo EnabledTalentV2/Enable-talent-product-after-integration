@@ -38,11 +38,15 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
                 {candidate.avatarUrl ? (
                   <img
                     src={candidate.avatarUrl}
-                    alt={candidate.name}
+                    alt={`Profile photo of ${candidate.name}`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xl font-bold text-yellow-800">
+                  <div
+                    className="flex h-full w-full items-center justify-center text-xl font-bold text-yellow-800"
+                    role="img"
+                    aria-label={`${candidate.name} avatar placeholder`}
+                  >
                     {candidate.name.charAt(0)}
                   </div>
                 )}

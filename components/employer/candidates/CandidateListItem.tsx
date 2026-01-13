@@ -29,11 +29,15 @@ export default function CandidateListItem({
             {candidate.avatarUrl ? (
               <img
                 src={candidate.avatarUrl}
-                alt={candidate.name}
+                alt={`Profile photo of ${candidate.name}`}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-slate-300 text-slate-500">
+              <div
+                className="flex h-full w-full items-center justify-center bg-slate-300 text-slate-500"
+                role="img"
+                aria-label={`${candidate.name} avatar placeholder`}
+              >
                 {candidate.name.charAt(0)}
               </div>
             )}

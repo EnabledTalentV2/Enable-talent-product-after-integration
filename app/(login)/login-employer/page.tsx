@@ -91,7 +91,7 @@ export default function EmployerLoginPage() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
+    <main id="main-content" className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}

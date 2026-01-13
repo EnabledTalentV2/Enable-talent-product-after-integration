@@ -3,7 +3,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  color-scheme: light;  
+  --focus-ring-color: #C27803;
+  --focus-ring-offset: 2px;
+  color-scheme: light;
+
+  /* ============================================
+     WCAG 1.4.3 Contrast (Minimum) - Level AA
+     All text colors meet 4.5:1 contrast ratio for normal text
+     and 3:1 for large text (18pt+ or 14pt bold)
+     ============================================ */
+
+  /* Primary text colors - meet 4.5:1 against white */
+  --text-primary: #1e293b;    /* slate-800: 12.6:1 contrast */
+  --text-secondary: #475569;  /* slate-600: 6.4:1 contrast */
+  --text-muted: #64748b;      /* slate-500: 4.6:1 contrast - min for normal text */
+
+  /* Error/success colors with sufficient contrast */
+  --text-error: #b91c1c;      /* red-700: 5.6:1 contrast */
+  --text-success: #047857;    /* emerald-700: 5.0:1 contrast */
+  --text-warning: #b45309;    /* amber-700: 4.5:1 contrast */
+
+  /* Link colors */
+  --link-color: #9a3412;      /* orange-800: 6.6:1 contrast */
+  --link-hover: #7c2d12;      /* orange-900: 9.3:1 contrast */
 }
 
 body {
@@ -15,4 +37,86 @@ button,
 a,
 [role="button"] {
   cursor: pointer;
+}
+
+/* ============================================
+   WCAG 2.4.7: Focus Visible
+   Ensures visible focus indicators for keyboard navigation
+   ============================================ */
+
+/* Default focus-visible outline for all interactive elements */
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Remove default focus for mouse/touch users (pointer-based) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast focus for form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 0;
+  border-color: var(--focus-ring-color);
+}
+
+/* Enhanced focus for buttons */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: 0 0 0 4px rgba(194, 120, 3, 0.2);
+}
+
+/* Focus styles for links */
+a:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 2px;
+}
+
+/* ============================================
+   WCAG 1.4.13: Content on Hover or Focus
+   Ensures dropdown/tooltip content is accessible
+   ============================================ */
+[aria-expanded="true"] + [role="menu"],
+[aria-expanded="true"] + [role="listbox"],
+[aria-haspopup="true"]:focus + [role="menu"] {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* ============================================
+   Reduced Motion Support (WCAG 2.3.3)
+   Respects user preference for reduced motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   High Contrast Mode Support
+   Ensures visibility in Windows High Contrast Mode
+   ============================================ */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid CanvasText;
+    outline-offset: 2px;
+  }
+
+  button,
+  [role="button"] {
+    border: 1px solid ButtonText;
+  }
 }
