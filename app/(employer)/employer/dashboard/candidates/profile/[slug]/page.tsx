@@ -3,7 +3,7 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
-import CandidateDecisionButtons from "@/components/employer/candidates/CandidateDecisionButtons";
+// import CandidateDecisionButtons from "@/components/employer/candidates/CandidateDecisionButtons"; // Removed - Backend API not ready yet
 import {
   MapPin,
   Briefcase,
@@ -125,30 +125,21 @@ export default function CandidateProfilePage() {
         )}
       </div>
 
-      {/* Candidate Decision Actions */}
+      {/* Candidate Actions */}
       {jobId && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-bold text-slate-900">
-            Candidate Decision
+            Candidate Actions
           </h2>
-          {!applicationId && (
-            <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-              <p className="text-sm text-yellow-800">
-                <strong>Warning:</strong> No application ID found in URL. Using candidate slug instead.
-                <br />
-                <span className="text-xs">Expected URL format: ?jobId={jobId}&applicationId=[number]</span>
-              </p>
-            </div>
-          )}
-          <CandidateDecisionButtons
-            jobId={jobId}
-            applicationId={applicationId || slug || ""}
-            onDecisionUpdate={(status) => {
-              console.log("Decision updated to:", status);
-              // Optionally refresh candidate data or show success message
+          <button
+            onClick={() => {
+              // Placeholder - Backend API not ready yet
+              console.log("Send invite to candidate:", slug, "for job:", jobId);
             }}
-            variant="full"
-          />
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+          >
+            Send Invite
+          </button>
         </div>
       )}
 
