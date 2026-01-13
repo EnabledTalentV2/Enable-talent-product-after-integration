@@ -346,7 +346,9 @@ export default function HomePageDashboard() {
   };
 
   return (
-    <section className="mx-auto max-w-360 space-y-6 py-10">
+    <main id="main-content" aria-labelledby="dashboard-heading">
+      <h1 id="dashboard-heading" className="sr-only">Talent Dashboard</h1>
+      <section className="mx-auto max-w-360 space-y-6 py-10">
       <DashboardProfilePrompt percent={profilePercent} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
         <div className="space-y-6">
@@ -547,6 +549,7 @@ export default function HomePageDashboard() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </main>
   );
 }

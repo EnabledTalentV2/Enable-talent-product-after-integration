@@ -6,13 +6,59 @@ import { Bell, LogOut, Search, User, Menu, X, Home, LayoutDashboard, BriefcaseBu
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function DashBoardNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const resetUserData = useUserDataStore((s) => s.resetUserData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Handle Escape key to close menu
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMenuOpen]);
+
+  // Focus trap for mobile menu
+  useEffect(() => {
+    if (!isMenuOpen || !menuRef.current) return;
+
+    const menu = menuRef.current;
+    const focusableElements = menu.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement?.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleTabKey);
+    firstElement?.focus();
+
+    return () => document.removeEventListener("keydown", handleTabKey);
+  }, [isMenuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -110,11 +156,13 @@ export default function DashBoardNavbar() {
 
           {/* Mobile Hamburger Button */}
           <button
+            ref={menuButtonRef}
             type="button"
             onClick={toggleMenu}
             className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
-            aria-label="Toggle menu"
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation-menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -123,8 +171,16 @@ export default function DashBoardNavbar() {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden" onClick={toggleMenu}>
-          <div
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden"
+          onClick={toggleMenu}
+          role="presentation"
+        >
+          <nav
+            ref={menuRef}
+            id="mobile-navigation-menu"
+            role="navigation"
+            aria-label="Mobile navigation"
             className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
@@ -214,7 +270,7 @@ export default function DashBoardNavbar() {
                 </button>
               </div>
             </div>
-          </div>
+          </nav>
         </div>
       )}
     </>

@@ -11,18 +11,57 @@ type InputBlockProps = {
   type?: string;
   error?: boolean;
   errorMessage?: string;
+  required?: boolean;
+  hint?: string;
+  autoComplete?: string;
 };
 
-export default function InputBlock({ label, id, value, onChange, placeholder, type = "text", error, errorMessage }: InputBlockProps) {
+/**
+ * Accessible form input component.
+ * WCAG 1.3.1: Info and Relationships - Proper label association
+ * WCAG 3.3.1: Error Identification - Clear error messages
+ * WCAG 3.3.2: Labels or Instructions - Required field indication
+ */
+export default function InputBlock({
+  label,
+  id,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  error,
+  errorMessage,
+  required = false,
+  hint,
+  autoComplete,
+}: InputBlockProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const errorId = errorMessage ? `${inputId}-error` : undefined;
+  const hintId = hint ? `${inputId}-hint` : undefined;
+
+  // Build aria-describedby from available descriptions
+  const describedByIds = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={inputId} className={`block text-base font-medium ${error ? "text-red-600" : "text-slate-700"}`}>
+      <label
+        htmlFor={inputId}
+        className={`block text-base font-medium ${error ? "text-red-700" : "text-slate-700"}`}
+      >
         {label}
+        {required && (
+          <>
+            <span aria-hidden="true" className="text-red-600"> *</span>
+            <span className="sr-only"> (required)</span>
+          </>
+        )}
       </label>
+      {hint && (
+        <p id={hintId} className="text-sm text-slate-500">
+          {hint}
+        </p>
+      )}
       <input
         id={inputId}
         type={type}
@@ -30,18 +69,20 @@ export default function InputBlock({ label, id, value, onChange, placeholder, ty
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-invalid={error || undefined}
-        aria-describedby={errorId}
+        aria-describedby={describedByIds}
+        aria-required={required || undefined}
+        autoComplete={autoComplete}
         className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
           error
             ? "border-red-400 focus:ring-red-200 focus:border-red-500"
             : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
         }`}
       />
-      {errorMessage ? (
-        <p id={errorId} className="text-sm text-red-600">
+      {errorMessage && (
+        <p id={errorId} role="alert" className="text-sm text-red-700">
           {errorMessage}
         </p>
-      ) : null}
+      )}
     </div>
   );
 }

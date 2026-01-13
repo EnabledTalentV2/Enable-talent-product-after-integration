@@ -88,11 +88,15 @@ export default function ApplicantsList({
                 {application.candidate.avatar ? (
                   <img
                     src={application.candidate.avatar}
-                    alt={application.candidate.name}
+                    alt={`Profile photo of ${application.candidate.name}`}
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-slate-600">
+                  <div
+                    className="flex h-full w-full items-center justify-center text-xl font-semibold text-slate-600"
+                    role="img"
+                    aria-label={`${application.candidate.name} avatar placeholder`}
+                  >
                     {application.candidate.name
                       .split(" ")
                       .map((n) => n[0])

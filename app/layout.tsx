@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import icon from "@/public/logo/ET Logo-01.webp";
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
+import { SkipLink } from "@/components/a11y";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body
         className={`${plusJakarta.variable}  antialiased`}
       >
+        <SkipLink />
         <ReactQueryProvider>
           {children}
         </ReactQueryProvider>

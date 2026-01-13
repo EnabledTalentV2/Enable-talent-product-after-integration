@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#F0F4F8] p-6">
+    <main id="main-content" className="flex min-h-screen flex-col items-center justify-center bg-[#F0F4F8] p-6">
       <div className="w-full max-w-md space-y-8 text-center">
         <a
           href="https://enable-talent-landing.vercel.app/"
