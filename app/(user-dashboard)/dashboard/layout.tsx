@@ -12,6 +12,7 @@ import {
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
+import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 import {
   validateBackendData,
   logValidationToConsole,
@@ -190,9 +191,24 @@ export default function DashboardLayoutPage({
 
             if (profile) {
               setCandidateProfile(profile);
-              const mapped = mapCandidateProfileToUserData(profile);
-              if (Object.keys(mapped).length > 0) {
-                patchUserData(mapped);
+
+              // Extract basic profile data (employment preferences, etc.)
+              const profileData = mapCandidateProfileToUserData(profile);
+
+              // Transform resume_data if present
+              const resumeDataPayload =
+                typeof profile === "object" &&
+                profile !== null &&
+                "resume_data" in profile
+                  ? profile.resume_data
+                  : null;
+              const resumeData = transformBackendResumeData(resumeDataPayload);
+
+              // Merge both transformations (resume_data takes priority for overlapping fields)
+              const merged = { ...profileData, ...resumeData };
+
+              if (Object.keys(merged).length > 0) {
+                patchUserData(merged);
               }
             } else {
               setCandidateError("Unable to load candidate profile.");

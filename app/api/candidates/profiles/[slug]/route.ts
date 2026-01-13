@@ -10,6 +10,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const cookies = request.headers.get("cookie") || "";
     const { slug } = await context.params;
 
+    console.log("[Get Profile API] Request for slug:", slug);
+    console.log("[Get Profile API] Backend URL:", API_ENDPOINTS.candidateProfiles.detail(slug));
+
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
       {
@@ -18,13 +21,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
       cookies
     );
 
+    console.log("[Get Profile API] Backend response status:", backendResponse.status);
+
     const data = await backendResponse.json();
+
+    console.log("[Get Profile API] Backend response data keys:", Object.keys(data));
+    console.log("[Get Profile API] Has resume_data?", "resume_data" in data);
+    console.log("[Get Profile API] Has verified_data?", "verified_data" in data);
+    if (data.resume_data) {
+      console.log("[Get Profile API] resume_data keys:", Object.keys(data.resume_data));
+      console.log("[Get Profile API] resume_data:", JSON.stringify(data.resume_data, null, 2));
+    }
 
     return NextResponse.json(data, {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Get candidate profile error:", error);
+    console.error("[Get Profile API] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch candidate profile" },
       { status: 500 }

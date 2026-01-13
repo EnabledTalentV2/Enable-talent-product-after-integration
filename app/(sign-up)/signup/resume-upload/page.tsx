@@ -12,6 +12,7 @@ import {
 import { useUserDataStore } from "@/lib/userDataStore";
 import type { UserData } from "@/lib/types/user";
 import { apiRequest, handleSessionExpiry } from "@/lib/api-client";
+import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 
 // Resume upload configuration
 const allowedExtensions = [
@@ -179,75 +180,6 @@ type UserDataPatch = {
   reviewAgree?: Partial<UserData["reviewAgree"]>;
 };
 
-const splitFullName = (value: string) => {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { firstName: "", lastName: "" };
-  return {
-    firstName: parts[0],
-    lastName: parts.slice(1).join(" "),
-  };
-};
-
-const extractTextValue = (value: unknown) =>
-  typeof value === "string" ? value.trim() : "";
-
-const normalizeSkillsValue = (value: unknown) => {
-  if (Array.isArray(value)) {
-    const list = value
-      .filter((entry): entry is string => typeof entry === "string")
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-    return { list, text: list.join(", ") };
-  }
-
-  if (typeof value === "string") {
-    const text = value.trim();
-    const list = text
-      .split(/[,;\n]/)
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-    return { list: list.length > 0 ? list : text ? [text] : [], text };
-  }
-
-  return { list: [], text: "" };
-};
-
-const extractResumeDataPatch = (
-  resumeData: Record<string, unknown>
-): UserDataPatch => {
-  const patch: UserDataPatch = {};
-  const fullName =
-    extractTextValue(resumeData.name) ||
-    extractTextValue(resumeData.full_name) ||
-    extractTextValue(resumeData.fullName);
-  const email = extractTextValue(resumeData.email);
-  const linkedin =
-    extractTextValue(resumeData.linkedin) ||
-    extractTextValue(resumeData.linkedin_url) ||
-    extractTextValue(resumeData.linkedinUrl);
-
-  if (fullName || email || linkedin) {
-    const { firstName, lastName } = splitFullName(fullName);
-    patch.basicInfo = {
-      ...(firstName ? { firstName } : {}),
-      ...(lastName ? { lastName } : {}),
-      ...(email ? { email } : {}),
-      ...(linkedin ? { linkedinUrl: linkedin } : {}),
-    };
-  }
-
-  const { list: skillsList, text: skillsText } = normalizeSkillsValue(
-    resumeData.skills
-  );
-  if (skillsText || skillsList.length > 0) {
-    patch.skills = {
-      skills: skillsText || skillsList.join(", "),
-      ...(skillsList.length > 0 ? { primaryList: skillsList } : {}),
-    };
-  }
-
-  return patch;
-};
 
 /**
  * Extracts user data from various possible API response formats.
@@ -268,6 +200,8 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
   if (!isRecord(candidate)) return {};
 
   const patch: UserDataPatch = {};
+
+  // First, try to extract already-structured UserData format (verified_data)
   if (isRecord(candidate.basicInfo))
     patch.basicInfo = candidate.basicInfo as Partial<UserData["basicInfo"]>;
   if (isRecord(candidate.education))
@@ -297,11 +231,13 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
   if (isRecord(candidate.reviewAgree))
     patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
 
+  // Second, try to find and transform resume_data from backend
   const resumeData =
     (isRecord(payload.resume_data) && payload.resume_data) ||
     (isRecord(payload.resumeData) && payload.resumeData) ||
     (isRecord(candidate.resume_data) && candidate.resume_data) ||
     (isRecord(candidate.resumeData) && candidate.resumeData) ||
+    // If no structured data exists, try the root object
     (!("basicInfo" in candidate) &&
     (typeof candidate.name === "string" ||
       typeof candidate.email === "string" ||
@@ -310,13 +246,36 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
       ? candidate
       : null);
 
-  if (resumeData && isRecord(resumeData)) {
-    const resumePatch = extractResumeDataPatch(resumeData);
-    if (resumePatch.basicInfo && !patch.basicInfo) {
-      patch.basicInfo = resumePatch.basicInfo;
+  // Use the comprehensive transformer to convert backend resume_data
+  if (resumeData) {
+    console.log("[Resume Upload] Transforming resume_data:", resumeData);
+    const transformedData = transformBackendResumeData(resumeData);
+    console.log("[Resume Upload] Transformed data:", transformedData);
+
+    // Merge transformed data, but don't override already-structured data
+    if (transformedData.basicInfo && Object.keys(patch.basicInfo || {}).length === 0) {
+      patch.basicInfo = transformedData.basicInfo;
     }
-    if (resumePatch.skills && !patch.skills) {
-      patch.skills = resumePatch.skills;
+    if (transformedData.education && Object.keys(patch.education || {}).length === 0) {
+      patch.education = transformedData.education;
+    }
+    if (transformedData.workExperience && Object.keys(patch.workExperience || {}).length === 0) {
+      patch.workExperience = transformedData.workExperience;
+    }
+    if (transformedData.skills && Object.keys(patch.skills || {}).length === 0) {
+      patch.skills = transformedData.skills;
+    }
+    if (transformedData.projects && Object.keys(patch.projects || {}).length === 0) {
+      patch.projects = transformedData.projects;
+    }
+    if (transformedData.achievements && Object.keys(patch.achievements || {}).length === 0) {
+      patch.achievements = transformedData.achievements;
+    }
+    if (transformedData.certification && Object.keys(patch.certification || {}).length === 0) {
+      patch.certification = transformedData.certification;
+    }
+    if (transformedData.otherDetails && Object.keys(patch.otherDetails || {}).length === 0) {
+      patch.otherDetails = transformedData.otherDetails;
     }
   }
 
@@ -522,13 +481,17 @@ export default function ResumeUpload() {
               `/api/candidates/profiles/${slug}/`,
               { method: "GET" }
             );
+            console.log("[Resume Upload] Profile data received:", JSON.stringify(profileData, null, 2));
+
             const patch = extractUserDataPatch(profileData);
+            console.log("[Resume Upload] Extracted patch:", JSON.stringify(patch, null, 2));
 
             if (Object.keys(patch).length > 0) {
               console.log("[Resume Upload] Successfully received parsed data from profile");
               return patch;
             } else {
               console.warn("[Resume Upload] Profile fetched but no parsed data found");
+              console.warn("[Resume Upload] Raw profile data keys:", Object.keys(profileData || {}));
             }
           } catch (fetchErr) {
             console.error("[Resume Upload] Failed to fetch profile data after parsing:", fetchErr);
