@@ -1,10 +1,19 @@
 ﻿# Enabled Talent - Inclusive Job Platform
 
-A modern, accessible job platform designed to empower talents and connect them with disability-inclusive employers. Enabled Talent provides an intuitive interface for job seekers to build profiles, upload resumes, and discover opportunities, while employers can post jobs and find top talent.
+A modern, accessible job platform designed to empower talents and connect them with disability-inclusive employers. Enabled Talent provides an intuitive interface for job seekers to build profiles, upload resumes, and discover opportunities, while employers can post jobs and find top talent using AI-powered search and ranking.
 
-## Mission1-a1
+## Mission
 
 To bridge the employment gap for persons with disabilities by providing an accessible, user-friendly platform that connects skilled individuals with disability-inclusive employers and meaningful job opportunities.
+
+## Key Highlights
+
+- **AI-Powered Matching**: Intelligent candidate search and ranking to connect the right talent with the right opportunities
+- **Accessibility First**: Built with WCAG compliance, screen reader support, and keyboard navigation throughout
+- **Smart Resume Parsing**: Automated resume parsing with manual entry fallback for flexible profile creation
+- **Career Coaching**: AI-driven career guidance to help job seekers navigate their professional journey
+- **Modern Tech Stack**: Built with Next.js 16, React 19, TypeScript, and TanStack Query for optimal performance
+- **Seamless Integration**: Django backend integration with robust authentication and CSRF protection
 
 ## Key Features
 
@@ -13,14 +22,18 @@ For Talents:
 - User authentication with email verification and CSRF-protected sessions
 - Multi-step profile builder covering basic info, education, work experience, skills, projects, certifications, and preferences
 - Resume upload and parsing pipeline (Supabase storage + backend parsing) with manual resume entry fallback
-- Job discovery, company browsing, and applied job tracking
-- Dashboard sections for profile completion and career coach flow
+- Job discovery, browsing, and application tracking with status updates
+- Company browsing and exploration
+- AI-powered career coach for personalized career guidance and recommendations
+- Dashboard sections for profile completion, job applications, and career development
 
 For Employers:
 
 - Employer authentication with email verification and organization info step
 - Job posting, editing, and listing management stored per employer
-- Candidate management per job with profile review and interview invite flow
+- AI-powered candidate search and intelligent ranking based on job requirements
+- Application management with accept/reject decision workflow
+- Candidate management per job with detailed profile review
 - Company profile view and edit
 - Analytics widgets and engagement trends
 
@@ -33,14 +46,21 @@ Platform & Experience:
 
 ## Tech Stack
 
-- Next.js 16 (React 19, App Router)
-- TypeScript
+### Frontend
+- Next.js 16.0.10 (React 19.2.1, App Router)
+- TypeScript 5
 - Tailwind CSS v4 with PostCSS
-- Zustand (state + localStorage persistence)
-- Chart.js and react-chartjs-2
+- Zustand (state management + localStorage persistence)
+- TanStack Query (React Query) for data fetching and caching
+- Chart.js and react-chartjs-2 for analytics visualization
+- React Markdown for rich text rendering
 - Lucide React icons
+- Zod for schema validation
 - Jose (JWT decoding)
-- ESLint
+
+### Development
+- ESLint 9 with Next.js config
+- TypeScript strict mode
 
 ## Getting Started
 
@@ -124,7 +144,10 @@ app/                                    # Next.js App Router
       post-jobs/page.tsx                # Job posting form
       listed-jobs/page.tsx              # Posted jobs list
       edit-job/[jobId]/page.tsx         # Job editing
+      ai-search/page.tsx                # AI-powered candidate search
+      candidates/page.tsx               # All candidates overview
       candidates/[jobId]/page.tsx       # Candidate management per job
+      candidates/profile/[slug]/page.tsx # Individual candidate profile view
       company-profile/page.tsx          # Company info
       company-profile-edit/page.tsx     # Edit company info
 
@@ -136,10 +159,11 @@ app/                                    # Next.js App Router
       my-jobs/page.tsx                  # Applied jobs
       companies/page.tsx                # Browse companies
       profile/page.tsx                  # View profile
-      profile-edit/page.tsx             # Edit profile
       profile-update/page.tsx           # Update profile
-      career-coach/page.tsx             # Career guidance
-      career-coach/start/page.tsx        # Career coach start
+      career-coach/page.tsx             # AI career guidance
+      career-coach/start/page.tsx       # Career coach start
+
+  accessibility/page.tsx                # Accessibility features and info
 
   api/
     auth/                               # Auth proxy routes
@@ -152,15 +176,40 @@ app/                                    # Next.js App Router
       csrf/route.ts
       token/refresh/route.ts
       add-feedback/route.ts
-    candidates/
-      profiles/route.ts
+
+    candidates/                         # Candidate endpoints
+      route.ts                          # All candidates
+      [slug]/route.ts                   # Single candidate
+      prompt/route.ts                   # AI prompt generation
+      career-coach/route.ts             # Career coaching AI
+      profiles/route.ts                 # Candidate profiles
       profiles/[slug]/route.ts
       profiles/[slug]/parse-resume/route.ts
       profiles/[slug]/parsing-status/route.ts
       profiles/[slug]/verify-profile/route.ts
-    resume/parse/route.ts               # Resume upload + parsing proxy
-    organizations/route.ts              # Organization API proxy
-    user/me/route.ts                    # Current user session
+
+    candidate/
+      applications/route.ts             # Talent's job applications
+
+    jobs/                               # Job endpoints
+      route.ts                          # All jobs
+      browse/route.ts                   # Browse jobs
+      [id]/route.ts                     # Single job
+      [id]/apply/route.ts               # Apply to job
+      [id]/applications/route.ts        # Job applications
+      [id]/applications/[applicationId]/decision/route.ts  # Accept/reject
+      [id]/rank-candidates/route.ts     # AI candidate ranking
+      [id]/ranking-data/route.ts        # Ranking results
+
+    organizations/                      # Organization endpoints
+      route.ts
+      [id]/route.ts
+
+    agent/
+      search/route.ts                   # AI-powered search
+
+    user/
+      me/route.ts                       # Current user session
 
 components/                             # Reusable React components
   DashBoardNavbar.tsx                   # Talent dashboard navbar
@@ -232,6 +281,16 @@ proxy.ts                                # Route guard helper
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 
+## Documentation
+
+Additional documentation is available in the project:
+
+- **[Backend API README.md](Backend%20API%20README.md)** - Complete Django backend API documentation with endpoints and examples
+- **[docs/API_INTEGRATION_GUIDE.md](docs/API_INTEGRATION_GUIDE.md)** - Guide for integrating with the backend API
+- **[docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md)** - Implementation details and architecture decisions
+- **[docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** - Quick reference for common tasks
+- **[docs/BEFORE_AFTER_COMPARISON.md](docs/BEFORE_AFTER_COMPARISON.md)** - Project evolution and changes
+
 ## Design Features
 
 ### Authentication Pages (Talent & Employer)
@@ -249,6 +308,13 @@ proxy.ts                                # Route guard helper
 - Card-based layout for dashboard content
 - Status indicators for jobs and profiles
 
+### AI-Powered Features
+
+- **Career Coach**: Personalized AI guidance for job seekers with career recommendations
+- **Candidate Search**: AI agent-powered search to help employers find the right talent
+- **Smart Ranking**: Intelligent candidate ranking based on job requirements and qualifications
+- **Profile Analysis**: AI-driven profile suggestions and improvements
+
 ## Authentication & Data Management
 
 ### Backend Integration
@@ -256,10 +322,31 @@ proxy.ts                                # Route guard helper
 - Django backend integration via `BACKEND_URL` in `lib/api-config.ts`
 - Next.js route handlers in `app/api/*` proxy requests and forward cookies/CSRF
 - CSRF handling in `lib/api-client.ts` for client-side requests
+- TanStack Query for efficient data fetching, caching, and synchronization
 
-### Local State
+### State Management
 
-- Zustand stores for talent profiles, employer profiles, applied jobs, and job listings
+- **Zustand stores** for talent profiles, employer profiles, applied jobs, and job listings
+- **Local storage persistence** for user data between sessions
+- **React Query** for server state management and background updates
+
+### Application Workflow
+
+#### For Talents
+1. Sign up with email verification
+2. Complete multi-step profile or upload resume for parsing
+3. Browse jobs and companies
+4. Apply to positions with one click
+5. Track application status in dashboard
+6. Get AI-powered career coaching
+
+#### For Employers
+1. Sign up with organization details
+2. Create and manage job postings
+3. Use AI search to find candidates
+4. Review applications with smart ranking
+5. Accept or reject candidates with decision workflow
+6. Track engagement and analytics
 
 ## Accessibility
 
@@ -296,4 +383,4 @@ For questions, bug reports, or support requests, please contact the Enabled Tale
 
 Built with care to create inclusive employment opportunities for everyone.
 
-Last Updated: January 2026
+**Last Updated:** January 12, 2026

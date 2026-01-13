@@ -12,6 +12,8 @@ export const initialUserData: UserData = {
     ethnicity: "",
     socialProfile: "",
     linkedinUrl: "",
+    githubUrl: "",
+    portfolioUrl: "",
     currentStatus: "",
     profilePhoto: "",
   },
@@ -20,6 +22,9 @@ export const initialUserData: UserData = {
     major: "",
     institution: "",
     graduationDate: "",
+    grade: "",
+    from: "",
+    to: "",
   },
   workExperience: {
     experienceType: "fresher",

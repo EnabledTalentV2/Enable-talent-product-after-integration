@@ -33,6 +33,8 @@ export type UserData = {
     ethnicity: string;
     socialProfile: string;
     linkedinUrl: string;
+    githubUrl: string;
+    portfolioUrl: string;
     currentStatus: string;
     profilePhoto?: string;
   };
@@ -41,6 +43,9 @@ export type UserData = {
     major: string;
     institution: string;
     graduationDate: string;
+    grade: string;
+    from: string;
+    to: string;
   };
   workExperience: {
     experienceType: "experienced" | "fresher";
