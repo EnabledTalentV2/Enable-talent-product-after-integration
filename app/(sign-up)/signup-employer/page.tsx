@@ -16,6 +16,8 @@ import logo from "@/public/logo/ET Logo-01.webp";
 import { useSignupUser } from "@/lib/hooks/useSignupUser";
 import { useLoginUser } from "@/lib/hooks/useLoginUser";
 import { apiRequest } from "@/lib/api-client";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -107,6 +109,11 @@ export default function SignupEmployerPage() {
     }
     if (!password) {
       nextErrors.password = "Password is required.";
+    } else {
+      const passwordStrength = validatePasswordStrength(password);
+      if (!passwordStrength.isStrong) {
+        nextErrors.password = "Password is not strong enough. Please meet all requirements.";
+      }
     }
     if (!confirmPassword) {
       nextErrors.confirmPassword = "Please confirm your password.";
@@ -453,6 +460,7 @@ export default function SignupEmployerPage() {
                     {fieldErrors.password}
                   </p>
                 )}
+                <PasswordStrengthIndicator password={password} show={true} />
               </div>
 
               <div className="space-y-1">

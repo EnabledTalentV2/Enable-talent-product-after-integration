@@ -1,5 +1,8 @@
-import { Pencil, ArrowRight } from "lucide-react";
+"use client";
+
+import { Pencil, ArrowRight, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 interface JobDetail {
   id: string | number;
@@ -24,36 +27,65 @@ interface JobDetail {
 interface JobDetailViewProps {
   job: JobDetail;
   getBrandStyle: (company: string) => string;
+  onDelete?: (jobId: string | number) => void;
 }
 
 export default function JobDetailView({
   job,
   getBrandStyle,
+  onDelete,
 }: JobDetailViewProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await onDelete(job.id);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm h-full">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div
-            className={`flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold ${getBrandStyle(
-              job.company
-            )}`}
-          >
-            <span className="text-2xl">∞</span>
+    <>
+      <div className="bg-white rounded-[28px] p-6 md:p-8 shadow-sm h-full">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div
+              className={`flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold ${getBrandStyle(
+                job.company
+              )}`}
+            >
+              <span className="text-2xl">∞</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">{job.role}</h1>
+              <p className="text-slate-500">{job.company}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">{job.role}</h1>
-            <p className="text-slate-500">{job.company}</p>
+          <div className="flex gap-2">
+            <Link
+              href={`/employer/dashboard/edit-job/${job.id}`}
+              className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
+            >
+              <Pencil className="h-5 w-5 text-slate-400" />
+            </Link>
+            {onDelete && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="p-2 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
+              >
+                <Trash2 className="h-5 w-5 text-red-500" />
+              </button>
+            )}
           </div>
         </div>
-        <Link
-          href={`/employer/dashboard/edit-job/${job.id}`}
-          className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
-        >
-          <Pencil className="h-5 w-5 text-slate-400" />
-        </Link>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4">
@@ -159,20 +191,57 @@ export default function JobDetailView({
         </ul>
       </div>
 
-      {/* Requirements */}
-      <div>
-        <h3 className="font-bold text-slate-900 mb-3">Requirement</h3>
-        <ul className="list-disc list-outside ml-4 space-y-2">
-          {job.requirements.map((item, index) => (
-            <li
-              key={index}
-              className="text-sm text-slate-600 leading-relaxed pl-1"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
+        {/* Requirements */}
+        <div>
+          <h3 className="font-bold text-slate-900 mb-3">Requirement</h3>
+          <ul className="list-disc list-outside ml-4 space-y-2">
+            {job.requirements.map((item, index) => (
+              <li
+                key={index}
+                className="text-sm text-slate-600 leading-relaxed pl-1"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Delete Job Post</h2>
+            </div>
+
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{job.role}</span>?
+              This action cannot be undone and all associated applications will be removed.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

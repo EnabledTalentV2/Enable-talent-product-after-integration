@@ -17,6 +17,8 @@ import { apiRequest } from "@/lib/api-client";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
@@ -100,6 +102,11 @@ export default function SignUpPage() {
     }
     if (!password) {
       nextErrors.password = "Password is required.";
+    } else {
+      const passwordStrength = validatePasswordStrength(password);
+      if (!passwordStrength.isStrong) {
+        nextErrors.password = "Password is not strong enough. Please meet all requirements.";
+      }
     }
     if (!confirmPassword) {
       nextErrors.confirmPassword = "Please confirm your password.";
@@ -393,6 +400,7 @@ export default function SignUpPage() {
                     {fieldErrors.password}
                   </p>
                 ) : null}
+                <PasswordStrengthIndicator password={password} show={true} />
               </div>
 
               <div className="space-y-1">

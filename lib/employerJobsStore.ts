@@ -5,6 +5,13 @@ import type { EmployerJob, JobFormValues } from "@/lib/employerJobsTypes";
 import { apiRequest } from "@/lib/api-client";
 import { parseJobsArray, toBackendJobPayload } from "@/lib/employerJobsUtils";
 
+// Callback to invalidate React Query cache
+let invalidateJobsCache: (() => void) | null = null;
+
+export function setJobsCacheInvalidator(invalidator: () => void) {
+  invalidateJobsCache = invalidator;
+}
+
 type EmployerJobsStore = {
   jobs: EmployerJob[];
   isLoading: boolean;
@@ -12,6 +19,7 @@ type EmployerJobsStore = {
   fetchJobs: () => Promise<void>;
   createJob: (values: JobFormValues) => Promise<EmployerJob>;
   updateJob: (jobId: string | number, values: JobFormValues) => Promise<EmployerJob>;
+  deleteJob: (jobId: string | number) => Promise<void>;
   resetJobs: () => void;
 };
 
@@ -72,20 +80,76 @@ export const useEmployerJobsStore = create<EmployerJobsStore>((set, get) => ({
     }
   },
   updateJob: async (jobId, values) => {
-    const previousJobs = get().jobs;
-    const jobIndex = previousJobs.findIndex((job) => job.id === jobId);
-    if (jobIndex === -1) {
-      throw new Error("Job not found.");
-    }
+    try {
+      console.log("[Jobs Store] Updating job...", jobId, values);
 
-    const updatedJob: EmployerJob = {
-      ...previousJobs[jobIndex],
-      ...values,
-    };
-    const nextJobs = [...previousJobs];
-    nextJobs[jobIndex] = updatedJob;
-    set({ jobs: nextJobs, hasFetched: true });
-    return updatedJob;
+      // Map frontend values to backend format
+      const backendPayload = toBackendJobPayload(values);
+      console.log("[Jobs Store] Backend payload:", backendPayload);
+
+      // Call backend API
+      const response = await apiRequest<unknown>(`/api/jobs/${jobId}`, {
+        method: "PATCH",
+        body: JSON.stringify(backendPayload),
+      });
+
+      console.log("[Jobs Store] Backend response:", response);
+
+      // Parse response - backend returns single job object
+      const parsedJobs = parseJobsArray(response);
+      if (parsedJobs.length === 0) {
+        throw new Error("Failed to parse updated job from backend response");
+      }
+
+      const updatedJob = parsedJobs[0];
+      console.log("[Jobs Store] Parsed updated job:", updatedJob);
+
+      // Update in store
+      const previousJobs = get().jobs;
+      const jobIndex = previousJobs.findIndex((job) => job.id === jobId);
+      if (jobIndex === -1) {
+        throw new Error("Job not found.");
+      }
+
+      const nextJobs = [...previousJobs];
+      nextJobs[jobIndex] = updatedJob;
+      set({ jobs: nextJobs, hasFetched: true });
+
+      // Invalidate React Query cache if available
+      if (invalidateJobsCache) {
+        invalidateJobsCache();
+      }
+
+      return updatedJob;
+    } catch (error) {
+      console.error("[Jobs Store] Failed to update job:", error);
+      throw error; // Re-throw to show error toast in UI
+    }
+  },
+  deleteJob: async (jobId) => {
+    try {
+      console.log("[Jobs Store] Deleting job...", jobId);
+
+      // Call backend API
+      await apiRequest<unknown>(`/api/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+
+      console.log("[Jobs Store] Job deleted successfully");
+
+      // Remove from store
+      const previousJobs = get().jobs;
+      const nextJobs = previousJobs.filter((job) => job.id !== jobId);
+      set({ jobs: nextJobs, hasFetched: true });
+
+      // Invalidate React Query cache if available
+      if (invalidateJobsCache) {
+        invalidateJobsCache();
+      }
+    } catch (error) {
+      console.error("[Jobs Store] Failed to delete job:", error);
+      throw error; // Re-throw to show error toast in UI
+    }
   },
   resetJobs: () => set({ jobs: [], isLoading: false, hasFetched: false }),
 }));

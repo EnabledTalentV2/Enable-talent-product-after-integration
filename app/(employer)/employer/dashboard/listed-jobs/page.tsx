@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
-import { useJobs } from "@/lib/hooks/useJobs";
+import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
 import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
+import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
@@ -22,11 +25,35 @@ const getBrandStyle = (company: string) =>
 export default function ListedJobsPage() {
   // Use React Query hook - automatic fetching, caching, and error handling
   const { data: jobs = [], isLoading, error } = useJobs();
+  const { deleteJob } = useEmployerJobsStore();
+  const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const jobIdFromUrl = searchParams.get("jobId");
 
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
   );
   const didMountRef = useRef(false);
+
+  // Set up cache invalidator for Zustand store
+  useEffect(() => {
+    setJobsCacheInvalidator(() => {
+      queryClient.invalidateQueries({ queryKey: jobsKeys.lists() });
+    });
+  }, [queryClient]);
+
+  const handleDeleteJob = async (jobId: string | number) => {
+    try {
+      await deleteJob(jobId);
+      // If we deleted the selected job, clear selection
+      if (selectedJobId === jobId) {
+        setSelectedJobId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+      alert("Failed to delete job. Please try again.");
+    }
+  };
 
   const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
   const selectedJob = useMemo(() => {
@@ -41,13 +68,22 @@ export default function ListedJobsPage() {
       return;
     }
 
+    // If jobId is in URL, select that job
+    if (jobIdFromUrl) {
+      const jobExists = jobs.some((job) => String(job.id) === jobIdFromUrl);
+      if (jobExists) {
+        setSelectedJobId(jobIdFromUrl);
+        return;
+      }
+    }
+
     setSelectedJobId((current) => {
       if (current && jobs.some((job) => job.id === current)) {
         return current;
       }
       return jobs[0].id;
     });
-  }, [jobs]);
+  }, [jobs, jobIdFromUrl]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -171,6 +207,7 @@ export default function ListedJobsPage() {
                         <JobDetailView
                           job={selectedJob}
                           getBrandStyle={getBrandStyle}
+                          onDelete={handleDeleteJob}
                         />
                       )}
                     </div>
@@ -188,7 +225,7 @@ export default function ListedJobsPage() {
             tabIndex={-1}
             className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10"
           >
-            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} />
+            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} onDelete={handleDeleteJob} />
           </div>
         )}
       </div>
