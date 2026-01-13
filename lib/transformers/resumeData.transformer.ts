@@ -6,6 +6,17 @@
 import type { UserData } from "@/lib/types/user";
 
 /**
+ * Deep partial type utility for nested objects
+ */
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object
+    ? T[P] extends Array<infer U>
+      ? Array<U>
+      : DeepPartial<T[P]>
+    : T[P];
+};
+
+/**
  * Backend resume_data structure from Django API
  */
 export type BackendResumeData = {
@@ -581,13 +592,13 @@ const transformLanguages = (data: BackendResumeData): Partial<UserData["otherDet
  */
 export function transformBackendResumeData(
   resumeData: BackendResumeData | unknown
-): Partial<UserData> {
+): DeepPartial<UserData> {
   if (!resumeData || typeof resumeData !== "object") {
     return {};
   }
 
   const data = resumeData as BackendResumeData;
-  const patch: Partial<UserData> = {};
+  const patch: DeepPartial<UserData> = {};
 
   // Transform each section
   const basicInfo = transformBasicInfo(data);

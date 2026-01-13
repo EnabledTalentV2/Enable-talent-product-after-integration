@@ -63,6 +63,16 @@ function transformBackendToFrontend(
         (backendData.linkedinUrl as string) ||
         (backendData.linkedin as string) ||
         defaultUserData.basicInfo.linkedinUrl,
+      githubUrl:
+        (backendData.github_url as string) ||
+        (backendData.githubUrl as string) ||
+        (backendData.github as string) ||
+        defaultUserData.basicInfo.githubUrl,
+      portfolioUrl:
+        (backendData.portfolio_url as string) ||
+        (backendData.portfolioUrl as string) ||
+        (backendData.portfolio as string) ||
+        defaultUserData.basicInfo.portfolioUrl,
       currentStatus:
         (backendData.current_status as string) ||
         (backendData.currentStatus as string) ||
