@@ -57,4 +57,10 @@ export const initialUserData: UserData = {
     desiredSalary: "",
   },
   reviewAgree: { agree: false, discover: "", comments: "" },
+  accessibilityNeeds: {
+    categories: [],
+    accommodationNeed: "",
+    disclosurePreference: "",
+    accommodations: [],
+  },
 };
