@@ -9,10 +9,10 @@ const INDUSTRY_LABELS: Record<string, string> = {
 };
 
 const COMPANY_SIZE_LABELS: Record<string, string> = {
-  "1": "1 - 10",
-  "2": "10 - 100",
-  "3": "100 - 1000",
-  "4": "1000 - 10000",
+  "1": "1-10",
+  "2": "10-100",
+  "3": "100-1000",
+  "4": "1000-10000",
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -33,6 +33,30 @@ const normalizeChoice = (
   const raw = toStringValue(value).trim();
   if (!raw) return "";
   return choices[raw] ?? raw;
+};
+
+const toCompanySizeRange = (value: unknown): string => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    if (value >= 1 && value <= 10) return "1-10";
+    if (value >= 11 && value <= 100) return "10-100";
+    if (value >= 101 && value <= 1000) return "100-1000";
+    if (value >= 1001 && value <= 10000) return "1000-10000";
+    return "";
+  }
+
+  const raw = toStringValue(value).trim();
+  if (!raw) return "";
+  if (/^\d+$/.test(raw)) {
+    const numeric = Number(raw);
+    if (!Number.isFinite(numeric)) return "";
+    if (numeric >= 1 && numeric <= 10) return "1-10";
+    if (numeric >= 11 && numeric <= 100) return "10-100";
+    if (numeric >= 101 && numeric <= 1000) return "100-1000";
+    if (numeric >= 1001 && numeric <= 10000) return "1000-10000";
+    return "";
+  }
+
+  return COMPANY_SIZE_LABELS[raw] ?? raw;
 };
 
 const getFirstOrganization = (
@@ -87,12 +111,14 @@ export const toEmployerOrganizationInfo = (
     record.founded_year ?? record.foundedYear ?? record.founded
   );
   const website = toStringValue(record.url ?? record.website);
-  const companySize = normalizeChoice(
+  const linkedinUrl = toStringValue(
+    record.linkedin_url ?? record.linkedinUrl ?? record.linkedin
+  );
+  const companySize = toCompanySizeRange(
     record.employee_size ??
       record.employeeSize ??
       record.companySize ??
-      record.company_size,
-    COMPANY_SIZE_LABELS
+      record.company_size
   );
   const industry = normalizeChoice(
     record.industry ?? record.industry_name ?? record.industryName,
@@ -105,6 +131,7 @@ export const toEmployerOrganizationInfo = (
     location ||
     foundedYear ||
     website ||
+    linkedinUrl ||
     companySize ||
     industry;
 
@@ -117,6 +144,7 @@ export const toEmployerOrganizationInfo = (
     location,
     foundedYear,
     website,
+    linkedinUrl,
     companySize,
     industry,
   };

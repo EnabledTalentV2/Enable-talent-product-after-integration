@@ -21,6 +21,7 @@ type FieldErrors = Partial<{
   location: string;
   foundedYear: string;
   website: string;
+  linkedinUrl: string;
   companySize: string;
   industry: string;
 }>;
@@ -56,6 +57,9 @@ const toFieldErrorsFromApi = (error: unknown): FieldErrors => {
 
   const websiteMessage = extractErrorText(data.url);
   if (websiteMessage) nextErrors.website = websiteMessage;
+
+  const linkedinMessage = extractErrorText(data.linkedin_url ?? data.linkedin);
+  if (linkedinMessage) nextErrors.linkedinUrl = linkedinMessage;
 
   const sizeMessage = extractErrorText(data.employee_size);
   if (sizeMessage) nextErrors.companySize = sizeMessage;
@@ -106,6 +110,7 @@ export default function OrganisationInfoPage() {
     location: "",
     foundedYear: "",
     website: "",
+    linkedinUrl: "",
     companySize: "",
     industry: "",
   };
@@ -121,6 +126,7 @@ export default function OrganisationInfoPage() {
   const locationRef = useRef<HTMLInputElement | null>(null);
   const foundedRef = useRef<HTMLInputElement | null>(null);
   const websiteRef = useRef<HTMLInputElement | null>(null);
+  const linkedinRef = useRef<HTMLInputElement | null>(null);
   const companySizeRef = useRef<HTMLFieldSetElement | null>(null);
   const industryRef = useRef<HTMLSelectElement | null>(null);
 
@@ -142,6 +148,29 @@ export default function OrganisationInfoPage() {
     checkSession();
   }, [router]);
 
+  useEffect(() => {
+    const normalizedFoundedYear = organizationInfo.foundedYear?.includes("-")
+      ? organizationInfo.foundedYear.split("-")[0] ?? ""
+      : organizationInfo.foundedYear;
+    const normalizedCompanySize = organizationInfo.companySize
+      ? organizationInfo.companySize.replace(/\s+/g, "")
+      : organizationInfo.companySize;
+
+    if (
+      normalizedFoundedYear !== organizationInfo.foundedYear ||
+      normalizedCompanySize !== organizationInfo.companySize
+    ) {
+      patchOrganizationInfo({
+        foundedYear: normalizedFoundedYear,
+        companySize: normalizedCompanySize,
+      });
+    }
+  }, [
+    organizationInfo.companySize,
+    organizationInfo.foundedYear,
+    patchOrganizationInfo,
+  ]);
+
   const welcomeName = organizationInfo.organizationName.trim() || "Employer";
 
   const clearFieldError = (field: keyof FieldErrors) => {
@@ -161,6 +190,7 @@ export default function OrganisationInfoPage() {
     const trimmedAbout = organizationInfo.aboutOrganization.trim();
     const trimmedLocation = organizationInfo.location.trim();
     const trimmedWebsite = organizationInfo.website.trim();
+    const trimmedLinkedin = organizationInfo.linkedinUrl.trim();
     const companySizeChoice = COMPANY_SIZE_CHOICES[organizationInfo.companySize];
     const industryChoice = INDUSTRY_CHOICES[organizationInfo.industry];
 
@@ -194,6 +224,7 @@ export default function OrganisationInfoPage() {
         ["location", locationRef as unknown as RefObject<HTMLElement | null>],
         ["foundedYear", foundedRef as unknown as RefObject<HTMLElement | null>],
         ["website", websiteRef as unknown as RefObject<HTMLElement | null>],
+        ["linkedinUrl", linkedinRef as unknown as RefObject<HTMLElement | null>],
         [
           "companySize",
           companySizeRef as unknown as RefObject<HTMLElement | null>,
@@ -220,6 +251,9 @@ export default function OrganisationInfoPage() {
       formData.append("about", trimmedAbout);
       if (trimmedWebsite) {
         formData.append("url", trimmedWebsite);
+      }
+      if (trimmedLinkedin) {
+        formData.append("linkedin_url", trimmedLinkedin);
       }
 
       const orgData = await apiRequest<unknown>("/api/organizations", {
@@ -445,7 +479,7 @@ export default function OrganisationInfoPage() {
                 <input
                   ref={foundedRef}
                   id="organization-founded"
-                  type="date"
+                  type="text"
                   value={organizationInfo.foundedYear}
                   aria-invalid={Boolean(fieldErrors.foundedYear)}
                   aria-describedby={
@@ -455,9 +489,16 @@ export default function OrganisationInfoPage() {
                   }
                   onChange={(event) => {
                     clearFieldError("foundedYear");
-                    patchOrganizationInfo({ foundedYear: event.target.value });
+                    const normalized = event.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 4);
+                    patchOrganizationInfo({ foundedYear: normalized });
                   }}
+                  inputMode="numeric"
+                  pattern="\d{4}"
+                  maxLength={4}
                   className={inputClasses(!!fieldErrors.foundedYear)}
+                  placeholder="YYYY"
                 />
                 {fieldErrors.foundedYear ? (
                   <p
@@ -501,6 +542,42 @@ export default function OrganisationInfoPage() {
                     className="text-sm text-red-500"
                   >
                     {fieldErrors.website}
+                  </p>
+                ) : null}
+              </div>
+
+              {/* LinkedIn */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="organization-linkedin"
+                  className="text-sm font-medium text-gray-900"
+                >
+                  LinkedIn URL
+                </label>
+                <input
+                  ref={linkedinRef}
+                  id="organization-linkedin"
+                  type="text"
+                  placeholder="Enter LinkedIn page"
+                  value={organizationInfo.linkedinUrl}
+                  aria-invalid={Boolean(fieldErrors.linkedinUrl)}
+                  aria-describedby={
+                    fieldErrors.linkedinUrl
+                      ? "organization-linkedin-error"
+                      : undefined
+                  }
+                  onChange={(event) => {
+                    clearFieldError("linkedinUrl");
+                    patchOrganizationInfo({ linkedinUrl: event.target.value });
+                  }}
+                  className={inputClasses(!!fieldErrors.linkedinUrl)}
+                />
+                {fieldErrors.linkedinUrl ? (
+                  <p
+                    id="organization-linkedin-error"
+                    className="text-sm text-red-500"
+                  >
+                    {fieldErrors.linkedinUrl}
                   </p>
                 ) : null}
               </div>
@@ -576,8 +653,11 @@ export default function OrganisationInfoPage() {
                       patchOrganizationInfo({ industry: event.target.value });
                     }}
                   >
+                    <option value="">Select industry</option>
                     {INDUSTRY_OPTIONS.map((option) => (
-                      <option key={option.id}>{option.label}</option>
+                      <option key={option.id} value={option.label}>
+                        {option.label}
+                      </option>
                     ))}
                   </select>
                   <ChevronDown

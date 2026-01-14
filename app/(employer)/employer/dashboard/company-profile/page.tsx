@@ -17,6 +17,7 @@ export default function EmployerCompanyProfilePage() {
     location: "",
     foundedYear: "",
     website: "",
+    linkedinUrl: "",
     companySize: "",
     industry: "",
   };
@@ -26,6 +27,7 @@ export default function EmployerCompanyProfilePage() {
     Boolean(organizationInfo.aboutOrganization) ||
     Boolean(organizationInfo.location) ||
     Boolean(organizationInfo.website) ||
+    Boolean(organizationInfo.linkedinUrl) ||
     Boolean(organizationInfo.companySize) ||
     Boolean(organizationInfo.foundedYear);
 

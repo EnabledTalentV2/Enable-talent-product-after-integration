@@ -42,6 +42,7 @@ export default function CompanyProfileEditPage() {
     foundedYear: "",
     companySize: "",
     website: "",
+    linkedinUrl: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -94,20 +95,26 @@ export default function CompanyProfileEditPage() {
       console.log("Company Size value:", organizationInfo.companySize);
       console.log("Industry value:", organizationInfo.industry);
 
+      const normalizedFoundedYear = organizationInfo.foundedYear?.includes("-")
+        ? organizationInfo.foundedYear.split("-")[0] ?? ""
+        : organizationInfo.foundedYear || "";
+
       setFormData({
         organizationName: organizationInfo.organizationName || "",
         industry: organizationInfo.industry || "",
         aboutOrganization: organizationInfo.aboutOrganization || "",
         location: organizationInfo.location || "",
-        foundedYear: organizationInfo.foundedYear || "",
+        foundedYear: normalizedFoundedYear,
         companySize: organizationInfo.companySize || "",
         website: organizationInfo.website || "",
+        linkedinUrl: organizationInfo.linkedinUrl || "",
       });
 
       console.log("Form data after setting:", {
-        foundedYear: organizationInfo.foundedYear,
+        foundedYear: normalizedFoundedYear,
         companySize: organizationInfo.companySize,
         industry: organizationInfo.industry,
+        linkedinUrl: organizationInfo.linkedinUrl,
       });
     }
   }, [organizationInfo]);
@@ -116,6 +123,11 @@ export default function CompanyProfileEditPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "foundedYear") {
+      const normalized = value.replace(/\D/g, "").slice(0, 4);
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -188,6 +200,9 @@ export default function CompanyProfileEditPage() {
       requestFormData.append("about", formData.aboutOrganization.trim());
       requestFormData.append("headquarter_location", formData.location.trim());
       requestFormData.append("url", formData.website.trim());
+      if (formData.linkedinUrl.trim()) {
+        requestFormData.append("linkedin_url", formData.linkedinUrl.trim());
+      }
       requestFormData.append("employee_size", String(companySizeChoice ?? ""));
       requestFormData.append("industry", String(industryChoice ?? ""));
 
@@ -349,12 +364,16 @@ export default function CompanyProfileEditPage() {
             Founded year
           </label>
           <input
-            type="date"
+            type="text"
             id="foundedYear"
             name="foundedYear"
             value={formData.foundedYear}
             onChange={handleChange}
+            inputMode="numeric"
+            pattern="\d{4}"
+            maxLength={4}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="YYYY"
           />
         </div>
 
@@ -374,6 +393,25 @@ export default function CompanyProfileEditPage() {
             onChange={handleChange}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Enter website link"
+          />
+        </div>
+
+        {/* LinkedIn */}
+        <div className="space-y-2">
+          <label
+            htmlFor="linkedinUrl"
+            className="text-sm font-medium text-slate-700"
+          >
+            LinkedIn URL
+          </label>
+          <input
+            type="text"
+            id="linkedinUrl"
+            name="linkedinUrl"
+            value={formData.linkedinUrl}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Enter LinkedIn page"
           />
         </div>
 
