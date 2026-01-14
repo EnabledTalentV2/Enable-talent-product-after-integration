@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Navbar from "@/components/signup/Navbar";
+import { apiRequest } from "@/lib/api-client";
+import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
+import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
+import type { UserData } from "@/lib/types/user";
 
 const categories = [
   {
@@ -70,11 +74,167 @@ const accommodationOptions = [
   { id: "prefer_discuss_later", label: "Prefer to discuss later" },
 ];
 
+// Helper functions for parsing status check
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getParsingStatus = (payload: unknown): string | null => {
+  if (!isRecord(payload)) return null;
+  const status =
+    (typeof payload.status === "string" && payload.status) ||
+    (typeof payload.state === "string" && payload.state) ||
+    (typeof payload.parsing_status === "string" && payload.parsing_status) ||
+    (typeof payload.parsingStatus === "string" && payload.parsingStatus) ||
+    null;
+  return status ? status.toLowerCase() : null;
+};
+
+type UserDataPatch = {
+  basicInfo?: Partial<UserData["basicInfo"]>;
+  education?: Partial<UserData["education"]>;
+  workExperience?: Partial<UserData["workExperience"]>;
+  skills?: Partial<UserData["skills"]>;
+  projects?: Partial<UserData["projects"]>;
+  achievements?: Partial<UserData["achievements"]>;
+  certification?: Partial<UserData["certification"]>;
+  preference?: Partial<UserData["preference"]>;
+  otherDetails?: Partial<UserData["otherDetails"]>;
+  reviewAgree?: Partial<UserData["reviewAgree"]>;
+};
+
+const PARSE_FAILURE_MESSAGE =
+  "We couldn't finish parsing your resume. Please continue to fill your details manually.";
+
+const extractUserDataPatch = (payload: unknown): UserDataPatch => {
+  if (!isRecord(payload)) return {};
+
+  const candidate =
+    (isRecord(payload.data) && payload.data) ||
+    (isRecord(payload.parsed_data) && payload.parsed_data) ||
+    (isRecord(payload.parsedData) && payload.parsedData) ||
+    (isRecord(payload.resume_data) && payload.resume_data) ||
+    (isRecord(payload.resumeData) && payload.resumeData) ||
+    (isRecord(payload.userData) && payload.userData) ||
+    payload;
+  if (!isRecord(candidate)) return {};
+
+  const patch: UserDataPatch = {};
+
+  if (isRecord(candidate.basicInfo))
+    patch.basicInfo = candidate.basicInfo as Partial<UserData["basicInfo"]>;
+  if (isRecord(candidate.education))
+    patch.education = candidate.education as Partial<UserData["education"]>;
+  if (isRecord(candidate.workExperience))
+    patch.workExperience = candidate.workExperience as Partial<
+      UserData["workExperience"]
+    >;
+  if (isRecord(candidate.skills))
+    patch.skills = candidate.skills as Partial<UserData["skills"]>;
+  if (isRecord(candidate.projects))
+    patch.projects = candidate.projects as Partial<UserData["projects"]>;
+  if (isRecord(candidate.achievements))
+    patch.achievements = candidate.achievements as Partial<
+      UserData["achievements"]
+    >;
+  if (isRecord(candidate.certification))
+    patch.certification = candidate.certification as Partial<
+      UserData["certification"]
+    >;
+  if (isRecord(candidate.preference))
+    patch.preference = candidate.preference as Partial<UserData["preference"]>;
+  if (isRecord(candidate.otherDetails))
+    patch.otherDetails = candidate.otherDetails as Partial<
+      UserData["otherDetails"]
+    >;
+  if (isRecord(candidate.reviewAgree))
+    patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
+
+  const resumeData =
+    (isRecord(payload.resume_data) && payload.resume_data) ||
+    (isRecord(payload.resumeData) && payload.resumeData) ||
+    (isRecord(candidate.resume_data) && candidate.resume_data) ||
+    (isRecord(candidate.resumeData) && candidate.resumeData) ||
+    (!("basicInfo" in candidate) &&
+    (typeof candidate.name === "string" ||
+      typeof candidate.email === "string" ||
+      Array.isArray(candidate.skills) ||
+      typeof candidate.skills === "string")
+      ? candidate
+      : null);
+
+  if (resumeData) {
+    const transformedData = transformBackendResumeData(resumeData);
+
+    if (transformedData.basicInfo && Object.keys(patch.basicInfo || {}).length === 0) {
+      patch.basicInfo = transformedData.basicInfo;
+    }
+    if (transformedData.education && Object.keys(patch.education || {}).length === 0) {
+      patch.education = transformedData.education;
+    }
+    if (transformedData.workExperience && Object.keys(patch.workExperience || {}).length === 0) {
+      patch.workExperience = transformedData.workExperience;
+    }
+    if (transformedData.skills && Object.keys(patch.skills || {}).length === 0) {
+      patch.skills = transformedData.skills;
+    }
+    if (transformedData.projects && Object.keys(patch.projects || {}).length === 0) {
+      patch.projects = transformedData.projects;
+    }
+    if (transformedData.achievements && Object.keys(patch.achievements || {}).length === 0) {
+      patch.achievements = transformedData.achievements;
+    }
+    if (transformedData.certification && Object.keys(patch.certification || {}).length === 0) {
+      patch.certification = transformedData.certification;
+    }
+    if (transformedData.otherDetails && Object.keys(patch.otherDetails || {}).length === 0) {
+      patch.otherDetails = transformedData.otherDetails;
+    }
+  }
+
+  return patch;
+};
+
+const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
+  ...prev,
+  basicInfo: patch.basicInfo
+    ? { ...prev.basicInfo, ...patch.basicInfo }
+    : prev.basicInfo,
+  education: patch.education
+    ? { ...prev.education, ...patch.education }
+    : prev.education,
+  workExperience: patch.workExperience
+    ? { ...prev.workExperience, ...patch.workExperience }
+    : prev.workExperience,
+  skills: patch.skills ? { ...prev.skills, ...patch.skills } : prev.skills,
+  projects: patch.projects
+    ? { ...prev.projects, ...patch.projects }
+    : prev.projects,
+  achievements: patch.achievements
+    ? { ...prev.achievements, ...patch.achievements }
+    : prev.achievements,
+  certification: patch.certification
+    ? { ...prev.certification, ...patch.certification }
+    : prev.certification,
+  preference: patch.preference
+    ? { ...prev.preference, ...patch.preference }
+    : prev.preference,
+  otherDetails: patch.otherDetails
+    ? { ...prev.otherDetails, ...patch.otherDetails }
+    : prev.otherDetails,
+  reviewAgree: patch.reviewAgree
+    ? { ...prev.reviewAgree, ...patch.reviewAgree }
+    : prev.reviewAgree,
+});
+
 export default function AccessabilityNeedsPage() {
   const router = useRouter();
   const { userData, patchUserData } = useUserDataStore();
+  const setUserData = useUserDataStore((s) => s.setUserData);
 
   const [loading, setLoading] = useState(true);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [parseFailure, setParseFailure] = useState<string | null>(null);
+  const [resumeUploaded, setResumeUploaded] = useState(false);
   const [step, setStep] = useState<
     "intro" | "categories" | "preferences" | "accommodations"
   >("intro");
@@ -143,6 +303,12 @@ export default function AccessabilityNeedsPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setResumeUploaded(params.get("resumeUploaded") === "1");
+  }, []);
+
   // Announce step changes to screen readers
   useEffect(() => {
     if (mainHeadingRef.current) {
@@ -174,20 +340,73 @@ export default function AccessabilityNeedsPage() {
     );
   };
 
-  // Save accessibility data and navigate to manual resume fill
-  const handleCompleteProfile = () => {
-    // Save to user data store (persisted in localStorage)
-    patchUserData({
-      accessibilityNeeds: {
-        categories: selectedCategories,
-        accommodationNeed: accommodationNeed,
-        disclosurePreference: disclosurePreference,
-        accommodations: selectedAccommodations,
-      },
-    });
+  // Save accessibility data, check parsing status, and navigate to manual resume fill
+  const handleCompleteProfile = async () => {
+    if (isCompleting) return;
 
-    // Navigate to manual resume fill
-    router.push("/signup/manual-resume-fill");
+    setIsCompleting(true);
+    setParseFailure(null);
+
+    try {
+      // Save to user data store (persisted in localStorage)
+      patchUserData({
+        accessibilityNeeds: {
+          categories: selectedCategories,
+          accommodationNeed: accommodationNeed,
+          disclosurePreference: disclosurePreference,
+          accommodations: selectedAccommodations,
+        },
+      });
+
+      if (!resumeUploaded) {
+        router.push("/signup/manual-resume-fill");
+        return;
+      }
+
+      // Get candidate slug for API calls
+      const slug = await ensureCandidateProfileSlug({
+        logLabel: "Accessibility Needs",
+      });
+
+      if (!slug) {
+        setParseFailure(PARSE_FAILURE_MESSAGE);
+        return;
+      }
+
+      try {
+        // Check parsing status
+        const statusData = await apiRequest<unknown>(
+          `/api/candidates/profiles/${slug}/parsing-status/`,
+          { method: "GET" }
+        );
+
+        const status = getParsingStatus(statusData);
+
+        if (status === "parsed") {
+          const profileData = await apiRequest<unknown>(
+            `/api/candidates/profiles/${slug}/`,
+            { method: "GET" }
+          );
+
+          const patch = extractUserDataPatch(profileData);
+          if (Object.keys(patch).length > 0) {
+            setUserData((prev) => mergeUserData(prev, patch));
+            router.push("/signup/manual-resume-fill");
+            return;
+          }
+
+          setParseFailure(PARSE_FAILURE_MESSAGE);
+          return;
+        }
+
+        setParseFailure(PARSE_FAILURE_MESSAGE);
+      } catch (err) {
+        console.error("[Accessibility Needs] Error checking parsing status:", err);
+        setParseFailure(PARSE_FAILURE_MESSAGE);
+      }
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   // Show loading state during authentication check
@@ -595,6 +814,25 @@ export default function AccessabilityNeedsPage() {
             </div>
           </fieldset>
 
+          {parseFailure ? (
+            <div
+              role="alert"
+              className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              <p className="font-semibold">
+                Resume parsing could not be completed.
+              </p>
+              <p className="mt-1">{parseFailure}</p>
+              <button
+                type="button"
+                onClick={() => router.push("/signup/manual-resume-fill")}
+                className="mt-3 block w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+              >
+                Continue to manual resume fill
+              </button>
+            </div>
+          ) : null}
+
           <nav className="mt-12 flex items-center justify-between" aria-label="Form navigation">
             <button
               type="button"
@@ -606,10 +844,11 @@ export default function AccessabilityNeedsPage() {
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-[#C78539] px-12 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#b07430] focus:outline-none focus:ring-2 focus:ring-[#C78539] focus:ring-offset-2"
-              aria-label="Complete accessibility profile and continue to resume upload"
+              disabled={isCompleting}
+              className="rounded-xl bg-[#C78539] px-12 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#b07430] focus:outline-none focus:ring-2 focus:ring-[#C78539] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              aria-label="Complete accessibility profile and continue to resume details"
             >
-              Create Profile
+              {isCompleting ? "Processing..." : "Create Profile"}
             </button>
           </nav>
         </form>

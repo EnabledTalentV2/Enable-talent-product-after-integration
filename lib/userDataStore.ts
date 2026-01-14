@@ -17,6 +17,14 @@ const normalizeUserData = (
   value: Partial<UserData> | DeepPartialUserData | null | undefined
 ): UserData => {
   const safe = value && typeof value === "object" ? value : {};
+  const accessibility = safe.accessibilityNeeds;
+  const defaultAccessibility =
+    initialUserData.accessibilityNeeds ?? {
+      categories: [],
+      accommodationNeed: "",
+      disclosurePreference: "",
+      accommodations: [],
+    };
 
   return {
     basicInfo: { ...initialUserData.basicInfo, ...safe.basicInfo },
@@ -59,9 +67,16 @@ const normalizeUserData = (
         : initialUserData.otherDetails.languages,
     },
     reviewAgree: { ...initialUserData.reviewAgree, ...safe.reviewAgree },
-    accessibilityNeeds: safe.accessibilityNeeds
-      ? { ...initialUserData.accessibilityNeeds, ...safe.accessibilityNeeds }
-      : initialUserData.accessibilityNeeds,
+    accessibilityNeeds: {
+      categories: accessibility?.categories ?? defaultAccessibility.categories,
+      accommodationNeed:
+        accessibility?.accommodationNeed ?? defaultAccessibility.accommodationNeed,
+      disclosurePreference:
+        accessibility?.disclosurePreference ??
+        defaultAccessibility.disclosurePreference,
+      accommodations:
+        accessibility?.accommodations ?? defaultAccessibility.accommodations,
+    },
   };
 };
 

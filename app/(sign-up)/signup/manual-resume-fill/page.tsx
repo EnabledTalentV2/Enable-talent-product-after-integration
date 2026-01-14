@@ -180,6 +180,18 @@ export default function ManualResumeFill() {
     };
   }, [fetchCandidateProfile, router, setUserData]);
 
+  const hasCompletedAccessibility = Boolean(
+    userData.accessibilityNeeds?.accommodationNeed &&
+      userData.accessibilityNeeds?.disclosurePreference
+  );
+
+  useEffect(() => {
+    if (loading) return;
+    if (!hasCompletedAccessibility) {
+      router.replace("/signup/accessability-needs");
+    }
+  }, [hasCompletedAccessibility, loading, router]);
+
   const [finishError, setFinishError] = useState<string | null>(null);
   const [basicInfoErrors, setBasicInfoErrors] = useState<
     Partial<Record<keyof UserData["basicInfo"], string>>

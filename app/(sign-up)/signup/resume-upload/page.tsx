@@ -676,11 +676,11 @@ export default function ResumeUpload() {
 
         // Immediately navigate to accessibility needs while parsing happens in background
         console.log("[Resume Upload] Resume uploaded successfully, navigating to accessibility needs");
-        router.push("/signup/accessability-needs");
+        router.push("/signup/accessability-needs?resumeUploaded=1");
       } catch (err) {
         console.error("[Resume Upload] Unexpected error:", err);
         // Even if there's an error, navigate to accessibility needs
-        router.push("/signup/accessability-needs");
+        router.push("/signup/accessability-needs?resumeUploaded=1");
       }
     } catch (err) {
       // Check if session expired
@@ -793,10 +793,10 @@ export default function ResumeUpload() {
                 {parseWarning}
                 <button
                   type="button"
-                  onClick={() => router.push("/signup/manual-resume-fill")}
+                  onClick={() => router.push("/signup/accessability-needs")}
                   className="mt-3 block w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-700"
                 >
-                  Continue to fill manually
+                  Continue to accessibility needs
                 </button>
               </div>
             ) : null}
@@ -819,10 +819,10 @@ export default function ResumeUpload() {
           <div className="mt-10 text-base text-slate-600">
             Don&apos;t have resume file ready?{" "}
             <Link
-              href="/signup/manual-resume-fill"
+              href="/signup/accessability-needs"
               className="font-semibold text-[#C27528] underline-offset-4 transition-colors hover:text-[#a45d1f] hover:underline"
             >
-              Create manually
+              Skip to next step
             </Link>
           </div>
         </div>

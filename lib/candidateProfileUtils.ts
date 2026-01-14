@@ -83,6 +83,7 @@ export type DeepPartialUserData = {
   preference?: Partial<UserData["preference"]>;
   otherDetails?: Partial<UserData["otherDetails"]>;
   reviewAgree?: Partial<UserData["reviewAgree"]>;
+  accessibilityNeeds?: Partial<NonNullable<UserData["accessibilityNeeds"]>>;
 };
 
 export const mapCandidateProfileToUserData = (
