@@ -543,6 +543,7 @@ export default function ResumeUpload() {
     setSelectedFileName(file.name);
     setSelectedFile(file);
     setUploadStage("idle");
+    handleSendForParsing(file);
   };
 
   const handleRemoveFile = () => {
@@ -556,10 +557,12 @@ export default function ResumeUpload() {
     }
   };
 
-  const handleSendForParsing = async () => {
+  const handleSendForParsing = async (fileOverride?: File) => {
     if (isUploading) return;
 
-    if (!selectedFile) {
+    const fileToParse = fileOverride ?? selectedFile;
+
+    if (!fileToParse) {
       setError("Select a resume file to continue.");
       return;
     }
@@ -582,7 +585,7 @@ export default function ResumeUpload() {
       console.log("[Resume Upload] Starting file upload to storage");
       let resumeUrl = "";
       try {
-        resumeUrl = await uploadResumeToStorage(selectedFile, candidateSlug);
+        resumeUrl = await uploadResumeToStorage(fileToParse, candidateSlug);
         console.log("[Resume Upload] File uploaded successfully:", resumeUrl);
       } catch (err) {
         const message = getErrorMessage(err);
@@ -746,14 +749,12 @@ export default function ResumeUpload() {
 
             <button
               type="button"
-              onClick={selectedFile ? handleSendForParsing : handleUploadClick}
+              onClick={handleUploadClick}
               disabled={isUploading}
               className="rounded-lg bg-[#D97706] px-8 py-3.5 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#b76005] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D97706] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isUploading
                 ? "Processing..."
-                : selectedFile
-                ? "Send resume for parsing"
                 : "Upload Resume"}
             </button>
 
