@@ -9,12 +9,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const cookies = request.headers.get("cookie") || "";
     const { slug } = await context.params;
+    const requestUrl = new URL(request.url);
+    const includeResume =
+      requestUrl.searchParams.get("include_resume") === "true";
+    const backendUrl = new URL(
+      API_ENDPOINTS.candidateProfiles.parsingStatus(slug)
+    );
+    if (includeResume) {
+      backendUrl.searchParams.set("include_resume", "true");
+    }
 
     console.log("[Parsing Status API] Request for slug:", slug);
-    console.log("[Parsing Status API] Backend URL:", API_ENDPOINTS.candidateProfiles.parsingStatus(slug));
+    console.log("[Parsing Status API] Backend URL:", backendUrl.toString());
 
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.candidateProfiles.parsingStatus(slug),
+      backendUrl.toString(),
       {
         method: "GET",
       },

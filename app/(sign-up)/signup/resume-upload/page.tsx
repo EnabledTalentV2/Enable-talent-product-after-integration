@@ -425,7 +425,7 @@ export default function ResumeUpload() {
     try {
       console.log("[Resume Upload] Checking current parsing status");
       const statusData = await apiRequest<unknown>(
-        `/api/candidates/profiles/${slug}/parsing-status/`,
+        `/api/candidates/profiles/${slug}/parsing-status/?include_resume=true`,
         { method: "GET" }
       );
       const patch = extractUserDataPatch(statusData);
@@ -465,7 +465,7 @@ export default function ResumeUpload() {
           `[Resume Upload] Polling attempt ${attempt + 1}/${POLLING_MAX_ATTEMPTS}`
         );
         const statusData = await apiRequest<unknown>(
-          `/api/candidates/profiles/${slug}/parsing-status/`,
+          `/api/candidates/profiles/${slug}/parsing-status/?include_resume=true`,
           { method: "GET" }
         );
 
@@ -474,29 +474,17 @@ export default function ResumeUpload() {
 
         // Check if parsing is complete
         if (status === "parsed") {
-          console.log("[Resume Upload] Parsing completed! Fetching parsed data from profile...");
+          console.log("[Resume Upload] Parsing completed! Using parsed data from status response.");
+          const patch = extractUserDataPatch(statusData);
+          console.log("[Resume Upload] Extracted patch:", JSON.stringify(patch, null, 2));
 
-          // Fetch the actual parsed data from the profile detail endpoint
-          try {
-            const profileData = await apiRequest<unknown>(
-              `/api/candidates/profiles/${slug}/`,
-              { method: "GET" }
-            );
-            console.log("[Resume Upload] Profile data received:", JSON.stringify(profileData, null, 2));
-
-            const patch = extractUserDataPatch(profileData);
-            console.log("[Resume Upload] Extracted patch:", JSON.stringify(patch, null, 2));
-
-            if (Object.keys(patch).length > 0) {
-              console.log("[Resume Upload] Successfully received parsed data from profile");
-              return patch;
-            } else {
-              console.warn("[Resume Upload] Profile fetched but no parsed data found");
-              console.warn("[Resume Upload] Raw profile data keys:", Object.keys(profileData || {}));
-            }
-          } catch (fetchErr) {
-            console.error("[Resume Upload] Failed to fetch profile data after parsing:", fetchErr);
+          if (Object.keys(patch).length > 0) {
+            console.log("[Resume Upload] Successfully received parsed data from status");
+            return patch;
           }
+
+          console.warn("[Resume Upload] Parsing marked complete but resume data missing");
+          return null;
         }
 
         if (status && ["failed", "error"].includes(status)) {
