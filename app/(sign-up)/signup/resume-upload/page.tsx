@@ -190,6 +190,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
 
   // Try to find candidate data in various possible response structures
   const candidate =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.data) && payload.data) ||
     (isRecord(payload.parsed_data) && payload.parsed_data) ||
     (isRecord(payload.parsedData) && payload.parsedData) ||
@@ -233,6 +234,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
 
   // Second, try to find and transform resume_data from backend
   const resumeData =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.resume_data) && payload.resume_data) ||
     (isRecord(payload.resumeData) && payload.resumeData) ||
     (isRecord(candidate.resume_data) && candidate.resume_data) ||

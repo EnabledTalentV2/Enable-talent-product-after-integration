@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, LogOut, Search, User, Menu, X, Home, LayoutDashboard, BriefcaseBusiness, Building2 } from "lucide-react";
+import { Bell, LogOut, Search, User, Menu, X, Home, LayoutDashboard, BriefcaseBusiness } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
@@ -93,12 +93,6 @@ export default function DashBoardNavbar() {
       label: "My Jobs",
       icon: BriefcaseBusiness,
       isActive: (path: string) => path.startsWith("/dashboard/my-jobs"),
-    },
-    {
-      href: "/dashboard/companies",
-      label: "Companies",
-      icon: Building2,
-      isActive: (path: string) => path.startsWith("/dashboard/companies"),
     },
   ];
 

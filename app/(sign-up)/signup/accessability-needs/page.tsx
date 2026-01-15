@@ -109,6 +109,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
   if (!isRecord(payload)) return {};
 
   const candidate =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.data) && payload.data) ||
     (isRecord(payload.parsed_data) && payload.parsed_data) ||
     (isRecord(payload.parsedData) && payload.parsedData) ||
@@ -150,6 +151,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
     patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
 
   const resumeData =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.resume_data) && payload.resume_data) ||
     (isRecord(payload.resumeData) && payload.resumeData) ||
     (isRecord(candidate.resume_data) && candidate.resume_data) ||
