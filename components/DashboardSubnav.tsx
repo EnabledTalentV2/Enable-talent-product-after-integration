@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BriefcaseBusiness,
-  Building2,
   Home,
   LayoutDashboard,
   Search,
@@ -25,9 +24,8 @@ export default function DashboardSubnav() {
       params.delete("q");
     }
 
-    // If user is searching and not on my-jobs or companies page, redirect to my-jobs
-    const isOnSearchablePage = pathname.startsWith("/dashboard/my-jobs") ||
-                                pathname.startsWith("/dashboard/companies");
+    // If user is searching and not on my-jobs page, redirect to my-jobs
+    const isOnSearchablePage = pathname.startsWith("/dashboard/my-jobs");
 
     if (value.trim() && !isOnSearchablePage) {
       router.push(`/dashboard/my-jobs?${params.toString()}`);
@@ -57,12 +55,6 @@ export default function DashboardSubnav() {
       label: "My Jobs",
       icon: BriefcaseBusiness,
       isActive: (path: string) => path.startsWith("/dashboard/my-jobs"),
-    },
-    {
-      href: "/dashboard/companies",
-      label: "Companies",
-      icon: Building2,
-      isActive: (path: string) => path.startsWith("/dashboard/companies"),
     },
     {
       href: "/dashboard/profile",

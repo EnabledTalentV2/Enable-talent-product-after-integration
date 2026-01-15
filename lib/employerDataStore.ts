@@ -9,6 +9,7 @@ export type EmployerOrganizationInfo = {
   location: string;
   foundedYear: string;
   website: string;
+  linkedinUrl: string;
   companySize: string;
   industry: string;
 };
@@ -24,6 +25,7 @@ const initialEmployerData: EmployerData = {
     location: "",
     foundedYear: "",
     website: "",
+    linkedinUrl: "",
     companySize: "",
     industry: "",
   },

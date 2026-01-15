@@ -109,6 +109,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
   if (!isRecord(payload)) return {};
 
   const candidate =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.data) && payload.data) ||
     (isRecord(payload.parsed_data) && payload.parsed_data) ||
     (isRecord(payload.parsedData) && payload.parsedData) ||
@@ -150,6 +151,7 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
     patch.reviewAgree = candidate.reviewAgree as UserData["reviewAgree"];
 
   const resumeData =
+    (isRecord(payload.resume) && payload.resume) ||
     (isRecord(payload.resume_data) && payload.resume_data) ||
     (isRecord(payload.resumeData) && payload.resumeData) ||
     (isRecord(candidate.resume_data) && candidate.resume_data) ||
@@ -376,19 +378,14 @@ export default function AccessabilityNeedsPage() {
       try {
         // Check parsing status
         const statusData = await apiRequest<unknown>(
-          `/api/candidates/profiles/${slug}/parsing-status/`,
+          `/api/candidates/profiles/${slug}/parsing-status/?include_resume=true`,
           { method: "GET" }
         );
 
         const status = getParsingStatus(statusData);
 
         if (status === "parsed") {
-          const profileData = await apiRequest<unknown>(
-            `/api/candidates/profiles/${slug}/`,
-            { method: "GET" }
-          );
-
-          const patch = extractUserDataPatch(profileData);
+          const patch = extractUserDataPatch(statusData);
           if (Object.keys(patch).length > 0) {
             setUserData((prev) => mergeUserData(prev, patch));
             router.push("/signup/manual-resume-fill");
