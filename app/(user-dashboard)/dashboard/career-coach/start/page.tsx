@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
@@ -32,15 +30,18 @@ const defaultMessages: ChatMessage[] = [
 ];
 
 const quickPrompts = [
-  "Review my resume summary for clarity",
-  "Create a 2-week interview prep plan",
-  "Help me tailor my profile for frontend roles",
-  "Suggest stronger achievement bullets",
+  "How can I improve my career profile?",
+  "What skills are in demand for my field?",
+  "Help me prepare for job interviews",
+  "How should I highlight my strengths?",
+  "Tips for networking in my industry",
+  "How to negotiate a better salary offer?",
 ];
 
 export default function CareerCoachStartPage() {
   const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
+
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -73,36 +74,29 @@ export default function CareerCoachStartPage() {
     }),
     [rawUserData]
   );
-  const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
-    [userData]
-  );
 
-  // Hooks for API interaction
-  const { data: profileData, fetchCandidateProfile } = useFetchCandidateProfile();
-  const { sendCareerCoachMessage, isLoading: isSendingMessage } = useCareerCoach();
+  const { data: profileData, fetchCandidateProfile } =
+    useFetchCandidateProfile();
+  const { sendCareerCoachMessage, isLoading: isSendingMessage } =
+    useCareerCoach();
 
-  // State management
   const [messages, setMessages] = useState<ChatMessage[]>(defaultMessages);
   const [draft, setDraft] = useState("");
   const [threadId, setThreadId] = useState<string | null>(null);
   const [resumeSlug, setResumeSlug] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const textareaRef = useRef<HTMLInputElement | null>(null);
 
-  // Fetch candidate profile on mount to get resume slug
   useEffect(() => {
     fetchCandidateProfile();
   }, [fetchCandidateProfile]);
 
-  // Update resume slug when profile data is available
   useEffect(() => {
     if (profileData?.slug) {
       setResumeSlug(profileData.slug);
     }
   }, [profileData]);
 
-  // Load messages from localStorage
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -124,7 +118,6 @@ export default function CareerCoachStartPage() {
     }
   }, []);
 
-  // Save messages to localStorage
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -132,7 +125,6 @@ export default function CareerCoachStartPage() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  // Save thread ID to localStorage
   useEffect(() => {
     if (typeof window === "undefined" || !threadId) {
       return;
@@ -140,7 +132,6 @@ export default function CareerCoachStartPage() {
     window.localStorage.setItem(THREAD_ID_KEY, threadId);
   }, [threadId]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -167,7 +158,6 @@ export default function CareerCoachStartPage() {
     setMessages((prev) => [...prev, userMessage]);
     setDraft("");
 
-    // Send to API
     console.log("[Career Coach] Sending message:", {
       input_text: trimmed,
       resume_slug: resumeSlug,
@@ -185,12 +175,10 @@ export default function CareerCoachStartPage() {
     if (result.error) {
       console.error("[Career Coach] Error:", result.error);
 
-      // Check if session expired
       if (handleSessionExpiry(result.error, router)) {
         return;
       }
 
-      // Show error message in chat
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         role: "coach",
@@ -200,25 +188,20 @@ export default function CareerCoachStartPage() {
     } else if (result.data) {
       console.log("[Career Coach] Success! Response:", result.data);
 
-      // Update thread ID if it's new
       if (result.data.thread_id && result.data.thread_id !== threadId) {
-        console.log("[Career Coach] Updating thread ID:", result.data.thread_id);
         setThreadId(result.data.thread_id);
       }
 
-      // Add coach response
       const coachMessage: ChatMessage = {
         id: `coach-${Date.now()}`,
         role: "coach",
         content: result.data.output,
       };
-      console.log("[Career Coach] Adding coach message:", coachMessage);
       setMessages((prev) => [...prev, coachMessage]);
     } else {
       console.warn("[Career Coach] No data and no error in result");
     }
 
-    // Refocus the textarea after message is sent
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 100);
@@ -228,7 +211,7 @@ export default function CareerCoachStartPage() {
     sendMessage(draft);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSubmit();
@@ -239,157 +222,212 @@ export default function CareerCoachStartPage() {
     sendMessage(prompt);
   };
 
-  const handleReset = () => {
-    setMessages(defaultMessages);
-    setThreadId(null);
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem(STORAGE_KEY);
-      window.localStorage.removeItem(THREAD_ID_KEY);
-    }
-  };
+  const isConversationStarted = messages.length > 1;
 
   return (
-    <section className="mx-auto max-w-360 space-y-6 py-10">
-      <DashboardProfilePrompt percent={profilePercent} />
-
-      <div className="rounded-[32px] bg-white p-6 shadow-sm md:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/dashboard/career-coach"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
-          >
-            <ArrowLeft size={16} />
-            Back to Coach
-          </Link>
-          <div className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-1 text-xs font-semibold text-green-700">
-            <Sparkles size={14} />
-            AI-Powered
-          </div>
-        </div>
-        <div className="mt-4 flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-slate-900">Start Coaching</h1>
-          <p className="text-sm text-slate-500">
-            Get personalized career guidance powered by AI. Your conversation is saved automatically.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-[28px] bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Session</h2>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-sm font-semibold text-slate-500 transition hover:text-slate-800"
-            >
-              Reset
-            </button>
-          </div>
-
-          <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-2">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm ${
-                  message.role === "coach"
-                    ? "bg-slate-100 text-slate-700"
-                    : "ml-auto bg-amber-100 text-slate-900"
-                }`}
-              >
-                {message.role === "coach" ? (
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                        ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-                        li: ({ children }) => <li className="mb-1">{children}</li>,
-                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  message.content
-                )}
+    <section className="mx-auto max-w-[1400px] p-4 lg:p-8">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
+        {/* --- LEFT SIDEBAR --- */}
+        <aside
+          className="flex flex-col gap-6"
+          aria-label="Sidebar with career tips and prompts"
+        >
+          {/* Banner Card */}
+          <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#D9643A] to-[#E8A359] p-6 text-white shadow-lg">
+            <div className="relative z-10">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
+                <Bot
+                  size={24}
+                  className="text-white"
+                  strokeWidth={2.5}
+                  aria-hidden="true"
+                />
               </div>
-            ))}
-            {isSendingMessage && (
-              <div className="max-w-[70%] rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-500">
-                Coach is typing...
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3">
-            <label htmlFor="coach-input" className="sr-only">
-              Coach input
-            </label>
-            <textarea
-              ref={textareaRef}
-              id="coach-input"
-              rows={3}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask the coach for help with your resume, interviews, or job search..."
-              className="w-full resize-none bg-transparent text-sm text-slate-700 outline-none"
+              <h2 className="text-2xl font-bold leading-tight">
+                Career Advisor
+              </h2>
+              <p className="opacity-90 mt-1 text-sm font-medium">
+                Your AI-powered career coach
+              </p>
+            </div>
+            {/* Decorative Elements */}
+            <div
+              className="absolute right-[-20px] top-[-20px] h-32 w-32 rounded-full border-[16px] border-white/10"
+              aria-hidden="true"
             />
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
-                Press Enter to send
-              </span>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!draft.trim() || isSendingMessage}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  !draft.trim() || isSendingMessage
-                    ? "cursor-not-allowed bg-slate-100 text-slate-400"
-                    : "bg-[#C27803] text-white hover:bg-[#A56303]"
-                }`}
-              >
-                <Send size={14} />
-                Send
-              </button>
+            <div
+              className="absolute bottom-[-10px] right-[-10px] text-white/10"
+              aria-hidden="true"
+            >
+              <Bot size={120} />
             </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[28px] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Quick Prompts
-            </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Tap a prompt to kick off the conversation.
+          {/* "Ask me about" Section */}
+          <div className="flex-1 rounded-[24px] bg-white p-6 shadow-sm ring-1 ring-slate-100">
+            <h3 className="border-b border-slate-100 pb-4 text-lg font-bold text-slate-900">
+              Ask me about
+            </h3>
+
+            <p className="mt-4 text-sm leading-relaxed text-slate-500">
+              Career advancement strategies, Resume and profile optimization,
+              Interview preparation tips, Industry-specific advice, Skill
+              development recommendations
             </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {quickPrompts.map((prompt) => (
+
+            <div className="mt-6 space-y-3">
+              {quickPrompts.map((prompt, index) => (
                 <button
                   key={prompt}
-                  type="button"
                   onClick={() => handlePromptClick(prompt)}
-                  className="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-200"
+                  className={`w-full text-left rounded-2xl px-5 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#D9643A] focus:ring-offset-2
+                    ${
+                      index === 0
+                        ? "border-2 border-[#D9643A] bg-white text-[#D9643A]"
+                        : "bg-[#FFF8F0] text-slate-700 hover:bg-[#FCECD8]"
+                    }
+                  `}
                 >
                   {prompt}
                 </button>
               ))}
             </div>
           </div>
+        </aside>
 
-          <div className="rounded-[28px] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Tips</h2>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600">
-              <li>Share a target role to get sharper guidance.</li>
-              <li>Include metrics to improve your bullet points.</li>
-              <li>Ask for a week-by-week interview plan.</li>
-            </ul>
+        {/* --- RIGHT MAIN CHAT AREA --- */}
+        <main
+          className="flex h-[calc(100vh-140px)] min-h-[600px] flex-col rounded-[32px] bg-white shadow-sm ring-1 ring-slate-100"
+          aria-label="Chat Interface"
+        >
+          {/* Header */}
+          <div className="border-b border-slate-100 px-8 py-6">
+            <h1 className="text-xl font-bold text-slate-900">Career Coach</h1>
           </div>
-        </div>
+
+          {/* Chat Content */}
+          <div
+            className="flex-1 overflow-y-auto px-8 py-6"
+            id="chat-container"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            tabIndex={0}
+            aria-label="Chat history"
+          >
+            {!isConversationStarted ? (
+              // Empty State / Hero View
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#FFECD2] to-[#FCB69F]">
+                  <Sparkles
+                    size={40}
+                    className="text-white drop-shadow-sm"
+                    aria-hidden="true"
+                  />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Hi! I&apos;m your Career Coach
+                </h2>
+                <p className="mt-3 max-w-md text-slate-500">
+                  I can help you navigate your career path, prepare for
+                  interviews, improve your resume, and provide personalized
+                  guidance for your professional development.
+                </p>
+              </div>
+            ) : (
+              // Chat Message List
+              <div className="space-y-6">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.role === "coach" ? "justify-start" : "justify-end"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-3xl px-6 py-4 text-sm leading-relaxed ${
+                        message.role === "coach"
+                          ? "bg-slate-50 text-slate-800"
+                          : "bg-[#4A3B32] text-white"
+                      }`}
+                    >
+                      {message.role === "coach" ? (
+                        <div className="prose prose-sm max-w-none prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-ul:text-slate-800">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        message.content
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isSendingMessage && (
+                  <div className="flex justify-start">
+                    <div
+                      className="flex items-center gap-2 rounded-3xl bg-slate-50 px-6 py-4 text-xs text-slate-500"
+                      role="status"
+                      aria-busy="true"
+                    >
+                      <Loader2
+                        size={14}
+                        className="animate-spin"
+                        aria-hidden="true"
+                      />
+                      Coach is thinking...
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+
+          {/* Footer / Input Styling */}
+          <div className="px-8 pb-8 pt-2">
+            <div className="relative mt-auto">
+              {/* Input Box */}
+              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 pl-5 pr-2 shadow-sm transition focus-within:border-[#D9643A] focus-within:ring-1 focus-within:ring-[#D9643A]">
+                <label htmlFor="chat-input" className="sr-only">
+                  Type your message to the career coach
+                </label>
+                <input
+                  id="chat-input"
+                  ref={textareaRef}
+                  type="text"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask your career coach..."
+                  className="flex-1 bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:placeholder:text-slate-300"
+                  aria-invalid="false"
+                />
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={!draft.trim() || isSendingMessage}
+                  className={`flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#C27803] focus:ring-offset-1
+                    ${
+                      !draft.trim() || isSendingMessage
+                        ? "bg-slate-300 cursor-not-allowed"
+                        : "bg-[#C27803] hover:bg-[#A66702] active:scale-95"
+                    }`}
+                  aria-label="Send message"
+                >
+                  <Send size={16} strokeWidth={2.5} aria-hidden="true" />
+                  <span>Send</span>
+                </button>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-medium text-slate-400">
+                <Sparkles size={12} aria-hidden="true" />
+                <span>
+                  Using your profile data for personalized career advice
+                </span>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </section>
   );

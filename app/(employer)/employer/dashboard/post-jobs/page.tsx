@@ -144,7 +144,12 @@ export default function PostJobsPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Link>
-          <button type="button" aria-label="Close" className="text-gray-400 hover:text-gray-600">
+          <button
+            type="button"
+            aria-label="Close"
+            className="text-gray-400 hover:text-gray-600"
+            onClick={() => router.push("/employer/dashboard")}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
