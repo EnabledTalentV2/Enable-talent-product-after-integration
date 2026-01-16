@@ -126,6 +126,8 @@ type WorkExperience = {
   role?: string;
   position?: string;
   title?: string;
+  job_title?: string;
+  jobTitle?: string;
   start_date?: string;
   startDate?: string;
   from?: string;
@@ -493,7 +495,7 @@ const transformWorkExperience = (
         const company = extractText(
           exp.company || exp.company_name || exp.companyName
         );
-        const role = extractText(exp.role || exp.position || exp.title);
+        const role = extractText(exp.role || exp.position || exp.title || exp.job_title || exp.jobTitle);
         const description = extractText(
           exp.description || exp.responsibilities
         );
@@ -568,7 +570,11 @@ const transformSkills = (data: BackendResumeData): Partial<UserData["skills"]> =
     const uniqueSkills = Array.from(new Set(combined));
     const normalized = normalizeSkills(uniqueSkills);
     if (normalized.skills || normalized.primaryList.length > 0) {
-      return normalized;
+      // Return only primaryList, keep input field empty
+      return {
+        skills: "",
+        primaryList: normalized.primaryList,
+      };
     }
     return {};
   }
@@ -576,8 +582,9 @@ const transformSkills = (data: BackendResumeData): Partial<UserData["skills"]> =
   const { skills, primaryList } = normalizeSkills(skillsData);
 
   if (skills || primaryList.length > 0) {
+    // Return only primaryList, keep input field empty
     return {
-      skills,
+      skills: "",
       primaryList,
     };
   }
