@@ -83,11 +83,17 @@ const normalizeUserData = (
   };
 };
 
-export const useUserDataStore = create<UserDataStore>()(
+type StoreWithHydration = UserDataStore & {
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
+};
+
+export const useUserDataStore = create<StoreWithHydration>()(
   persist(
     (set) => ({
       userData: normalizeUserData(initialUserData),
       signupCompletedAt: null,
+      _hasHydrated: false,
       setUserData: (updater) =>
         set((state) => ({
           userData: normalizeUserData(updater(state.userData)),
@@ -100,6 +106,7 @@ export const useUserDataStore = create<UserDataStore>()(
       clearSignupComplete: () => set({ signupCompletedAt: null }),
       resetUserData: () =>
         set({ userData: initialUserData, signupCompletedAt: null }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: "et_user_data",
@@ -116,6 +123,9 @@ export const useUserDataStore = create<UserDataStore>()(
           userData: normalizeUserData(persistedState?.userData),
           signupCompletedAt: persistedState?.signupCompletedAt ?? null,
         };
+      },
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
       },
     }
   )

@@ -123,6 +123,23 @@ function transformBackendToFrontend(
 // Time window (in ms) to consider signup as "fresh" and preserve local data
 const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
+// Helper to wait for Zustand hydration
+const waitForHydration = (): Promise<void> => {
+  return new Promise((resolve) => {
+    const state = useUserDataStore.getState();
+    if (state._hasHydrated) {
+      resolve();
+      return;
+    }
+    const unsubscribe = useUserDataStore.subscribe((s) => {
+      if (s._hasHydrated) {
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
+};
+
 export default function DashboardLayoutPage({
   children,
 }: {
@@ -144,6 +161,8 @@ export default function DashboardLayoutPage({
     let active = true;
 
     const checkAuth = async () => {
+      // Wait for Zustand to hydrate from localStorage first
+      await waitForHydration();
       try {
         const response = await fetch("/api/user/me", {
           credentials: "include",
@@ -205,23 +224,36 @@ export default function DashboardLayoutPage({
             if (profile) {
               setCandidateProfile(profile);
 
-              // Extract basic profile data (employment preferences, etc.)
-              const profileData = mapCandidateProfileToUserData(profile);
+              // Check if this is a fresh signup - if so, don't overwrite local data
+              const currentState = useUserDataStore.getState();
+              const isFreshSignupNow =
+                currentState.signupCompletedAt !== null &&
+                Date.now() - currentState.signupCompletedAt <
+                  FRESH_SIGNUP_WINDOW_MS;
 
-              // Transform resume_data if present
-              const resumeDataPayload =
-                typeof profile === "object" &&
-                profile !== null &&
-                "resume_data" in profile
-                  ? profile.resume_data
-                  : null;
-              const resumeData = transformBackendResumeData(resumeDataPayload);
+              if (isFreshSignupNow) {
+                console.log(
+                  "[Dashboard] Fresh signup - skipping profile data patch"
+                );
+              } else {
+                // Extract basic profile data (employment preferences, etc.)
+                const profileData = mapCandidateProfileToUserData(profile);
 
-              // Merge both transformations (resume_data takes priority for overlapping fields)
-              const merged = { ...profileData, ...resumeData };
+                // Transform resume_data if present
+                const resumeDataPayload =
+                  typeof profile === "object" &&
+                  profile !== null &&
+                  "resume_data" in profile
+                    ? profile.resume_data
+                    : null;
+                const resumeData = transformBackendResumeData(resumeDataPayload);
 
-              if (Object.keys(merged).length > 0) {
-                patchUserData(merged);
+                // Merge both transformations (resume_data takes priority for overlapping fields)
+                const merged = { ...profileData, ...resumeData };
+
+                if (Object.keys(merged).length > 0) {
+                  patchUserData(merged);
+                }
               }
             } else {
               setCandidateError("Unable to load candidate profile.");
@@ -244,7 +276,6 @@ export default function DashboardLayoutPage({
           // Get current store state to check for fresh signup
           const storeState = useUserDataStore.getState();
           const currentSignupTime = storeState.signupCompletedAt;
-          const localUserData = storeState.userData;
 
           // Check if user just completed signup (within the fresh window)
           const isFreshSignup =
@@ -255,23 +286,28 @@ export default function DashboardLayoutPage({
           const transformedData = transformBackendToFrontend(rawData);
 
           if (isFreshSignup) {
-            // Optimistic update: preserve local signup data, only merge backend email/auth info
-            // The local data from signup is more complete than backend at this point
-            patchUserData({
-              basicInfo: {
-                ...localUserData.basicInfo,
-                // Only update email from backend if it's more reliable
-                email:
-                  transformedData.basicInfo.email ||
-                  localUserData.basicInfo.email,
-              },
-            });
+            // Optimistic update: keep the local signup data as-is
+            // The store already has complete data from the signup flow
+            // Don't overwrite it with potentially incomplete backend data
+            const localData = storeState.userData;
+            console.log(
+              "[Dashboard] Fresh signup detected - preserving local data",
+              {
+                hasFirstName: !!localData.basicInfo.firstName,
+                hasPhone: !!localData.basicInfo.phone,
+                hasLocation: !!localData.basicInfo.location,
+                signupTime: new Date(currentSignupTime).toISOString(),
+              }
+            );
             // Clear the signup flag after a delay to allow normal refresh on next visit
             setTimeout(() => {
               useUserDataStore.getState().clearSignupComplete();
             }, FRESH_SIGNUP_WINDOW_MS);
           } else {
             // Normal flow: replace with backend data
+            console.log("[Dashboard] Normal flow - using backend data", {
+              signupCompletedAt: currentSignupTime,
+            });
             setUserData(() => transformedData);
           }
           setLoading(false);
