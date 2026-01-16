@@ -16,6 +16,42 @@ type DeepPartial<T> = {
     : T[P];
 };
 
+type ResumeSkills = {
+  technical?: string[];
+  technical_skills?: string[];
+  technicalSkills?: string[];
+  soft_skills?: string[];
+  softSkills?: string[];
+  categories?: Record<string, unknown>;
+  skills?: string[];
+};
+
+type PersonalInfo = {
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin_url?: string;
+  linkedinUrl?: string;
+  github_url?: string;
+  githubUrl?: string;
+  portfolio_url?: string;
+  portfolioUrl?: string;
+};
+
+type AdditionalInfo = {
+  expected_salary_min?: number | string;
+  expected_salary_max?: number | string;
+  expected_salary_range?: string;
+  preferred_work_mode?: string[] | string;
+  notice_period?: string | number;
+  willing_to_relocate?: boolean;
+  visa_sponsorship_required?: boolean;
+};
+
 /**
  * Backend resume_data structure from Django API
  */
@@ -41,7 +77,7 @@ export type BackendResumeData = {
   portfolioUrl?: string;
 
   // Skills
-  skills?: string | string[];
+  skills?: string | string[] | ResumeSkills;
   technical_skills?: string | string[];
   technicalSkills?: string | string[];
 
@@ -71,13 +107,22 @@ export type BackendResumeData = {
   awards?: Achievement[];
 
   // Languages
-  languages?: Language[];
+  languages?: Array<Language | string>;
+
+  // Parser nested fields
+  personal_info?: PersonalInfo;
+  additional_info?: AdditionalInfo;
+  expected_salary_min?: number | string;
+  expected_salary_max?: number | string;
+  expected_salary_range?: string;
+  preferred_work_mode?: string[] | string;
 };
 
 type WorkExperience = {
   company?: string;
   company_name?: string;
   companyName?: string;
+  location?: string;
   role?: string;
   position?: string;
   title?: string;
@@ -123,6 +168,7 @@ type Project = {
   title?: string;
   project_name?: string;
   projectName?: string;
+  raw_text?: string;
   description?: string;
   project_description?: string;
   projectDescription?: string;
@@ -149,6 +195,7 @@ type Certification = {
   title?: string;
   certification_name?: string;
   certificationName?: string;
+  raw_text?: string;
   organization?: string;
   issuer?: string;
   issued_by?: string;
@@ -168,6 +215,7 @@ type Certification = {
 type Achievement = {
   title?: string;
   name?: string;
+  raw_text?: string;
   description?: string;
   date?: string;
   issue_date?: string;
@@ -186,15 +234,51 @@ type Language = {
   writing?: string;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 /**
  * Helper: Extract text value from unknown type
  */
 const extractText = (value: unknown): string => {
   if (typeof value === "string") return value.trim();
-  if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
-    return value[0].trim();
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value) && value.length > 0) {
+    const first = value[0];
+    if (typeof first === "string" || typeof first === "number") {
+      return String(first).trim();
+    }
   }
   return "";
+};
+
+const extractNumberText = (value: unknown): string => {
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return value.trim();
+  return "";
+};
+
+const toStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === "string" || typeof entry === "number") {
+          return String(entry).trim();
+        }
+        if (isRecord(entry)) {
+          return extractText(entry.label ?? entry.name ?? entry.value);
+        }
+        return "";
+      })
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(/[,;\n]+/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+  return [];
 };
 
 /**
@@ -235,43 +319,104 @@ const normalizeSkills = (value: unknown): { skills: string; primaryList: string[
 };
 
 /**
- * Helper: Format date to YYYY-MM format
+ * Helper: Format date to YYYY-MM-DD format
  */
 const formatDate = (value: unknown): string => {
   if (!value || typeof value !== "string") return "";
   const trimmed = value.trim();
+  if (!trimmed) return "";
 
-  // If already in YYYY-MM format
-  if (/^\d{4}-\d{2}$/.test(trimmed)) return trimmed;
-
-  // If in YYYY-MM-DD format
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed.substring(0, 7);
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
 
   // Try to parse common date formats
   const date = new Date(trimmed);
   if (!isNaN(date.getTime())) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
-    return `${year}-${month}`;
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   return trimmed;
 };
 
+const isPresentDate = (value: unknown): boolean => {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim().toLowerCase();
+  return ["present", "current", "now"].some((keyword) =>
+    trimmed.includes(keyword)
+  );
+};
+
+const parseRawTextBlock = (
+  value: unknown
+): { title: string; description: string } => {
+  const text = extractText(value);
+  if (!text) return { title: "", description: "" };
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return { title: "", description: "" };
+  return {
+    title: lines[0],
+    description: lines.slice(1).join("\n"),
+  };
+};
+
 /**
  * Transform basic info from resume data
  */
-const transformBasicInfo = (data: BackendResumeData): Partial<UserData["basicInfo"]> => {
-  const fullName = extractText(data.name || data.full_name || data.fullName);
+const transformBasicInfo = (
+  data: BackendResumeData
+): Partial<UserData["basicInfo"]> => {
+  const personalInfo = isRecord(data.personal_info)
+    ? (data.personal_info as PersonalInfo)
+    : null;
+  const personalFullName = personalInfo
+    ? [personalInfo.first_name, personalInfo.last_name]
+        .map((value) => extractText(value))
+        .filter(Boolean)
+        .join(" ")
+    : "";
+  const fullName = extractText(
+    data.name ||
+      data.full_name ||
+      data.fullName ||
+      personalInfo?.full_name ||
+      personalInfo?.fullName ||
+      personalFullName
+  );
   const { firstName, lastName } = splitFullName(fullName);
-  const email = extractText(data.email);
-  const phone = extractText(data.phone || data.phone_number || data.phoneNumber);
-  const location = extractText(data.location || data.address);
-  const linkedin = extractText(data.linkedin || data.linkedin_url || data.linkedinUrl);
-  const github = extractText(data.github || data.github_url || data.githubUrl);
-  const portfolio = extractText(data.portfolio || data.portfolio_url || data.portfolioUrl);
+  const email = extractText(data.email || personalInfo?.email);
+  const phone = extractText(
+    data.phone || data.phone_number || data.phoneNumber || personalInfo?.phone
+  );
+  const location = extractText(
+    data.location || data.address || personalInfo?.location
+  );
+  const linkedin = extractText(
+    data.linkedin ||
+      data.linkedin_url ||
+      data.linkedinUrl ||
+      personalInfo?.linkedin_url ||
+      personalInfo?.linkedinUrl
+  );
+  const github = extractText(
+    data.github ||
+      data.github_url ||
+      data.githubUrl ||
+      personalInfo?.github_url ||
+      personalInfo?.githubUrl
+  );
+  const portfolio = extractText(
+    data.portfolio ||
+      data.portfolio_url ||
+      data.portfolioUrl ||
+      personalInfo?.portfolio_url ||
+      personalInfo?.portfolioUrl
+  );
 
   const basicInfo: Partial<UserData["basicInfo"]> = {};
 
@@ -307,11 +452,12 @@ const transformEducation = (data: BackendResumeData): Partial<UserData["educatio
       edu.major || edu.field_of_study || edu.fieldOfStudy
     );
     const grade = extractText(edu.grade || edu.gpa);
-    const from = formatDate(
-      edu.start_date || edu.startDate || edu.from
-    );
-    const to = formatDate(
-      edu.end_date || edu.endDate || edu.to || edu.graduation_date || edu.graduationDate
+    const from = formatDate(edu.start_date || edu.startDate || edu.from);
+    const endRaw =
+      edu.end_date || edu.endDate || edu.to || edu.graduation_date || edu.graduationDate;
+    const to = formatDate(endRaw);
+    const graduationDate = formatDate(
+      edu.graduation_date || edu.graduationDate || endRaw
     );
 
     const education: Partial<UserData["education"]> = {};
@@ -321,6 +467,7 @@ const transformEducation = (data: BackendResumeData): Partial<UserData["educatio
     if (grade) education.grade = grade;
     if (from) education.from = from;
     if (to) education.to = to;
+    if (graduationDate) education.graduationDate = graduationDate;
 
     return education;
   }
@@ -334,24 +481,14 @@ const transformEducation = (data: BackendResumeData): Partial<UserData["educatio
 const transformWorkExperience = (
   data: BackendResumeData
 ): Partial<UserData["workExperience"]> => {
-  const experienceData =
-    data.experience || data.work_experience || data.workExperience;
+  const experienceArray =
+    (Array.isArray(data.work_experience) && data.work_experience) ||
+    (Array.isArray(data.workExperience) && data.workExperience) ||
+    (Array.isArray(data.experience) && data.experience) ||
+    null;
 
-  // If work_experience is a string (backend returns unstructured text)
-  // Just mark as experienced but don't add entries - user will fill manually
-  if (typeof experienceData === "string" && experienceData.trim().length > 0) {
-    return {
-      experienceType: "experienced",
-      entries: [],
-    };
-  }
-
-  if (!experienceData) {
-    return {};
-  }
-
-  if (Array.isArray(experienceData) && experienceData.length > 0) {
-    const entries = experienceData
+  if (experienceArray && experienceArray.length > 0) {
+    const entries = experienceArray
       .map((exp) => {
         const company = extractText(
           exp.company || exp.company_name || exp.companyName
@@ -360,15 +497,12 @@ const transformWorkExperience = (
         const description = extractText(
           exp.description || exp.responsibilities
         );
-        const from = formatDate(
-          exp.start_date || exp.startDate || exp.from
-        );
-        const to = formatDate(
-          exp.end_date || exp.endDate || exp.to
-        );
+        const from = formatDate(exp.start_date || exp.startDate || exp.from);
+        const endRaw = exp.end_date || exp.endDate || exp.to;
         const current = Boolean(
           exp.current || exp.is_current || exp.isCurrent
-        );
+        ) || isPresentDate(endRaw);
+        const to = current ? "" : formatDate(endRaw);
 
         if (!company || !role) return null;
 
@@ -376,7 +510,7 @@ const transformWorkExperience = (
           company,
           role,
           from,
-          to: current ? "" : to,
+          to,
           current,
           description,
         };
@@ -389,6 +523,25 @@ const transformWorkExperience = (
         entries,
       };
     }
+    return {
+      experienceType: "experienced",
+      entries: [],
+    };
+  }
+
+  const experienceText =
+    (typeof data.work_experience === "string" && data.work_experience) ||
+    (typeof data.workExperience === "string" && data.workExperience) ||
+    (typeof data.experience === "string" && data.experience) ||
+    "";
+
+  // If work_experience is a string (backend returns unstructured text)
+  // Just mark as experienced but don't add entries - user will fill manually
+  if (experienceText.trim().length > 0) {
+    return {
+      experienceType: "experienced",
+      entries: [],
+    };
   }
 
   return {};
@@ -401,6 +554,24 @@ const transformSkills = (data: BackendResumeData): Partial<UserData["skills"]> =
   const skillsData = data.skills || data.technical_skills || data.technicalSkills;
 
   if (!skillsData) return {};
+
+  if (isRecord(skillsData)) {
+    const combined = [
+      ...toStringArray(
+        skillsData.technical ??
+          skillsData.technical_skills ??
+          skillsData.technicalSkills
+      ),
+      ...toStringArray(skillsData.soft_skills ?? skillsData.softSkills),
+      ...toStringArray(skillsData.skills),
+    ];
+    const uniqueSkills = Array.from(new Set(combined));
+    const normalized = normalizeSkills(uniqueSkills);
+    if (normalized.skills || normalized.primaryList.length > 0) {
+      return normalized;
+    }
+    return {};
+  }
 
   const { skills, primaryList } = normalizeSkills(skillsData);
 
@@ -424,12 +595,19 @@ const transformProjects = (data: BackendResumeData): Partial<UserData["projects"
 
   const entries = data.projects
     .map((proj) => {
-      const projectName = extractText(
+      let projectName = extractText(
         proj.name || proj.title || proj.project_name || proj.projectName
       );
-      const projectDescription = extractText(
+      let projectDescription = extractText(
         proj.description || proj.project_description || proj.projectDescription
       );
+      if (proj.raw_text) {
+        const parsed = parseRawTextBlock(proj.raw_text);
+        if (!projectName && parsed.title) projectName = parsed.title;
+        if (!projectDescription && parsed.description) {
+          projectDescription = parsed.description;
+        }
+      }
       const from = formatDate(
         proj.start_date || proj.startDate || proj.from
       );
@@ -477,7 +655,11 @@ const transformCertifications = (
   const entries = certData
     .map((cert) => {
       const name = extractText(
-        cert.name || cert.title || cert.certification_name || cert.certificationName
+        cert.name ||
+          cert.title ||
+          cert.certification_name ||
+          cert.certificationName ||
+          cert.raw_text
       );
       const organization = extractText(
         cert.organization || cert.issuer || cert.issued_by || cert.issuedBy
@@ -524,7 +706,9 @@ const transformAchievements = (
 
   const entries = achievementData
     .map((achievement) => {
-      const title = extractText(achievement.title || achievement.name);
+      const title = extractText(
+        achievement.title || achievement.name || achievement.raw_text
+      );
       const description = extractText(achievement.description);
       const issueDate = formatDate(
         achievement.date || achievement.issue_date || achievement.issueDate
@@ -559,6 +743,17 @@ const transformLanguages = (data: BackendResumeData): Partial<UserData["otherDet
 
   const languages = data.languages
     .map((lang) => {
+      if (typeof lang === "string") {
+        const language = lang.trim();
+        if (!language) return null;
+        return {
+          language,
+          speaking: "",
+          reading: "",
+          writing: "",
+        };
+      }
+
       const language = extractText(lang.language || lang.name);
       const proficiency = extractText(lang.proficiency || lang.level);
 
@@ -587,17 +782,86 @@ const transformLanguages = (data: BackendResumeData): Partial<UserData["otherDet
   return {};
 };
 
+const getAdditionalInfo = (data: BackendResumeData): AdditionalInfo | null => {
+  if (!data.additional_info || !isRecord(data.additional_info)) {
+    return null;
+  }
+  return data.additional_info as AdditionalInfo;
+};
+
+const extractDesiredSalary = (data: BackendResumeData): string => {
+  const additionalInfo = getAdditionalInfo(data);
+  const range = extractNumberText(
+    data.expected_salary_range || additionalInfo?.expected_salary_range
+  );
+  if (range) return range;
+
+  const min = extractNumberText(
+    data.expected_salary_min || additionalInfo?.expected_salary_min
+  );
+  const max = extractNumberText(
+    data.expected_salary_max || additionalInfo?.expected_salary_max
+  );
+
+  if (min && max) return `${min}-${max}`;
+  return min || max;
+};
+
+const transformPreference = (
+  data: BackendResumeData
+): Partial<UserData["preference"]> => {
+  const additionalInfo = getAdditionalInfo(data);
+  const jobSearch = toStringArray(
+    data.preferred_work_mode || additionalInfo?.preferred_work_mode
+  );
+
+  if (jobSearch.length > 0) {
+    return { jobSearch };
+  }
+
+  return {};
+};
+
+const transformOtherDetails = (
+  data: BackendResumeData
+): Partial<UserData["otherDetails"]> => {
+  const otherDetails = transformLanguages(data);
+  const desiredSalary = extractDesiredSalary(data);
+
+  if (desiredSalary) {
+    otherDetails.desiredSalary = desiredSalary;
+  }
+
+  return otherDetails;
+};
+
 /**
  * Main transformer: Convert backend resume_data to UserData patch
  */
+const unwrapResumeData = (value: unknown): BackendResumeData | null => {
+  if (!isRecord(value)) return null;
+
+  const resumeData =
+    (isRecord(value.resume_data) && value.resume_data) ||
+    (isRecord(value.resumeData) && value.resumeData) ||
+    null;
+
+  if (resumeData) {
+    const nested =
+      (isRecord(resumeData.resume_data) && resumeData.resume_data) ||
+      (isRecord(resumeData.resumeData) && resumeData.resumeData) ||
+      null;
+    return (nested || resumeData) as BackendResumeData;
+  }
+
+  return value as BackendResumeData;
+};
+
 export function transformBackendResumeData(
   resumeData: BackendResumeData | unknown
 ): DeepPartial<UserData> {
-  if (!resumeData || typeof resumeData !== "object") {
-    return {};
-  }
-
-  const data = resumeData as BackendResumeData;
+  const data = unwrapResumeData(resumeData);
+  if (!data) return {};
   const patch: DeepPartial<UserData> = {};
 
   // Transform each section
@@ -636,7 +900,12 @@ export function transformBackendResumeData(
     patch.achievements = achievements;
   }
 
-  const otherDetails = transformLanguages(data);
+  const preference = transformPreference(data);
+  if (Object.keys(preference).length > 0) {
+    patch.preference = preference;
+  }
+
+  const otherDetails = transformOtherDetails(data);
   if (Object.keys(otherDetails).length > 0) {
     patch.otherDetails = otherDetails;
   }
