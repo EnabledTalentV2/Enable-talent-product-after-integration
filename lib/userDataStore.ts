@@ -8,8 +8,11 @@ import type { DeepPartialUserData } from "@/lib/candidateProfileUtils";
 
 type UserDataStore = {
   userData: UserData;
+  signupCompletedAt: number | null;
   setUserData: (updater: (prev: UserData) => UserData) => void;
   patchUserData: (patch: Partial<UserData> | DeepPartialUserData) => void;
+  markSignupComplete: () => void;
+  clearSignupComplete: () => void;
   resetUserData: () => void;
 };
 
@@ -84,6 +87,7 @@ export const useUserDataStore = create<UserDataStore>()(
   persist(
     (set) => ({
       userData: normalizeUserData(initialUserData),
+      signupCompletedAt: null,
       setUserData: (updater) =>
         set((state) => ({
           userData: normalizeUserData(updater(state.userData)),
@@ -92,18 +96,25 @@ export const useUserDataStore = create<UserDataStore>()(
         set((state) => ({
           userData: normalizeUserData({ ...state.userData, ...patch }),
         })),
-      resetUserData: () => set({ userData: initialUserData }),
+      markSignupComplete: () => set({ signupCompletedAt: Date.now() }),
+      clearSignupComplete: () => set({ signupCompletedAt: null }),
+      resetUserData: () =>
+        set({ userData: initialUserData, signupCompletedAt: null }),
     }),
     {
       name: "et_user_data",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ userData: state.userData }),
+      partialize: (state) => ({
+        userData: state.userData,
+        signupCompletedAt: state.signupCompletedAt,
+      }),
       merge: (persisted, current) => {
         const persistedState = persisted as Partial<UserDataStore> | undefined;
         return {
           ...current,
           ...persistedState,
           userData: normalizeUserData(persistedState?.userData),
+          signupCompletedAt: persistedState?.signupCompletedAt ?? null,
         };
       },
     }

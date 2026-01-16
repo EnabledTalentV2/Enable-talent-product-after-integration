@@ -120,6 +120,9 @@ function transformBackendToFrontend(
   };
 }
 
+// Time window (in ms) to consider signup as "fresh" and preserve local data
+const FRESH_SIGNUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
 export default function DashboardLayoutPage({
   children,
 }: {
@@ -238,9 +241,39 @@ export default function DashboardLayoutPage({
             logValidationToConsole(validation);
           }
 
+          // Get current store state to check for fresh signup
+          const storeState = useUserDataStore.getState();
+          const currentSignupTime = storeState.signupCompletedAt;
+          const localUserData = storeState.userData;
+
+          // Check if user just completed signup (within the fresh window)
+          const isFreshSignup =
+            currentSignupTime !== null &&
+            Date.now() - currentSignupTime < FRESH_SIGNUP_WINDOW_MS;
+
           // Transform backend data to frontend structure with defaults
           const transformedData = transformBackendToFrontend(rawData);
-          setUserData(() => transformedData);
+
+          if (isFreshSignup) {
+            // Optimistic update: preserve local signup data, only merge backend email/auth info
+            // The local data from signup is more complete than backend at this point
+            patchUserData({
+              basicInfo: {
+                ...localUserData.basicInfo,
+                // Only update email from backend if it's more reliable
+                email:
+                  transformedData.basicInfo.email ||
+                  localUserData.basicInfo.email,
+              },
+            });
+            // Clear the signup flag after a delay to allow normal refresh on next visit
+            setTimeout(() => {
+              useUserDataStore.getState().clearSignupComplete();
+            }, FRESH_SIGNUP_WINDOW_MS);
+          } else {
+            // Normal flow: replace with backend data
+            setUserData(() => transformedData);
+          }
           setLoading(false);
         }
 
