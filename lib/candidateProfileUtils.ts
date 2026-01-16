@@ -170,10 +170,81 @@ const getCurrentYearMonth = () => {
 };
 
 export const buildVerifyProfilePayload = (data: UserData) => {
+  const payload: Record<string, unknown> = {};
+
+  // Basic Info
+  const basicInfo: Record<string, unknown> = {};
+  if (data.basicInfo.firstName.trim()) {
+    basicInfo.first_name = data.basicInfo.firstName.trim();
+  }
+  if (data.basicInfo.lastName.trim()) {
+    basicInfo.last_name = data.basicInfo.lastName.trim();
+  }
+  if (data.basicInfo.phone.trim()) {
+    basicInfo.phone = data.basicInfo.phone.trim();
+  }
+  if (data.basicInfo.location.trim()) {
+    basicInfo.location = data.basicInfo.location.trim();
+  }
+  if (data.basicInfo.citizenshipStatus.trim()) {
+    basicInfo.citizenship_status = data.basicInfo.citizenshipStatus.trim();
+  }
+  if (data.basicInfo.gender.trim()) {
+    basicInfo.gender = data.basicInfo.gender.trim();
+  }
+  if (data.basicInfo.ethnicity.trim()) {
+    basicInfo.ethnicity = data.basicInfo.ethnicity.trim();
+  }
   const linkedin = (
     data.basicInfo.linkedinUrl || data.basicInfo.socialProfile || ""
   ).trim();
-  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
+  if (linkedin) {
+    basicInfo.linkedin_url = linkedin;
+  }
+  if (data.basicInfo.githubUrl.trim()) {
+    basicInfo.github_url = data.basicInfo.githubUrl.trim();
+  }
+  if (data.basicInfo.portfolioUrl.trim()) {
+    basicInfo.portfolio_url = data.basicInfo.portfolioUrl.trim();
+  }
+  if (data.basicInfo.currentStatus.trim()) {
+    basicInfo.current_status = data.basicInfo.currentStatus.trim();
+  }
+  if (data.basicInfo.profilePhoto?.trim()) {
+    basicInfo.profile_photo = data.basicInfo.profilePhoto.trim();
+  }
+  if (Object.keys(basicInfo).length > 0) {
+    payload.basic_info = basicInfo;
+  }
+
+  // Education
+  const education: Record<string, unknown> = {};
+  if (data.education.courseName.trim()) {
+    education.course_name = data.education.courseName.trim();
+  }
+  if (data.education.major.trim()) {
+    education.major = data.education.major.trim();
+  }
+  if (data.education.institution.trim()) {
+    education.institution = data.education.institution.trim();
+  }
+  if (data.education.graduationDate.trim()) {
+    education.graduation_date = toYearMonth(data.education.graduationDate);
+  }
+  if (data.education.grade.trim()) {
+    education.grade = data.education.grade.trim();
+  }
+  if (data.education.from.trim()) {
+    education.start_date = toYearMonth(data.education.from);
+  }
+  if (data.education.to.trim()) {
+    education.end_date = toYearMonth(data.education.to);
+  }
+  if (Object.keys(education).length > 0) {
+    payload.education = education;
+  }
+
+  // Work Experience
   const workEntries =
     data.workExperience.experienceType === "fresher"
       ? []
@@ -190,35 +261,142 @@ export const buildVerifyProfilePayload = (data: UserData) => {
         role: entry.role.trim(),
         start_date: startDate,
         end_date: endDate || undefined,
+        current: entry.current || false,
+        description: entry.description.trim() || undefined,
       };
     })
     .filter((entry) => entry.company && entry.role && entry.start_date);
-
-  const payload: Record<string, unknown> = {};
-  const email = data.basicInfo.email.trim();
-  const name = [data.basicInfo.firstName, data.basicInfo.lastName]
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .join(" ");
-
-  if (email) {
-    payload.email = email;
-  }
-
-  if (name) {
-    payload.name = name;
-  }
-
-  if (skills.length) {
-    payload.skills = skills;
-  }
-
-  if (workExperience.length) {
+  if (workExperience.length > 0) {
     payload.work_experience = workExperience;
   }
 
-  if (linkedin) {
-    payload.linkedin = linkedin;
+  // Skills
+  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
+  if (skills.length > 0) {
+    payload.skills = skills;
+  }
+
+  // Projects
+  if (!data.projects.noProjects) {
+    const projects = data.projects.entries
+      .map((entry) => {
+        const startDate = toYearMonth(entry.from);
+        const endDate = entry.current
+          ? getCurrentYearMonth()
+          : toYearMonth(entry.to);
+
+        return {
+          project_name: entry.projectName.trim(),
+          description: entry.projectDescription.trim(),
+          start_date: startDate,
+          end_date: endDate || undefined,
+          current: entry.current || false,
+        };
+      })
+      .filter((entry) => entry.project_name && entry.start_date);
+    if (projects.length > 0) {
+      payload.projects = projects;
+    }
+  }
+
+  // Achievements
+  const achievements = data.achievements.entries
+    .map((entry) => ({
+      title: entry.title.trim(),
+      issue_date: toYearMonth(entry.issueDate),
+      description: entry.description.trim(),
+    }))
+    .filter((entry) => entry.title);
+  if (achievements.length > 0) {
+    payload.achievements = achievements;
+  }
+
+  // Certifications
+  if (!data.certification.noCertification) {
+    const certifications = data.certification.entries
+      .map((entry) => ({
+        name: entry.name.trim(),
+        issue_date: toYearMonth(entry.issueDate),
+        organization: entry.organization.trim(),
+        credential_id_url: entry.credentialIdUrl.trim(),
+      }))
+      .filter((entry) => entry.name);
+    if (certifications.length > 0) {
+      payload.certifications = certifications;
+    }
+  }
+
+  // Preferences
+  const preferences: Record<string, unknown> = {};
+  if (data.preference.companySize.length > 0) {
+    preferences.company_size = data.preference.companySize;
+  }
+  if (data.preference.jobType.length > 0) {
+    preferences.job_type = data.preference.jobType;
+  }
+  if (data.preference.jobSearch.length > 0) {
+    preferences.job_search_status = data.preference.jobSearch;
+  }
+  if (Object.keys(preferences).length > 0) {
+    payload.preferences = preferences;
+  }
+
+  // Languages
+  const languages = data.otherDetails.languages
+    .map((entry) => ({
+      language: entry.language.trim(),
+      speaking: entry.speaking.trim(),
+      reading: entry.reading.trim(),
+      writing: entry.writing.trim(),
+    }))
+    .filter((entry) => entry.language);
+  if (languages.length > 0) {
+    payload.languages = languages;
+  }
+
+  // Other Details
+  const otherDetails: Record<string, unknown> = {};
+  if (data.otherDetails.careerStage.trim()) {
+    otherDetails.career_stage = data.otherDetails.careerStage.trim();
+  }
+  if (data.otherDetails.availability.trim()) {
+    otherDetails.availability = data.otherDetails.availability.trim();
+  }
+  if (data.otherDetails.desiredSalary.trim()) {
+    otherDetails.desired_salary = data.otherDetails.desiredSalary.trim();
+  }
+  if (Object.keys(otherDetails).length > 0) {
+    payload.other_details = otherDetails;
+  }
+
+  // Accessibility Needs
+  if (data.accessibilityNeeds) {
+    const accessibilityNeeds: Record<string, unknown> = {};
+    if (data.accessibilityNeeds.categories.length > 0) {
+      accessibilityNeeds.categories = data.accessibilityNeeds.categories;
+    }
+    if (data.accessibilityNeeds.accommodationNeed.trim()) {
+      accessibilityNeeds.accommodation_need =
+        data.accessibilityNeeds.accommodationNeed.trim();
+    }
+    if (data.accessibilityNeeds.disclosurePreference.trim()) {
+      accessibilityNeeds.disclosure_preference =
+        data.accessibilityNeeds.disclosurePreference.trim();
+    }
+    if (data.accessibilityNeeds.accommodations.length > 0) {
+      accessibilityNeeds.accommodations = data.accessibilityNeeds.accommodations;
+    }
+    if (Object.keys(accessibilityNeeds).length > 0) {
+      payload.accessibility_needs = accessibilityNeeds;
+    }
+  }
+
+  // How discovered and comments (from reviewAgree)
+  if (data.reviewAgree.discover.trim()) {
+    payload.how_discovered = data.reviewAgree.discover.trim();
+  }
+  if (data.reviewAgree.comments.trim()) {
+    payload.comments = data.reviewAgree.comments.trim();
   }
 
   return payload;
