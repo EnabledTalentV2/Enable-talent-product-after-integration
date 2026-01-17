@@ -28,6 +28,37 @@ import type { UserData } from "@/lib/types/user";
 function transformBackendToFrontend(
   backendData: Record<string, unknown>
 ): UserData {
+  const defaultAccessibility =
+    defaultUserData.accessibilityNeeds ?? {
+      categories: [],
+      accommodationNeed: "",
+      disclosurePreference: "",
+      accommodations: [],
+    };
+  const accessibilityRaw =
+    (backendData.accessibility_needs as Record<string, unknown>) ||
+    (backendData.accessibilityNeeds as Record<string, unknown>) ||
+    null;
+  const accessibilityNeeds =
+    accessibilityRaw && typeof accessibilityRaw === "object"
+      ? {
+          categories: Array.isArray(accessibilityRaw.categories)
+            ? (accessibilityRaw.categories as string[])
+            : defaultAccessibility.categories,
+          accommodationNeed:
+            (accessibilityRaw.accommodation_need as string) ||
+            (accessibilityRaw.accommodationNeed as string) ||
+            defaultAccessibility.accommodationNeed,
+          disclosurePreference:
+            (accessibilityRaw.disclosure_preference as string) ||
+            (accessibilityRaw.disclosurePreference as string) ||
+            defaultAccessibility.disclosurePreference,
+          accommodations: Array.isArray(accessibilityRaw.accommodations)
+            ? (accessibilityRaw.accommodations as string[])
+            : defaultAccessibility.accommodations,
+        }
+      : { ...defaultAccessibility };
+
   return {
     basicInfo: {
       firstName:
@@ -113,6 +144,7 @@ function transformBackendToFrontend(
       (backendData.otherDetails as UserData["otherDetails"]) || {
         ...defaultUserData.otherDetails,
       },
+    accessibilityNeeds,
     reviewAgree: (backendData.review_agree as UserData["reviewAgree"]) ||
       (backendData.reviewAgree as UserData["reviewAgree"]) || {
         ...defaultUserData.reviewAgree,

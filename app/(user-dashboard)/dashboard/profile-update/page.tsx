@@ -25,6 +25,7 @@ import Achievements from "@/components/signup/forms/Achievements";
 import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
+import AccessibilityNeeds from "@/components/signup/forms/AccessibilityNeeds";
 import ReviewAndAgree from "@/components/signup/forms/ReviewAndAgree";
 
 const sectionOrder: StepKey[] = [
@@ -37,6 +38,7 @@ const sectionOrder: StepKey[] = [
   "certification",
   "preference",
   "otherDetails",
+  "accessibilityNeeds",
   "reviewAgree",
 ];
 
@@ -50,8 +52,17 @@ const sectionLabels: Record<StepKey, string> = {
   certification: "Certification",
   preference: "Preferences",
   otherDetails: "Other Details",
+  accessibilityNeeds: "Accessibility Needs",
   reviewAgree: "Review & Consent",
 };
+
+const fallbackAccessibilityNeeds =
+  initialUserData.accessibilityNeeds ?? {
+    categories: [],
+    accommodationNeed: "",
+    disclosurePreference: "",
+    accommodations: [],
+  };
 
 const cardClass = "rounded-2xl bg-white p-6 shadow-sm";
 const titleClass = "text-lg font-semibold text-slate-900";
@@ -83,6 +94,10 @@ export default function ProfileUpdatePage() {
       otherDetails: {
         ...initialUserData.otherDetails,
         ...rawUserData?.otherDetails,
+      },
+      accessibilityNeeds: {
+        ...fallbackAccessibilityNeeds,
+        ...rawUserData?.accessibilityNeeds,
       },
       reviewAgree: {
         ...initialUserData.reviewAgree,
@@ -531,6 +546,21 @@ export default function ProfileUpdatePage() {
                   },
                 };
               })
+            }
+          />
+        );
+      case "accessibilityNeeds":
+        return (
+          <AccessibilityNeeds
+            data={userData.accessibilityNeeds ?? fallbackAccessibilityNeeds}
+            onChange={(patch) =>
+              setUserData((prev) => ({
+                ...prev,
+                accessibilityNeeds: {
+                  ...(prev.accessibilityNeeds ?? fallbackAccessibilityNeeds),
+                  ...patch,
+                },
+              }))
             }
           />
         );

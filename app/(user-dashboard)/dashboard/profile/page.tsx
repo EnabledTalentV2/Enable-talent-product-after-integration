@@ -56,6 +56,15 @@ export default function ProfilePage() {
         ...initialUserData.otherDetails,
         ...rawUserData?.otherDetails,
       },
+      accessibilityNeeds: {
+        ...(initialUserData.accessibilityNeeds ?? {
+          categories: [],
+          accommodationNeed: "",
+          disclosurePreference: "",
+          accommodations: [],
+        }),
+        ...rawUserData?.accessibilityNeeds,
+      },
       reviewAgree: {
         ...initialUserData.reviewAgree,
         ...rawUserData?.reviewAgree,

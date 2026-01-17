@@ -92,6 +92,15 @@ export default function MyJobsPage() {
         ...initialUserData.otherDetails,
         ...rawUserData?.otherDetails,
       },
+      accessibilityNeeds: {
+        ...(initialUserData.accessibilityNeeds ?? {
+          categories: [],
+          accommodationNeed: "",
+          disclosurePreference: "",
+          accommodations: [],
+        }),
+        ...rawUserData?.accessibilityNeeds,
+      },
       reviewAgree: {
         ...initialUserData.reviewAgree,
         ...rawUserData?.reviewAgree,

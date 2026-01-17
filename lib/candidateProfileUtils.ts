@@ -127,6 +127,37 @@ export const mapCandidateProfileToUserData = (
     otherDetails.availability = "Immediately / Available now";
   }
 
+  const accessibilitySource =
+    (isRecord(payload.accessibility_needs) && payload.accessibility_needs) ||
+    (isRecord(payload.accessibilityNeeds) && payload.accessibilityNeeds) ||
+    (isRecord(user?.accessibility_needs) && user.accessibility_needs) ||
+    (isRecord(user?.accessibilityNeeds) && user.accessibilityNeeds) ||
+    (isRecord(profile?.accessibility_needs) && profile.accessibility_needs) ||
+    (isRecord(profile?.accessibilityNeeds) && profile.accessibilityNeeds) ||
+    null;
+  const accessibilityNeeds: Partial<
+    NonNullable<UserData["accessibilityNeeds"]>
+  > = {};
+  if (accessibilitySource) {
+    const categories = toStringArray(accessibilitySource.categories);
+    const accommodations = toStringArray(accessibilitySource.accommodations);
+    const accommodationNeed = toTrimmedString(
+      accessibilitySource.accommodation_need ??
+        accessibilitySource.accommodationNeed
+    );
+    const disclosurePreference = toTrimmedString(
+      accessibilitySource.disclosure_preference ??
+        accessibilitySource.disclosurePreference
+    );
+
+    if (categories.length > 0) accessibilityNeeds.categories = categories;
+    if (accommodationNeed) accessibilityNeeds.accommodationNeed = accommodationNeed;
+    if (disclosurePreference)
+      accessibilityNeeds.disclosurePreference = disclosurePreference;
+    if (accommodations.length > 0)
+      accessibilityNeeds.accommodations = accommodations;
+  }
+
   const result: DeepPartialUserData = {};
   if (hasValue(basicInfo)) {
     result.basicInfo = basicInfo;
@@ -136,6 +167,9 @@ export const mapCandidateProfileToUserData = (
   }
   if (hasValue(otherDetails)) {
     result.otherDetails = otherDetails;
+  }
+  if (hasValue(accessibilityNeeds)) {
+    result.accessibilityNeeds = accessibilityNeeds;
   }
 
   return result;

@@ -11,6 +11,7 @@ type SectionCounts = {
   certification: Counts;
   preference: Counts;
   otherDetails: Counts;
+  accessibilityNeeds: Counts;
   reviewAgree: Counts;
 };
 
@@ -116,6 +117,15 @@ const computeSectionCounts = (data: UserData): SectionCounts => {
     { total: 1, filled: data.reviewAgree.agree ? 1 : 0 }
   );
 
+  const accessibilityNeedsCounts = countValue(
+    data.accessibilityNeeds ?? {
+      categories: [],
+      accommodationNeed: "",
+      disclosurePreference: "",
+      accommodations: [],
+    }
+  );
+
   return {
     basicInfo: countValue(data.basicInfo),
     education: countValue(data.education),
@@ -126,6 +136,7 @@ const computeSectionCounts = (data: UserData): SectionCounts => {
     certification: certificationCounts,
     preference: countValue(data.preference),
     otherDetails: countValue(data.otherDetails),
+    accessibilityNeeds: accessibilityNeedsCounts,
     reviewAgree: reviewAgreeCounts,
   };
 };
@@ -143,6 +154,7 @@ export const computeProfileSectionCompletion = (data: UserData) => {
     certification: toCompletion(counts.certification),
     preference: toCompletion(counts.preference),
     otherDetails: toCompletion(counts.otherDetails),
+    accessibilityNeeds: toCompletion(counts.accessibilityNeeds),
     reviewAgree: toCompletion(counts.reviewAgree),
   };
 };

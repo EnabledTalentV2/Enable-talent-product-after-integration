@@ -10,6 +10,7 @@ export type StepKey =
   | "certification"
   | "preference"
   | "otherDetails"
+  | "accessibilityNeeds"
   | "reviewAgree";
 
 export type Step = {
