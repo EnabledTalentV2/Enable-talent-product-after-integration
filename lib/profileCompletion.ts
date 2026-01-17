@@ -86,6 +86,11 @@ const toCompletion = (counts: Counts) => {
   };
 };
 
+const PROFILE_COMPLETION_SCALE = 100 / 85;
+
+const scaleCompletionPercent = (percent: number) =>
+  Math.min(100, Math.round(percent * PROFILE_COMPLETION_SCALE));
+
 const computeSectionCounts = (data: UserData): SectionCounts => {
   const workExperienceCounts =
     data.workExperience.experienceType === "fresher"
@@ -112,7 +117,6 @@ const computeSectionCounts = (data: UserData): SectionCounts => {
   const reviewAgreeCounts = combineCounts(
     countValue({
       discover: data.reviewAgree.discover,
-      comments: data.reviewAgree.comments,
     }),
     { total: 1, filled: data.reviewAgree.agree ? 1 : 0 }
   );
@@ -161,14 +165,15 @@ export const computeProfileSectionCompletion = (data: UserData) => {
 
 export const computeProfileCompletion = (data: UserData) => {
   const counts = computeSectionCounts(data);
-  const totals = combineCounts(...(Object.values(counts) as Counts[]));
-  const percent =
+  const { achievements: _achievements, ...rest } = counts;
+  const totals = combineCounts(...(Object.values(rest) as Counts[]));
+  const rawPercent =
     totals.total > 0
       ? Math.min(100, Math.round((totals.filled / totals.total) * 100))
       : 0;
 
   return {
-    percent,
+    percent: scaleCompletionPercent(rawPercent),
     isComplete: totals.total > 0 && totals.filled === totals.total,
   };
 };
