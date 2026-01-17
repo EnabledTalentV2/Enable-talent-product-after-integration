@@ -86,11 +86,6 @@ const toCompletion = (counts: Counts) => {
   };
 };
 
-const PROFILE_COMPLETION_SCALE = 100 / 85;
-
-const scaleCompletionPercent = (percent: number) =>
-  Math.min(100, Math.round(percent * PROFILE_COMPLETION_SCALE));
-
 const computeSectionCounts = (data: UserData): SectionCounts => {
   const workExperienceCounts =
     data.workExperience.experienceType === "fresher"
@@ -173,7 +168,7 @@ export const computeProfileCompletion = (data: UserData) => {
       : 0;
 
   return {
-    percent: scaleCompletionPercent(rawPercent),
+    percent: rawPercent,
     isComplete: totals.total > 0 && totals.filled === totals.total,
   };
 };

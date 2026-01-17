@@ -650,31 +650,17 @@ export default function ResumeUpload() {
         return;
       }
 
-      // Step 3: Trigger resume parsing in background (don't wait for results)
+      // Step 3: Resume parsing starts once the resume URL is saved.
       setUploadStage("parsing");
-      console.log("[Resume Upload] Step 3: Triggering resume parsing in background");
+      console.log(
+        "[Resume Upload] Resume saved. Parsing will start in the background."
+      );
 
-      try {
-        // Start parsing but don't wait for results
-        apiRequest<unknown>(
-          `/api/candidates/profiles/${candidateSlug}/parse-resume/`,
-          {
-            method: "POST",
-          }
-        ).then(() => {
-          console.log("[Resume Upload] Parse request initiated successfully");
-        }).catch((err) => {
-          console.warn("[Resume Upload] Parse request error (non-blocking):", err);
-        });
-
-        // Immediately navigate to accessibility needs while parsing happens in background
-        console.log("[Resume Upload] Resume uploaded successfully, navigating to accessibility needs");
-        router.push("/signup/accessability-needs?resumeUploaded=1");
-      } catch (err) {
-        console.error("[Resume Upload] Unexpected error:", err);
-        // Even if there's an error, navigate to accessibility needs
-        router.push("/signup/accessability-needs?resumeUploaded=1");
-      }
+      // Immediately navigate to accessibility needs while parsing happens in background
+      console.log(
+        "[Resume Upload] Resume uploaded successfully, navigating to accessibility needs"
+      );
+      router.push("/signup/accessability-needs?resumeUploaded=1");
     } catch (err) {
       // Check if session expired
       if (handleSessionExpiry(err, router)) {
