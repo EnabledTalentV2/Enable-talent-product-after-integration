@@ -107,9 +107,6 @@ export const toEmployerOrganizationInfo = (
   const location = toStringValue(
     record.headquarter_location ?? record.location
   );
-  const foundedYear = toStringValue(
-    record.founded_year ?? record.foundedYear ?? record.founded
-  );
   const website = toStringValue(record.url ?? record.website);
   const linkedinUrl = toStringValue(
     record.linkedin_url ?? record.linkedinUrl ?? record.linkedin
@@ -129,7 +126,6 @@ export const toEmployerOrganizationInfo = (
     organizationName ||
     aboutOrganization ||
     location ||
-    foundedYear ||
     website ||
     linkedinUrl ||
     companySize ||
@@ -142,7 +138,6 @@ export const toEmployerOrganizationInfo = (
     organizationName,
     aboutOrganization,
     location,
-    foundedYear,
     website,
     linkedinUrl,
     companySize,

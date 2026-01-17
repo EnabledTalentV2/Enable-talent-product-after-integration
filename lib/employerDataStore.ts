@@ -7,7 +7,6 @@ export type EmployerOrganizationInfo = {
   organizationName: string;
   aboutOrganization: string;
   location: string;
-  foundedYear: string;
   website: string;
   linkedinUrl: string;
   companySize: string;
@@ -23,7 +22,6 @@ const initialEmployerData: EmployerData = {
     organizationName: "",
     aboutOrganization: "",
     location: "",
-    foundedYear: "",
     website: "",
     linkedinUrl: "",
     companySize: "",

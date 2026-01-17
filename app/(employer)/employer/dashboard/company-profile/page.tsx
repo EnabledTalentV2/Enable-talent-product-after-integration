@@ -15,7 +15,6 @@ export default function EmployerCompanyProfilePage() {
     organizationName: "",
     aboutOrganization: "",
     location: "",
-    foundedYear: "",
     website: "",
     linkedinUrl: "",
     companySize: "",
@@ -28,8 +27,7 @@ export default function EmployerCompanyProfilePage() {
     Boolean(organizationInfo.location) ||
     Boolean(organizationInfo.website) ||
     Boolean(organizationInfo.linkedinUrl) ||
-    Boolean(organizationInfo.companySize) ||
-    Boolean(organizationInfo.foundedYear);
+    Boolean(organizationInfo.companySize);
 
   useEffect(() => {
     if (hasOrgData) return;
@@ -67,11 +65,12 @@ export default function EmployerCompanyProfilePage() {
     about:
       organizationInfo.aboutOrganization || "No company description available.",
     location: organizationInfo.location || "Location not set",
-    founded: organizationInfo.foundedYear || "Founded year not set",
     employees: organizationInfo.companySize || "Company size not set",
     website: organizationInfo.website || "",
+    linkedin: organizationInfo.linkedinUrl || "",
   };
   const hasWebsite = Boolean(displayData.website.trim());
+  const hasLinkedin = Boolean(displayData.linkedin.trim());
 
   return (
     <section className="mx-auto max-w-[1200px] space-y-6 py-8 px-6 ">
@@ -123,14 +122,6 @@ export default function EmployerCompanyProfilePage() {
               </p>
             </div>
 
-            {/* Founded Card */}
-            <div className="rounded-[24px] bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Founded in</p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
-                {displayData.founded}
-              </p>
-            </div>
-
             {/* Industry Card */}
             <div className="rounded-[24px] bg-white p-6 shadow-sm">
               <p className="text-sm text-slate-500">Industry</p>
@@ -164,6 +155,32 @@ export default function EmployerCompanyProfilePage() {
                   className="mt-1 block text-xl font-bold hover:underline truncate"
                 >
                   {displayData.website}
+                </a>
+              ) : (
+                <p className="mt-1 text-xl font-bold">Not provided</p>
+              )}
+            </div>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2">
+              <ArrowRight className="h-5 w-5 text-white" />
+            </div>
+          </div>
+
+          {/* LinkedIn Card */}
+          <div className="relative overflow-hidden rounded-[24px] bg-[#0A66C2] p-6 text-white shadow-sm">
+            <div className="relative z-10">
+              <p className="text-sm font-medium text-white/90">LinkedIn</p>
+              {hasLinkedin ? (
+                <a
+                  href={
+                    displayData.linkedin.startsWith("http")
+                      ? displayData.linkedin
+                      : `https://${displayData.linkedin}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block text-xl font-bold hover:underline truncate"
+                >
+                  {displayData.linkedin}
                 </a>
               ) : (
                 <p className="mt-1 text-xl font-bold">Not provided</p>
