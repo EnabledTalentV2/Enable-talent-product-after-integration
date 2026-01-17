@@ -149,7 +149,6 @@ export default function CompaniesPage() {
     [rawUserData]
   );
   const appliedJobs = useAppliedJobsStore((s) => s.appliedJobs);
-  const applyJob = useAppliedJobsStore((s) => s.applyJob);
   const { percent: profilePercent } = useMemo(
     () => computeProfileCompletion(userData),
     [userData]
@@ -220,39 +219,39 @@ export default function CompaniesPage() {
       return;
     }
 
-    // Submit application to backend
-    applyToJob(activeJob.id, {
-      onSuccess: (data) => {
-        console.log("Application submitted successfully:", data);
+    // Prepare job data for optimistic update
+    const jobData = {
+      id: activeJob.id,
+      title: activeJob.title,
+      status: activeJob.status,
+      location: activeJob.location,
+      match: activeJob.match,
+      companyId: activeCompany.id,
+      companyName: activeCompany.name,
+      companyLogo: activeCompany.logo,
+      companyIndustry: activeCompany.industry,
+      hiringCount: activeCompany.hiringCount,
+      lastActive: activeCompany.lastActive,
+      posted: activeJob.posted,
+      salary: activeJob.salary,
+      jobType: activeJob.jobType,
+      workMode: activeJob.workMode,
+      yearsExperience: activeJob.yearsExperience,
+      about: activeCompany.about[0],
+      description: activeJob.description,
+      requirements: activeJob.requirements,
+    };
 
-        // Also store in local state for UI feedback
-        applyJob({
-          id: activeJob.id,
-          title: activeJob.title,
-          status: activeJob.status,
-          location: activeJob.location,
-          match: activeJob.match,
-          companyId: activeCompany.id,
-          companyName: activeCompany.name,
-          companyLogo: activeCompany.logo,
-          companyIndustry: activeCompany.industry,
-          hiringCount: activeCompany.hiringCount,
-          lastActive: activeCompany.lastActive,
-          posted: activeJob.posted,
-          salary: activeJob.salary,
-          jobType: activeJob.jobType,
-          workMode: activeJob.workMode,
-          yearsExperience: activeJob.yearsExperience,
-          about: activeCompany.about[0],
-          description: activeJob.description,
-          requirements: activeJob.requirements,
-        });
-      },
-      onError: (error) => {
-        console.error("Failed to apply to job:", error);
-        alert("Failed to submit application. Please try again.");
-      },
-    });
+    // Optimistic update - UI updates immediately
+    applyToJob(
+      { jobId: activeJob.id, jobData },
+      {
+        onError: (error) => {
+          console.error("Failed to apply to job:", error);
+          alert("Failed to submit application. Please try again.");
+        },
+      }
+    );
   };
 
   return (

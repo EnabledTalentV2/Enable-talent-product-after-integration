@@ -54,6 +54,32 @@ const getStatusStyles = (status: Job["status"]) => {
   }
 };
 
+const formatPostedDate = (dateString: string | undefined): string => {
+  if (!dateString) return "Recently posted";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined
+    });
+  } catch {
+    return dateString;
+  }
+};
+
 export default function MyJobsPage() {
   const { data: jobsData, isLoading: isLoadingJobs } = useCandidateJobs();
   const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
@@ -110,7 +136,6 @@ export default function MyJobsPage() {
   );
 
   const appliedJobsStore = useAppliedJobsStore((s) => s.appliedJobs);
-  const applyJobToStore = useAppliedJobsStore((s) => s.applyJob);
   const { percent: profilePercent } = useMemo(
     () => computeProfileCompletion(userData),
     [userData]
@@ -165,14 +190,41 @@ export default function MyJobsPage() {
     [applications]
   );
 
+  // Transform optimistic applied jobs from store (not yet confirmed by server)
+  const optimisticAppliedJobs = useMemo(() => {
+    // Get IDs already in server applications to avoid duplicates
+    const serverAppliedIds = new Set(applications.map(app => String(app.job.id)));
+
+    return appliedJobsStore
+      .filter(job => !serverAppliedIds.has(job.id)) // Only show if not yet in server response
+      .map((job) => ({
+        id: `app-optimistic-${job.id}`,
+        title: job.title,
+        company: job.companyName,
+        location: job.location,
+        jobType: job.jobType || "Full-time",
+        salary: job.salary,
+        posted: job.posted || "Just now",
+        status: "Applied" as Job["status"],
+        applicationStatus: "Applied" as Job["applicationStatus"],
+        description: job.description,
+        requirements: job.requirements,
+        appliedAt: "Just now",
+      }));
+  }, [appliedJobsStore, applications]);
+
   // Transform browse jobs
   const browseJobs = useMemo(() => {
     if (!jobsData) return [];
 
-    const appliedJobIds = new Set(applications.map(app => Number(app.job.id)));
+    // Combine server applications AND optimistic store for filtering
+    const allAppliedIds = new Set([
+      ...applications.map(app => Number(app.job.id)),
+      ...appliedJobsStore.map(job => Number(job.id)),
+    ]);
 
     return jobsData
-      .filter(job => !appliedJobIds.has(Number(job.id)))
+      .filter(job => !allAppliedIds.has(Number(job.id)))
       .map((job) => ({
         id: String(job.id),
         title: job.title,
@@ -180,22 +232,25 @@ export default function MyJobsPage() {
         location: job.location || "Not specified",
         jobType: job.employmentType || "Full-time",
         salary: job.salary || "Not disclosed",
-        posted: job.postedAt || "Recently posted",
+        posted: formatPostedDate(job.postedAt),
         status: (job.status === "Active" || job.status === "Closed" ? job.status : "Active") as Job["status"],
         applicationStatus: undefined,
         description: job.description?.split('\n').filter(line => line.trim()),
         requirements: job.requirements?.split('\n').filter(line => line.trim()),
         appliedAt: undefined,
       }));
-  }, [jobsData, applications]);
+  }, [jobsData, applications, appliedJobsStore]);
 
-  // Combine all jobs
+  // Combine all jobs (server applications + optimistic + browse)
   const allJobs = useMemo(() => {
+    // Combine server applications with optimistic ones
+    const allApplicationJobs = [...optimisticAppliedJobs, ...applicationJobs];
+
     if (activeFilter === "All") {
-      return [...applicationJobs, ...browseJobs];
+      return [...allApplicationJobs, ...browseJobs];
     }
-    return applicationJobs.filter(job => job.applicationStatus === activeFilter);
-  }, [activeFilter, applicationJobs, browseJobs]);
+    return allApplicationJobs.filter(job => job.applicationStatus === activeFilter);
+  }, [activeFilter, applicationJobs, optimisticAppliedJobs, browseJobs]);
 
   // Filter jobs based on search
   const filteredJobs = useMemo(() => {
@@ -272,53 +327,26 @@ export default function MyJobsPage() {
       return;
     }
 
-    applyToJob(activeJob.id, {
-      onSuccess: (data) => {
-        console.log("Application submitted successfully:", data);
+    // Prepare job data for optimistic update
+    const jobData = {
+      id: activeJob.id,
+      title: activeJob.title,
+      status: "Active" as const,
+      location: activeJob.location,
+      companyId: activeJob.id,
+      companyName: activeJob.company,
+      posted: activeJob.posted,
+      salary: activeJob.salary,
+      jobType: activeJob.jobType,
+      description: activeJob.description,
+      requirements: activeJob.requirements,
+    };
 
-        // Store in local state
-        applyJobToStore({
-          id: activeJob.id,
-          title: activeJob.title,
-          status: "Active",
-          location: activeJob.location,
-          companyId: activeJob.id,
-          companyName: activeJob.company,
-          posted: activeJob.posted,
-          salary: activeJob.salary,
-          jobType: activeJob.jobType,
-          description: activeJob.description,
-          requirements: activeJob.requirements,
-        });
-
-        // Refresh applications
-        fetch("/api/candidate/applications/")
-          .then(res => {
-            if (res.ok) {
-              return res.json();
-            }
-            throw new Error("Failed to refresh applications");
-          })
-          .then(data => {
-            if (Array.isArray(data)) {
-              setApplications(data);
-            }
-          })
-          .catch(err => console.error("Error refreshing applications:", err));
-
-        // Show success message
-        alert("Application submitted successfully!");
-      },
-      onError: (error: any) => {
-        console.error("Failed to apply to job:", error);
-
-        // Handle specific error cases based on status code
-        const status = error?.status;
-        const message = error?.message || "Failed to submit application";
-
-        if (status === 409) {
-          alert("You have already applied to this job.");
-          // Refresh applications to update the UI
+    applyToJob(
+      { jobId: activeJob.id, jobData },
+      {
+        onSuccess: () => {
+          // Refresh applications from server to get full data
           fetch("/api/candidate/applications/")
             .then(res => res.ok ? res.json() : [])
             .then(data => {
@@ -327,13 +355,32 @@ export default function MyJobsPage() {
               }
             })
             .catch(err => console.error("Error refreshing applications:", err));
-        } else if (status === 401) {
-          alert("Please log in to apply for this job.");
-        } else {
-          alert(message || "Failed to submit application. Please try again.");
-        }
-      },
-    });
+        },
+        onError: (error: any) => {
+          console.error("Failed to apply to job:", error);
+
+          const status = error?.status;
+          const message = error?.message || "Failed to submit application";
+
+          if (status === 409) {
+            alert("You have already applied to this job.");
+            // Refresh applications to sync with server
+            fetch("/api/candidate/applications/")
+              .then(res => res.ok ? res.json() : [])
+              .then(data => {
+                if (Array.isArray(data)) {
+                  setApplications(data);
+                }
+              })
+              .catch(err => console.error("Error refreshing applications:", err));
+          } else if (status === 401) {
+            alert("Please log in to apply for this job.");
+          } else {
+            alert(message || "Failed to submit application. Please try again.");
+          }
+        },
+      }
+    );
   };
 
   return (
