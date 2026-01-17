@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect } from "react";
-import { Search, MapPin, Briefcase, DollarSign, CheckCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { MapPin, Briefcase, DollarSign, CheckCircle } from "lucide-react";
 import { useCandidateProfiles } from "@/lib/hooks/useCandidateProfiles";
 import Pagination from "@/components/ui/Pagination";
 import Link from "next/link";
@@ -9,8 +10,9 @@ import Link from "next/link";
 const ITEMS_PER_PAGE = 12;
 
 export default function CandidatesListPage() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   const { data: candidates, isLoading, error } = useCandidateProfiles();
-  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filter candidates based on search
@@ -55,22 +57,14 @@ export default function CandidatesListPage() {
     <div className="mx-auto max-w-8xl space-y-6 p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">All Candidates</h1>
+        <h1 className="text-3xl font-bold text-slate-900">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "All Candidates"}
+        </h1>
         <p className="mt-2 text-slate-600">
-          Browse and manage candidate profiles
+          {searchQuery
+            ? "Use the search bar above to refine your search"
+            : "Browse and manage candidate profiles"}
         </p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search by name, email, or location..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/30"
-        />
-        <Search className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
       </div>
 
       {/* Loading State */}
