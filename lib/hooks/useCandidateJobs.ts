@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { candidateJobsAPI } from "@/lib/services/candidateJobsAPI";
+import { useAppliedJobsStore, AppliedJob } from "@/lib/talentAppliedJobsStore";
 
 /**
  * React Query keys for candidate job operations
@@ -8,6 +9,12 @@ export const candidateJobsKeys = {
   all: ["candidate-jobs"] as const,
   browse: () => [...candidateJobsKeys.all, "browse"] as const,
   search: (query: string) => [...candidateJobsKeys.all, "search", query] as const,
+  applications: () => ["candidate-applications"] as const,
+};
+
+export type ApplyToJobParams = {
+  jobId: string | number;
+  jobData: AppliedJob;
 };
 
 /**
@@ -36,17 +43,40 @@ export function useSearchCandidateJobs(query: string) {
 }
 
 /**
- * Hook to apply to a job
- * Mutation that submits job application and invalidates queries
+ * Hook to apply to a job with optimistic updates
+ * Immediately updates UI and rolls back on error
  */
 export function useApplyToJob() {
   const queryClient = useQueryClient();
+  const applyJob = useAppliedJobsStore((s) => s.applyJob);
+  const removeJob = useAppliedJobsStore((s) => s.removeJob);
 
   return useMutation({
-    mutationFn: (jobId: string | number) => candidateJobsAPI.apply(jobId),
-    onSuccess: () => {
-      // Invalidate browse query to refresh job list
+    mutationFn: ({ jobId }: ApplyToJobParams) => candidateJobsAPI.apply(jobId),
+    onMutate: async ({ jobId, jobData }) => {
+      // Optimistically add job to applied jobs store immediately
+      applyJob(jobData);
+
+      // Return context for potential rollback
+      return { jobId: String(jobId), jobData };
+    },
+    onError: (error: any, _variables, context) => {
+      // Don't rollback on 409 - it means already applied (keep in applied state)
+      const status = error?.status || error?.response?.status;
+      if (status === 409) {
+        // Already applied - keep the optimistic state
+        return;
+      }
+
+      // Rollback: remove job from store on actual errors
+      if (context?.jobId) {
+        removeJob(context.jobId);
+      }
+    },
+    onSettled: () => {
+      // Always refetch to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: candidateJobsKeys.browse() });
+      queryClient.invalidateQueries({ queryKey: candidateJobsKeys.applications() });
     },
   });
 }

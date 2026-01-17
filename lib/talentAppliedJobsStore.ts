@@ -27,9 +27,11 @@ export type AppliedJob = {
 type AppliedJobsStore = {
   appliedJobs: AppliedJob[];
   applyJob: (job: AppliedJob) => void;
+  removeJob: (jobId: string) => void;
+  isJobApplied: (jobId: string) => boolean;
 };
 
-export const useAppliedJobsStore = create<AppliedJobsStore>((set) => ({
+export const useAppliedJobsStore = create<AppliedJobsStore>((set, get) => ({
   appliedJobs: [],
   applyJob: (job) =>
     set((state) => {
@@ -38,4 +40,9 @@ export const useAppliedJobsStore = create<AppliedJobsStore>((set) => ({
       }
       return { appliedJobs: [job, ...state.appliedJobs] };
     }),
+  removeJob: (jobId) =>
+    set((state) => ({
+      appliedJobs: state.appliedJobs.filter((job) => job.id !== jobId),
+    })),
+  isJobApplied: (jobId) => get().appliedJobs.some((job) => job.id === jobId),
 }));
