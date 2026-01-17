@@ -11,17 +11,6 @@ import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
 import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
 
-const brandStyles: Record<string, string> = {
-  Meta: "bg-blue-100 text-blue-700",
-  Google: "bg-amber-100 text-amber-700",
-  Amazon: "bg-orange-100 text-orange-700",
-};
-
-const getBrandKey = (company: string) => company.split(" ")[0] || company;
-
-const getBrandStyle = (company: string) =>
-  brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
-
 export default function ListedJobsPage() {
   // Use React Query hook - automatic fetching, caching, and error handling
   const { data: jobs = [], isLoading, error } = useJobs();
@@ -213,7 +202,6 @@ export default function ListedJobsPage() {
                       job={job}
                       isSelected={isSelected}
                       onClick={() => setSelectedJobId(job.id)}
-                      getBrandStyle={getBrandStyle}
                     />
                     {isSelected && (
                       <div
@@ -224,7 +212,6 @@ export default function ListedJobsPage() {
                         {selectedJob && (
                           <JobDetailView
                             job={selectedJob}
-                            getBrandStyle={getBrandStyle}
                             onDelete={handleDeleteJob}
                           />
                         )}
@@ -250,7 +237,7 @@ export default function ListedJobsPage() {
             tabIndex={-1}
             className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10"
           >
-            <JobDetailView job={selectedJob} getBrandStyle={getBrandStyle} onDelete={handleDeleteJob} />
+            <JobDetailView job={selectedJob} onDelete={handleDeleteJob} />
           </div>
         )}
       </div>
