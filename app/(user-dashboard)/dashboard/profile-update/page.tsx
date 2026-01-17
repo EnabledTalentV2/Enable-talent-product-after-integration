@@ -12,10 +12,7 @@ import type { StepKey, UserData } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
 import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import {
-  buildCandidateProfileUpdatePayload,
-  buildVerifyProfilePayload,
-} from "@/lib/candidateProfileUtils";
+import { buildCandidateProfilePatchPayload } from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -99,6 +96,31 @@ type RequiredValidationResult = {
 
 const isBlank = (value: string | undefined) =>
   !value || value.trim().length === 0;
+
+const appendFormValue = (
+  formData: FormData,
+  key: string,
+  value: unknown
+) => {
+  if (value === null || value === undefined) return;
+  if (Array.isArray(value) || typeof value === "object") {
+    formData.append(key, JSON.stringify(value));
+    return;
+  }
+  formData.append(key, String(value));
+};
+
+const buildResumeFormData = (
+  payload: Record<string, unknown>,
+  resumeFile: File
+) => {
+  const formData = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    appendFormValue(formData, key, value);
+  });
+  formData.append("resume_file", resumeFile, resumeFile.name);
+  return formData;
+};
 
 const validateRequiredFields = (data: UserData): RequiredValidationResult => {
   const basicInfoErrors: RequiredValidationResult["basicInfoErrors"] = {};
@@ -426,11 +448,14 @@ export default function ProfileUpdatePage() {
   );
   const setUserData = useUserDataStore((s) => s.setUserData);
   const resetUserData = useUserDataStore((s) => s.resetUserData);
+  const candidateProfile = useCandidateProfileStore((s) => s.profile);
   const candidateSlug = useCandidateProfileStore((s) => s.slug);
   const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeInputKey, setResumeInputKey] = useState(0);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [showValidation, setShowValidation] = useState(false);
@@ -477,6 +502,12 @@ export default function ProfileUpdatePage() {
     [sectionCompletion]
   );
   const hasIncompleteSections = incompleteSections.length > 0;
+  const currentResumeUrl = useMemo(() => {
+    if (!candidateProfile || typeof candidateProfile !== "object") return "";
+    const record = candidateProfile as Record<string, unknown>;
+    const resumeFile = record.resume_file ?? record.resume_url;
+    return typeof resumeFile === "string" ? resumeFile : "";
+  }, [candidateProfile]);
 
   useEffect(() => {
     let active = true;
@@ -574,29 +605,28 @@ export default function ProfileUpdatePage() {
     setSaveError(null);
 
     try {
-      const verifyPayload = buildVerifyProfilePayload(userData);
-      if (Object.keys(verifyPayload).length > 0) {
-        await apiRequest<unknown>(
-          `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
-          {
-            method: "POST",
-            body: JSON.stringify(verifyPayload),
-          }
-        );
-      }
+      const candidatePayload = buildCandidateProfilePatchPayload(userData);
+      const hasPayload = Object.keys(candidatePayload).length > 0;
+      const hasResumeFile = Boolean(resumeFile);
 
-      const candidatePayload = buildCandidateProfileUpdatePayload(userData);
-      if (Object.keys(candidatePayload).length > 0) {
+      if (hasPayload || hasResumeFile) {
+        const body = hasResumeFile
+          ? buildResumeFormData(candidatePayload, resumeFile as File)
+          : JSON.stringify(candidatePayload);
         await apiRequest<unknown>(
           `/api/candidates/profiles/${candidateSlug}/`,
           {
             method: "PATCH",
-            body: JSON.stringify(candidatePayload),
+            body,
           }
         );
       }
 
       setSaveSuccess("Profile saved.");
+      if (hasResumeFile) {
+        setResumeFile(null);
+        setResumeInputKey((key) => key + 1);
+      }
       if (redirect) {
         router.push("/dashboard");
       }
@@ -1029,6 +1059,65 @@ export default function ProfileUpdatePage() {
           </button>
         </div>
       ) : null}
+
+      <div className={cardClass}>
+        <h2 className={titleClass}>Resume</h2>
+        <p className="mt-2 text-base text-slate-600">
+          Upload a new resume file to replace your current one.
+        </p>
+        {currentResumeUrl ? (
+          <p className="mt-2 text-sm text-slate-700">
+            Current resume:{" "}
+            <a
+              href={currentResumeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-slate-900 underline"
+            >
+              View file
+            </a>
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-slate-500">No resume on file.</p>
+        )}
+        <div className="mt-4 space-y-2">
+          <label
+            htmlFor="resume-file"
+            className="text-sm font-medium text-slate-700"
+          >
+            Upload new resume
+          </label>
+          <input
+            key={resumeInputKey}
+            id="resume-file"
+            type="file"
+            accept=".pdf,application/pdf"
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null;
+              setResumeFile(file);
+            }}
+            className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200"
+          />
+          {resumeFile ? (
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span>Selected: {resumeFile.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setResumeFile(null);
+                  setResumeInputKey((key) => key + 1);
+                }}
+                className="text-slate-500 underline hover:text-slate-700"
+              >
+                Clear selection
+              </button>
+            </div>
+          ) : null}
+          <p className="text-xs text-slate-500">
+            Accepted file type: PDF.
+          </p>
+        </div>
+      </div>
 
       <div className="space-y-6">
         {sectionOrder.map((key) => (
