@@ -156,10 +156,6 @@ export default function JobDetailView({
           <div className="text-xs text-slate-500 mb-1">Job Type</div>
           <div className="font-semibold text-slate-900">{job.workMode}</div>
         </div>
-        <div>
-          <div className="text-xs text-slate-500 mb-1">Years of Experience</div>
-          <div className="font-semibold text-slate-900">{job.experience}</div>
-        </div>
       </div>
 
       {/* Salary */}
@@ -191,20 +187,6 @@ export default function JobDetailView({
         </ul>
       </div>
 
-        {/* Requirements */}
-        <div>
-          <h3 className="font-bold text-slate-900 mb-3">Requirement</h3>
-          <ul className="list-disc list-outside ml-4 space-y-2">
-            {job.requirements.map((item, index) => (
-              <li
-                key={index}
-                className="text-sm text-slate-600 leading-relaxed pl-1"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

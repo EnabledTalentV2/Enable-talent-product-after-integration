@@ -76,9 +76,6 @@ export default function ListedJobCard({
 
       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
         <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
-          {job.experience}
-        </span>
-        <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
           {job.type}
         </span>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 
 type JobFormProps = {
@@ -42,6 +42,7 @@ export default function JobForm({
     ...initialValues,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
   const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => {
@@ -85,11 +86,13 @@ export default function JobForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!onSubmit) return;
+    if (!onSubmit || submitLockRef.current) return;
+    submitLockRef.current = true;
     setIsSubmitting(true);
     try {
       await onSubmit(values);
     } finally {
+      submitLockRef.current = false;
       setIsSubmitting(false);
     }
   };
