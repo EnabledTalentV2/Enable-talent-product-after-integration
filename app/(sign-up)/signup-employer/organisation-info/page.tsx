@@ -19,7 +19,6 @@ type FieldErrors = Partial<{
   organizationName: string;
   aboutOrganization: string;
   location: string;
-  foundedYear: string;
   website: string;
   linkedinUrl: string;
   companySize: string;
@@ -51,9 +50,6 @@ const toFieldErrorsFromApi = (error: unknown): FieldErrors => {
 
   const locationMessage = extractErrorText(data.headquarter_location);
   if (locationMessage) nextErrors.location = locationMessage;
-
-  const foundedMessage = extractErrorText(data.foundedYear);
-  if (foundedMessage) nextErrors.foundedYear = foundedMessage;
 
   const websiteMessage = extractErrorText(data.url);
   if (websiteMessage) nextErrors.website = websiteMessage;
@@ -108,7 +104,6 @@ export default function OrganisationInfoPage() {
     organizationName: "",
     aboutOrganization: "",
     location: "",
-    foundedYear: "",
     website: "",
     linkedinUrl: "",
     companySize: "",
@@ -124,7 +119,6 @@ export default function OrganisationInfoPage() {
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
-  const foundedRef = useRef<HTMLInputElement | null>(null);
   const websiteRef = useRef<HTMLInputElement | null>(null);
   const linkedinRef = useRef<HTMLInputElement | null>(null);
   const companySizeRef = useRef<HTMLFieldSetElement | null>(null);
@@ -149,25 +143,17 @@ export default function OrganisationInfoPage() {
   }, [router]);
 
   useEffect(() => {
-    const normalizedFoundedYear = organizationInfo.foundedYear?.includes("-")
-      ? organizationInfo.foundedYear.split("-")[0] ?? ""
-      : organizationInfo.foundedYear;
     const normalizedCompanySize = organizationInfo.companySize
       ? organizationInfo.companySize.replace(/\s+/g, "")
       : organizationInfo.companySize;
 
-    if (
-      normalizedFoundedYear !== organizationInfo.foundedYear ||
-      normalizedCompanySize !== organizationInfo.companySize
-    ) {
+    if (normalizedCompanySize !== organizationInfo.companySize) {
       patchOrganizationInfo({
-        foundedYear: normalizedFoundedYear,
         companySize: normalizedCompanySize,
       });
     }
   }, [
     organizationInfo.companySize,
-    organizationInfo.foundedYear,
     patchOrganizationInfo,
   ]);
 
@@ -200,8 +186,6 @@ export default function OrganisationInfoPage() {
     if (!trimmedAbout)
       nextErrors.aboutOrganization = "About organization is required.";
     if (!trimmedLocation) nextErrors.location = "Location is required.";
-    if (!organizationInfo.foundedYear)
-      nextErrors.foundedYear = "Founded date is required.";
     if (!trimmedWebsite) nextErrors.website = "Website is required.";
     if (!companySizeChoice)
       nextErrors.companySize = "Please select company size.";
@@ -222,7 +206,6 @@ export default function OrganisationInfoPage() {
           aboutRef as unknown as RefObject<HTMLElement | null>,
         ],
         ["location", locationRef as unknown as RefObject<HTMLElement | null>],
-        ["foundedYear", foundedRef as unknown as RefObject<HTMLElement | null>],
         ["website", websiteRef as unknown as RefObject<HTMLElement | null>],
         ["linkedinUrl", linkedinRef as unknown as RefObject<HTMLElement | null>],
         [
@@ -464,48 +447,6 @@ export default function OrganisationInfoPage() {
                     className="text-sm text-red-500"
                   >
                     {fieldErrors.location}
-                  </p>
-                ) : null}
-              </div>
-
-              {/* Founded Year */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="organization-founded"
-                  className="text-sm font-medium text-gray-900"
-                >
-                  Founded year
-                </label>
-                <input
-                  ref={foundedRef}
-                  id="organization-founded"
-                  type="text"
-                  value={organizationInfo.foundedYear}
-                  aria-invalid={Boolean(fieldErrors.foundedYear)}
-                  aria-describedby={
-                    fieldErrors.foundedYear
-                      ? "organization-founded-error"
-                      : undefined
-                  }
-                  onChange={(event) => {
-                    clearFieldError("foundedYear");
-                    const normalized = event.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 4);
-                    patchOrganizationInfo({ foundedYear: normalized });
-                  }}
-                  inputMode="numeric"
-                  pattern="\d{4}"
-                  maxLength={4}
-                  className={inputClasses(!!fieldErrors.foundedYear)}
-                  placeholder="YYYY"
-                />
-                {fieldErrors.foundedYear ? (
-                  <p
-                    id="organization-founded-error"
-                    className="text-sm text-red-500"
-                  >
-                    {fieldErrors.foundedYear}
                   </p>
                 ) : null}
               </div>

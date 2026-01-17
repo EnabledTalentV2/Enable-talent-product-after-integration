@@ -192,18 +192,6 @@ export default function CandidateProfilePage() {
             </div>
           )}
 
-          {candidate.willing_to_relocate !== undefined && (
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Willing to Relocate</p>
-                <p className="font-medium text-slate-900">
-                  {candidate.willing_to_relocate ? "Yes" : "No"}
-                </p>
-              </div>
-            </div>
-          )}
-
           {candidate.visa_required !== undefined && (
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-slate-400" />

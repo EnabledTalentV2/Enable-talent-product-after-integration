@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateList from "@/components/employer/candidates/CandidateList";
@@ -17,6 +17,8 @@ const TABS = [
   { id: "declined", label: "Declined", status: "rejected" },
   { id: "hired", label: "Hired", status: "hired" },
 ] as const;
+
+const ITEMS_PER_PAGE = 10;
 
 const fetchCandidates = async (
   _jobId: string,
@@ -68,6 +70,7 @@ export default function CandidatesPage() {
   const [allApplications, setAllApplications] = useState<Application[]>([]);
   const [applicationsError, setApplicationsError] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter applications based on active tab
   const filteredApplications = useMemo(() => {
@@ -77,6 +80,28 @@ export default function CandidatesPage() {
     }
     return allApplications.filter(app => app.status === currentTabConfig.status);
   }, [allApplications, activeTab]);
+
+  // Pagination calculations
+  const totalItems = filteredApplications.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  // Paginated applications for current page
+  const paginatedApplications = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredApplications.slice(startIndex, endIndex);
+  }, [filteredApplications, currentPage]);
+
+  // Reset to page 1 when tab changes or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of list
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Calculate stats dynamically for the current job
   const jobStats = useMemo(() => emptyJobStats(), []);
@@ -231,7 +256,7 @@ export default function CandidatesPage() {
               </div>
             ) : (
               <ApplicantsList
-                applications={filteredApplications}
+                applications={paginatedApplications}
                 jobId={currentJobId}
                 isLoading={isLoading}
                 onDecisionUpdate={() => {
@@ -241,6 +266,11 @@ export default function CandidatesPage() {
                     setApplicationsError(result.error);
                   });
                 }}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={handlePageChange}
               />
             )}
           </div>

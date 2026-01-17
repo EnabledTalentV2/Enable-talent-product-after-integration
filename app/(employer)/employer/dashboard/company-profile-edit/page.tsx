@@ -39,7 +39,6 @@ export default function CompanyProfileEditPage() {
     industry: "",
     aboutOrganization: "",
     location: "",
-    foundedYear: "",
     companySize: "",
     website: "",
     linkedinUrl: "",
@@ -89,32 +88,14 @@ export default function CompanyProfileEditPage() {
 
   useEffect(() => {
     if (organizationInfo) {
-      console.log("=== LOADING FORM DATA ===");
-      console.log("Organization Info:", organizationInfo);
-      console.log("Founded Year value:", organizationInfo.foundedYear);
-      console.log("Company Size value:", organizationInfo.companySize);
-      console.log("Industry value:", organizationInfo.industry);
-
-      const normalizedFoundedYear = organizationInfo.foundedYear?.includes("-")
-        ? organizationInfo.foundedYear.split("-")[0] ?? ""
-        : organizationInfo.foundedYear || "";
-
       setFormData({
         organizationName: organizationInfo.organizationName || "",
         industry: organizationInfo.industry || "",
         aboutOrganization: organizationInfo.aboutOrganization || "",
         location: organizationInfo.location || "",
-        foundedYear: normalizedFoundedYear,
         companySize: organizationInfo.companySize || "",
         website: organizationInfo.website || "",
         linkedinUrl: organizationInfo.linkedinUrl || "",
-      });
-
-      console.log("Form data after setting:", {
-        foundedYear: normalizedFoundedYear,
-        companySize: organizationInfo.companySize,
-        industry: organizationInfo.industry,
-        linkedinUrl: organizationInfo.linkedinUrl,
       });
     }
   }, [organizationInfo]);
@@ -123,11 +104,6 @@ export default function CompanyProfileEditPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    if (name === "foundedYear") {
-      const normalized = value.replace(/\D/g, "").slice(0, 4);
-      setFormData((prev) => ({ ...prev, [name]: normalized }));
-      return;
-    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -135,15 +111,9 @@ export default function CompanyProfileEditPage() {
     e.preventDefault();
     setSubmitError(null);
 
-    console.log("=== FORM SUBMIT STARTED ===");
-    console.log("Form Data:", formData);
-    console.log("Organization Info:", organizationInfo);
-
     // Check if we have organization ID (for update) or need to create new
     const organizationId = organizationInfo?.organizationId;
     const isCreatingNew = !organizationId;
-    console.log("Organization ID:", organizationId);
-    console.log("Creating new organization:", isCreatingNew);
 
     // Validate required fields
     if (!formData.organizationName.trim()) {
@@ -158,7 +128,6 @@ export default function CompanyProfileEditPage() {
       setSubmitError("Location is required.");
       return;
     }
-    // Note: Founded year is optional - backend doesn't support it yet
     if (!formData.website.trim()) {
       setSubmitError("Website is required.");
       return;
@@ -173,15 +142,11 @@ export default function CompanyProfileEditPage() {
     }
 
     setSubmitting(true);
-    console.log("Submitting set to true");
 
     try {
       // Map frontend fields to backend fields
       const companySizeChoice = COMPANY_SIZE_CHOICES[formData.companySize];
       const industryChoice = INDUSTRY_CHOICES[formData.industry];
-
-      console.log("Company Size Choice:", companySizeChoice);
-      console.log("Industry Choice:", industryChoice);
 
       // Validate that we have valid choices
       if (!companySizeChoice) {
@@ -206,29 +171,19 @@ export default function CompanyProfileEditPage() {
       requestFormData.append("employee_size", String(companySizeChoice ?? ""));
       requestFormData.append("industry", String(industryChoice ?? ""));
 
-      console.log("Request FormData entries:");
-      for (const [key, value] of requestFormData.entries()) {
-        console.log(`  ${key}: ${value}`);
-      }
-
-      let updatedData;
       if (isCreatingNew) {
-        console.log("Making POST request to: /api/organizations");
-        updatedData = await apiRequest<unknown>("/api/organizations", {
+        await apiRequest<unknown>("/api/organizations", {
           method: "POST",
           body: requestFormData,
         });
-        console.log("Organization created successfully:", updatedData);
       } else {
-        console.log(`Making PATCH request to: /api/organizations/${organizationId}`);
-        updatedData = await apiRequest<unknown>(
+        await apiRequest<unknown>(
           `/api/organizations/${organizationId}`,
           {
             method: "PATCH",
             body: requestFormData,
           }
         );
-        console.log("Organization updated successfully:", updatedData);
       }
 
       // Update local store
@@ -352,28 +307,6 @@ export default function CompanyProfileEditPage() {
             onChange={handleChange}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="Enter location"
-          />
-        </div>
-
-        {/* Founded Year */}
-        <div className="space-y-2">
-          <label
-            htmlFor="foundedYear"
-            className="text-sm font-medium text-slate-700"
-          >
-            Founded year
-          </label>
-          <input
-            type="text"
-            id="foundedYear"
-            name="foundedYear"
-            value={formData.foundedYear}
-            onChange={handleChange}
-            inputMode="numeric"
-            pattern="\d{4}"
-            maxLength={4}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="YYYY"
           />
         </div>
 

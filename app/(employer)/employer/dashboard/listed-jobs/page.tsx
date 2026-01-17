@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useCallback, FormEvent } from "react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,7 +33,12 @@ export default function ListedJobsPage() {
   const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
     null
   );
+  const [searchQuery, setSearchQuery] = useState("");
   const didMountRef = useRef(false);
+
+  const handleSearch = useCallback((e: FormEvent) => {
+    e.preventDefault();
+  }, []);
 
   // Set up cache invalidator for Zustand store
   useEffect(() => {
@@ -55,7 +60,18 @@ export default function ListedJobsPage() {
     }
   };
 
-  const listedJobs = useMemo(() => jobs.map(toListedJob), [jobs]);
+  const listedJobs = useMemo(() => {
+    const allJobs = jobs.map(toListedJob);
+    if (!searchQuery.trim()) return allJobs;
+
+    const query = searchQuery.toLowerCase();
+    return allJobs.filter((job) => {
+      const titleMatch = job.role?.toLowerCase().includes(query);
+      const companyMatch = job.company?.toLowerCase().includes(query);
+      const locationMatch = job.location?.toLowerCase().includes(query);
+      return titleMatch || companyMatch || locationMatch;
+    });
+  }, [jobs, searchQuery]);
   const selectedJob = useMemo(() => {
     if (!selectedJobId) return null;
     const job = jobs.find((entry) => entry.id === selectedJobId);
@@ -139,8 +155,8 @@ export default function ListedJobsPage() {
     );
   }
 
-  // Show empty state
-  if (listedJobs.length === 0) {
+  // Show empty state only when there are truly no jobs (not filtered by search)
+  if (jobs.length === 0) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 py-16 text-center">
         <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-700">
@@ -165,56 +181,65 @@ export default function ListedJobsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Job List */}
         <div className="flex flex-col lg:col-span-4">
-          {/* Search and Filter */}
-          <div className="flex flex-col gap-3 mb-6 sm:flex-row">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
-                aria-hidden="true"
-              />
+          {/* Search */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="relative w-full">
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search your listed jobs"
                 aria-label="Search your listed jobs"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                className="w-full bg-white pl-4 pr-12 py-2.5 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
               />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 bg-[#D95F35] text-white hover:bg-[#B84D28] transition-colors"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5" />
+              </button>
             </div>
-            <button className="w-full sm:w-auto bg-[#D95F35] hover:bg-[#B84D28] text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
-              Filters
-              <SlidersHorizontal className="h-4 w-4" />
-            </button>
-          </div>
+          </form>
 
           {/* Scrollable List */}
           <div className="space-y-4 lg:pr-2 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent">
-            {listedJobs.map((job) => {
-              const isSelected = selectedJobId === job.id;
-              return (
-                <div key={job.id} className="space-y-4">
-                  <ListedJobCard
-                    job={job}
-                    isSelected={isSelected}
-                    onClick={() => setSelectedJobId(job.id)}
-                    getBrandStyle={getBrandStyle}
-                  />
-                  {isSelected && (
-                    <div
-                      id={`listed-job-details-inline-${job.id}`}
-                      tabIndex={-1}
-                      className="lg:hidden"
-                    >
-                      {selectedJob && (
-                        <JobDetailView
-                          job={selectedJob}
-                          getBrandStyle={getBrandStyle}
-                          onDelete={handleDeleteJob}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {listedJobs.length > 0 ? (
+              listedJobs.map((job) => {
+                const isSelected = selectedJobId === job.id;
+                return (
+                  <div key={job.id} className="space-y-4">
+                    <ListedJobCard
+                      job={job}
+                      isSelected={isSelected}
+                      onClick={() => setSelectedJobId(job.id)}
+                      getBrandStyle={getBrandStyle}
+                    />
+                    {isSelected && (
+                      <div
+                        id={`listed-job-details-inline-${job.id}`}
+                        tabIndex={-1}
+                        className="lg:hidden"
+                      >
+                        {selectedJob && (
+                          <JobDetailView
+                            job={selectedJob}
+                            getBrandStyle={getBrandStyle}
+                            onDelete={handleDeleteJob}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+                <p className="text-slate-600">
+                  No related job found
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
