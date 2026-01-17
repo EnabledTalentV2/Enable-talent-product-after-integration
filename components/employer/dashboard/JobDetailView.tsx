@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, ArrowRight, Trash2 } from "lucide-react";
+import { ArrowRight, Briefcase, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -26,13 +26,11 @@ interface JobDetail {
 
 interface JobDetailViewProps {
   job: JobDetail;
-  getBrandStyle: (company: string) => string;
   onDelete?: (jobId: string | number) => void;
 }
 
 export default function JobDetailView({
   job,
-  getBrandStyle,
   onDelete,
 }: JobDetailViewProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -57,12 +55,8 @@ export default function JobDetailView({
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div
-              className={`flex h-14 w-14 items-center justify-center rounded-full text-xl font-semibold ${getBrandStyle(
-                job.company
-              )}`}
-            >
-              <span className="text-2xl">∞</span>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+              <Briefcase className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">{job.role}</h1>
@@ -156,10 +150,6 @@ export default function JobDetailView({
           <div className="text-xs text-slate-500 mb-1">Job Type</div>
           <div className="font-semibold text-slate-900">{job.workMode}</div>
         </div>
-        <div>
-          <div className="text-xs text-slate-500 mb-1">Years of Experience</div>
-          <div className="font-semibold text-slate-900">{job.experience}</div>
-        </div>
       </div>
 
       {/* Salary */}
@@ -191,20 +181,6 @@ export default function JobDetailView({
         </ul>
       </div>
 
-        {/* Requirements */}
-        <div>
-          <h3 className="font-bold text-slate-900 mb-3">Requirement</h3>
-          <ul className="list-disc list-outside ml-4 space-y-2">
-            {job.requirements.map((item, index) => (
-              <li
-                key={index}
-                className="text-sm text-slate-600 leading-relaxed pl-1"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
 
       {/* Delete Confirmation Modal */}

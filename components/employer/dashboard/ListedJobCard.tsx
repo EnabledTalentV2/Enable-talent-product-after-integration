@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { Briefcase, MapPin } from "lucide-react";
 
 interface ListedJob {
   id: string | number;
@@ -20,14 +20,12 @@ interface ListedJobCardProps {
   job: ListedJob;
   isSelected?: boolean;
   onClick?: () => void;
-  getBrandStyle: (company: string) => string;
 }
 
 export default function ListedJobCard({
   job,
   isSelected,
   onClick,
-  getBrandStyle,
 }: ListedJobCardProps) {
   return (
     <button
@@ -55,12 +53,8 @@ export default function ListedJobCard({
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div
-            className={`flex h-11 w-11 items-center justify-center rounded-full text-base font-semibold ${getBrandStyle(
-              job.company
-            )}`}
-          >
-            <span className="text-xl">∞</span>
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+            <Briefcase className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <p className="text-base font-semibold text-slate-900">{job.role}</p>
@@ -75,9 +69,6 @@ export default function ListedJobCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-        <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
-          {job.experience}
-        </span>
         <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
           {job.type}
         </span>

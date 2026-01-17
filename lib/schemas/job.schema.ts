@@ -123,14 +123,9 @@ export const BackendJobsResponseSchema = z.union([
  */
 export const JobFormValuesSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  company: z.string().min(1, "Company is required"),
   location: z.string().min(1, "Location is required"),
-  address: z.string().optional().default(""),
-  experience: z.string().optional().default(""),
   employmentType: z.string().min(1, "Employment type is required"),
   workArrangement: z.string().min(1, "Work arrangement is required"),
-  preferredLanguage: z.string().optional().default(""),
-  urgentHiring: z.string().optional().default("No"),
   description: z.string().min(1, "Description is required"),
   requirements: z.string().optional().default(""),
   salary: z.string().optional().default(""),
@@ -150,9 +145,6 @@ export const BackendJobPayloadSchema = z.object({
   estimated_salary: z.number().optional(),
   visa_required: z.boolean().optional(),
   skills: z.array(z.string()).optional(),
-  experience: z.string().optional(),
-  preferred_language: z.string().optional(),
-  is_urgent: z.boolean().optional(),
 });
 
 /**

@@ -6,7 +6,6 @@ import { ArrowRight, Pencil } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import { apiRequest } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
-import logoPlaceholder from "@/public/logo/logo-placeholder.png"; // Assuming this path based on previous context, or I will use a text placeholder if image fails.
 
 export default function EmployerCompanyProfilePage() {
   const employerData = useEmployerDataStore((s) => s.employerData);
@@ -80,11 +79,6 @@ export default function EmployerCompanyProfilePage() {
         <div className="absolute -right-20 -top-40 h-[400px] w-[400px] rounded-full border-[40px] border-white/20" />
 
         <div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-center">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white p-4 shadow-sm md:h-32 md:w-32">
-            {/* Using a text placeholder if image is missing, or the imported placeholder */}
-            <span className="text-4xl font-bold text-blue-600">∞</span>
-          </div>
-
           <div className="flex-1 space-y-1">
             <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
               {displayData.name}

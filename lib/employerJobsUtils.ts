@@ -24,13 +24,8 @@ const WORK_ARRANGEMENT_TO_BACKEND: Record<string, number> = {
 };
 
 export const toBackendJobPayload = (values: JobFormValues) => {
-  // Combine description and requirements into single job_desc field
-  let jobDesc = values.description || "";
-  if (values.requirements) {
-    jobDesc = jobDesc
-      ? `${jobDesc}\n\nRequirements:\n${values.requirements}`
-      : `Requirements:\n${values.requirements}`;
-  }
+  // Use description as the job_desc field
+  const jobDesc = values.description || "";
 
   // Parse salary to number if possible, otherwise send as is
   let salaryValue: number | string = values.salary;
@@ -146,14 +141,6 @@ const parseJobFromBackend = (
     else workArrangement = arrangeStr;
   }
 
-  const preferredLanguage = toStringValue(
-    record.preferred_language ?? record.preferredLanguage
-  );
-  const urgentHiring =
-    record.urgent_hiring === true || record.urgent_hiring === "true"
-      ? "Yes"
-      : "No";
-
   // Handle both job_desc (backend response) and description/job_description (alternatives)
   const description = toStringValue(
     record.job_desc ?? record.job_description ?? record.description
@@ -191,8 +178,6 @@ const parseJobFromBackend = (
     experience,
     employmentType,
     workArrangement,
-    preferredLanguage,
-    urgentHiring,
     description,
     requirements,
     salary,
@@ -332,14 +317,9 @@ export const toJobHeaderInfo = (job: EmployerJob) => ({
 
 export const toJobFormValues = (job: EmployerJob): JobFormValues => ({
   title: job.title || "",
-  company: job.company || "",
   location: job.location || "",
-  address: job.address || "",
-  experience: job.experience || "",
   employmentType: job.employmentType || "",
   workArrangement: job.workArrangement || "",
-  preferredLanguage: job.preferredLanguage || "",
-  urgentHiring: job.urgentHiring || "",
   description: job.description || "",
   requirements: job.requirements || "",
   salary: job.salary || "",
