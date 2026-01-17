@@ -6,8 +6,6 @@ import {
   employmentTypeMapper,
   workArrangementMapper,
   jobStatusMapper,
-  booleanToYesNo,
-  yesNoToBoolean,
   parseSalary,
   isRecord,
   extractArray,
@@ -46,13 +44,6 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
   // Transform work arrangement (handles multiple field names and formats)
   const rawWorkArrangement = tryFields(raw, "workplace_type", "work_arrangement", "workArrangement");
   const workArrangement = workArrangementMapper.toFrontend(rawWorkArrangement);
-
-  // Extract preferred language
-  const preferredLanguage = toString(tryFields(raw, "preferred_language", "language"));
-
-  // Extract urgent hiring flag
-  const rawUrgent = tryFields(raw, "is_urgent", "urgent_hiring");
-  const urgentHiring = booleanToYesNo(rawUrgent);
 
   // Extract description (handles multiple field names)
   const description = toString(tryFields(raw, "job_desc", "description", "job_description"));
@@ -109,8 +100,6 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
     experience,
     employmentType,
     workArrangement,
-    preferredLanguage,
-    urgentHiring,
     description,
     requirements,
     salary,
@@ -128,13 +117,8 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
  * Transform frontend form values to backend payload
  */
 export const transformJobToBackend = (values: JobFormValues): BackendJobPayload => {
-  // Combine description and requirements into single job_desc field
-  let jobDesc = values.description || "";
-  if (values.requirements) {
-    jobDesc = jobDesc
-      ? `${jobDesc}\n\nRequirements:\n${values.requirements}`
-      : `Requirements:\n${values.requirements}`;
-  }
+  // Use description as the job_desc field
+  const jobDesc = values.description || "";
 
   // Parse salary to number
   const salaryNum = parseSalary(values.salary);
@@ -150,9 +134,6 @@ export const transformJobToBackend = (values: JobFormValues): BackendJobPayload 
     job_type: employmentTypeMapper.toBackend(values.employmentType),
     estimated_salary: salaryNum,
     visa_required: false, // Default value
-    experience: values.experience || undefined,
-    preferred_language: values.preferredLanguage || undefined,
-    is_urgent: yesNoToBoolean(values.urgentHiring),
   };
 
   // NOTE: Skills are temporarily disabled until we implement skill ID mapping
@@ -191,14 +172,9 @@ export const transformJobsArray = (payload: unknown): EmployerJob[] => {
 export const transformJobToFormValues = (job: EmployerJob): JobFormValues => {
   return {
     title: job.title,
-    company: job.company,
     location: job.location,
-    address: job.address || "",
-    experience: job.experience || "",
     employmentType: job.employmentType,
     workArrangement: job.workArrangement,
-    preferredLanguage: job.preferredLanguage || "",
-    urgentHiring: job.urgentHiring || "No",
     description: job.description,
     requirements: job.requirements || "",
     salary: job.salary || "",
