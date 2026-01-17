@@ -83,6 +83,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const contentType = request.headers.get("content-type") || "";
     const isMultipart = contentType.includes("multipart/form-data");
     const body = isMultipart ? await request.formData() : await request.json();
+    const resumeFileValue = isMultipart
+      ? body.get("resume_file")
+      : (body as Record<string, unknown>)?.resume_file;
+    const hasResumeFile =
+      typeof resumeFileValue === "string"
+        ? resumeFileValue.trim().length > 0 &&
+          resumeFileValue.trim().toLowerCase() !== "null"
+        : Boolean(resumeFileValue);
 
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
@@ -94,6 +102,25 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
 
     const data = await backendResponse.json().catch(() => ({}));
+
+    if (backendResponse.ok && hasResumeFile) {
+      try {
+        const parseResponse = await backendFetch(
+          API_ENDPOINTS.candidateProfiles.parseResume(slug),
+          { method: "POST" },
+          cookies
+        );
+        console.log(
+          "[Patch Profile API] Triggered resume parsing:",
+          parseResponse.status
+        );
+      } catch (error) {
+        console.warn(
+          "[Patch Profile API] Failed to trigger resume parsing:",
+          error
+        );
+      }
+    }
 
     return NextResponse.json(data, {
       status: backendResponse.status,

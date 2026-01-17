@@ -127,6 +127,37 @@ export const mapCandidateProfileToUserData = (
     otherDetails.availability = "Immediately / Available now";
   }
 
+  const accessibilitySource =
+    (isRecord(payload.accessibility_needs) && payload.accessibility_needs) ||
+    (isRecord(payload.accessibilityNeeds) && payload.accessibilityNeeds) ||
+    (isRecord(user?.accessibility_needs) && user.accessibility_needs) ||
+    (isRecord(user?.accessibilityNeeds) && user.accessibilityNeeds) ||
+    (isRecord(profile?.accessibility_needs) && profile.accessibility_needs) ||
+    (isRecord(profile?.accessibilityNeeds) && profile.accessibilityNeeds) ||
+    null;
+  const accessibilityNeeds: Partial<
+    NonNullable<UserData["accessibilityNeeds"]>
+  > = {};
+  if (accessibilitySource) {
+    const categories = toStringArray(accessibilitySource.categories);
+    const accommodations = toStringArray(accessibilitySource.accommodations);
+    const accommodationNeed = toTrimmedString(
+      accessibilitySource.accommodation_need ??
+        accessibilitySource.accommodationNeed
+    );
+    const disclosurePreference = toTrimmedString(
+      accessibilitySource.disclosure_preference ??
+        accessibilitySource.disclosurePreference
+    );
+
+    if (categories.length > 0) accessibilityNeeds.categories = categories;
+    if (accommodationNeed) accessibilityNeeds.accommodationNeed = accommodationNeed;
+    if (disclosurePreference)
+      accessibilityNeeds.disclosurePreference = disclosurePreference;
+    if (accommodations.length > 0)
+      accessibilityNeeds.accommodations = accommodations;
+  }
+
   const result: DeepPartialUserData = {};
   if (hasValue(basicInfo)) {
     result.basicInfo = basicInfo;
@@ -136,6 +167,9 @@ export const mapCandidateProfileToUserData = (
   }
   if (hasValue(otherDetails)) {
     result.otherDetails = otherDetails;
+  }
+  if (hasValue(accessibilityNeeds)) {
+    result.accessibilityNeeds = accessibilityNeeds;
   }
 
   return result;
@@ -430,6 +464,75 @@ export const buildCandidateProfileUpdatePayload = (
   if (availability) {
     payload.is_available = true;
   }
+
+  return payload;
+};
+
+export const buildCandidateProfilePatchPayload = (
+  data: UserData
+): Record<string, unknown> => {
+  const payload = buildVerifyProfilePayload(data);
+  const basicInfo = payload.basic_info;
+
+  if (basicInfo && typeof basicInfo === "object" && !Array.isArray(basicInfo)) {
+    const info = basicInfo as Record<string, unknown>;
+    const firstName =
+      typeof info.first_name === "string" ? info.first_name.trim() : "";
+    const lastName =
+      typeof info.last_name === "string" ? info.last_name.trim() : "";
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+    if (fullName) payload.name = fullName;
+
+    const phone = typeof info.phone === "string" ? info.phone.trim() : "";
+    if (phone) payload.phone = phone;
+
+    const location =
+      typeof info.location === "string" ? info.location.trim() : "";
+    if (location) payload.location = location;
+
+    const citizenshipStatus =
+      typeof info.citizenship_status === "string"
+        ? info.citizenship_status.trim()
+        : "";
+    if (citizenshipStatus) payload.citizenship_status = citizenshipStatus;
+
+    const gender = typeof info.gender === "string" ? info.gender.trim() : "";
+    if (gender) payload.gender = gender;
+
+    const ethnicity =
+      typeof info.ethnicity === "string" ? info.ethnicity.trim() : "";
+    if (ethnicity) payload.ethnicity = ethnicity;
+
+    const linkedin =
+      typeof info.linkedin_url === "string" ? info.linkedin_url.trim() : "";
+    if (linkedin) payload.linkedin = linkedin;
+
+    const github =
+      typeof info.github_url === "string" ? info.github_url.trim() : "";
+    if (github) payload.github = github;
+
+    const portfolio =
+      typeof info.portfolio_url === "string" ? info.portfolio_url.trim() : "";
+    if (portfolio) payload.portfolio = portfolio;
+
+    const currentStatus =
+      typeof info.current_status === "string" ? info.current_status.trim() : "";
+    if (currentStatus) payload.current_status = currentStatus;
+
+    const profilePhoto =
+      typeof info.profile_photo === "string" ? info.profile_photo.trim() : "";
+    if (profilePhoto) payload.profile_photo = profilePhoto;
+  }
+
+  const email = data.basicInfo.email.trim();
+  if (email) {
+    payload.email = email;
+  }
+
+  delete payload.basic_info;
+
+  Object.assign(payload, buildCandidateProfileUpdatePayload(data));
 
   return payload;
 };

@@ -1,162 +1,165 @@
 import type { UserData } from "@/lib/types/user";
 
-type Counts = { total: number; filled: number };
-type SectionCounts = {
-  basicInfo: Counts;
-  education: Counts;
-  workExperience: Counts;
-  skills: Counts;
-  projects: Counts;
-  achievements: Counts;
-  certification: Counts;
-  preference: Counts;
-  otherDetails: Counts;
-  reviewAgree: Counts;
-};
+type Completion = { percent: number; isComplete: boolean };
 
-const countValue = (value: unknown): Counts => {
-  if (value === null || value === undefined) {
-    return { total: 1, filled: 0 };
-  }
+const toCompletion = (isComplete: boolean): Completion => ({
+  percent: isComplete ? 100 : 0,
+  isComplete,
+});
 
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    return { total: 1, filled: trimmed.length > 0 ? 1 : 0 };
-  }
+const isNonEmpty = (value: string | null | undefined) =>
+  Boolean(value && value.trim().length > 0);
 
-  if (typeof value === "number") {
-    return { total: 1, filled: Number.isNaN(value) ? 0 : 1 };
-  }
+const areAllNonEmpty = (values: Array<string | null | undefined>) =>
+  values.every(isNonEmpty);
 
-  if (typeof value === "boolean") {
-    return { total: 1, filled: value ? 1 : 0 };
-  }
+const hasCompleteEntries = <T>(
+  entries: T[],
+  isComplete: (entry: T) => boolean
+) => entries.length > 0 && entries.every(isComplete);
 
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return { total: 1, filled: 0 };
-    }
-
-    return value.reduce(
-      (acc, item) => {
-        const next = countValue(item);
-        return {
-          total: acc.total + next.total,
-          filled: acc.filled + next.filled,
-        };
-      },
-      { total: 0, filled: 0 }
-    );
-  }
-
-  if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>).reduce<Counts>(
-      (acc, item) => {
-        const next = countValue(item);
-        return {
-          total: acc.total + next.total,
-          filled: acc.filled + next.filled,
-        };
-      },
-      { total: 0, filled: 0 }
-    );
-  }
-
-  return { total: 1, filled: 0 };
-};
-
-const combineCounts = (...counts: Counts[]) =>
-  counts.reduce(
-    (acc, next) => ({
-      total: acc.total + next.total,
-      filled: acc.filled + next.filled,
-    }),
-    { total: 0, filled: 0 }
+const isAccessibilityComplete = (data: UserData) =>
+  Boolean(
+    data.accessibilityNeeds &&
+      isNonEmpty(data.accessibilityNeeds.accommodationNeed) &&
+      isNonEmpty(data.accessibilityNeeds.disclosurePreference)
   );
 
-const toCompletion = (counts: Counts) => {
-  const percent =
-    counts.total > 0
-      ? Math.min(100, Math.round((counts.filled / counts.total) * 100))
-      : 0;
-  return {
-    percent,
-    isComplete: counts.total > 0 && counts.filled === counts.total,
-  };
+const isBasicInfoComplete = (data: UserData) =>
+  areAllNonEmpty([
+    data.basicInfo.firstName,
+    data.basicInfo.lastName,
+    data.basicInfo.email,
+    data.basicInfo.phone,
+    data.basicInfo.location,
+    data.basicInfo.citizenshipStatus,
+    data.basicInfo.gender,
+    data.basicInfo.ethnicity,
+    data.basicInfo.currentStatus,
+  ]);
+
+const isEducationComplete = (data: UserData) =>
+  areAllNonEmpty([
+    data.education.courseName,
+    data.education.major,
+    data.education.institution,
+  ]);
+
+const isWorkEntryComplete = (
+  entry: UserData["workExperience"]["entries"][number]
+) =>
+  areAllNonEmpty([
+    entry.company,
+    entry.role,
+    entry.from,
+    entry.description,
+  ]) && (entry.current ? true : isNonEmpty(entry.to));
+
+const isWorkExperienceComplete = (data: UserData) =>
+  data.workExperience.experienceType === "fresher" ||
+  hasCompleteEntries(data.workExperience.entries, isWorkEntryComplete);
+
+const isSkillsComplete = (data: UserData) => {
+  const primaryList = data.skills.primaryList ?? [];
+  return primaryList.length > 0 || isNonEmpty(data.skills.skills);
 };
 
-const computeSectionCounts = (data: UserData): SectionCounts => {
-  const workExperienceCounts =
-    data.workExperience.experienceType === "fresher"
-      ? countValue({ experienceType: data.workExperience.experienceType })
-      : combineCounts(
-          countValue({ experienceType: data.workExperience.experienceType }),
-          countValue(data.workExperience.entries)
-        );
+const isProjectEntryComplete = (
+  entry: UserData["projects"]["entries"][number]
+) =>
+  areAllNonEmpty([entry.projectName, entry.projectDescription, entry.from]) &&
+  (entry.current ? true : isNonEmpty(entry.to));
 
-  const certificationCounts = data.certification.noCertification
-    ? countValue({ noCertification: data.certification.noCertification })
-    : combineCounts(
-        countValue({ noCertification: data.certification.noCertification }),
-        countValue(data.certification.entries)
-      );
+const isProjectsComplete = (data: UserData) =>
+  data.projects.noProjects ||
+  hasCompleteEntries(data.projects.entries, isProjectEntryComplete);
 
-  const projectCounts = data.projects.noProjects
-    ? countValue({ noProjects: data.projects.noProjects })
-    : combineCounts(
-        countValue({ noProjects: data.projects.noProjects }),
-        countValue(data.projects.entries)
-      );
+const isAchievementComplete = () => true;
 
-  const reviewAgreeCounts = combineCounts(
-    countValue({
-      discover: data.reviewAgree.discover,
-      comments: data.reviewAgree.comments,
-    }),
-    { total: 1, filled: data.reviewAgree.agree ? 1 : 0 }
-  );
+const isCertificationEntryComplete = (
+  entry: UserData["certification"]["entries"][number]
+) =>
+  areAllNonEmpty([
+    entry.name,
+    entry.issueDate,
+    entry.organization,
+    entry.credentialIdUrl,
+  ]);
 
-  return {
-    basicInfo: countValue(data.basicInfo),
-    education: countValue(data.education),
-    workExperience: workExperienceCounts,
-    skills: countValue(data.skills),
-    projects: projectCounts,
-    achievements: countValue(data.achievements),
-    certification: certificationCounts,
-    preference: countValue(data.preference),
-    otherDetails: countValue(data.otherDetails),
-    reviewAgree: reviewAgreeCounts,
-  };
-};
+const isCertificationComplete = (data: UserData) =>
+  data.certification.noCertification ||
+  hasCompleteEntries(data.certification.entries, isCertificationEntryComplete);
+
+const isPreferenceComplete = (data: UserData) =>
+  data.preference.companySize.length > 0 &&
+  data.preference.jobType.length > 0 &&
+  data.preference.jobSearch.length > 0;
+
+const isLanguageComplete = (
+  entry: UserData["otherDetails"]["languages"][number]
+) =>
+  areAllNonEmpty([
+    entry.language,
+    entry.speaking,
+    entry.reading,
+    entry.writing,
+  ]);
+
+const isOtherDetailsComplete = (data: UserData) =>
+  hasCompleteEntries(data.otherDetails.languages, isLanguageComplete) &&
+  areAllNonEmpty([
+    data.otherDetails.careerStage,
+    data.otherDetails.availability,
+    data.otherDetails.desiredSalary,
+  ]);
+
+const isReviewAgreeComplete = (data: UserData) =>
+  Boolean(data.reviewAgree.agree) && isNonEmpty(data.reviewAgree.discover);
+
+const computeStepCompletion = (data: UserData) => ({
+  accessibilityNeeds: isAccessibilityComplete(data),
+  basicInfo: isBasicInfoComplete(data),
+  education: isEducationComplete(data),
+  workExperience: isWorkExperienceComplete(data),
+  skills: isSkillsComplete(data),
+  projects: isProjectsComplete(data),
+  achievements: isAchievementComplete(),
+  certification: isCertificationComplete(data),
+  preference: isPreferenceComplete(data),
+  otherDetails: isOtherDetailsComplete(data),
+  reviewAgree: isReviewAgreeComplete(data),
+});
 
 export const computeProfileSectionCompletion = (data: UserData) => {
-  const counts = computeSectionCounts(data);
+  const steps = computeStepCompletion(data);
 
   return {
-    basicInfo: toCompletion(counts.basicInfo),
-    education: toCompletion(counts.education),
-    workExperience: toCompletion(counts.workExperience),
-    skills: toCompletion(counts.skills),
-    projects: toCompletion(counts.projects),
-    achievements: toCompletion(counts.achievements),
-    certification: toCompletion(counts.certification),
-    preference: toCompletion(counts.preference),
-    otherDetails: toCompletion(counts.otherDetails),
-    reviewAgree: toCompletion(counts.reviewAgree),
+    basicInfo: toCompletion(steps.basicInfo),
+    education: toCompletion(steps.education),
+    workExperience: toCompletion(steps.workExperience),
+    skills: toCompletion(steps.skills),
+    projects: toCompletion(steps.projects),
+    achievements: toCompletion(steps.achievements),
+    certification: toCompletion(steps.certification),
+    preference: toCompletion(steps.preference),
+    otherDetails: toCompletion(steps.otherDetails),
+    accessibilityNeeds: toCompletion(steps.accessibilityNeeds),
+    reviewAgree: toCompletion(steps.reviewAgree),
   };
 };
 
 export const computeProfileCompletion = (data: UserData) => {
-  const counts = computeSectionCounts(data);
-  const totals = combineCounts(...(Object.values(counts) as Counts[]));
+  const steps = computeStepCompletion(data);
+  const entries = Object.entries(steps).filter(
+    ([key]) => key !== "achievements"
+  );
+  const totalSteps = entries.length;
+  const completedSteps = entries.filter(([, isComplete]) => isComplete).length;
   const percent =
-    totals.total > 0
-      ? Math.min(100, Math.round((totals.filled / totals.total) * 100))
-      : 0;
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
   return {
     percent,
-    isComplete: totals.total > 0 && totals.filled === totals.total,
+    isComplete: totalSteps > 0 && completedSteps === totalSteps,
   };
 };

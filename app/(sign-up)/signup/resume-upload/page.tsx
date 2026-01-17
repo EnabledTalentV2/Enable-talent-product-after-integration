@@ -15,24 +15,8 @@ import { apiRequest, handleSessionExpiry } from "@/lib/api-client";
 import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 
 // Resume upload configuration
-const allowedExtensions = [
-  ".pdf",
-  ".doc",
-  ".docx",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".webp",
-  ".gif",
-  ".bmp",
-  ".tif",
-  ".tiff",
-];
-const allowedMimeTypes = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
+const allowedExtensions = [".pdf"];
+const allowedMimeTypes = new Set(["application/pdf"]);
 
 // File size limit (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -59,7 +43,6 @@ const isAllowedFile = (file: File) => {
   // Check MIME type first
   if (file.type) {
     if (allowedMimeTypes.has(file.type)) return true;
-    if (file.type.startsWith("image/")) return true;
   }
 
   // Fallback to extension check (for browsers that don't set MIME type correctly)
@@ -521,7 +504,7 @@ export default function ResumeUpload() {
     if (!file) return;
 
     if (!isAllowedFile(file)) {
-      setError("Upload a PDF, DOC, DOCX, or image file.");
+      setError("Upload a PDF file.");
       setSelectedFile(null);
       setSelectedFileName(null);
       event.target.value = "";
@@ -650,31 +633,17 @@ export default function ResumeUpload() {
         return;
       }
 
-      // Step 3: Trigger resume parsing in background (don't wait for results)
+      // Step 3: Resume parsing starts once the resume URL is saved.
       setUploadStage("parsing");
-      console.log("[Resume Upload] Step 3: Triggering resume parsing in background");
+      console.log(
+        "[Resume Upload] Resume saved. Parsing will start in the background."
+      );
 
-      try {
-        // Start parsing but don't wait for results
-        apiRequest<unknown>(
-          `/api/candidates/profiles/${candidateSlug}/parse-resume/`,
-          {
-            method: "POST",
-          }
-        ).then(() => {
-          console.log("[Resume Upload] Parse request initiated successfully");
-        }).catch((err) => {
-          console.warn("[Resume Upload] Parse request error (non-blocking):", err);
-        });
-
-        // Immediately navigate to accessibility needs while parsing happens in background
-        console.log("[Resume Upload] Resume uploaded successfully, navigating to accessibility needs");
-        router.push("/signup/accessability-needs?resumeUploaded=1");
-      } catch (err) {
-        console.error("[Resume Upload] Unexpected error:", err);
-        // Even if there's an error, navigate to accessibility needs
-        router.push("/signup/accessability-needs?resumeUploaded=1");
-      }
+      // Immediately navigate to accessibility needs while parsing happens in background
+      console.log(
+        "[Resume Upload] Resume uploaded successfully, navigating to accessibility needs"
+      );
+      router.push("/signup/accessability-needs?resumeUploaded=1");
     } catch (err) {
       // Check if session expired
       if (handleSessionExpiry(err, router)) {
@@ -725,7 +694,7 @@ export default function ResumeUpload() {
               ref={fileInputRef}
               id="resume-upload-input"
               type="file"
-              accept=".pdf,.doc,.docx,image/*"
+              accept=".pdf,application/pdf"
               className="sr-only"
               disabled={isUploading}
               aria-describedby={
@@ -803,7 +772,7 @@ export default function ResumeUpload() {
             ) : null}
 
             <span id="resume-upload-help" className="text-base text-slate-500">
-              Supports PDF, DOC, DOCX, and image files.
+              Supports PDF files.
             </span>
           </div>
 
