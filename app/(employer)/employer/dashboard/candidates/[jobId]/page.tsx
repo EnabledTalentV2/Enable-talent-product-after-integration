@@ -254,6 +254,11 @@ export default function CandidatesPage() {
     currentJobId,
   ]);
 
+  const canSendInvites = useMemo(
+    () => activeTab === "ai_ranking" || activeTab === "shortlisted",
+    [activeTab]
+  );
+
   const jobStats = useMemo(() => {
     const stats = emptyJobStats();
     allApplications.forEach((application) => {
@@ -605,7 +610,9 @@ export default function CandidatesPage() {
                                     candidate={selectedCandidateProfile}
                                     profileScore={selectedProfileScore}
                                     profileHref={profileHref}
-                                    onInviteClick={handleInviteClick}
+                                    onInviteClick={
+                                      canSendInvites ? handleInviteClick : undefined
+                                    }
                                   />
                                 </div>
                               ) : isCandidateLoading ? (
@@ -771,7 +778,9 @@ export default function CandidatesPage() {
                                     candidate={selectedCandidateProfile}
                                     profileScore={selectedProfileScore}
                                     profileHref={profileHref}
-                                    onInviteClick={handleInviteClick}
+                                    onInviteClick={
+                                      canSendInvites ? handleInviteClick : undefined
+                                    }
                                   />
                                 </div>
                               ) : isCandidateLoading ? (
@@ -845,7 +854,7 @@ export default function CandidatesPage() {
                   candidate={selectedCandidateProfile}
                   profileScore={selectedProfileScore}
                   profileHref={profileHref}
-                  onInviteClick={handleInviteClick}
+                  onInviteClick={canSendInvites ? handleInviteClick : undefined}
                 />
               </div>
             ) : isCandidateLoading ? (
