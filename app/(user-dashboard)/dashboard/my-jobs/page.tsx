@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { CandidateMyJobsSkeleton } from "@/components/CandidateDashboardSkeletons";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
@@ -383,21 +384,14 @@ export default function MyJobsPage() {
     );
   };
 
+  if (isLoading) {
+    return <CandidateMyJobsSkeleton />;
+  }
+
   return (
     <section className="mx-auto max-w-360 space-y-6 py-10">
       <DashboardProfilePrompt percent={profilePercent} />
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="rounded-[32px] bg-white p-8 text-center shadow-sm">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#C27803] border-r-transparent"></div>
-          <p className="mt-4 text-slate-600">Loading your jobs...</p>
-        </div>
-      )}
-
-      {/* Content */}
-      {!isLoading && (
-        <div>
+      <div>
           {/* Filter Tabs */}
           <div className="mb-6 flex flex-wrap gap-3">
             {filters.map((filter) => (
@@ -647,8 +641,7 @@ export default function MyJobsPage() {
               )}
             </div>
           </div>
-        </div>
-      )}
+      </div>
     </section>
   );
 }

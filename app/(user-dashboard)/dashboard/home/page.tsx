@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import placeholder from "@/public/Placeholder.png";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import { CandidateHomeSkeleton } from "@/components/CandidateDashboardSkeletons";
 import { getNotifications, requestNote } from "@/lib/notifications";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
@@ -337,11 +338,7 @@ export default function HomePageDashboard() {
   }, [userData]);
 
   if (loading) {
-    return (
-      <div className="py-10 text-base text-slate-600">
-        Loading your dashboard...
-      </div>
-    );
+    return <CandidateHomeSkeleton />;
   }
 
   if (error) {

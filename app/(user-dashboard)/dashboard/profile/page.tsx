@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { useUserDataStore } from "@/lib/userDataStore";
+import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { initialUserData } from "@/lib/userDataDefaults";
+import { CandidateProfileSkeleton } from "@/components/CandidateDashboardSkeletons";
 import Link from "next/link";
 import {
   Mail,
@@ -31,6 +33,7 @@ const withFallback = (value?: string) => {
 
 export default function ProfilePage() {
   const rawUserData = useUserDataStore((s) => s.userData);
+  const isProfileLoading = useCandidateProfileStore((s) => s.isLoading);
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -127,6 +130,10 @@ export default function ProfilePage() {
   const majorLabel = withFallback(education.major);
   const institutionLabel = withFallback(education.institution);
   const graduationLabel = withFallback(education.graduationDate);
+
+  if (isProfileLoading) {
+    return <CandidateProfileSkeleton />;
+  }
 
   return (
     <div className="max-w-360 mx-auto space-y-8 py-8">

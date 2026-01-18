@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useAIRanking } from "@/lib/hooks/useAIRanking";
-import type { RankedCandidate } from "@/lib/types/ai-features";
 
 interface CandidateRankingPanelProps {
   jobId: string;
@@ -17,6 +17,7 @@ export default function CandidateRankingPanel({
     isRanking,
     rankingStatus,
     rankedCandidates,
+    isFetchingRankingData,
     error,
     triggerRanking,
     fetchRankingData,
@@ -54,7 +55,7 @@ export default function CandidateRankingPanel({
   return (
     <div className="bg-white rounded-lg shadow p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <span>✨</span>
@@ -64,7 +65,14 @@ export default function CandidateRankingPanel({
             Let AI analyze and rank candidates based on job requirements
           </p>
         </div>
-        <button
+        <div className="flex items-center gap-3 sm:ml-auto">
+          {isFetchingRankingData && !isRanking && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading ranking data...
+          </div>
+          )}
+          <button
           onClick={handleTriggerRanking}
           disabled={isRanking}
           className={`px-6 py-2 rounded-lg font-medium transition-colors ${
@@ -101,6 +109,7 @@ export default function CandidateRankingPanel({
             "Rank Candidates"
           )}
         </button>
+        </div>
       </div>
 
       {/* Error Message */}
@@ -133,6 +142,13 @@ export default function CandidateRankingPanel({
           <p className="mt-6 text-gray-600">
             AI is analyzing candidates... This may take up to 60 seconds.
           </p>
+        </div>
+      )}
+
+      {!isRanking && isFetchingRankingData && (
+        <div className="flex items-center justify-center gap-2 py-12 text-gray-600">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading ranking data...
         </div>
       )}
 
@@ -206,6 +222,7 @@ export default function CandidateRankingPanel({
 
       {/* Empty State */}
       {!isRanking &&
+        !isFetchingRankingData &&
         rankedCandidates.length === 0 &&
         rankingStatus === "not_started" && (
           <div className="text-center py-12">
@@ -214,14 +231,14 @@ export default function CandidateRankingPanel({
               No Ranking Yet
             </h3>
             <p className="text-gray-600 mb-4">
-              Click "Rank Candidates" to let AI analyze and score candidates
-              for this job.
+              No ranking data yet. Click "Rank Candidates" to generate the list.
             </p>
           </div>
         )}
 
       {/* No Candidates State */}
       {!isRanking &&
+        !isFetchingRankingData &&
         rankedCandidates.length === 0 &&
         rankingStatus === "completed" && (
           <div className="text-center py-12">

@@ -14,7 +14,7 @@ export interface Application {
     email: string;
     avatar?: string;
   };
-  status: CandidateDecisionStatus | "applied";
+  status: CandidateDecisionStatus | "applied" | "request_sent";
   applied_at: string;
 }
 
@@ -36,6 +36,7 @@ const STATUS_BADGES = {
   shortlisted: { label: "Shortlisted", color: "bg-yellow-100 text-yellow-700" },
   rejected: { label: "Rejected", color: "bg-red-100 text-red-700" },
   hired: { label: "Hired", color: "bg-green-100 text-green-700" },
+  request_sent: { label: "Request sent", color: "bg-orange-100 text-orange-700" },
 };
 
 export default function ApplicantsList({
