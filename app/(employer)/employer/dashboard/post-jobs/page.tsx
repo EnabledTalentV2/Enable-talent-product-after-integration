@@ -4,16 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, X, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import JobForm from "@/components/employer/dashboard/JobForm";
 import Toast from "@/components/Toast";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
+import { jobsKeys } from "@/lib/hooks/useJobs";
 import { apiRequest, getApiErrorMessage, isSessionExpiredError } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
-import type { JobFormValues } from "@/lib/employerJobsTypes";
+import type { EmployerJob, JobFormValues } from "@/lib/employerJobsTypes";
 
 export default function PostJobsPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const createJob = useEmployerJobsStore((state) => state.createJob);
   const employerData = useEmployerDataStore((s) => s.employerData);
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
@@ -69,7 +72,13 @@ export default function PostJobsPage() {
   const handleSubmit = async (values: JobFormValues) => {
     try {
       console.log("[Post Jobs] Submitting job:", values);
-      await createJob(values);
+      const newJob = await createJob(values);
+      queryClient.setQueryData<EmployerJob[]>(jobsKeys.lists(), (current) => {
+        const existing = Array.isArray(current) ? current : [];
+        const hasJob = existing.some((job) => job.id === newJob.id);
+        return hasJob ? existing : [newJob, ...existing];
+      });
+      queryClient.invalidateQueries({ queryKey: jobsKeys.lists() });
       console.log("[Post Jobs] Job created successfully, redirecting...");
       router.push("/employer/dashboard/listed-jobs");
     } catch (error) {
