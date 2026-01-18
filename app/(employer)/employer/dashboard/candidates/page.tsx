@@ -8,6 +8,10 @@ import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import Pagination from "@/components/ui/Pagination";
 import CandidateDirectoryCard from "@/components/employer/candidates/CandidateDirectoryCard";
 import CandidateDetailPanel from "@/components/employer/candidates/CandidateDetailPanel";
+import {
+  CandidateDetailSkeleton,
+  CandidateListSkeleton,
+} from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
 import type { CandidateProfile } from "@/lib/types/candidateProfile";
@@ -190,14 +194,6 @@ export default function CandidatesListPage() {
     }
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center text-slate-500">
-        Loading candidates...
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-500">
@@ -207,6 +203,33 @@ export default function CandidatesListPage() {
         <p className="text-sm">
           {error instanceof Error ? error.message : "Please try again later"}
         </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-6 max-w-360 mx-auto">
+        <div className="sr-only">Loading candidates...</div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="flex flex-col lg:col-span-4">
+            <div className="mb-4 space-y-2">
+              <div className="h-6 w-32 rounded bg-slate-200 animate-pulse" />
+              <div className="h-4 w-48 rounded bg-slate-200 animate-pulse" />
+            </div>
+
+            <div className="mb-5 flex items-center gap-2">
+              <div className="h-11 flex-1 rounded-xl bg-slate-200 animate-pulse" />
+              <div className="h-11 w-24 rounded-xl bg-slate-200 animate-pulse" />
+            </div>
+
+            <CandidateListSkeleton count={6} />
+          </div>
+
+          <div className="hidden lg:block lg:col-span-8 lg:pb-10">
+            <CandidateDetailSkeleton />
+          </div>
+        </div>
       </div>
     );
   }

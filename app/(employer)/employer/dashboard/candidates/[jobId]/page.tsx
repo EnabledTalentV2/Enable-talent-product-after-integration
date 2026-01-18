@@ -13,6 +13,10 @@ import JobHeader from "@/components/employer/candidates/JobHeader";
 import CandidateSummaryCard from "@/components/employer/candidates/CandidateSummaryCard";
 import CandidateDetailPanel from "@/components/employer/candidates/CandidateDetailPanel";
 import CandidateDecisionButtons from "@/components/employer/candidates/CandidateDecisionButtons";
+import {
+  CandidateDetailSkeleton,
+  CandidateListSkeleton,
+} from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
 import Pagination from "@/components/ui/Pagination";
@@ -508,9 +512,7 @@ export default function CandidatesPage() {
                 ) : (
                   <div className="space-y-4 lg:pr-2 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent">
                     {isLoading ? (
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
-                        Loading applications...
-                      </div>
+                      <CandidateListSkeleton count={5} />
                     ) : paginatedApplications.length > 0 ? (
                       paginatedApplications.map((application) => {
                         const profile = candidateProfilesBySlug.get(
@@ -570,48 +572,50 @@ export default function CandidatesPage() {
                                 setSelectedCandidateSlug(application.candidate.slug);
                               }}
                             />
-                            {selectedApplicationId === application.id && (
-                              <div
-                                id={`job-candidate-details-inline-${listKey}`}
-                                tabIndex={-1}
-                                className="lg:hidden"
-                              >
-                                {isProfileReady && selectedCandidateProfile && (
-                                  <div className="space-y-4">
-                                    {application.status === "applied" && (
-                                      <div className="rounded-2xl bg-white p-4 shadow-sm">
-                                        <h3 className="text-sm font-semibold text-slate-900">
-                                          Candidate actions
-                                        </h3>
-                                        <div className="mt-3">
-                                          <CandidateDecisionButtons
-                                            jobId={currentJobId}
-                                            applicationId={application.id}
-                                            variant="compact"
-                                            currentStatus={undefined}
-                                            onDecisionUpdate={() => {
-                                              fetchApplications(currentJobId).then((result) => {
-                                                setAllApplications(result.data);
-                                                setApplicationsError(result.error);
-                                              });
-                                            }}
-                                          />
-                                        </div>
+                          {selectedApplicationId === application.id && (
+                            <div
+                              id={`job-candidate-details-inline-${listKey}`}
+                              tabIndex={-1}
+                              className="lg:hidden"
+                            >
+                              {isProfileReady && selectedCandidateProfile ? (
+                                <div className="space-y-4">
+                                  {application.status === "applied" && (
+                                    <div className="rounded-2xl bg-white p-4 shadow-sm">
+                                      <h3 className="text-sm font-semibold text-slate-900">
+                                        Candidate actions
+                                      </h3>
+                                      <div className="mt-3">
+                                        <CandidateDecisionButtons
+                                          jobId={currentJobId}
+                                          applicationId={application.id}
+                                          variant="compact"
+                                          currentStatus={undefined}
+                                          onDecisionUpdate={() => {
+                                            fetchApplications(currentJobId).then((result) => {
+                                              setAllApplications(result.data);
+                                              setApplicationsError(result.error);
+                                            });
+                                          }}
+                                        />
                                       </div>
-                                    )}
-                                    <CandidateDetailPanel
-                                      candidate={selectedCandidateProfile}
-                                      profileScore={selectedProfileScore}
-                                      profileHref={profileHref}
-                                      onInviteClick={handleInviteClick}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })
+                                    </div>
+                                  )}
+                                  <CandidateDetailPanel
+                                    candidate={selectedCandidateProfile}
+                                    profileScore={selectedProfileScore}
+                                    profileHref={profileHref}
+                                    onInviteClick={handleInviteClick}
+                                  />
+                                </div>
+                              ) : isCandidateLoading ? (
+                                <CandidateDetailSkeleton />
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
                     ) : (
                       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
                         <p className="text-slate-600">
@@ -751,7 +755,7 @@ export default function CandidatesPage() {
                               tabIndex={-1}
                               className="lg:hidden"
                             >
-                              {isProfileReady && selectedCandidateProfile && (
+                              {isProfileReady && selectedCandidateProfile ? (
                                 <div className="space-y-4">
                                   {candidate.match_reason && (
                                     <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -770,7 +774,9 @@ export default function CandidatesPage() {
                                     onInviteClick={handleInviteClick}
                                   />
                                 </div>
-                              )}
+                              ) : isCandidateLoading ? (
+                                <CandidateDetailSkeleton />
+                              ) : null}
                             </div>
                           )}
                         </div>
@@ -842,11 +848,11 @@ export default function CandidatesPage() {
                   onInviteClick={handleInviteClick}
                 />
               </div>
+            ) : isCandidateLoading ? (
+              <CandidateDetailSkeleton />
             ) : (
               <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
-                {isCandidateLoading
-                  ? "Loading candidate details..."
-                  : candidateError
+                {candidateError
                   ? "Unable to load candidate details."
                   : "Select a candidate to view their profile."}
               </div>

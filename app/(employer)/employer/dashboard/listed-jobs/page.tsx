@@ -7,6 +7,10 @@ import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
+import {
+  ListedJobDetailSkeleton,
+  ListedJobsListSkeleton,
+} from "@/components/employer/dashboard/ListedJobsLoadingSkeleton";
 import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
 import { emptyJobStats, toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
@@ -230,8 +234,20 @@ export default function ListedJobsPage() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center text-slate-500">
-        Loading listed jobs...
+      <div className="p-4 md:p-6 max-w-360 mx-auto">
+        <div className="sr-only">Loading listed jobs...</div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="flex flex-col lg:col-span-4">
+            <div className="mb-6">
+              <div className="h-11 w-full rounded-xl bg-slate-200 animate-pulse" />
+            </div>
+            <ListedJobsListSkeleton count={4} />
+          </div>
+
+          <div className="hidden lg:block lg:col-span-8 lg:pb-10">
+            <ListedJobDetailSkeleton />
+          </div>
+        </div>
       </div>
     );
   }
