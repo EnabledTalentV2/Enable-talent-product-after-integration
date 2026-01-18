@@ -53,9 +53,13 @@ export function useAIRanking() {
         // If we got a task ID, start polling
         if (response.task_id) {
           pollRankingCompletion(jobId, response.task_id);
+        } else if (response.ranking_status === "ranking") {
+          // Fallback polling when backend doesn't return a task ID
+          pollRankingCompletion(jobId, "");
         } else {
           // If no task ID, fetch ranking data immediately
           await fetchRankingData(jobId);
+          setIsRanking(false);
         }
 
         return { data: response, error: null };
