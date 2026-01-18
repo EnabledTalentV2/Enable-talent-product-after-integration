@@ -4,9 +4,12 @@ import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useCandidateProfiles } from "@/lib/hooks/useCandidateProfiles";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import Pagination from "@/components/ui/Pagination";
 import CandidateDirectoryCard from "@/components/employer/candidates/CandidateDirectoryCard";
 import CandidateDetailPanel from "@/components/employer/candidates/CandidateDetailPanel";
+import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
+import SuccessModal from "@/components/employer/candidates/SuccessModal";
 import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 const ITEMS_PER_PAGE = 12;
@@ -47,11 +50,18 @@ export default function CandidatesListPage() {
   const searchParams = useSearchParams();
   const queryFromUrl = searchParams.get("search") || "";
   const { data: candidates = [], isLoading, error } = useCandidateProfiles();
+  const {
+    fetchJobs,
+    hasFetched: hasFetchedJobs,
+    isLoading: isJobsLoading,
+  } = useEmployerJobsStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [localQuery, setLocalQuery] = useState(queryFromUrl);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null
   );
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const didMountRef = useRef(false);
 
   useEffect(() => {
@@ -166,6 +176,20 @@ export default function CandidatesListPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleInviteClick = useCallback(() => {
+    if (!hasFetchedJobs && !isJobsLoading) {
+      fetchJobs();
+    }
+    setIsInviteModalOpen(true);
+  }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
+
+  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
+    setIsInviteModalOpen(false);
+    if (selectedJobIds.length > 0) {
+      setIsSuccessModalOpen(true);
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-120px)] items-center justify-center text-slate-500">
@@ -259,6 +283,7 @@ export default function CandidatesListPage() {
                         <CandidateDetailPanel
                           candidate={selectedCandidate}
                           profileScore={profileScore}
+                          onInviteClick={handleInviteClick}
                         />
                       </div>
                     )}
@@ -298,6 +323,7 @@ export default function CandidatesListPage() {
               <CandidateDetailPanel
                 candidate={selectedCandidate}
                 profileScore={profileScores.get(selectedCandidate.id) ?? 0}
+                onInviteClick={handleInviteClick}
               />
             </div>
           ) : (
@@ -307,6 +333,16 @@ export default function CandidatesListPage() {
           )}
         </div>
       </div>
+
+      <SendInvitesModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSendInvites={handleSendInvites}
+      />
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+      />
     </div>
   );
 }

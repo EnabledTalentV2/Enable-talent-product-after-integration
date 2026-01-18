@@ -19,6 +19,7 @@ interface CandidateDetailPanelProps {
   candidate: CandidateProfile;
   profileScore: number;
   profileHref?: string;
+  onInviteClick?: () => void;
 }
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -89,6 +90,7 @@ export default function CandidateDetailPanel({
   candidate,
   profileScore,
   profileHref,
+  onInviteClick,
 }: CandidateDetailPanelProps) {
   const salaryRange = formatSalaryRange(
     candidate.salary_min,
@@ -190,17 +192,29 @@ export default function CandidateDetailPanel({
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            href={
-              profileHref ||
-              `/employer/dashboard/candidates/profile/${candidate.slug}`
-            }
-            className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
-          >
-            View full profile
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-col gap-3">
+            <Link
+              href={
+                profileHref ||
+                `/employer/dashboard/candidates/profile/${candidate.slug}`
+              }
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
+            >
+              View full profile
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            {onInviteClick && (
+              <button
+                type="button"
+                onClick={onInviteClick}
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#C27831] bg-white px-4 py-2 text-sm font-semibold text-[#A66628] transition-colors hover:bg-white"
+              >
+                Send Invites for Jobs
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           {candidate.resume_url && (
             <a
               href={candidate.resume_url}
