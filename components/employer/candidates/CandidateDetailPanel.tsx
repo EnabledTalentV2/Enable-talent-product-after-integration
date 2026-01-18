@@ -18,6 +18,7 @@ import type { CandidateProfile } from "@/lib/types/candidateProfile";
 interface CandidateDetailPanelProps {
   candidate: CandidateProfile;
   profileScore: number;
+  profileHref?: string;
 }
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -87,6 +88,7 @@ function DetailSection({
 export default function CandidateDetailPanel({
   candidate,
   profileScore,
+  profileHref,
 }: CandidateDetailPanelProps) {
   const salaryRange = formatSalaryRange(
     candidate.salary_min,
@@ -190,7 +192,10 @@ export default function CandidateDetailPanel({
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
-            href={`/employer/dashboard/candidates/profile/${candidate.slug}`}
+            href={
+              profileHref ||
+              `/employer/dashboard/candidates/profile/${candidate.slug}`
+            }
             className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
           >
             View full profile

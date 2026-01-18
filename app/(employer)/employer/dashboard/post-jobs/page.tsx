@@ -8,7 +8,7 @@ import JobForm from "@/components/employer/dashboard/JobForm";
 import Toast from "@/components/Toast";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage, isSessionExpiredError } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 
@@ -20,6 +20,15 @@ export default function PostJobsPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoadingOrg, setIsLoadingOrg] = useState(true);
   const [hasOrganization, setHasOrganization] = useState(false);
+
+  const redirectToEmployerLogin = () => {
+    const currentPath =
+      typeof window !== "undefined" ? window.location.pathname : "";
+    const returnUrl = currentPath
+      ? `?returnUrl=${encodeURIComponent(currentPath)}`
+      : "";
+    router.push(`/login-employer${returnUrl}`);
+  };
 
   // Check if user has an organization
   useEffect(() => {
@@ -43,6 +52,10 @@ export default function PostJobsPage() {
           setHasOrganization(false);
         }
       } catch (error) {
+        if (isSessionExpiredError(error)) {
+          redirectToEmployerLogin();
+          return;
+        }
         console.error("[Post Jobs] Failed to load organization:", error);
         setHasOrganization(false);
       } finally {
@@ -61,6 +74,10 @@ export default function PostJobsPage() {
       router.push("/employer/dashboard/listed-jobs");
     } catch (error) {
       console.error("[Post Jobs] Failed to create job:", error);
+      if (isSessionExpiredError(error)) {
+        redirectToEmployerLogin();
+        return;
+      }
       const message = getApiErrorMessage(
         error,
         "Unable to post this job. Please try again."
