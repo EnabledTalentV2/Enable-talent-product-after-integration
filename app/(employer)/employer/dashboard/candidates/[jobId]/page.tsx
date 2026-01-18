@@ -24,9 +24,10 @@ import type { Application } from "@/components/employer/candidates/ApplicantsLis
 const TABS = [
   { id: "ai_ranking", label: "AI Ranking", status: null },
   { id: "applicants", label: "Applicants", status: "applied" },
-  { id: "accepted", label: "Accepted", status: "shortlisted" },
+  { id: "shortlisted", label: "Shortlisted", status: "shortlisted" },
   { id: "declined", label: "Declined", status: "rejected" },
   { id: "hired", label: "Hired", status: "hired" },
+  { id: "request_sent", label: "Request sent", status: "request_sent" },
 ] as const;
 
 const ITEMS_PER_PAGE = 10;
@@ -36,9 +37,10 @@ const STATUS_BADGES: Record<
   { label: string; className: string }
 > = {
   applied: { label: "Applied", className: "bg-blue-50 text-blue-700" },
-  shortlisted: { label: "Accepted", className: "bg-emerald-50 text-emerald-700" },
+  shortlisted: { label: "Shortlisted", className: "bg-emerald-50 text-emerald-700" },
   rejected: { label: "Declined", className: "bg-rose-50 text-rose-700" },
   hired: { label: "Hired", className: "bg-green-50 text-green-700" },
+  request_sent: { label: "Request sent", className: "bg-orange-50 text-orange-700" },
 };
 
 const formatDate = (dateString?: string) => {
@@ -239,7 +241,20 @@ export default function CandidatesPage() {
     currentJobId,
   ]);
 
-  const jobStats = useMemo(() => emptyJobStats(), []);
+  const jobStats = useMemo(() => {
+    const stats = emptyJobStats();
+    allApplications.forEach((application) => {
+      if (application.status === "shortlisted" || application.status === "hired") {
+        stats.accepted += 1;
+      } else if (application.status === "rejected") {
+        stats.declined += 1;
+      } else if (application.status === "request_sent") {
+        stats.requestsSent += 1;
+      }
+    });
+    stats.matchingCandidates = rankedCandidates.length;
+    return stats;
+  }, [allApplications, rankedCandidates]);
 
   useEffect(() => {
     if (!currentJobId) return;
@@ -253,16 +268,16 @@ export default function CandidatesPage() {
       return;
     }
 
-    if (activeTab === "ai_ranking") {
-      setIsLoading(false);
-      return;
-    }
-
     let isMounted = true;
+    const showLoading = activeTab !== "ai_ranking";
+    if (showLoading) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+    setApplicationsError(undefined);
 
     const loadData = async () => {
-      setIsLoading(true);
-      setApplicationsError(undefined);
       try {
         const result = await fetchApplications(currentJobId);
         if (isMounted) {
@@ -272,7 +287,7 @@ export default function CandidatesPage() {
       } catch (error) {
         console.error("Failed to fetch applications", error);
       } finally {
-        if (isMounted) {
+        if (isMounted && showLoading) {
           setIsLoading(false);
         }
       }

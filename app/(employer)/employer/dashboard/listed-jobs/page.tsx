@@ -8,8 +8,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
 import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
-import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
+import { emptyJobStats, toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
+import type { JobStats } from "@/lib/employerJobsUtils";
+import type { Application } from "@/components/employer/candidates/ApplicantsList";
 
 export default function ListedJobsPage() {
   // Use React Query hook - automatic fetching, caching, and error handling
@@ -23,6 +25,7 @@ export default function ListedJobsPage() {
     null
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobStatsMap, setJobStatsMap] = useState<Record<string, JobStats>>({});
   const didMountRef = useRef(false);
 
   const handleSearch = useCallback((e: FormEvent) => {
@@ -49,8 +52,27 @@ export default function ListedJobsPage() {
     }
   };
 
+  const getStatsForJob = useCallback(
+    (jobId: string | number) => jobStatsMap[String(jobId)],
+    [jobStatsMap]
+  );
+
   const listedJobs = useMemo(() => {
-    const allJobs = jobs.map(toListedJob);
+    const allJobs = jobs.map((job) => {
+      const base = toListedJob(job);
+      const stats = getStatsForJob(job.id);
+      if (!stats) {
+        return base;
+      }
+      return {
+        ...base,
+        stats: {
+          accepted: stats.accepted,
+          declined: stats.declined,
+          matching: stats.matchingCandidates,
+        },
+      };
+    });
     if (!searchQuery.trim()) return allJobs;
 
     const query = searchQuery.toLowerCase();
@@ -64,8 +86,22 @@ export default function ListedJobsPage() {
   const selectedJob = useMemo(() => {
     if (!selectedJobId) return null;
     const job = jobs.find((entry) => entry.id === selectedJobId);
-    return job ? toJobDetail(job) : null;
-  }, [jobs, selectedJobId]);
+    if (!job) return null;
+    const base = toJobDetail(job);
+    const stats = getStatsForJob(job.id);
+    if (!stats) {
+      return base;
+    }
+    return {
+      ...base,
+      stats: {
+        accepted: stats.accepted,
+        declined: stats.declined,
+        requests: stats.requestsSent,
+        matching: stats.matchingCandidates,
+      },
+    };
+  }, [jobs, selectedJobId, getStatsForJob]);
 
   useEffect(() => {
     if (jobs.length === 0) {
@@ -124,6 +160,72 @@ export default function ListedJobsPage() {
       }
     });
   }, [selectedJobId]);
+
+  useEffect(() => {
+    if (jobs.length === 0) {
+      setJobStatsMap({});
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadJobStats = async () => {
+      const entries = await Promise.all(
+        jobs.map(async (job) => {
+          const stats = emptyJobStats();
+          const jobId = job.id;
+
+          try {
+            const response = await fetch(`/api/jobs/${jobId}/applications`);
+            if (response.ok) {
+              const data = await response.json();
+              const applications = Array.isArray(data) ? (data as Application[]) : [];
+
+              applications.forEach((application) => {
+                if (
+                  application.status === "shortlisted" ||
+                  application.status === "hired"
+                ) {
+                  stats.accepted += 1;
+                } else if (application.status === "rejected") {
+                  stats.declined += 1;
+                } else if (application.status === "request_sent") {
+                  stats.requestsSent += 1;
+                }
+              });
+            }
+          } catch (error) {
+            console.error("Failed to load applications for job:", jobId, error);
+          }
+
+          try {
+            const response = await fetch(`/api/jobs/${jobId}/ranking-data`);
+            if (response.ok) {
+              const data = await response.json();
+              const rankedCandidates = Array.isArray(data?.ranked_candidates)
+                ? data.ranked_candidates
+                : [];
+              stats.matchingCandidates = rankedCandidates.length;
+            }
+          } catch (error) {
+            console.error("Failed to load ranking data for job:", jobId, error);
+          }
+
+          return [String(jobId), stats] as const;
+        })
+      );
+
+      if (isMounted) {
+        setJobStatsMap(Object.fromEntries(entries));
+      }
+    };
+
+    loadJobStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [jobs]);
 
   // Show loading state
   if (isLoading) {
