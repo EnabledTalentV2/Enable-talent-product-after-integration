@@ -156,6 +156,7 @@ export default function CandidatesPage() {
     isRanking,
     rankingStatus,
     rankedCandidates,
+    isFetchingRankingData,
     error: rankingError,
     triggerRanking,
     fetchRankingData,
@@ -597,7 +598,7 @@ export default function CandidatesPage() {
             ) : (
               <div className="flex min-h-0 flex-col gap-4">
                 <div className="rounded-2xl bg-white p-4 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
                         AI Candidate Ranking
@@ -606,17 +607,25 @@ export default function CandidatesPage() {
                         Let AI analyze and rank candidates for this job.
                       </p>
                     </div>
-                    <button
-                      onClick={() => triggerRanking(currentJobId)}
-                      disabled={isRanking}
-                      className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
-                        isRanking
-                          ? "bg-slate-200 text-slate-400"
-                          : "bg-[#C27803] text-white hover:bg-[#A66628]"
-                      }`}
-                    >
-                      {isRanking ? "Ranking..." : "Rank Candidates"}
-                    </button>
+                    <div className="flex items-center gap-3 sm:ml-auto">
+                      {isFetchingRankingData && !isRanking && (
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#C27803]"></span>
+                          Loading ranking data...
+                        </div>
+                      )}
+                      <button
+                        onClick={() => triggerRanking(currentJobId)}
+                        disabled={isRanking}
+                        className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
+                          isRanking
+                            ? "bg-slate-200 text-slate-400"
+                            : "bg-[#C27803] text-white hover:bg-[#A66628]"
+                        }`}
+                      >
+                        {isRanking ? "Ranking..." : "Rank Candidates"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -638,6 +647,10 @@ export default function CandidatesPage() {
                   {isRanking ? (
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
                       AI is ranking candidates...
+                    </div>
+                  ) : isFetchingRankingData ? (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                      Loading ranking data...
                     </div>
                   ) : rankedCandidates.length > 0 ? (
                     rankedCandidates.map((candidate, index) => {

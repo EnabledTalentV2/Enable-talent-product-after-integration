@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import {
   apiRequest,
   getApiErrorMessage,
+  isApiError,
   type ApiResult,
 } from "@/lib/api-client";
 import type {
@@ -23,6 +24,7 @@ export function useAIRanking() {
   const [rankedCandidates, setRankedCandidates] = useState<RankedCandidate[]>(
     []
   );
+  const [isFetchingRankingData, setIsFetchingRankingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -138,6 +140,7 @@ export function useAIRanking() {
    */
   const fetchRankingData = useCallback(
     async (jobId: string): Promise<ApiResult<RankingDataResponse>> => {
+      setIsFetchingRankingData(true);
       try {
         const response = await apiRequest<RankingDataResponse>(
           `/api/jobs/${jobId}/ranking-data`,
@@ -157,13 +160,25 @@ export function useAIRanking() {
           setRankingStatus(response.ranking_status);
         }
 
+        setIsFetchingRankingData(false);
         return { data: response, error: null };
       } catch (err) {
+        if (isApiError(err) && err.status === 404) {
+          setRankedCandidates([]);
+          setRankingStatus("not_started");
+          setError(null);
+          setIsFetchingRankingData(false);
+          return {
+            data: { ranked_candidates: [], ranking_status: "not_started" },
+            error: null,
+          };
+        }
         const errorMessage = getApiErrorMessage(
           err,
           "Failed to fetch ranking data. Please try again."
         );
         setError(errorMessage);
+        setIsFetchingRankingData(false);
         return { data: null, error: errorMessage };
       }
     },
@@ -178,6 +193,7 @@ export function useAIRanking() {
     setError(null);
     setRankingStatus("not_started");
     setIsRanking(false);
+    setIsFetchingRankingData(false);
   }, []);
 
   /**
@@ -189,6 +205,7 @@ export function useAIRanking() {
     isRanking,
     rankingStatus,
     rankedCandidates,
+    isFetchingRankingData,
     error,
     triggerRanking,
     fetchRankingData,
