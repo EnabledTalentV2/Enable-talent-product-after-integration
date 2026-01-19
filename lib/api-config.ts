@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     me: `${BACKEND_URL}/api/auth/users/me/`,
     list: `${BACKEND_URL}/api/auth/users/`,
     detail: (pk: string) => `${BACKEND_URL}/api/auth/users/${pk}/`,
+    profile: `${BACKEND_URL}/api/users/profile/`,
   },
   // Resume parsing
   resume: {},
@@ -36,6 +37,7 @@ export const API_ENDPOINTS = {
   candidateProfiles: {
     list: `${BACKEND_URL}/api/candidates/profiles/`,
     detail: (slug: string) => `${BACKEND_URL}/api/candidates/profiles/${slug}/`,
+    full: (slug: string) => `${BACKEND_URL}/api/candidates/profiles/${slug}/full/`,
     parseResume: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parse-resume/`,
     parsingStatus: (slug: string) =>
@@ -44,6 +46,12 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/candidates/profiles/${slug}/verify-profile/`,
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
     resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
+  },
+  candidateData: {
+    education: `${BACKEND_URL}/api/candidates/education/`,
+    skills: `${BACKEND_URL}/api/candidates/skills/`,
+    languages: `${BACKEND_URL}/api/candidates/languages/`,
+    notes: `${BACKEND_URL}/api/candidates/notes/`,
   },
   // Other APIs
   organizations: {
@@ -79,6 +87,7 @@ export const defaultFetchOptions: RequestInit = {
 };
 
 const CSRF_COOKIE_NAME = "csrftoken";
+const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 
 const getCookieValue = (cookieHeader: string, name: string): string | null => {
   if (!cookieHeader) return null;
@@ -120,6 +129,14 @@ export async function backendFetch(
   // Forward cookies from incoming request to backend
   if (incomingCookies) {
     headers.set("Cookie", incomingCookies);
+  }
+
+  // Add Authorization header from HttpOnly JWT cookie when available
+  if (!headers.has("Authorization") && incomingCookies) {
+    const accessToken = getCookieValue(incomingCookies, ACCESS_TOKEN_COOKIE_NAME);
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
   }
 
   // Add CSRF token for write requests if available

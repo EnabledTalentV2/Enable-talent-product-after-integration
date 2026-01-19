@@ -10,9 +10,17 @@ import {
 } from "@/lib/profileCompletion";
 import type { StepKey, UserData } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
-import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
+import {
+  ensureCandidateProfileSlug,
+  fetchCandidateProfileFull,
+} from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import { buildCandidateProfilePatchPayload } from "@/lib/candidateProfileUtils";
+import {
+  buildCandidateEducationPayloads,
+  buildCandidateLanguagePayloads,
+  buildCandidateProfileCorePayload,
+  buildCandidateSkillPayloads,
+} from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -96,6 +104,9 @@ type RequiredValidationResult = {
 
 const isBlank = (value: string | undefined) =>
   !value || value.trim().length === 0;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const appendFormValue = (
   formData: FormData,
@@ -605,14 +616,34 @@ export default function ProfileUpdatePage() {
     setSaveError(null);
 
     try {
-      const candidatePayload = buildCandidateProfilePatchPayload(userData);
-      const hasPayload = Object.keys(candidatePayload).length > 0;
+      const firstName = userData.basicInfo.firstName.trim();
+      const lastName = userData.basicInfo.lastName.trim();
+      if (firstName || lastName) {
+        await apiRequest("/api/users/profile/", {
+          method: "PATCH",
+          body: JSON.stringify({
+            first_name: firstName,
+            last_name: lastName,
+          }),
+        });
+      }
+
+      const profilePayload = buildCandidateProfileCorePayload(userData);
+      const hasPayload = Object.keys(profilePayload).length > 0;
       const hasResumeFile = Boolean(resumeFile);
 
-      if (hasPayload || hasResumeFile) {
-        const body = hasResumeFile
-          ? buildResumeFormData(candidatePayload, resumeFile as File)
-          : JSON.stringify(candidatePayload);
+      if (hasPayload) {
+        await apiRequest<unknown>(
+          `/api/candidates/profiles/${candidateSlug}/`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(profilePayload),
+          }
+        );
+      }
+
+      if (hasResumeFile) {
+        const body = buildResumeFormData({}, resumeFile as File);
         await apiRequest<unknown>(
           `/api/candidates/profiles/${candidateSlug}/`,
           {
@@ -620,6 +651,56 @@ export default function ProfileUpdatePage() {
             body,
           }
         );
+      }
+
+      const fullProfile = await fetchCandidateProfileFull(
+        candidateSlug,
+        "Profile Update"
+      );
+      const verifiedProfile = isRecord(fullProfile?.verified_profile)
+        ? fullProfile?.verified_profile
+        : null;
+      const existingEducation = Array.isArray(verifiedProfile?.education)
+        ? verifiedProfile.education
+        : [];
+      const existingSkills = Array.isArray(verifiedProfile?.skills)
+        ? verifiedProfile.skills
+        : [];
+      const existingLanguages = Array.isArray(verifiedProfile?.languages)
+        ? verifiedProfile.languages
+        : [];
+
+      const educationPayloads = buildCandidateEducationPayloads(
+        userData,
+        existingEducation
+      );
+      for (const payload of educationPayloads) {
+        await apiRequest("/api/candidates/education/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const skillPayloads = buildCandidateSkillPayloads(
+        userData,
+        existingSkills
+      );
+      for (const payload of skillPayloads) {
+        await apiRequest("/api/candidates/skills/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const languagePayloads = buildCandidateLanguagePayloads(
+        userData,
+        existingLanguages
+      );
+      for (const payload of languagePayloads) {
+        await apiRequest("/api/candidates/languages/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
       }
 
       setSaveSuccess("Profile saved.");

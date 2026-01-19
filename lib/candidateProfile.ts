@@ -144,3 +144,22 @@ export async function fetchCandidateProfileDetail(
     return null;
   }
 }
+
+export async function fetchCandidateProfileFull(
+  slug: string,
+  logLabel?: string
+): Promise<Record<string, unknown> | null> {
+  try {
+    const data = await apiRequest<unknown>(`${PROFILE_ENDPOINT}${slug}/full/`, {
+      method: "GET",
+    });
+    if (!isRecord(data)) {
+      warnWithLabel(logLabel, "Unexpected candidate full profile response");
+      return null;
+    }
+    return data;
+  } catch (error) {
+    warnWithLabel(logLabel, "Failed to fetch candidate full profile", error);
+    return null;
+  }
+}

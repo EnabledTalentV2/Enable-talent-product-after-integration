@@ -8,7 +8,7 @@ import BackendValidationBanner from "@/components/BackendValidationBanner";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
   ensureCandidateProfileSlug,
-  fetchCandidateProfileDetail,
+  fetchCandidateProfileFull,
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
@@ -246,10 +246,7 @@ export default function DashboardLayoutPage({
 
             setCandidateSlug(slug);
 
-            const profile = await fetchCandidateProfileDetail(
-              slug,
-              "Dashboard"
-            );
+            const profile = await fetchCandidateProfileFull(slug, "Dashboard");
 
             if (!active) return;
 
