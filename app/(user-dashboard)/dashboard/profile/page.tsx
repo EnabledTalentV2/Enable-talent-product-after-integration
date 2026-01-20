@@ -111,7 +111,7 @@ export default function ProfilePage() {
       toTrimmed(project.projectDescription)
   );
   const primarySkills = (skills.primaryList ?? [])
-    .map(toTrimmed)
+    .map((skill) => toTrimmed(skill.name))
     .filter(Boolean);
   const certificationEntries = certification.entries.filter(
     (cert) =>

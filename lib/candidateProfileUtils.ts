@@ -195,6 +195,21 @@ export const mapCandidateProfileToUserData = (
     preference.jobSearch = workModes;
   }
 
+  // Read relocation and work visa preferences
+  const willingToRelocate =
+    (preferenceSource as Record<string, unknown>)?.willing_to_relocate ??
+    payload.willing_to_relocate;
+  if (typeof willingToRelocate === "boolean") {
+    preference.willingToRelocate = willingToRelocate;
+  }
+
+  const hasWorkVisa =
+    (preferenceSource as Record<string, unknown>)?.has_workvisa ??
+    payload.has_workvisa;
+  if (typeof hasWorkVisa === "boolean") {
+    preference.hasWorkVisa = hasWorkVisa;
+  }
+
   const otherDetails: Partial<UserData["otherDetails"]> = {};
   const desiredSalary = toExpectedSalary(payload.expected_salary_range);
   if (desiredSalary) {
@@ -272,13 +287,31 @@ export const mapCandidateProfileToUserData = (
   const skillSource = Array.isArray(verifiedProfile?.skills)
     ? verifiedProfile?.skills
     : [];
-  const skillNames = skillSource
-    .map((entry) =>
-      isRecord(entry)
-        ? toTrimmedString(entry.name ?? entry.skill ?? entry.title)
-        : toTrimmedString(entry)
-    )
-    .filter(Boolean);
+  const normalizeSkillLevel = (
+    level: unknown
+  ): "basic" | "intermediate" | "advanced" => {
+    const trimmed = toTrimmedString(level).toLowerCase();
+    if (trimmed === "basic" || trimmed === "beginner") return "basic";
+    if (trimmed === "advanced" || trimmed === "expert") return "advanced";
+    return "intermediate";
+  };
+  const mappedSkills = skillSource
+    .map((entry) => {
+      if (!isRecord(entry)) {
+        const name = toTrimmedString(entry);
+        return name ? { name, level: "intermediate" as const } : null;
+      }
+      const name = toTrimmedString(entry.name ?? entry.skill ?? entry.title);
+      if (!name) return null;
+      return {
+        name,
+        level: normalizeSkillLevel(entry.level),
+      };
+    })
+    .filter(Boolean) as Array<{
+    name: string;
+    level: "basic" | "intermediate" | "advanced";
+  }>;
 
   const languageSource = Array.isArray(verifiedProfile?.languages)
     ? verifiedProfile?.languages
@@ -320,9 +353,17 @@ export const mapCandidateProfileToUserData = (
   if (hasValue(otherDetails)) {
     result.otherDetails = otherDetails;
   }
-  if (skillNames.length > 0) {
+  if (mappedSkills.length > 0) {
+    // Deduplicate by skill name (keep first occurrence)
+    const seen = new Set<string>();
+    const uniqueSkills = mappedSkills.filter((skill) => {
+      const key = skill.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     result.skills = {
-      primaryList: Array.from(new Set(skillNames)),
+      primaryList: uniqueSkills,
       skills: "",
     };
   }
@@ -469,9 +510,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   }
 
   // Skills
-  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
-  if (skills.length > 0) {
-    payload.skills = skills;
+  const skillNames = (data.skills.primaryList ?? []).map((skill) => skill.name);
+  if (skillNames.length > 0) {
+    payload.skills = skillNames;
   }
 
   // Projects
@@ -629,6 +670,12 @@ export const buildCandidateProfileUpdatePayload = (
     payload.is_available = true;
   }
 
+  // Relocation and work visa preferences
+  payload.willing_to_relocate = data.preference.willingToRelocate;
+  if (data.preference.hasWorkVisa !== null) {
+    payload.has_workvisa = data.preference.hasWorkVisa;
+  }
+
   if (data.accessibilityNeeds) {
     const categories = data.accessibilityNeeds.categories;
     const accommodations = data.accessibilityNeeds.accommodations;
@@ -719,8 +766,8 @@ export const buildCandidateSkillPayloads = (
   data: UserData,
   existing: BackendSkillEntry[] = []
 ): Record<string, unknown>[] => {
-  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
-  if (skills.length === 0) return [];
+  const skillList = data.skills.primaryList ?? [];
+  if (skillList.length === 0) return [];
 
   const existingNames = new Set(
     existing
@@ -730,11 +777,11 @@ export const buildCandidateSkillPayloads = (
       .filter(Boolean)
   );
 
-  return skills
-    .filter((skill) => !existingNames.has(normalizeKey(skill)))
+  return skillList
+    .filter((skill) => !existingNames.has(normalizeKey(skill.name)))
     .map((skill) => ({
-      name: skill,
-      level: DEFAULT_SKILL_LEVEL,
+      name: skill.name,
+      level: skill.level || DEFAULT_SKILL_LEVEL,
     }));
 };
 

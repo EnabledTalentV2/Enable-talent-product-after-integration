@@ -134,7 +134,7 @@ export default function HomePageDashboard() {
       .join(" ") || fallbackText;
   const profileRole =
     toTrimmed(userData.workExperience.entries[0]?.role) ||
-    toTrimmed(userData.skills.primaryList?.[0]) ||
+    toTrimmed(userData.skills.primaryList?.[0]?.name) ||
     fallbackText;
   const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
   const profileImage = isLikelyImageSource(profilePhoto)
@@ -214,7 +214,7 @@ export default function HomePageDashboard() {
       .filter((item): item is string => Boolean(item));
 
     const skillItems = (userData.skills.primaryList ?? [])
-      .map(toTrimmed)
+      .map((skill) => toTrimmed(skill.name))
       .filter(Boolean);
 
     const projectItems = userData.projects.entries
