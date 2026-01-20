@@ -37,11 +37,14 @@ export const API_ENDPOINTS = {
   candidateProfiles: {
     list: `${BACKEND_URL}/api/candidates/profiles/`,
     detail: (slug: string) => `${BACKEND_URL}/api/candidates/profiles/${slug}/`,
-    full: (slug: string) => `${BACKEND_URL}/api/candidates/profiles/${slug}/full/`,
+    full: (slug: string) =>
+      `${BACKEND_URL}/api/candidates/profiles/${slug}/full/`,
     parseResume: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parse-resume/`,
-    parsingStatus: (slug: string) =>
-      `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`,
+    parsingStatus: (slug: string, includeResume?: boolean) => {
+      const url = `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`;
+      return includeResume ? `${url}?include_resume=true` : url;
+    },
     verifyProfile: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/verify-profile/`,
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
@@ -103,9 +106,7 @@ const getCookieValue = (cookieHeader: string, name: string): string | null => {
 };
 
 const isWriteMethod = (method?: string) =>
-  ["POST", "PUT", "PATCH", "DELETE"].includes(
-    (method || "GET").toUpperCase()
-  );
+  ["POST", "PUT", "PATCH", "DELETE"].includes((method || "GET").toUpperCase());
 
 /**
  * Helper function to make API requests to the Django backend
@@ -114,7 +115,7 @@ const isWriteMethod = (method?: string) =>
 export async function backendFetch(
   endpoint: string,
   options: RequestInit = {},
-  incomingCookies?: string
+  incomingCookies?: string,
 ): Promise<Response> {
   const headers = new Headers(options.headers);
   const hasBody = options.body !== undefined && options.body !== null;
@@ -133,7 +134,10 @@ export async function backendFetch(
 
   // Add Authorization header from HttpOnly JWT cookie when available
   if (!headers.has("Authorization") && incomingCookies) {
-    const accessToken = getCookieValue(incomingCookies, ACCESS_TOKEN_COOKIE_NAME);
+    const accessToken = getCookieValue(
+      incomingCookies,
+      ACCESS_TOKEN_COOKIE_NAME,
+    );
     if (accessToken) {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
@@ -187,7 +191,7 @@ export function extractSetCookieHeaders(backendResponse: Response): string[] {
  */
 export function forwardCookiesToResponse(
   backendResponse: Response,
-  nextResponse: Response
+  nextResponse: Response,
 ): void {
   const setCookieHeaders = extractSetCookieHeaders(backendResponse);
 
