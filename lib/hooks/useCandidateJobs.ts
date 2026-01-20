@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { candidateJobsAPI } from "@/lib/services/candidateJobsAPI";
 import { useAppliedJobsStore, AppliedJob } from "@/lib/talentAppliedJobsStore";
+import type { CandidateApplication } from "@/lib/types/candidate-applications";
 
 /**
  * React Query keys for candidate job operations
@@ -26,6 +27,18 @@ export function useCandidateJobs() {
     queryKey: candidateJobsKeys.browse(),
     queryFn: candidateJobsAPI.browse,
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+/**
+ * Hook to fetch candidate's job applications
+ * Returns all applications submitted by the current candidate
+ */
+export function useCandidateApplications() {
+  return useQuery<CandidateApplication[]>({
+    queryKey: candidateJobsKeys.applications(),
+    queryFn: candidateJobsAPI.fetchApplications,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 }
 

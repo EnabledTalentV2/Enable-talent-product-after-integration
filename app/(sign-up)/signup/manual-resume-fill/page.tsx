@@ -18,25 +18,14 @@ import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
-import {
-  ensureCandidateProfileSlug,
-  fetchCandidateProfileFull,
-} from "@/lib/candidateProfile";
+import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
-import {
-  buildCandidateEducationPayloads,
-  buildCandidateLanguagePayloads,
-  buildCandidateProfileCorePayload,
-  buildCandidateSkillPayloads,
-} from "@/lib/candidateProfileUtils";
+import { buildVerifyProfilePayload } from "@/lib/candidateProfileUtils";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const initialSteps: Step[] = [
   {
@@ -574,76 +563,14 @@ export default function ManualResumeFill() {
     setIsUpdating(true);
 
     try {
-      const firstName = finalizedData.basicInfo.firstName.trim();
-      const lastName = finalizedData.basicInfo.lastName.trim();
-
-      if (firstName || lastName) {
-        await apiRequest("/api/users/profile/", {
-          method: "PATCH",
-          body: JSON.stringify({
-            first_name: firstName,
-            last_name: lastName,
-          }),
-        });
-      }
-
-      const profilePayload = buildCandidateProfileCorePayload(finalizedData);
-      if (Object.keys(profilePayload).length > 0) {
-        await apiRequest(`/api/candidates/profiles/${candidateSlug}/`, {
-          method: "PATCH",
-          body: JSON.stringify(profilePayload),
-        });
-      }
-
-      const fullProfile = await fetchCandidateProfileFull(
-        candidateSlug,
-        "Manual Resume Fill"
-      );
-      const verifiedProfile = isRecord(fullProfile?.verified_profile)
-        ? fullProfile?.verified_profile
-        : null;
-      const existingEducation = Array.isArray(verifiedProfile?.education)
-        ? verifiedProfile.education
-        : [];
-      const existingSkills = Array.isArray(verifiedProfile?.skills)
-        ? verifiedProfile.skills
-        : [];
-      const existingLanguages = Array.isArray(verifiedProfile?.languages)
-        ? verifiedProfile.languages
-        : [];
-
-      const educationPayloads = buildCandidateEducationPayloads(
-        finalizedData,
-        existingEducation
-      );
-      for (const payload of educationPayloads) {
-        await apiRequest("/api/candidates/education/", {
+      const verifyPayload = buildVerifyProfilePayload(finalizedData);
+      await apiRequest(
+        `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
+        {
           method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
-
-      const skillPayloads = buildCandidateSkillPayloads(
-        finalizedData,
-        existingSkills
+          body: JSON.stringify(verifyPayload),
+        }
       );
-      for (const payload of skillPayloads) {
-        await apiRequest("/api/candidates/skills/", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
-
-      const languagePayloads = buildCandidateLanguagePayloads(
-        finalizedData,
-        existingLanguages
-      );
-      for (const payload of languagePayloads) {
-        await apiRequest("/api/candidates/languages/", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
 
       setUserData((prev) => finalizedData as typeof prev);
       markSignupComplete();

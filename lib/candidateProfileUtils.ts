@@ -419,6 +419,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   if (data.basicInfo.lastName.trim()) {
     basicInfo.last_name = data.basicInfo.lastName.trim();
   }
+  if (data.basicInfo.email.trim()) {
+    basicInfo.email = data.basicInfo.email.trim();
+  }
   if (data.basicInfo.phone.trim()) {
     basicInfo.phone = data.basicInfo.phone.trim();
   }
