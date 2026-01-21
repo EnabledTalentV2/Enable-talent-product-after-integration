@@ -583,8 +583,28 @@ export default function ResumeUpload() {
         });
 
         console.log(
-          "[Resume Upload] Resume uploaded successfully, backend will handle Supabase storage and parsing"
+          "[Resume Upload] Resume uploaded successfully, now triggering parsing"
         );
+
+        // Immediately trigger parsing after upload
+        try {
+          console.log("[Resume Upload] Triggering parse-resume POST");
+          await apiRequest(`/api/candidates/profiles/${candidateSlug}/parse-resume/`, {
+            method: "POST",
+          });
+          console.log("[Resume Upload] Parse-resume POST successful");
+
+          // Immediately fire GET to start the parsing process (backend requires this)
+          console.log("[Resume Upload] Firing GET to start parsing process");
+          await apiRequest<unknown>(
+            `/api/candidates/profiles/${candidateSlug}/parsing-status/?include_resume=true`,
+            { method: "GET" }
+          );
+          console.log("[Resume Upload] Parsing started successfully");
+        } catch (parseErr) {
+          console.warn("[Resume Upload] Failed to trigger parsing (will retry on accessibility page):", parseErr);
+          // Don't block navigation - parsing can be retried on the next page
+        }
       } catch (err) {
         // Check if session expired
         if (handleSessionExpiry(err, router)) {
