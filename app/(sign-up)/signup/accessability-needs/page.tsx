@@ -8,6 +8,7 @@ import Navbar from "@/components/signup/Navbar";
 import { apiRequest } from "@/lib/api-client";
 import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
+import { buildCandidateProfileCorePayload } from "@/lib/candidateProfileUtils";
 import type { UserData } from "@/lib/types/user";
 
 const categories = [
@@ -104,11 +105,12 @@ type UserDataPatch = {
 
 const PARSE_FAILURE_MESSAGE =
   "Something went wrong with resume parsing.";
-const PARSING_POLL_DELAY_MS = 1500;
-const PARSING_TIMEOUT_MS = 60 * 1000;
-const PARSING_MAX_ATTEMPTS = Math.ceil(
-  PARSING_TIMEOUT_MS / PARSING_POLL_DELAY_MS
-);
+const PARSE_TIMEOUT_MESSAGE =
+  "Resume parsing is taking longer than expected. You can retry or continue with manual entry.";
+const PARSING_POLL_DELAY_MS = 1500; // 1.5 seconds between attempts
+const PARSING_MAX_ATTEMPTS = 20; // Max 20 attempts (30 seconds total)
+
+type ParseFailureReason = "timeout" | "error" | "no_data" | null;
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -116,7 +118,12 @@ const sleep = (ms: number) =>
   });
 
 const extractUserDataPatch = (payload: unknown): UserDataPatch => {
-  if (!isRecord(payload)) return {};
+  console.log("[extractUserDataPatch] Input payload:", payload);
+
+  if (!isRecord(payload)) {
+    console.log("[extractUserDataPatch] Payload is not a record");
+    return {};
+  }
 
   const candidate =
     (isRecord(payload.resume) && payload.resume) ||
@@ -127,7 +134,13 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
     (isRecord(payload.resumeData) && payload.resumeData) ||
     (isRecord(payload.userData) && payload.userData) ||
     payload;
-  if (!isRecord(candidate)) return {};
+
+  console.log("[extractUserDataPatch] Candidate extracted:", candidate);
+
+  if (!isRecord(candidate)) {
+    console.log("[extractUserDataPatch] Candidate is not a record");
+    return {};
+  }
 
   const patch: UserDataPatch = {};
 
@@ -174,8 +187,12 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
       ? candidate
       : null);
 
+  console.log("[extractUserDataPatch] Resume data found:", resumeData);
+
   if (resumeData) {
+    console.log("[extractUserDataPatch] Transforming backend resume data...");
     const transformedData = transformBackendResumeData(resumeData);
+    console.log("[extractUserDataPatch] Transformed data:", transformedData);
 
     if (transformedData.basicInfo && Object.keys(patch.basicInfo || {}).length === 0) {
       patch.basicInfo = transformedData.basicInfo;
@@ -202,6 +219,9 @@ const extractUserDataPatch = (payload: unknown): UserDataPatch => {
       patch.otherDetails = transformedData.otherDetails;
     }
   }
+
+  console.log("[extractUserDataPatch] Final patch to return:", patch);
+  console.log("[extractUserDataPatch] Patch has keys:", Object.keys(patch));
 
   return patch;
 };
@@ -238,36 +258,121 @@ const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
     : prev.reviewAgree,
 });
 
+type PollResult = {
+  success: boolean;
+  data: UserDataPatch | null;
+  failureReason: ParseFailureReason;
+  errorMessage?: string;
+};
+
 const pollForParsedData = async (
   slug: string
-): Promise<UserDataPatch | null> => {
+): Promise<PollResult> => {
+  console.log(
+    `[Accessibility Needs] Starting to poll parsing-status endpoint (max ${PARSING_MAX_ATTEMPTS} attempts, ${PARSING_MAX_ATTEMPTS * PARSING_POLL_DELAY_MS / 1000}s timeout)`
+  );
+
   for (let attempt = 0; attempt < PARSING_MAX_ATTEMPTS; attempt += 1) {
     try {
-      const statusData = await apiRequest<unknown>(
+      // Poll the parsing-status endpoint with include_resume parameter
+      const response = await apiRequest<unknown>(
         `/api/candidates/profiles/${slug}/parsing-status/?include_resume=true`,
         { method: "GET" }
       );
 
-      const patch = extractUserDataPatch(statusData);
-      if (Object.keys(patch).length > 0) {
-        return patch;
-      }
+      console.log(
+        `[Accessibility Needs] Parsing status (attempt ${attempt + 1}/${PARSING_MAX_ATTEMPTS}):`,
+        response
+      );
 
-      const status = getParsingStatus(statusData);
-      if (status === "parsed") {
-        return null;
-      }
-      if (status && ["failed", "error"].includes(status)) {
-        return null;
+      // Check parsing status
+      if (isRecord(response)) {
+        const status = String(response.parsing_status || "").toLowerCase();
+
+        // Status: parsed - resume parsing completed successfully
+        if (status === "parsed") {
+          console.log("[Accessibility Needs] Resume parsing completed!");
+          console.log("[Accessibility Needs] Full response:", response);
+
+          const patch = extractUserDataPatch(response);
+          console.log("[Accessibility Needs] Extracted patch:", patch);
+          console.log("[Accessibility Needs] Patch keys:", Object.keys(patch));
+
+          if (Object.keys(patch).length > 0) {
+            console.log("[Accessibility Needs] Extracted resume data:", patch);
+            return { success: true, data: patch, failureReason: null };
+          }
+
+          console.warn("[Accessibility Needs] Status is 'parsed' but no data found");
+          console.warn("[Accessibility Needs] Response structure:", JSON.stringify(response, null, 2));
+          return {
+            success: false,
+            data: null,
+            failureReason: "no_data",
+            errorMessage: "Resume was processed but no data could be extracted. The file may be corrupted or in an unsupported format."
+          };
+        }
+
+        // Status: failed - resume parsing failed
+        if (status === "failed" || status === "error") {
+          const errorMsg = String(response.error || response.message || PARSE_FAILURE_MESSAGE);
+          console.error(
+            `[Accessibility Needs] Parsing ${status}:`,
+            errorMsg
+          );
+          return {
+            success: false,
+            data: null,
+            failureReason: "error",
+            errorMessage: errorMsg
+          };
+        }
+
+        // Status: parsing - still processing, continue polling
+        if (status === "parsing") {
+          console.log(
+            `[Accessibility Needs] Still parsing... (attempt ${attempt + 1}/${PARSING_MAX_ATTEMPTS})`
+          );
+          // Continue to next iteration
+        } else {
+          // Unknown status
+          console.warn(
+            `[Accessibility Needs] Unknown parsing status: "${status}"`
+          );
+        }
       }
     } catch (err) {
-      console.warn("[Accessibility Needs] Parsing status poll error:", err);
+      console.warn(
+        `[Accessibility Needs] Parsing status poll error (attempt ${attempt + 1}):`,
+        err
+      );
+
+      // On last attempt, return error
+      if (attempt === PARSING_MAX_ATTEMPTS - 1) {
+        return {
+          success: false,
+          data: null,
+          failureReason: "error",
+          errorMessage: err instanceof Error ? err.message : PARSE_FAILURE_MESSAGE
+        };
+      }
     }
 
-    await sleep(PARSING_POLL_DELAY_MS);
+    // Wait before next poll (except on last attempt)
+    if (attempt < PARSING_MAX_ATTEMPTS - 1) {
+      await sleep(PARSING_POLL_DELAY_MS);
+    }
   }
 
-  return null;
+  console.log(
+    `[Accessibility Needs] Polling timed out after ${PARSING_MAX_ATTEMPTS} attempts (${PARSING_MAX_ATTEMPTS * PARSING_POLL_DELAY_MS / 1000}s)`
+  );
+  return {
+    success: false,
+    data: null,
+    failureReason: "timeout",
+    errorMessage: PARSE_TIMEOUT_MESSAGE
+  };
 };
 
 export default function AccessabilityNeedsPage() {
@@ -279,7 +384,9 @@ export default function AccessabilityNeedsPage() {
   const [isCompleting, setIsCompleting] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [parseFailure, setParseFailure] = useState<string | null>(null);
+  const [parseFailureReason, setParseFailureReason] = useState<ParseFailureReason>(null);
   const [resumeUploaded, setResumeUploaded] = useState(false);
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [step, setStep] = useState<
     "intro" | "categories" | "preferences" | "accommodations"
   >("intro");
@@ -392,22 +499,20 @@ export default function AccessabilityNeedsPage() {
     setIsCompleting(true);
     setIsParsingResume(false);
     setParseFailure(null);
+    setParseFailureReason(null);
 
     try {
-      // Save to user data store (persisted in localStorage)
-      patchUserData({
+      const accessibilityPatch = {
         accessibilityNeeds: {
           categories: selectedCategories,
           accommodationNeed: accommodationNeed,
           disclosurePreference: disclosurePreference,
           accommodations: selectedAccommodations,
         },
-      });
+      };
 
-      if (!resumeUploaded) {
-        router.push("/signup/manual-resume-fill");
-        return;
-      }
+      // Save to user data store (persisted in localStorage)
+      patchUserData(accessibilityPatch);
 
       // Get candidate slug for API calls
       const slug = await ensureCandidateProfileSlug({
@@ -415,47 +520,136 @@ export default function AccessabilityNeedsPage() {
       });
 
       if (!slug) {
-        setParseFailure(PARSE_FAILURE_MESSAGE);
+        setParseFailure("Unable to save accessibility preferences.");
         return;
       }
 
+      // Save slug for retry functionality
+      setSavedSlug(slug);
+
       try {
-        // Check parsing status once before waiting
-        const statusData = await apiRequest<unknown>(
+        const profilePayload = buildCandidateProfileCorePayload({
+          ...userData,
+          ...accessibilityPatch,
+        });
+        if (Object.keys(profilePayload).length > 0) {
+          await apiRequest(`/api/candidates/profiles/${slug}/`, {
+            method: "PATCH",
+            body: JSON.stringify(profilePayload),
+          });
+        }
+      } catch (err) {
+        console.error("[Accessibility Needs] Failed to update profile:", err);
+        setParseFailure("Unable to save accessibility preferences.");
+        return;
+      }
+
+      // If resume was uploaded, poll the parsing-status endpoint for resume_data
+      // Polls GET /api/candidates/profiles/{slug}/parsing-status/?include_resume=true
+      // Max 20 attempts × 1.5s = 30 seconds timeout
+      if (!resumeUploaded) {
+        console.log("[Accessibility Needs] No resume uploaded, skipping to manual entry");
+        router.push("/signup/manual-resume-fill");
+        return;
+      }
+
+      console.log("[Accessibility Needs] Resume was uploaded, triggering parse and polling");
+      setIsParsingResume(true);
+
+      // Step 1: Trigger parsing via POST to parse-resume endpoint
+      try {
+        console.log("[Accessibility Needs] Triggering resume parsing via POST");
+        await apiRequest(`/api/candidates/profiles/${slug}/parse-resume/`, {
+          method: "POST",
+        });
+        console.log("[Accessibility Needs] Parse-resume POST successful");
+
+        // Step 2: Immediately fire GET to start the parsing process (backend requires this)
+        console.log("[Accessibility Needs] Immediately firing GET to start parsing process");
+        await apiRequest<unknown>(
           `/api/candidates/profiles/${slug}/parsing-status/?include_resume=true`,
           { method: "GET" }
         );
-
-        const patch = extractUserDataPatch(statusData);
-        if (Object.keys(patch).length > 0) {
-          setUserData((prev) => mergeUserData(prev, patch));
-          router.push("/signup/manual-resume-fill");
-          return;
-        }
-
-        const status = getParsingStatus(statusData);
-        if (status && ["failed", "error"].includes(status)) {
-          setParseFailure(PARSE_FAILURE_MESSAGE);
-          return;
-        }
-
-        setIsParsingResume(true);
-        const polledPatch = await pollForParsedData(slug);
-        if (polledPatch && Object.keys(polledPatch).length > 0) {
-          setUserData((prev) => mergeUserData(prev, polledPatch));
-          router.push("/signup/manual-resume-fill");
-          return;
-        }
-
-        setParseFailure(PARSE_FAILURE_MESSAGE);
+        console.log("[Accessibility Needs] Initial parsing-status GET successful");
       } catch (err) {
-        console.error("[Accessibility Needs] Error checking parsing status:", err);
-        setParseFailure(PARSE_FAILURE_MESSAGE);
+        console.warn("[Accessibility Needs] Parse trigger failed:", err);
+        // Continue anyway - parsing might have been triggered earlier
       }
+
+      // Step 3: Poll the parsing-status endpoint for resume_data
+      const pollResult = await pollForParsedData(slug);
+
+      if (pollResult.success && pollResult.data) {
+        console.log("[Accessibility Needs] Resume data found, merging into user data");
+        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        router.push("/signup/manual-resume-fill");
+        return;
+      }
+
+      // Parsing failed - show the failure UI and let user choose
+      console.log(
+        "[Accessibility Needs] Resume parsing failed:",
+        pollResult.failureReason,
+        pollResult.errorMessage
+      );
+      setParseFailure(pollResult.errorMessage || PARSE_FAILURE_MESSAGE);
+      setParseFailureReason(pollResult.failureReason);
+      // Don't navigate - let user choose to retry or continue
     } finally {
       setIsCompleting(false);
       setIsParsingResume(false);
     }
+  };
+
+  // Retry polling for parsed data (after a failure)
+  const handleRetryParsing = async () => {
+    if (isCompleting || !savedSlug) return;
+
+    setIsCompleting(true);
+    setIsParsingResume(true);
+    setParseFailure(null);
+    setParseFailureReason(null);
+
+    try {
+      // Re-trigger parsing via POST, then immediately GET to start parsing
+      try {
+        console.log("[Accessibility Needs] Retry: Triggering resume parsing via POST");
+        await apiRequest(`/api/candidates/profiles/${savedSlug}/parse-resume/`, {
+          method: "POST",
+        });
+
+        // Immediately fire GET to start parsing process
+        console.log("[Accessibility Needs] Retry: Immediately firing GET to start parsing process");
+        await apiRequest<unknown>(
+          `/api/candidates/profiles/${savedSlug}/parsing-status/?include_resume=true`,
+          { method: "GET" }
+        );
+      } catch (err) {
+        console.warn("[Accessibility Needs] Retry: Parse trigger failed:", err);
+      }
+
+      const pollResult = await pollForParsedData(savedSlug);
+
+      if (pollResult.success && pollResult.data) {
+        console.log("[Accessibility Needs] Retry successful, merging resume data");
+        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        router.push("/signup/manual-resume-fill");
+        return;
+      }
+
+      // Still failed
+      console.log("[Accessibility Needs] Retry failed:", pollResult.failureReason);
+      setParseFailure(pollResult.errorMessage || PARSE_FAILURE_MESSAGE);
+      setParseFailureReason(pollResult.failureReason);
+    } finally {
+      setIsCompleting(false);
+      setIsParsingResume(false);
+    }
+  };
+
+  // Continue to manual entry without parsed data
+  const handleContinueWithoutParsing = () => {
+    router.push("/signup/manual-resume-fill");
   };
 
   // Show loading state during authentication check
@@ -867,31 +1061,61 @@ export default function AccessabilityNeedsPage() {
             <div
               role="status"
               aria-live="polite"
-              className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+              className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900"
             >
-              <p className="font-semibold">
-                Resume parsing is still in progress.
-              </p>
-              <p className="mt-1">
-                We are still working on your resume. This can take up to a
-                minute.
-              </p>
+              <div className="flex items-center gap-3">
+                <svg className="h-5 w-5 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div>
+                  <p className="font-semibold">
+                    Parsing your resume...
+                  </p>
+                  <p className="mt-0.5 text-blue-700">
+                    This may take up to 30 seconds. Please wait.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : null}
 
-          {parseFailure ? (
+          {parseFailure && !isParsingResume ? (
             <div
               role="alert"
-              className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+              className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
             >
-              <p className="font-semibold">{parseFailure}</p>
-              <button
-                type="button"
-                onClick={() => router.push("/signup/manual-resume-fill")}
-                className="mt-3 block w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
-              >
-                Continue to manual fill
-              </button>
+              <p className="font-semibold text-amber-800">
+                {parseFailureReason === "timeout"
+                  ? "Resume parsing timed out"
+                  : parseFailureReason === "no_data"
+                  ? "Could not extract data from resume"
+                  : "Resume parsing failed"}
+              </p>
+              <p className="mt-1 text-amber-700">{parseFailure}</p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
+                {parseFailureReason === "timeout" ? (
+                  <button
+                    type="button"
+                    onClick={handleRetryParsing}
+                    disabled={isCompleting}
+                    className="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    Retry Parsing
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleContinueWithoutParsing}
+                  className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    parseFailureReason === "timeout"
+                      ? "border border-amber-300 bg-white text-amber-700 hover:bg-amber-50"
+                      : "bg-amber-600 text-white hover:bg-amber-700"
+                  }`}
+                >
+                  Continue to Manual Entry
+                </button>
+              </div>
             </div>
           ) : null}
 

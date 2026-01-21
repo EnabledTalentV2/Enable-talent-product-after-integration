@@ -299,13 +299,20 @@ const splitFullName = (fullName: string): { firstName: string; lastName: string 
 /**
  * Helper: Normalize skills from string or array to required format
  */
-const normalizeSkills = (value: unknown): { skills: string; primaryList: string[] } => {
+type SkillEntry = { name: string; level: "basic" | "intermediate" | "advanced" };
+
+const normalizeSkills = (value: unknown): { skills: string; primaryList: SkillEntry[] } => {
+  const toSkillEntry = (name: string): SkillEntry => ({
+    name,
+    level: "intermediate",
+  });
+
   if (Array.isArray(value)) {
     const list = value
       .filter((entry): entry is string => typeof entry === "string")
       .map((entry) => entry.trim())
       .filter(Boolean);
-    return { skills: list.join(", "), primaryList: list };
+    return { skills: list.join(", "), primaryList: list.map(toSkillEntry) };
   }
 
   if (typeof value === "string") {
@@ -314,7 +321,10 @@ const normalizeSkills = (value: unknown): { skills: string; primaryList: string[
       .split(/[,;\n]+/)
       .map((entry) => entry.trim())
       .filter(Boolean);
-    return { skills: text, primaryList: list.length > 0 ? list : text ? [text] : [] };
+    return {
+      skills: text,
+      primaryList: list.length > 0 ? list.map(toSkillEntry) : text ? [toSkillEntry(text)] : [],
+    };
   }
 
   return { skills: "", primaryList: [] };

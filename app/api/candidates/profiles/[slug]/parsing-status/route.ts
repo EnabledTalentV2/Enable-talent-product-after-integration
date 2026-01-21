@@ -5,76 +5,190 @@ type RouteContext = {
   params: Promise<{ slug: string }>;
 };
 
+/**
+ * GET /api/candidates/profiles/[slug]/parsing-status/
+ *
+ * Proxy to backend parsing status endpoint.
+ */
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const cookies = request.headers.get("cookie") || "";
     const { slug } = await context.params;
-    const requestUrl = new URL(request.url);
-    const includeResume =
-      requestUrl.searchParams.get("include_resume") === "true";
-    const backendUrl = new URL(
-      API_ENDPOINTS.candidateProfiles.parsingStatus(slug)
-    );
-    if (includeResume) {
-      backendUrl.searchParams.set("include_resume", "true");
+    if (!slug) {
+      return NextResponse.json(
+        { error: "Candidate slug is required" },
+        { status: 400 }
+      );
     }
 
-    console.log("[Parsing Status API] Request for slug:", slug);
-    console.log("[Parsing Status API] Backend URL:", backendUrl.toString());
+    const cookies = request.headers.get("cookie") || "";
+    const backendEndpoint = new URL(API_ENDPOINTS.candidateProfiles.parsingStatus(slug));
+    request.nextUrl.searchParams.forEach((value, key) => {
+      backendEndpoint.searchParams.set(key, value);
+    });
+
+    console.log("[Parsing Status GET] Backend URL:", backendEndpoint.toString());
 
     const backendResponse = await backendFetch(
-      backendUrl.toString(),
+      backendEndpoint.toString(),
+      { method: "GET" },
+      cookies
+    );
+
+    console.log("[Parsing Status GET] Backend status:", backendResponse.status);
+
+    // Get response as text first to see what we're getting
+    const responseText = await backendResponse.text();
+    console.log("[Parsing Status GET] Backend response body:", responseText);
+
+    // Try to parse as JSON
+    let data = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("[Parsing Status GET] Failed to parse response as JSON:", e);
+      data = { raw_response: responseText };
+    }
+
+    if (!backendResponse.ok) {
+      console.error("[Parsing Status GET] Backend error response:", {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        body: data
+      });
+    }
+
+    return NextResponse.json(data, { status: backendResponse.status });
+  } catch (error) {
+    console.error("[Parsing Status GET] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch parsing status" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * DELETE /api/candidates/profiles/[slug]/parsing-status/
+ *
+ * Proxy to backend parsing status endpoint.
+ */
+export async function DELETE(request: NextRequest, context: RouteContext) {
+  try {
+    const { slug } = await context.params;
+    if (!slug) {
+      return NextResponse.json(
+        { error: "Candidate slug is required" },
+        { status: 400 }
+      );
+    }
+
+    const cookies = request.headers.get("cookie") || "";
+    const backendEndpoint = new URL(API_ENDPOINTS.candidateProfiles.parsingStatus(slug));
+    request.nextUrl.searchParams.forEach((value, key) => {
+      backendEndpoint.searchParams.set(key, value);
+    });
+
+    console.log("[Parsing Status DELETE] Backend URL:", backendEndpoint.toString());
+
+    const backendResponse = await backendFetch(
+      backendEndpoint.toString(),
+      { method: "DELETE" },
+      cookies
+    );
+
+    console.log("[Parsing Status DELETE] Backend status:", backendResponse.status);
+
+    const responseText = await backendResponse.text();
+    console.log("[Parsing Status DELETE] Backend response body:", responseText);
+
+    let data = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("[Parsing Status DELETE] Failed to parse response as JSON:", e);
+      data = { raw_response: responseText };
+    }
+
+    if (!backendResponse.ok) {
+      console.error("[Parsing Status DELETE] Backend error response:", {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        body: data
+      });
+    }
+
+    return NextResponse.json(data, { status: backendResponse.status });
+  } catch (error) {
+    console.error("[Parsing Status DELETE] Error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete parsing status" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/candidates/profiles/[slug]/parsing-status/
+ *
+ * Proxy to backend parsing status endpoint.
+ */
+export async function POST(request: NextRequest, context: RouteContext) {
+  try {
+    const { slug } = await context.params;
+    if (!slug) {
+      return NextResponse.json(
+        { error: "Candidate slug is required" },
+        { status: 400 }
+      );
+    }
+
+    const cookies = request.headers.get("cookie") || "";
+    const contentType = request.headers.get("content-type") || "";
+    const isMultipart = contentType.includes("multipart/form-data");
+    const body = isMultipart ? await request.formData() : await request.json().catch(() => ({}));
+
+    const backendEndpoint = new URL(API_ENDPOINTS.candidateProfiles.parsingStatus(slug));
+    request.nextUrl.searchParams.forEach((value, key) => {
+      backendEndpoint.searchParams.set(key, value);
+    });
+
+    console.log("[Parsing Status POST] Backend URL:", backendEndpoint.toString());
+
+    const backendResponse = await backendFetch(
+      backendEndpoint.toString(),
       {
-        method: "GET",
+        method: "POST",
+        body: isMultipart ? body : JSON.stringify(body),
       },
       cookies
     );
 
-    console.log("[Parsing Status API] Backend response status:", backendResponse.status);
+    console.log("[Parsing Status POST] Backend status:", backendResponse.status);
 
-    // If backend returns an error status, try to get text for debugging
-    if (!backendResponse.ok) {
-      const text = await backendResponse.text();
-      console.error("[Parsing Status API] Backend error response (full):", text);
+    const responseText = await backendResponse.text();
+    console.log("[Parsing Status POST] Backend response body:", responseText);
 
-      return NextResponse.json(
-        {
-          error: "Backend returned an error",
-          status: backendResponse.status,
-          parsing_status: "error",
-          has_resume_data: false,
-          resume_file_exists: false,
-          has_verified_data: false
-        },
-        { status: backendResponse.status }
-      );
+    let data = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("[Parsing Status POST] Failed to parse response as JSON:", e);
+      data = { raw_response: responseText };
     }
 
-    const data = await backendResponse.json().catch((err) => {
-      console.error("[Parsing Status API] Failed to parse response:", err);
-      return {
-        parsing_status: "error",
-        has_resume_data: false,
-        resume_file_exists: false,
-        has_verified_data: false
-      };
-    });
+    if (!backendResponse.ok) {
+      console.error("[Parsing Status POST] Backend error response:", {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        body: data
+      });
+    }
 
-    console.log("[Parsing Status API] Backend response data:", data);
-
-    return NextResponse.json(data, {
-      status: backendResponse.status,
-    });
+    return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("[Parsing Status API] Error:", error);
+    console.error("[Parsing Status POST] Error:", error);
     return NextResponse.json(
-      {
-        error: "Failed to fetch parsing status.",
-        parsing_status: "error",
-        has_resume_data: false,
-        resume_file_exists: false,
-        has_verified_data: false
-      },
+      { error: "Failed to post parsing status" },
       { status: 500 }
     );
   }

@@ -109,26 +109,29 @@ export default function ListedJobsPage() {
 
   useEffect(() => {
     if (jobs.length === 0) {
-      setSelectedJobId(null);
+      if (selectedJobId !== null) {
+        setSelectedJobId(null);
+      }
       return;
     }
 
     // If jobId is in URL, select that job
     if (jobIdFromUrl) {
-      const jobExists = jobs.some((job) => String(job.id) === jobIdFromUrl);
-      if (jobExists) {
-        setSelectedJobId(jobIdFromUrl);
+      const jobMatch = jobs.find((job) => String(job.id) === jobIdFromUrl);
+      if (jobMatch) {
+        if (jobMatch.id !== selectedJobId) {
+          setSelectedJobId(jobMatch.id);
+        }
         return;
       }
     }
 
-    setSelectedJobId((current) => {
-      if (current && jobs.some((job) => job.id === current)) {
-        return current;
-      }
-      return jobs[0].id;
-    });
-  }, [jobs, jobIdFromUrl]);
+    const hasValidSelection =
+      selectedJobId !== null && jobs.some((job) => job.id === selectedJobId);
+    if (!hasValidSelection && jobs[0].id !== selectedJobId) {
+      setSelectedJobId(jobs[0].id);
+    }
+  }, [jobs, jobIdFromUrl, selectedJobId]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -167,7 +170,9 @@ export default function ListedJobsPage() {
 
   useEffect(() => {
     if (jobs.length === 0) {
-      setJobStatsMap({});
+      setJobStatsMap((prev) =>
+        Object.keys(prev).length === 0 ? prev : {}
+      );
       return;
     }
 

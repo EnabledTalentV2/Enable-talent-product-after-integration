@@ -563,13 +563,12 @@ export default function ManualResumeFill() {
     setIsUpdating(true);
 
     try {
-      const payload = buildVerifyProfilePayload(finalizedData);
-
-      await apiRequest<unknown>(
+      const verifyPayload = buildVerifyProfilePayload(finalizedData);
+      await apiRequest(
         `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
         {
           method: "POST",
-          body: JSON.stringify(payload),
+          body: JSON.stringify(verifyPayload),
         }
       );
 

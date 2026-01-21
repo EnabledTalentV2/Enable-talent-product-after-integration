@@ -59,7 +59,10 @@ export type UserData = {
       description: string;
     }>;
   };
-  skills: { skills: string; primaryList?: string[] };
+  skills: {
+    skills: string;
+    primaryList?: Array<{ name: string; level: "basic" | "intermediate" | "advanced" }>;
+  };
   projects: {
     noProjects: boolean;
     entries: Array<{
@@ -90,6 +93,8 @@ export type UserData = {
     companySize: string[];
     jobType: string[];
     jobSearch: string[];
+    willingToRelocate: boolean;
+    hasWorkVisa: boolean | null;
   };
   otherDetails: {
     languages: Array<{

@@ -9,10 +9,11 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
 import {
   ensureCandidateProfileSlug,
-  fetchCandidateProfileDetail,
+  fetchCandidateProfileFull,
 } from "@/lib/candidateProfile";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
+import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 
@@ -76,15 +77,20 @@ function LoginPageContent() {
         });
         if (slug) {
           setCandidateSlug(slug);
-          const profile = await fetchCandidateProfileDetail(
-            slug,
-            "Login Talent"
-          );
+          const profile = await fetchCandidateProfileFull(slug, "Login Talent");
           if (profile) {
             setCandidateProfile(profile);
             const mapped = mapCandidateProfileToUserData(profile);
-            if (Object.keys(mapped).length > 0) {
-              patchUserData(mapped);
+            const resumeDataPayload =
+              typeof profile === "object" &&
+              profile !== null &&
+              "resume_data" in profile
+                ? (profile as Record<string, unknown>).resume_data
+                : null;
+            const resumeData = transformBackendResumeData(resumeDataPayload);
+            const merged = { ...mapped, ...resumeData };
+            if (Object.keys(merged).length > 0) {
+              patchUserData(merged);
             }
           } else {
             setCandidateError("Unable to load candidate profile.");

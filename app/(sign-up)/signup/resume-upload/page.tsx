@@ -12,6 +12,7 @@ import {
 import { useUserDataStore } from "@/lib/userDataStore";
 import type { UserData } from "@/lib/types/user";
 import { apiRequest, handleSessionExpiry } from "@/lib/api-client";
+import { buildCandidateProfileCorePayload } from "@/lib/candidateProfileUtils";
 import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 
 // Resume upload configuration
@@ -50,18 +51,12 @@ const isAllowedFile = (file: File) => {
   return allowedExtensions.some((ext) => name.endsWith(ext));
 };
 
-type UploadStage = "idle" | "uploading" | "saving" | "parsing" | "polling";
+type UploadStage = "idle" | "uploading";
 
 const getUploadStageMessage = (stage: UploadStage): string | null => {
   switch (stage) {
     case "uploading":
       return "Uploading resume to storage...";
-    case "saving":
-      return "Saving resume URL to profile...";
-    case "parsing":
-      return "Triggering resume parsing...";
-    case "polling":
-      return "Polling for parsed data...";
     default:
       return null;
   }
@@ -298,6 +293,19 @@ const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
     ? { ...prev.reviewAgree, ...patch.reviewAgree }
     : prev.reviewAgree,
 });
+
+const appendFormValue = (
+  formData: FormData,
+  key: string,
+  value: unknown
+) => {
+  if (value === null || value === undefined) return;
+  if (Array.isArray(value) || typeof value === "object") {
+    formData.append(key, JSON.stringify(value));
+    return;
+  }
+  formData.append(key, String(value));
+};
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -551,71 +559,52 @@ export default function ResumeUpload() {
     setIsUploading(true);
     setUploadStage("uploading");
 
-    let parsedSuccessfully = false;
-
     try {
-      // Step 1: Upload resume to Supabase storage
-      console.log("[Resume Upload] Starting file upload to storage");
-      let resumeUrl = "";
-      try {
-        resumeUrl = await uploadResumeToStorage(fileToParse, candidateSlug);
-        console.log("[Resume Upload] File uploaded successfully:", resumeUrl);
-      } catch (err) {
-        const message = getErrorMessage(err);
-        console.error("[Resume Upload] Storage upload failed:", err);
+      // Validate file size before uploading
+      if (fileToParse.size > MAX_FILE_SIZE) {
         setParseWarning(
-          message
-            ? `Failed to upload resume: ${message}`
-            : "Failed to upload resume. Please try again."
+          `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit. Please upload a smaller file.`
         );
         return;
       }
 
-      // Validate resume URL before proceeding
-      if (!resumeUrl || !resumeUrl.startsWith("http")) {
-        console.error("[Resume Upload] Invalid resume URL:", resumeUrl);
-        setParseWarning(
-          "Failed to generate valid resume URL. Please try again."
-        );
-        return;
-      }
-
-      // Step 2: Clear old data and save new resume URL to candidate profile
-      setUploadStage("saving");
-      console.log("[Resume Upload] Clearing old parsed data and saving new resume URL");
-
-      const uploadData = new FormData();
-      uploadData.append("resume_file", resumeUrl);
-
-      // Use accessibility data from user if available
-      const accommodationNeeds = userData.accessibilityNeeds?.accommodationNeed
-        ? userData.accessibilityNeeds.accommodationNeed.toUpperCase()
-        : DEFAULT_ACCOMMODATION_NEEDS;
-      uploadData.append("accommodation_needs", accommodationNeeds);
-
-      // If user has selected specific accessibility categories and accommodations,
-      // store them as JSON for potential backend use
-      if (userData.accessibilityNeeds && (
-        userData.accessibilityNeeds.categories.length > 0 ||
-        userData.accessibilityNeeds.accommodations.length > 0
-      )) {
-        uploadData.append("accessibility_data", JSON.stringify({
-          categories: userData.accessibilityNeeds.categories,
-          disclosurePreference: userData.accessibilityNeeds.disclosurePreference,
-          accommodations: userData.accessibilityNeeds.accommodations,
-        }));
-      }
-
-      // Clear old parsed data to force re-parsing
-      uploadData.append("resume_data", "null");
-      uploadData.append("parsing_status", "not_parsed");
+      // Upload file directly to backend (not Supabase)
+      // Backend will handle Supabase upload internally and save the URL
+      setUploadStage("uploading");
+      console.log("[Resume Upload] Uploading file to backend");
 
       try {
+        const formData = new FormData();
+        formData.append("resume_file", fileToParse);
+
         await apiRequest(`/api/candidates/profiles/${candidateSlug}/`, {
           method: "PATCH",
-          body: uploadData,
+          body: formData, // Send as multipart/form-data
         });
-        console.log("[Resume Upload] Old data cleared and new resume URL saved to profile");
+
+        console.log(
+          "[Resume Upload] Resume uploaded successfully, now triggering parsing"
+        );
+
+        // Immediately trigger parsing after upload
+        try {
+          console.log("[Resume Upload] Triggering parse-resume POST");
+          await apiRequest(`/api/candidates/profiles/${candidateSlug}/parse-resume/`, {
+            method: "POST",
+          });
+          console.log("[Resume Upload] Parse-resume POST successful");
+
+          // Immediately fire GET to start the parsing process (backend requires this)
+          console.log("[Resume Upload] Firing GET to start parsing process");
+          await apiRequest<unknown>(
+            `/api/candidates/profiles/${candidateSlug}/parsing-status/?include_resume=true`,
+            { method: "GET" }
+          );
+          console.log("[Resume Upload] Parsing started successfully");
+        } catch (parseErr) {
+          console.warn("[Resume Upload] Failed to trigger parsing (will retry on accessibility page):", parseErr);
+          // Don't block navigation - parsing can be retried on the next page
+        }
       } catch (err) {
         // Check if session expired
         if (handleSessionExpiry(err, router)) {
@@ -624,24 +613,19 @@ export default function ResumeUpload() {
         }
 
         const message = getErrorMessage(err);
-        console.error("[Resume Upload] Failed to save resume URL:", err);
+        console.error("[Resume Upload] Failed to upload resume to backend:", err);
         setParseWarning(
           message
-            ? `Failed to save resume to profile: ${message}`
-            : "Failed to save resume. Please try again."
+            ? `Failed to upload resume: ${message}`
+            : "Failed to upload resume. Please try again."
         );
         return;
       }
 
-      // Step 3: Resume parsing starts once the resume URL is saved.
-      setUploadStage("parsing");
+      // Navigate to accessibility needs page
+      // Backend is now handling Supabase upload and will auto-parse the resume
       console.log(
-        "[Resume Upload] Resume saved. Parsing will start in the background."
-      );
-
-      // Immediately navigate to accessibility needs while parsing happens in background
-      console.log(
-        "[Resume Upload] Resume uploaded successfully, navigating to accessibility needs"
+        "[Resume Upload] Resume uploaded, navigating to accessibility needs"
       );
       router.push("/signup/accessability-needs?resumeUploaded=1");
     } catch (err) {

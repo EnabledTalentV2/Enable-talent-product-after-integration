@@ -9,11 +9,12 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 import { initialUserData } from "@/lib/userDataDefaults";
-import { useCandidateJobs, useApplyToJob } from "@/lib/hooks/useCandidateJobs";
 import {
-  CandidateApplication,
-  JobApplicationTab,
-} from "@/lib/types/candidate-applications";
+  useCandidateJobs,
+  useCandidateApplications,
+  useApplyToJob,
+} from "@/lib/hooks/useCandidateJobs";
+import { JobApplicationTab } from "@/lib/types/candidate-applications";
 
 type Job = {
   id: string;
@@ -83,12 +84,14 @@ const formatPostedDate = (dateString: string | undefined): string => {
 
 export default function MyJobsPage() {
   const { data: jobsData, isLoading: isLoadingJobs } = useCandidateJobs();
+  const {
+    data: applications = [],
+    isLoading: isLoadingApplications,
+  } = useCandidateApplications();
   const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
 
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState("");
-  const [applications, setApplications] = useState<CandidateApplication[]>([]);
-  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const detailsRef = useRef<HTMLDivElement | null>(null);
@@ -142,52 +145,46 @@ export default function MyJobsPage() {
     [userData]
   );
 
-  // Fetch applications
-  useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        const res = await fetch("/api/candidate/applications/");
-        if (res.ok) {
-          const data = await res.json();
-          // Ensure data is an array
-          if (Array.isArray(data)) {
-            setApplications(data);
-          } else {
-            console.error("Applications response is not an array:", data);
-            setApplications([]);
-          }
-        } else {
-          console.error("Failed to fetch applications:", res.status);
-          setApplications([]);
-        }
-      } catch (error) {
-        console.error("Error fetching applications:", error);
-        setApplications([]);
-      } finally {
-        setIsLoadingApplications(false);
-      }
-    };
-
-    fetchApplications();
-  }, []);
 
   // Transform applications to Job format
   const applicationJobs = useMemo(
     () =>
-      applications.map((app) => ({
-        id: `app-${app.id}`,
-        title: app.job.title,
-        company: app.job.organization.name,
-        location: app.job.location,
-        jobType: app.job.job_type,
-        salary: undefined,
-        posted: new Date(app.applied_at).toLocaleDateString(),
-        status: (app.status.charAt(0).toUpperCase() + app.status.slice(1)) as Job["status"],
-        applicationStatus: (app.status === "accepted" ? "Accepted" : app.status === "rejected" ? "Rejected" : "Applied") as Job["applicationStatus"],
-        description: undefined,
-        requirements: undefined,
-        appliedAt: new Date(app.applied_at).toLocaleDateString(),
-      })),
+      applications.map((app) => {
+        // Map backend status to UI applicationStatus
+        const getApplicationStatus = (): Job["applicationStatus"] => {
+          if (app.status === "hired" || app.status === "shortlisted" || app.status === "accepted") {
+            return "Accepted";
+          }
+          if (app.status === "rejected") {
+            return "Rejected";
+          }
+          return "Applied";
+        };
+
+        // Map backend status to display status
+        const getDisplayStatus = (): Job["status"] => {
+          if (app.status === "hired") return "Accepted";
+          if (app.status === "shortlisted") return "Shortlisted";
+          if (app.status === "rejected") return "Rejected";
+          if (app.status === "accepted") return "Accepted";
+          return "Applied";
+        };
+
+        return {
+          id: `app-${app.id}`,
+          title: app.job.title,
+          company: app.job.organization.name,
+          location: app.job.location,
+          jobType: app.job.job_type,
+          salary: undefined,
+          posted: new Date(app.applied_at).toLocaleDateString(),
+          status: getDisplayStatus(),
+          applicationStatus: getApplicationStatus(),
+          description: undefined,
+          requirements: undefined,
+          appliedAt: new Date(app.applied_at).toLocaleDateString(),
+        };
+      }),
     [applications]
   );
 
@@ -346,17 +343,6 @@ export default function MyJobsPage() {
     applyToJob(
       { jobId: activeJob.id, jobData },
       {
-        onSuccess: () => {
-          // Refresh applications from server to get full data
-          fetch("/api/candidate/applications/")
-            .then(res => res.ok ? res.json() : [])
-            .then(data => {
-              if (Array.isArray(data)) {
-                setApplications(data);
-              }
-            })
-            .catch(err => console.error("Error refreshing applications:", err));
-        },
         onError: (error: any) => {
           console.error("Failed to apply to job:", error);
 
@@ -365,15 +351,6 @@ export default function MyJobsPage() {
 
           if (status === 409) {
             alert("You have already applied to this job.");
-            // Refresh applications to sync with server
-            fetch("/api/candidate/applications/")
-              .then(res => res.ok ? res.json() : [])
-              .then(data => {
-                if (Array.isArray(data)) {
-                  setApplications(data);
-                }
-              })
-              .catch(err => console.error("Error refreshing applications:", err));
           } else if (status === 401) {
             alert("Please log in to apply for this job.");
           } else {
@@ -441,17 +418,18 @@ export default function MyJobsPage() {
                           {job.appliedAt ? `Applied: ${job.appliedAt}` : job.posted}
                         </span>
                         <div className="flex items-center gap-2">
-                          {jobIsApplied && (
+                          {jobIsApplied && job.status !== "Applied" && (
                             <span className="flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700">
                               <Check size={14} />
                               Applied
                             </span>
                           )}
                           <span
-                            className={`rounded-full px-3 py-1 text-sm font-bold ${getStatusStyles(
+                            className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold ${getStatusStyles(
                               job.status
                             )}`}
                           >
+                            {jobIsApplied && job.status === "Applied" && <Check size={14} />}
                             {job.status}
                           </span>
                         </div>

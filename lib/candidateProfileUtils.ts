@@ -29,6 +29,52 @@ const toStringArray = (value: unknown): string[] => {
 
 const toLower = (value: string) => value.toLowerCase();
 
+const toTitleCase = (value: string) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "";
+
+const normalizeLanguageLevelFromBackend = (value: unknown): string => {
+  const trimmed = toTrimmedString(value);
+  if (!trimmed) return "";
+  const normalized = toLower(trimmed);
+  if (normalized === "basic") return "Basic";
+  if (normalized === "intermediate") return "Intermediate";
+  if (normalized === "advanced") return "Fluent";
+  return toTitleCase(trimmed);
+};
+
+const normalizeLanguageLevelForBackend = (value: unknown): string => {
+  const trimmed = toTrimmedString(value);
+  if (!trimmed) return "";
+  const normalized = toLower(trimmed);
+  if (normalized.startsWith("basic")) return "basic";
+  if (normalized.startsWith("intermediate")) return "intermediate";
+  if (
+    normalized.startsWith("advanced") ||
+    normalized.startsWith("proficient") ||
+    normalized.startsWith("fluent") ||
+    normalized.startsWith("expert")
+  ) {
+    return "advanced";
+  }
+  return normalized;
+};
+
+const normalizeAccommodationNeed = (value: string) => {
+  const normalized = toLower(value);
+  if (normalized.includes("discuss")) return "discuss_later";
+  if (normalized === "yes") return "yes";
+  if (normalized === "no") return "no";
+  return value;
+};
+
+const toAccommodationNeedValue = (value: string) => {
+  const normalized = toLower(value);
+  if (normalized === "yes") return "YES";
+  if (normalized === "no") return "NO";
+  if (normalized.includes("discuss")) return "PREFER_TO_DISCUSS_LATER";
+  return value.toUpperCase();
+};
+
 const normalizeEmploymentType = (value: string) => {
   const normalized = toLower(value);
   if (normalized.includes("full")) return "Full time";
@@ -65,6 +111,25 @@ const toExpectedSalary = (value: unknown): string => {
   return "";
 };
 
+const extractYear = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  if (typeof value === "string") {
+    const match = value.trim().match(/\b(\d{4})\b/);
+    if (match) {
+      const year = Number(match[1]);
+      return Number.isFinite(year) ? year : null;
+    }
+  }
+  return null;
+};
+
+const toDateFromYear = (value: unknown): string => {
+  const year = extractYear(value);
+  return year ? `${year}-01-01` : "";
+};
+
 const hasValue = (value: unknown): boolean => {
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
@@ -93,6 +158,11 @@ export const mapCandidateProfileToUserData = (
 
   const user = isRecord(payload.user) ? payload.user : null;
   const profile = user && isRecord(user.profile) ? user.profile : null;
+  const verifiedProfile = isRecord(payload.verified_profile)
+    ? payload.verified_profile
+    : isRecord(payload.verifiedProfile)
+    ? payload.verifiedProfile
+    : null;
 
   const basicInfo: Partial<UserData["basicInfo"]> = {};
   const firstName = toTrimmedString(user?.first_name ?? user?.firstName);
@@ -105,10 +175,17 @@ export const mapCandidateProfileToUserData = (
   if (email) basicInfo.email = email;
   if (avatar) basicInfo.profilePhoto = avatar;
 
+  const preferenceSource =
+    (verifiedProfile &&
+      isRecord(verifiedProfile.preferences) &&
+      verifiedProfile.preferences) ||
+    payload;
   const employmentTypes = toStringArray(
-    payload.employment_type_preferences
+    (preferenceSource as Record<string, unknown>)?.employment_type_preferences
   ).map(normalizeEmploymentType);
-  const workModes = toStringArray(payload.work_mode_preferences);
+  const workModes = toStringArray(
+    (preferenceSource as Record<string, unknown>)?.work_mode_preferences
+  );
   const preference: Partial<UserData["preference"]> = {};
 
   if (employmentTypes.length > 0) {
@@ -116,6 +193,21 @@ export const mapCandidateProfileToUserData = (
   }
   if (workModes.length > 0) {
     preference.jobSearch = workModes;
+  }
+
+  // Read relocation and work visa preferences
+  const willingToRelocate =
+    (preferenceSource as Record<string, unknown>)?.willing_to_relocate ??
+    payload.willing_to_relocate;
+  if (typeof willingToRelocate === "boolean") {
+    preference.willingToRelocate = willingToRelocate;
+  }
+
+  const hasWorkVisa =
+    (preferenceSource as Record<string, unknown>)?.has_workvisa ??
+    payload.has_workvisa;
+  if (typeof hasWorkVisa === "boolean") {
+    preference.hasWorkVisa = hasWorkVisa;
   }
 
   const otherDetails: Partial<UserData["otherDetails"]> = {};
@@ -128,6 +220,9 @@ export const mapCandidateProfileToUserData = (
   }
 
   const accessibilitySource =
+    (verifiedProfile &&
+      isRecord(verifiedProfile.accessibility_needs) &&
+      verifiedProfile.accessibility_needs) ||
     (isRecord(payload.accessibility_needs) && payload.accessibility_needs) ||
     (isRecord(payload.accessibilityNeeds) && payload.accessibilityNeeds) ||
     (isRecord(user?.accessibility_needs) && user.accessibility_needs) ||
@@ -139,34 +234,144 @@ export const mapCandidateProfileToUserData = (
     NonNullable<UserData["accessibilityNeeds"]>
   > = {};
   if (accessibilitySource) {
-    const categories = toStringArray(accessibilitySource.categories);
-    const accommodations = toStringArray(accessibilitySource.accommodations);
+    const categories = toStringArray(
+      (accessibilitySource as Record<string, unknown>).disability_categories ??
+        (accessibilitySource as Record<string, unknown>).categories
+    );
+    const accommodations = toStringArray(
+      (accessibilitySource as Record<string, unknown>).workplace_accommodations ??
+        (accessibilitySource as Record<string, unknown>).accommodations
+    );
     const accommodationNeed = toTrimmedString(
-      accessibilitySource.accommodation_need ??
-        accessibilitySource.accommodationNeed
+      (accessibilitySource as Record<string, unknown>).accommodation_needs ??
+        (accessibilitySource as Record<string, unknown>).accommodationNeed ??
+        (accessibilitySource as Record<string, unknown>).accommodation_need
     );
     const disclosurePreference = toTrimmedString(
-      accessibilitySource.disclosure_preference ??
-        accessibilitySource.disclosurePreference
+      (accessibilitySource as Record<string, unknown>).disclosure_preference ??
+        (accessibilitySource as Record<string, unknown>).disclosurePreference
     );
 
     if (categories.length > 0) accessibilityNeeds.categories = categories;
-    if (accommodationNeed) accessibilityNeeds.accommodationNeed = accommodationNeed;
+    if (accommodationNeed)
+      accessibilityNeeds.accommodationNeed =
+        normalizeAccommodationNeed(accommodationNeed);
     if (disclosurePreference)
       accessibilityNeeds.disclosurePreference = disclosurePreference;
     if (accommodations.length > 0)
       accessibilityNeeds.accommodations = accommodations;
   }
 
+  const education: Partial<UserData["education"]> = {};
+  const educationSource = Array.isArray(verifiedProfile?.education)
+    ? verifiedProfile?.education
+    : [];
+  if (educationSource.length > 0) {
+    const first = educationSource.find(isRecord);
+    if (first) {
+      const courseName = toTrimmedString(
+        first.course_name ?? first.courseName ?? first.degree ?? first.course
+      );
+      const major = toTrimmedString(first.major ?? first.field_of_study);
+      const institution = toTrimmedString(first.institution ?? first.school);
+      const graduationDate =
+        toDateFromYear(first.end_year ?? first.graduation_year) || "";
+
+      if (courseName) education.courseName = courseName;
+      if (major) education.major = major;
+      if (institution) education.institution = institution;
+      if (graduationDate) education.graduationDate = graduationDate;
+    }
+  }
+
+  const skillSource = Array.isArray(verifiedProfile?.skills)
+    ? verifiedProfile?.skills
+    : [];
+  const normalizeSkillLevel = (
+    level: unknown
+  ): "basic" | "intermediate" | "advanced" => {
+    const trimmed = toTrimmedString(level).toLowerCase();
+    if (trimmed === "basic" || trimmed === "beginner") return "basic";
+    if (trimmed === "advanced" || trimmed === "expert") return "advanced";
+    return "intermediate";
+  };
+  const mappedSkills = skillSource
+    .map((entry) => {
+      if (!isRecord(entry)) {
+        const name = toTrimmedString(entry);
+        return name ? { name, level: "intermediate" as const } : null;
+      }
+      const name = toTrimmedString(entry.name ?? entry.skill ?? entry.title);
+      if (!name) return null;
+      return {
+        name,
+        level: normalizeSkillLevel(entry.level),
+      };
+    })
+    .filter(Boolean) as Array<{
+    name: string;
+    level: "basic" | "intermediate" | "advanced";
+  }>;
+
+  const languageSource = Array.isArray(verifiedProfile?.languages)
+    ? verifiedProfile?.languages
+    : [];
+  const mappedLanguages = languageSource
+    .map((entry) => {
+      if (!isRecord(entry)) {
+        const label = toTrimmedString(entry);
+        return label
+          ? {
+              language: label,
+              speaking: "",
+              reading: "",
+              writing: "",
+            }
+          : null;
+      }
+      const language = toTrimmedString(entry.language ?? entry.name);
+      if (!language) return null;
+      return {
+        language,
+        speaking: normalizeLanguageLevelFromBackend(entry.speaking),
+        reading: normalizeLanguageLevelFromBackend(entry.reading),
+        writing: normalizeLanguageLevelFromBackend(entry.writing),
+      };
+    })
+    .filter(Boolean) as UserData["otherDetails"]["languages"];
+
   const result: DeepPartialUserData = {};
   if (hasValue(basicInfo)) {
     result.basicInfo = basicInfo;
+  }
+  if (hasValue(education)) {
+    result.education = education;
   }
   if (hasValue(preference)) {
     result.preference = preference;
   }
   if (hasValue(otherDetails)) {
     result.otherDetails = otherDetails;
+  }
+  if (mappedSkills.length > 0) {
+    // Deduplicate by skill name (keep first occurrence)
+    const seen = new Set<string>();
+    const uniqueSkills = mappedSkills.filter((skill) => {
+      const key = skill.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    result.skills = {
+      primaryList: uniqueSkills,
+      skills: "",
+    };
+  }
+  if (mappedLanguages.length > 0) {
+    const otherDetailsPatch: Partial<UserData["otherDetails"]> =
+      result.otherDetails ?? {};
+    otherDetailsPatch.languages = mappedLanguages;
+    result.otherDetails = otherDetailsPatch;
   }
   if (hasValue(accessibilityNeeds)) {
     result.accessibilityNeeds = accessibilityNeeds;
@@ -213,6 +418,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   }
   if (data.basicInfo.lastName.trim()) {
     basicInfo.last_name = data.basicInfo.lastName.trim();
+  }
+  if (data.basicInfo.email.trim()) {
+    basicInfo.email = data.basicInfo.email.trim();
   }
   if (data.basicInfo.phone.trim()) {
     basicInfo.phone = data.basicInfo.phone.trim();
@@ -305,9 +513,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   }
 
   // Skills
-  const skills = normalizeSkills(data.skills.skills, data.skills.primaryList);
-  if (skills.length > 0) {
-    payload.skills = skills;
+  const skillNames = (data.skills.primaryList ?? []).map((skill) => skill.name);
+  if (skillNames.length > 0) {
+    payload.skills = skillNames;
   }
 
   // Projects
@@ -465,74 +673,147 @@ export const buildCandidateProfileUpdatePayload = (
     payload.is_available = true;
   }
 
+  // Relocation and work visa preferences
+  payload.willing_to_relocate = data.preference.willingToRelocate;
+  if (data.preference.hasWorkVisa !== null) {
+    payload.has_workvisa = data.preference.hasWorkVisa;
+  }
+
+  if (data.accessibilityNeeds) {
+    const categories = data.accessibilityNeeds.categories;
+    const accommodations = data.accessibilityNeeds.accommodations;
+    const accommodationNeed = data.accessibilityNeeds.accommodationNeed.trim();
+
+    if (categories.length > 0) {
+      payload.disability_categories = categories;
+    }
+    if (accommodationNeed) {
+      payload.accommodation_needs = toAccommodationNeedValue(accommodationNeed);
+    }
+    if (accommodations.length > 0) {
+      payload.workplace_accommodations = accommodations;
+    }
+  }
+
   return payload;
 };
+
+export const buildCandidateProfileCorePayload = (
+  data: UserData
+): Record<string, unknown> => buildCandidateProfileUpdatePayload(data);
 
 export const buildCandidateProfilePatchPayload = (
   data: UserData
 ): Record<string, unknown> => {
-  const payload = buildVerifyProfilePayload(data);
-  const basicInfo = payload.basic_info;
+  return buildCandidateProfileCorePayload(data);
+};
 
-  if (basicInfo && typeof basicInfo === "object" && !Array.isArray(basicInfo)) {
-    const info = basicInfo as Record<string, unknown>;
-    const firstName =
-      typeof info.first_name === "string" ? info.first_name.trim() : "";
-    const lastName =
-      typeof info.last_name === "string" ? info.last_name.trim() : "";
-    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+type BackendEducationEntry = Record<string, unknown>;
+type BackendSkillEntry = Record<string, unknown>;
+type BackendLanguageEntry = Record<string, unknown>;
 
-    if (fullName) payload.name = fullName;
+const DEFAULT_SKILL_LEVEL = "intermediate";
 
-    const phone = typeof info.phone === "string" ? info.phone.trim() : "";
-    if (phone) payload.phone = phone;
+const normalizeKey = (value: unknown) => toTrimmedString(value).toLowerCase();
 
-    const location =
-      typeof info.location === "string" ? info.location.trim() : "";
-    if (location) payload.location = location;
+const getEducationKey = (entry: Record<string, unknown>) => ({
+  course: normalizeKey(
+    entry.course_name ?? entry.courseName ?? entry.degree ?? entry.course
+  ),
+  institution: normalizeKey(entry.institution ?? entry.school),
+});
 
-    const citizenshipStatus =
-      typeof info.citizenship_status === "string"
-        ? info.citizenship_status.trim()
-        : "";
-    if (citizenshipStatus) payload.citizenship_status = citizenshipStatus;
+export const buildCandidateEducationPayloads = (
+  data: UserData,
+  existing: BackendEducationEntry[] = []
+): Record<string, unknown>[] => {
+  const courseName = data.education.courseName.trim();
+  const major = data.education.major.trim();
+  const institution = data.education.institution.trim();
+  const startYear = extractYear(data.education.from);
+  const endYear =
+    extractYear(data.education.graduationDate) || extractYear(data.education.to);
 
-    const gender = typeof info.gender === "string" ? info.gender.trim() : "";
-    if (gender) payload.gender = gender;
+  const payload: Record<string, unknown> = {};
+  if (courseName) payload.course_name = courseName;
+  if (major) payload.major = major;
+  if (institution) payload.institution = institution;
+  if (startYear) payload.start_year = startYear;
+  if (endYear) payload.end_year = endYear;
 
-    const ethnicity =
-      typeof info.ethnicity === "string" ? info.ethnicity.trim() : "";
-    if (ethnicity) payload.ethnicity = ethnicity;
+  if (!hasValue(payload)) return [];
 
-    const linkedin =
-      typeof info.linkedin_url === "string" ? info.linkedin_url.trim() : "";
-    if (linkedin) payload.linkedin = linkedin;
-
-    const github =
-      typeof info.github_url === "string" ? info.github_url.trim() : "";
-    if (github) payload.github = github;
-
-    const portfolio =
-      typeof info.portfolio_url === "string" ? info.portfolio_url.trim() : "";
-    if (portfolio) payload.portfolio = portfolio;
-
-    const currentStatus =
-      typeof info.current_status === "string" ? info.current_status.trim() : "";
-    if (currentStatus) payload.current_status = currentStatus;
-
-    const profilePhoto =
-      typeof info.profile_photo === "string" ? info.profile_photo.trim() : "";
-    if (profilePhoto) payload.profile_photo = profilePhoto;
+  const payloadKey = getEducationKey(payload);
+  if (payloadKey.course || payloadKey.institution) {
+    const isDuplicate = existing.some((entry) => {
+      const existingKey = getEducationKey(entry);
+      if (payloadKey.course && existingKey.course && payloadKey.course !== existingKey.course) {
+        return false;
+      }
+      if (
+        payloadKey.institution &&
+        existingKey.institution &&
+        payloadKey.institution !== existingKey.institution
+      ) {
+        return false;
+      }
+      return true;
+    });
+    if (isDuplicate) return [];
   }
 
-  const email = data.basicInfo.email.trim();
-  if (email) {
-    payload.email = email;
-  }
+  return [payload];
+};
 
-  delete payload.basic_info;
+export const buildCandidateSkillPayloads = (
+  data: UserData,
+  existing: BackendSkillEntry[] = []
+): Record<string, unknown>[] => {
+  const skillList = data.skills.primaryList ?? [];
+  if (skillList.length === 0) return [];
 
-  Object.assign(payload, buildCandidateProfileUpdatePayload(data));
+  const existingNames = new Set(
+    existing
+      .map((entry) =>
+        normalizeKey(entry.name ?? entry.skill ?? entry.title ?? entry.label)
+      )
+      .filter(Boolean)
+  );
 
-  return payload;
+  return skillList
+    .filter((skill) => !existingNames.has(normalizeKey(skill.name)))
+    .map((skill) => ({
+      name: skill.name,
+      level: skill.level || DEFAULT_SKILL_LEVEL,
+    }));
+};
+
+export const buildCandidateLanguagePayloads = (
+  data: UserData,
+  existing: BackendLanguageEntry[] = []
+): Record<string, unknown>[] => {
+  const existingLanguages = new Set(
+    existing
+      .map((entry) => normalizeKey(entry.language ?? entry.name))
+      .filter(Boolean)
+  );
+
+  return data.otherDetails.languages
+    .map((entry) => {
+      const language = entry.language.trim();
+      const speaking = normalizeLanguageLevelForBackend(entry.speaking);
+      const reading = normalizeLanguageLevelForBackend(entry.reading);
+      const writing = normalizeLanguageLevelForBackend(entry.writing);
+
+      if (!language || !speaking || !reading || !writing) return null;
+      if (existingLanguages.has(normalizeKey(language))) return null;
+
+      return {
+        language,
+        speaking,
+        reading,
+        writing,
+      };
+    })
+    .filter(Boolean) as Record<string, unknown>[];
 };

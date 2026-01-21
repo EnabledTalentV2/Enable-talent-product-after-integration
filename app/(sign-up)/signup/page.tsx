@@ -167,6 +167,24 @@ export default function SignUpPage() {
         }
       }
 
+      if (firstName || lastName) {
+        try {
+          await apiRequest("/api/users/profile/", {
+            method: "PATCH",
+            body: JSON.stringify({
+              first_name: firstName,
+              last_name: lastName,
+            }),
+          });
+        } catch (err) {
+          console.error("[signup] Failed to update user profile:", err);
+          setServerError(
+            "Account created, but we couldn't save your name. Please try again."
+          );
+          return;
+        }
+      }
+
       router.push("/signup/resume-upload");
     } catch (error) {
       console.error("[signup] Error:", error);
