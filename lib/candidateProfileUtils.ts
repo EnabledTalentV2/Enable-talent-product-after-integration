@@ -432,6 +432,64 @@ export const mapCandidateProfileToUserData = (
     })
     .filter(Boolean) as UserData["projects"]["entries"];
 
+  const achievementsContainer = isRecord(verifiedProfile?.achievements)
+    ? verifiedProfile.achievements
+    : isRecord(verifiedProfile?.achievement)
+    ? verifiedProfile.achievement
+    : isRecord(verifiedProfile?.awards)
+    ? verifiedProfile.awards
+    : null;
+  const achievementsSource = Array.isArray(verifiedProfile?.achievements)
+    ? verifiedProfile.achievements
+    : Array.isArray(verifiedProfile?.achievement)
+    ? verifiedProfile.achievement
+    : Array.isArray(verifiedProfile?.awards)
+    ? verifiedProfile.awards
+    : Array.isArray(
+        (achievementsContainer as Record<string, unknown>)?.entries
+      )
+    ? ((achievementsContainer as Record<string, unknown>)
+        ?.entries as unknown[])
+    : [];
+  const mappedAchievements = achievementsSource
+    .map((entry) => {
+      if (!isRecord(entry)) {
+        const title =
+          typeof entry === "string" || typeof entry === "number"
+            ? String(entry).trim()
+            : "";
+        if (!title) return null;
+        return {
+          id: undefined,
+          title,
+          issueDate: "",
+          description: "",
+        };
+      }
+      const title = toTrimmedString(entry.title ?? entry.name);
+      if (!title) return null;
+      const issueDate = toDateValue(
+        entry.issue_date ?? entry.issueDate ?? entry.date
+      );
+      const description = toTrimmedString(
+        entry.description ?? entry.details ?? entry.summary
+      );
+      const idValue =
+        entry.id ?? entry.pk ?? entry.achievement_id ?? entry.achievementId;
+      const id =
+        typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : undefined;
+
+      return {
+        id,
+        title,
+        issueDate,
+        description,
+      };
+    })
+    .filter(Boolean) as UserData["achievements"]["entries"];
+
   const certificationContainer = isRecord(verifiedProfile?.certifications)
     ? verifiedProfile.certifications
     : isRecord(verifiedProfile?.certification)
@@ -591,6 +649,11 @@ export const mapCandidateProfileToUserData = (
     result.projects = {
       noProjects: false,
       entries: mappedProjects,
+    };
+  }
+  if (mappedAchievements.length > 0) {
+    result.achievements = {
+      entries: mappedAchievements,
     };
   }
   if (mappedCertifications.length > 0) {
@@ -796,12 +859,21 @@ export const buildVerifyProfilePayload = (data: UserData) => {
 
   // Achievements
   const achievements = data.achievements.entries
-    .map((entry) => ({
-      title: entry.title.trim(),
-      issue_date: toYearMonth(entry.issueDate),
-      description: entry.description.trim(),
-    }))
-    .filter((entry) => entry.title);
+    .map((entry) => {
+      const title = entry.title.trim();
+      if (!title) return null;
+      const issueDate = toDateValue(entry.issueDate);
+      const description = entry.description.trim();
+      const achievement: Record<string, unknown> = { title };
+      if (issueDate) {
+        achievement.issue_date = issueDate;
+      }
+      if (description) {
+        achievement.description = description;
+      }
+      return achievement;
+    })
+    .filter(Boolean) as Record<string, unknown>[];
   if (achievements.length > 0) {
     payload.achievements = achievements;
   }
@@ -1071,6 +1143,44 @@ export const buildCandidateProjectPayloads = (
       };
     })
     .filter(Boolean) as ProjectUpdate[];
+};
+
+type AchievementPayload = {
+  title: string;
+  issue_date?: string;
+  description?: string;
+};
+
+type AchievementUpdate = {
+  id?: number | string;
+  payload: AchievementPayload;
+};
+
+export const buildCandidateAchievementPayloads = (
+  data: UserData
+): AchievementUpdate[] => {
+  return data.achievements.entries
+    .map((entry) => {
+      const title = entry.title.trim();
+      const issueDate = toDateValue(entry.issueDate);
+      const description = entry.description.trim();
+
+      if (!title) return null;
+
+      const payload: AchievementPayload = { title };
+      if (issueDate) {
+        payload.issue_date = issueDate;
+      }
+      if (description) {
+        payload.description = description;
+      }
+
+      return {
+        id: entry.id,
+        payload,
+      };
+    })
+    .filter(Boolean) as AchievementUpdate[];
 };
 
 type CertificationPayload = {

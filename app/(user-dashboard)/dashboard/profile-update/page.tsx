@@ -16,6 +16,7 @@ import {
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import {
+  buildCandidateAchievementPayloads,
   buildCandidateCertificationPayloads,
   buildCandidateEducationPayloads,
   buildCandidateLanguagePayloads,
@@ -116,6 +117,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const normalizeSkillKey = (value: string) => value.trim().toLowerCase();
 const normalizeProjectKey = (value: string) => value.trim().toLowerCase();
+const normalizeAchievementKey = (title: string, issueDate?: string) => {
+  const titleKey = title.trim().toLowerCase();
+  const dateKey = (issueDate ?? "").trim();
+  return dateKey ? `${titleKey}::${dateKey}` : titleKey;
+};
 const normalizeCertificationKey = (name: string, organization?: string) => {
   const nameKey = name.trim().toLowerCase();
   const orgKey = (organization ?? "").trim().toLowerCase();
@@ -655,6 +661,25 @@ export default function ProfileUpdatePage() {
         : Array.isArray((projectsContainer as Record<string, unknown>)?.entries)
         ? ((projectsContainer as Record<string, unknown>)?.entries as unknown[])
         : [];
+      const achievementsContainer = isRecord(verifiedProfile?.achievements)
+        ? verifiedProfile.achievements
+        : isRecord(verifiedProfile?.achievement)
+        ? verifiedProfile.achievement
+        : isRecord(verifiedProfile?.awards)
+        ? verifiedProfile.awards
+        : null;
+      const existingAchievements = Array.isArray(verifiedProfile?.achievements)
+        ? verifiedProfile.achievements
+        : Array.isArray(verifiedProfile?.achievement)
+        ? verifiedProfile.achievement
+        : Array.isArray(verifiedProfile?.awards)
+        ? verifiedProfile.awards
+        : Array.isArray(
+            (achievementsContainer as Record<string, unknown>)?.entries
+          )
+        ? ((achievementsContainer as Record<string, unknown>)
+            ?.entries as unknown[])
+        : [];
       const certificationsContainer = isRecord(verifiedProfile?.certifications)
         ? verifiedProfile.certifications
         : isRecord(verifiedProfile?.certification)
@@ -955,6 +980,110 @@ export default function ProfileUpdatePage() {
 
       for (const record of projectDeletes) {
         await apiRequest(`/api/candidates/projects/${record.id}/`, {
+          method: "DELETE",
+        });
+      }
+
+      const achievementPayloads = buildCandidateAchievementPayloads(userData);
+      const existingAchievementRecords = existingAchievements
+        .map((entry) => {
+          if (!isRecord(entry)) {
+            const title =
+              typeof entry === "string" || typeof entry === "number"
+                ? String(entry).trim()
+                : "";
+            return title ? { id: undefined, title, issueDate: "" } : null;
+          }
+          const title =
+            typeof entry.title === "string"
+              ? entry.title
+              : typeof entry.name === "string"
+              ? entry.name
+              : "";
+          const issueDate =
+            typeof entry.issue_date === "string"
+              ? entry.issue_date
+              : typeof entry.issueDate === "string"
+              ? entry.issueDate
+              : typeof entry.date === "string"
+              ? entry.date
+              : "";
+          const trimmedTitle = title.trim();
+          const trimmedIssueDate = issueDate.trim();
+          const idValue =
+            entry.id ?? entry.pk ?? entry.achievement_id ?? entry.achievementId;
+          const id =
+            typeof idValue === "number" || typeof idValue === "string"
+              ? idValue
+              : undefined;
+          if (!trimmedTitle && !id) return null;
+          return {
+            id,
+            title: trimmedTitle || (id ? String(id) : ""),
+            issueDate: trimmedIssueDate,
+          };
+        })
+        .filter(Boolean) as Array<{
+        id?: number | string;
+        title: string;
+        issueDate: string;
+      }>;
+
+      const existingAchievementByKey = new Map<
+        string,
+        { id?: number | string; title: string; issueDate: string }
+      >();
+      existingAchievementRecords.forEach((record) => {
+        const key = normalizeAchievementKey(record.title, record.issueDate);
+        if (!key) return;
+        if (!existingAchievementByKey.has(key)) {
+          existingAchievementByKey.set(key, record);
+        }
+      });
+
+      const achievementMap = new Map<
+        string,
+        { id?: number | string; payload: Record<string, unknown> }
+      >();
+      achievementPayloads.forEach((update) => {
+        const key = normalizeAchievementKey(
+          update.payload.title,
+          update.payload.issue_date
+        );
+        if (!key || achievementMap.has(key)) return;
+        achievementMap.set(key, update);
+      });
+
+      for (const [key, update] of achievementMap.entries()) {
+        const resolvedId = update.id ?? existingAchievementByKey.get(key)?.id;
+        if (
+          resolvedId !== null &&
+          resolvedId !== undefined &&
+          resolvedId !== ""
+        ) {
+          await apiRequest(`/api/candidates/achievements/${resolvedId}/`, {
+            method: "PATCH",
+            body: JSON.stringify(update.payload),
+          });
+        } else {
+          await apiRequest("/api/candidates/achievements/", {
+            method: "POST",
+            body: JSON.stringify(update.payload),
+          });
+        }
+      }
+
+      const achievementDeletes = existingAchievementRecords.filter((record) => {
+        if (record.id === undefined || record.id === null || record.id === "") {
+          return false;
+        }
+        const key = normalizeAchievementKey(record.title, record.issueDate);
+        if (!key) return true;
+        return !achievementMap.has(key);
+      });
+
+      for (const record of achievementDeletes) {
+        await apiRequest(`/api/candidates/achievements/${record.id}/`, {
           method: "DELETE",
         });
       }

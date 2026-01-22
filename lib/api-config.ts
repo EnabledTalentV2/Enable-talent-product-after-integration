@@ -62,6 +62,9 @@ export const API_ENDPOINTS = {
     projects: `${BACKEND_URL}/api/candidates/projects/`,
     projectsDetail: (id: string) =>
       `${BACKEND_URL}/api/candidates/projects/${id}/`,
+    achievements: `${BACKEND_URL}/api/candidates/achievements/`,
+    achievementsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/achievements/${id}/`,
     certifications: `${BACKEND_URL}/api/candidates/certifications/`,
     certificationsDetail: (id: string) =>
       `${BACKEND_URL}/api/candidates/certifications/${id}/`,

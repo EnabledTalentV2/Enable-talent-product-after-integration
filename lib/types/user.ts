@@ -81,6 +81,7 @@ export type UserData = {
   };
   achievements: {
     entries: Array<{
+      id?: number | string;
       title: string;
       issueDate: string;
       description: string;
