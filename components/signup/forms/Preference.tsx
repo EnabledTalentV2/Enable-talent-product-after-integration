@@ -136,7 +136,11 @@ export default function Preference({ data, errors, onChange }: Props) {
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
           Do you have a valid work visa?
-          <span className="text-red-500 ml-1">*</span>
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </p>
         <div
           id="preference-hasWorkVisa"

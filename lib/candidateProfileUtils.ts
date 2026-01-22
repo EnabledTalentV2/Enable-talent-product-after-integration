@@ -130,6 +130,14 @@ const toDateFromYear = (value: unknown): string => {
   return year ? `${year}-01-01` : "";
 };
 
+const toDateValue = (value: unknown): string => {
+  const trimmed = toTrimmedString(value);
+  if (!trimmed) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  return trimmed;
+};
+
 const hasValue = (value: unknown): boolean => {
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
@@ -284,6 +292,218 @@ export const mapCandidateProfileToUserData = (
     }
   }
 
+  const workExperienceContainer = isRecord(verifiedProfile?.work_experience)
+    ? verifiedProfile.work_experience
+    : isRecord(verifiedProfile?.workExperience)
+    ? verifiedProfile.workExperience
+    : isRecord(verifiedProfile?.work_experiences)
+    ? verifiedProfile.work_experiences
+    : null;
+  const workExperienceSource = Array.isArray(verifiedProfile?.work_experience)
+    ? verifiedProfile.work_experience
+    : Array.isArray(verifiedProfile?.workExperience)
+    ? verifiedProfile.workExperience
+    : Array.isArray(verifiedProfile?.work_experiences)
+    ? verifiedProfile.work_experiences
+    : Array.isArray(
+        (workExperienceContainer as Record<string, unknown>)?.entries
+      )
+    ? ((workExperienceContainer as Record<string, unknown>)
+        ?.entries as unknown[])
+    : [];
+  const experienceTypeRaw = toTrimmedString(
+    (isRecord(workExperienceContainer) &&
+      (workExperienceContainer.experience_type ??
+        workExperienceContainer.experienceType)) ||
+      verifiedProfile?.experience_type ||
+      verifiedProfile?.experienceType
+  );
+  const experienceType =
+    experienceTypeRaw.toLowerCase().startsWith("fresh") ? "fresher" : "";
+  const mappedWorkEntries = workExperienceSource
+    .map((entry) => {
+      if (!isRecord(entry)) return null;
+      const company = toTrimmedString(
+        entry.company ?? entry.company_name ?? entry.companyName
+      );
+      const role = toTrimmedString(
+        entry.role ??
+          entry.position ??
+          entry.title ??
+          entry.job_title ??
+          entry.jobTitle
+      );
+      const description = toTrimmedString(
+        entry.description ?? entry.responsibilities
+      );
+      const startDate = toDateValue(
+        entry.start_date ?? entry.startDate ?? entry.from
+      );
+      const endDateRaw = entry.end_date ?? entry.endDate ?? entry.to;
+      const currentValue = entry.current ?? entry.is_current ?? entry.isCurrent;
+      const current = typeof currentValue === "boolean" ? currentValue : false;
+      const endDate = current ? "" : toDateValue(endDateRaw);
+      const idValue =
+        entry.id ??
+        entry.pk ??
+        entry.work_experience_id ??
+        entry.workExperienceId;
+      const id =
+        typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : undefined;
+
+      if (!company && !role && !startDate && !endDate && !description && !id) {
+        return null;
+      }
+
+      return {
+        id,
+        company,
+        role,
+        from: startDate,
+        to: endDate,
+        current,
+        description,
+      };
+    })
+    .filter(Boolean) as UserData["workExperience"]["entries"];
+
+  const projectContainer = isRecord(verifiedProfile?.projects)
+    ? verifiedProfile.projects
+    : isRecord(verifiedProfile?.project)
+    ? verifiedProfile.project
+    : null;
+  const projectSource = Array.isArray(verifiedProfile?.projects)
+    ? verifiedProfile.projects
+    : Array.isArray(verifiedProfile?.project)
+    ? verifiedProfile.project
+    : Array.isArray((projectContainer as Record<string, unknown>)?.entries)
+    ? ((projectContainer as Record<string, unknown>)?.entries as unknown[])
+    : [];
+  const mappedProjects = projectSource
+    .map((entry) => {
+      if (!isRecord(entry)) return null;
+      const projectName = toTrimmedString(
+        entry.project_name ??
+          entry.projectName ??
+          entry.name ??
+          entry.title ??
+          entry.project
+      );
+      const description = toTrimmedString(
+        entry.description ??
+          entry.project_description ??
+          entry.projectDescription ??
+          entry.details
+      );
+      const startDate = toDateValue(
+        entry.start_date ?? entry.startDate ?? entry.from
+      );
+      const endDateRaw = entry.end_date ?? entry.endDate ?? entry.to;
+      const currentValue = entry.is_current ?? entry.isCurrent ?? entry.current;
+      const current = typeof currentValue === "boolean" ? currentValue : false;
+      const endDate = current ? "" : toDateValue(endDateRaw);
+      const idValue =
+        entry.id ?? entry.pk ?? entry.project_id ?? entry.projectId;
+      const id =
+        typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : undefined;
+
+      if (
+        !projectName &&
+        !description &&
+        !startDate &&
+        !endDate &&
+        !id
+      ) {
+        return null;
+      }
+
+      return {
+        id,
+        projectName,
+        projectDescription: description,
+        current,
+        from: startDate,
+        to: endDate,
+      };
+    })
+    .filter(Boolean) as UserData["projects"]["entries"];
+
+  const certificationContainer = isRecord(verifiedProfile?.certifications)
+    ? verifiedProfile.certifications
+    : isRecord(verifiedProfile?.certification)
+    ? verifiedProfile.certification
+    : isRecord(verifiedProfile?.certificates)
+    ? verifiedProfile.certificates
+    : null;
+  const certificationSource = Array.isArray(verifiedProfile?.certifications)
+    ? verifiedProfile.certifications
+    : Array.isArray(verifiedProfile?.certification)
+    ? verifiedProfile.certification
+    : Array.isArray(verifiedProfile?.certificates)
+    ? verifiedProfile.certificates
+    : Array.isArray(
+        (certificationContainer as Record<string, unknown>)?.entries
+      )
+    ? ((certificationContainer as Record<string, unknown>)
+        ?.entries as unknown[])
+    : [];
+  const mappedCertifications = certificationSource
+    .map((entry) => {
+      if (!isRecord(entry)) return null;
+      const name = toTrimmedString(
+        entry.name ??
+          entry.title ??
+          entry.certification_name ??
+          entry.certificationName
+      );
+      if (!name) return null;
+      const organization = toTrimmedString(
+        entry.issuing_organization ??
+          entry.organization ??
+          entry.issued_by ??
+          entry.issuedBy ??
+          entry.issuer
+      );
+      const issueDate = toDateValue(
+        entry.issue_date ?? entry.issueDate ?? entry.date
+      );
+      const expiryDate = toDateValue(
+        entry.expiry_date ??
+          entry.expiryDate ??
+          entry.expiration_date ??
+          entry.expirationDate
+      );
+      const credentialIdUrl = toTrimmedString(
+        entry.credential_url ??
+          entry.credentialUrl ??
+          entry.credential_id_url ??
+          entry.credentialIdUrl ??
+          entry.credential_id ??
+          entry.credentialId ??
+          entry.url
+      );
+      const idValue =
+        entry.id ?? entry.pk ?? entry.certification_id ?? entry.certificationId;
+      const id =
+        typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : undefined;
+
+      return {
+        id,
+        name,
+        issueDate,
+        expiryDate,
+        organization,
+        credentialIdUrl,
+      };
+    })
+    .filter(Boolean) as UserData["certification"]["entries"];
+
   const skillSource = Array.isArray(verifiedProfile?.skills)
     ? verifiedProfile?.skills
     : [];
@@ -299,16 +519,25 @@ export const mapCandidateProfileToUserData = (
     .map((entry) => {
       if (!isRecord(entry)) {
         const name = toTrimmedString(entry);
-        return name ? { name, level: "intermediate" as const } : null;
+        return name
+          ? { name, level: "intermediate" as const, id: undefined }
+          : null;
       }
       const name = toTrimmedString(entry.name ?? entry.skill ?? entry.title);
       if (!name) return null;
+      const idValue = entry.id ?? entry.pk ?? entry.skill_id ?? entry.skillId;
+      const id =
+        typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : undefined;
       return {
         name,
         level: normalizeSkillLevel(entry.level),
+        id,
       };
     })
     .filter(Boolean) as Array<{
+    id?: number | string;
     name: string;
     level: "basic" | "intermediate" | "advanced";
   }>;
@@ -346,6 +575,29 @@ export const mapCandidateProfileToUserData = (
   }
   if (hasValue(education)) {
     result.education = education;
+  }
+  if (mappedWorkEntries.length > 0) {
+    result.workExperience = {
+      experienceType: "experienced",
+      entries: mappedWorkEntries,
+    };
+  } else if (experienceType === "fresher") {
+    result.workExperience = {
+      experienceType: "fresher",
+      entries: [],
+    };
+  }
+  if (mappedProjects.length > 0) {
+    result.projects = {
+      noProjects: false,
+      entries: mappedProjects,
+    };
+  }
+  if (mappedCertifications.length > 0) {
+    result.certification = {
+      noCertification: false,
+      entries: mappedCertifications,
+    };
   }
   if (hasValue(preference)) {
     result.preference = preference;
@@ -400,12 +652,6 @@ const toYearMonth = (value: string) => {
   if (!trimmed) return "";
   const match = trimmed.match(/^(\d{4}-\d{2})/);
   return match ? match[1] : trimmed;
-};
-
-const getCurrentYearMonth = () => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${now.getFullYear()}-${month}`;
 };
 
 export const buildVerifyProfilePayload = (data: UserData) => {
@@ -493,19 +739,23 @@ export const buildVerifyProfilePayload = (data: UserData) => {
       : data.workExperience.entries;
   const workExperience = workEntries
     .map((entry) => {
-      const startDate = toYearMonth(entry.from);
-      const endDate = entry.current
-        ? getCurrentYearMonth()
-        : toYearMonth(entry.to);
+      const company = entry.company.trim();
+      const role = entry.role.trim();
+      const startDate = toDateValue(entry.from);
+      const endDate = entry.current ? null : toDateValue(entry.to) || null;
+      const description = entry.description.trim();
 
-      return {
-        company: entry.company.trim(),
-        role: entry.role.trim(),
+      const workEntry: Record<string, unknown> = {
+        company,
+        role,
         start_date: startDate,
-        end_date: endDate || undefined,
-        current: entry.current || false,
-        description: entry.description.trim() || undefined,
+        end_date: endDate,
+        current: Boolean(entry.current),
       };
+      if (description) {
+        workEntry.description = description;
+      }
+      return workEntry;
     })
     .filter((entry) => entry.company && entry.role && entry.start_date);
   if (workExperience.length > 0) {
@@ -522,20 +772,23 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   if (!data.projects.noProjects) {
     const projects = data.projects.entries
       .map((entry) => {
-        const startDate = toYearMonth(entry.from);
-        const endDate = entry.current
-          ? getCurrentYearMonth()
-          : toYearMonth(entry.to);
-
-        return {
-          project_name: entry.projectName.trim(),
-          description: entry.projectDescription.trim(),
-          start_date: startDate,
-          end_date: endDate || undefined,
-          current: entry.current || false,
+        const projectName = entry.projectName.trim();
+        if (!projectName) return null;
+        const startDate = toDateValue(entry.from);
+        const endDate = entry.current ? null : toDateValue(entry.to) || null;
+        const description = entry.projectDescription.trim();
+        const project: Record<string, unknown> = {
+          project_name: projectName,
+          start_date: startDate || null,
+          end_date: endDate,
+          is_current: Boolean(entry.current),
         };
+        if (description) {
+          project.description = description;
+        }
+        return project;
       })
-      .filter((entry) => entry.project_name && entry.start_date);
+      .filter(Boolean) as Record<string, unknown>[];
     if (projects.length > 0) {
       payload.projects = projects;
     }
@@ -556,13 +809,30 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   // Certifications
   if (!data.certification.noCertification) {
     const certifications = data.certification.entries
-      .map((entry) => ({
-        name: entry.name.trim(),
-        issue_date: toYearMonth(entry.issueDate),
-        organization: entry.organization.trim(),
-        credential_id_url: entry.credentialIdUrl.trim(),
-      }))
-      .filter((entry) => entry.name);
+      .map((entry) => {
+        const name = entry.name.trim();
+        if (!name) return null;
+        const issuingOrganization = entry.organization.trim();
+        const issueDate = toDateValue(entry.issueDate);
+        const expiryDate = toDateValue(entry.expiryDate ?? "");
+        const credentialUrl = entry.credentialIdUrl.trim();
+
+        const certification: Record<string, unknown> = { name };
+        if (issuingOrganization) {
+          certification.issuing_organization = issuingOrganization;
+        }
+        if (issueDate) {
+          certification.issue_date = issueDate;
+        }
+        if (expiryDate) {
+          certification.expiry_date = expiryDate;
+        }
+        if (credentialUrl) {
+          certification.credential_url = credentialUrl;
+        }
+        return certification;
+      })
+      .filter(Boolean) as Record<string, unknown>[];
     if (certifications.length > 0) {
       payload.certifications = certifications;
     }
@@ -708,11 +978,154 @@ export const buildCandidateProfilePatchPayload = (
   return buildCandidateProfileCorePayload(data);
 };
 
+type WorkExperiencePayload = {
+  company: string;
+  role: string;
+  start_date: string;
+  end_date: string | null;
+  current: boolean;
+  description?: string;
+};
+
+type WorkExperienceUpdate = {
+  id?: number | string;
+  payload: WorkExperiencePayload;
+};
+
+export const buildCandidateWorkExperiencePayloads = (
+  data: UserData
+): WorkExperienceUpdate[] => {
+  if (data.workExperience.experienceType === "fresher") return [];
+
+  return data.workExperience.entries
+    .map((entry) => {
+      const company = entry.company.trim();
+      const role = entry.role.trim();
+      const startDate = toDateValue(entry.from);
+      const endDate = entry.to ? toDateValue(entry.to) : "";
+      const current = Boolean(entry.current);
+      const description = entry.description.trim();
+
+      if (!company || !role || !startDate) return null;
+
+      const payload: WorkExperiencePayload = {
+        company,
+        role,
+        start_date: startDate,
+        end_date: current ? null : endDate || null,
+        current,
+      };
+      if (description) {
+        payload.description = description;
+      }
+
+      return {
+        id: entry.id,
+        payload,
+      };
+    })
+    .filter(Boolean) as WorkExperienceUpdate[];
+};
+
+type ProjectPayload = {
+  project_name: string;
+  description?: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+};
+
+type ProjectUpdate = {
+  id?: number | string;
+  payload: ProjectPayload;
+};
+
+export const buildCandidateProjectPayloads = (
+  data: UserData
+): ProjectUpdate[] => {
+  if (data.projects.noProjects) return [];
+
+  return data.projects.entries
+    .map((entry) => {
+      const projectName = entry.projectName.trim();
+      const description = entry.projectDescription.trim();
+      const startDate = toDateValue(entry.from);
+      const endDate = entry.to ? toDateValue(entry.to) : "";
+      const isCurrent = Boolean(entry.current);
+
+      if (!projectName) return null;
+
+      const payload: ProjectPayload = {
+        project_name: projectName,
+        start_date: startDate || null,
+        end_date: isCurrent ? null : endDate || null,
+        is_current: isCurrent,
+      };
+      if (description) {
+        payload.description = description;
+      }
+
+      return {
+        id: entry.id,
+        payload,
+      };
+    })
+    .filter(Boolean) as ProjectUpdate[];
+};
+
+type CertificationPayload = {
+  name: string;
+  issuing_organization?: string;
+  issue_date?: string;
+  expiry_date?: string;
+  credential_url?: string;
+};
+
+type CertificationUpdate = {
+  id?: number | string;
+  payload: CertificationPayload;
+};
+
+export const buildCandidateCertificationPayloads = (
+  data: UserData
+): CertificationUpdate[] => {
+  if (data.certification.noCertification) return [];
+
+  return data.certification.entries
+    .map((entry) => {
+      const name = entry.name.trim();
+      const issuingOrganization = entry.organization.trim();
+      const issueDate = toDateValue(entry.issueDate);
+      const expiryDate = toDateValue(entry.expiryDate ?? "");
+      const credentialUrl = entry.credentialIdUrl.trim();
+
+      if (!name) return null;
+
+      const payload: CertificationPayload = { name };
+      if (issuingOrganization) {
+        payload.issuing_organization = issuingOrganization;
+      }
+      if (issueDate) {
+        payload.issue_date = issueDate;
+      }
+      if (expiryDate) {
+        payload.expiry_date = expiryDate;
+      }
+      if (credentialUrl) {
+        payload.credential_url = credentialUrl;
+      }
+
+      return {
+        id: entry.id,
+        payload,
+      };
+    })
+    .filter(Boolean) as CertificationUpdate[];
+};
+
 type BackendEducationEntry = Record<string, unknown>;
 type BackendSkillEntry = Record<string, unknown>;
 type BackendLanguageEntry = Record<string, unknown>;
-
-const DEFAULT_SKILL_LEVEL = "intermediate";
 
 const normalizeKey = (value: unknown) => toTrimmedString(value).toLowerCase();
 
@@ -774,17 +1187,19 @@ export const buildCandidateSkillPayloads = (
 
   const existingNames = new Set(
     existing
-      .map((entry) =>
-        normalizeKey(entry.name ?? entry.skill ?? entry.title ?? entry.label)
-      )
+      .map((entry) => {
+        if (!isRecord(entry)) return normalizeKey(entry);
+        return normalizeKey(
+          entry.name ?? entry.skill ?? entry.title ?? entry.label
+        );
+      })
       .filter(Boolean)
   );
 
   return skillList
     .filter((skill) => !existingNames.has(normalizeKey(skill.name)))
     .map((skill) => ({
-      name: skill.name,
-      level: skill.level || DEFAULT_SKILL_LEVEL,
+      name: skill.name.trim(),
     }));
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
 import RecentJobCard from "@/components/employer/dashboard/RecentJobCard";
 import CandidateCard from "@/components/employer/dashboard/CandidateCard";
@@ -8,6 +8,7 @@ import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { useSelectedCandidatesStore } from "@/lib/selectedCandidatesStore";
 import {
   emptyJobStats,
   formatExperienceLabel,
@@ -75,8 +76,23 @@ const getBrandStyle = (company: string) =>
 
 export default function EmployerDashboardPage() {
   const jobs = useEmployerJobsStore((state) => state.jobs);
+  const {
+    candidates: selectedCandidates,
+    pagination: selectedCandidatesPagination,
+    isLoading: isLoadingCandidates,
+    hasFetched: hasFetchedCandidates,
+    fetchSelectedCandidates,
+  } = useSelectedCandidatesStore();
+
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
+
+  // Fetch selected candidates on mount
+  useEffect(() => {
+    if (!hasFetchedCandidates && !isLoadingCandidates) {
+      fetchSelectedCandidates();
+    }
+  }, [hasFetchedCandidates, isLoadingCandidates, fetchSelectedCandidates]);
 
   // Filter points based on activeRange
   const filteredPoints = useMemo(() => {
@@ -96,7 +112,7 @@ export default function EmployerDashboardPage() {
   const hasChartData = filteredPoints.length > 0;
 
   const totalActiveJobs = jobs.filter((job) => job.status === "Active").length;
-  const totalAcceptedCandidates = 0;
+  const totalAcceptedCandidates = selectedCandidatesPagination?.total ?? 0;
   const totalMatchingCandidates = 0;
 
   const recentJobs = useMemo<RecentJob[]>(() => {
@@ -121,7 +137,19 @@ export default function EmployerDashboardPage() {
       });
   }, [jobs]);
 
-  const acceptedCandidates: AcceptedCandidate[] = [];
+  // Map selected candidates from store to UI format
+  const acceptedCandidates: AcceptedCandidate[] = useMemo(() => {
+    return selectedCandidates.map((candidate) => ({
+      id: String(candidate.id),
+      name: candidate.name,
+      role: candidate.role,
+      location: candidate.location,
+      experience: candidate.experience,
+      matchPercent: candidate.matchPercent,
+      status: candidate.status === "accepted" ? "Active" : candidate.status as "Active" | "Inactive",
+      avatarUrl: candidate.avatarUrl ?? undefined,
+    }));
+  }, [selectedCandidates]);
 
   const summaryMetrics = [
     {
@@ -242,9 +270,19 @@ export default function EmployerDashboardPage() {
             </h2>
           </div>
           <div className="space-y-4">
-            {acceptedCandidates.map((candidate) => (
-              <CandidateCard key={candidate.id} candidate={candidate} />
-            ))}
+            {isLoadingCandidates ? (
+              <div className="rounded-[28px] bg-white p-6 shadow-sm text-center text-sm text-slate-400">
+                Loading candidates...
+              </div>
+            ) : acceptedCandidates.length === 0 ? (
+              <div className="rounded-[28px] bg-white p-6 shadow-sm text-center text-sm text-slate-400">
+                No accepted candidates yet.
+              </div>
+            ) : (
+              acceptedCandidates.map((candidate) => (
+                <CandidateCard key={candidate.id} candidate={candidate} />
+              ))
+            )}
           </div>
         </div>
       </div>

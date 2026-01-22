@@ -27,12 +27,23 @@ export default function Projects({
 }: Props) {
   const entries = data.entries ?? [];
   const noProjects = data.noProjects ?? false;
+  const showDeleteWarning = noProjects && entries.length > 0;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
         0
       )
     : 0;
+
+  const handleNoProjectsChange = (checked: boolean) => {
+    if (checked && entries.length > 0) {
+      const confirmed = window.confirm(
+        "Choosing 'no projects' will remove your existing project entries when you save. Continue?"
+      );
+      if (!confirmed) return;
+    }
+    onNoProjectsChange(checked);
+  };
 
   return (
     <div className="space-y-6">
@@ -50,7 +61,7 @@ export default function Projects({
           id="noProjects"
           type="checkbox"
           checked={noProjects}
-          onChange={(e) => onNoProjectsChange(e.target.checked)}
+          onChange={(e) => handleNoProjectsChange(e.target.checked)}
           className="h-5 w-5 rounded accent-orange-600 cursor-pointer"
         />
         <label
@@ -60,6 +71,12 @@ export default function Projects({
           I don&apos;t have any projects to list
         </label>
       </div>
+      {showDeleteWarning ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Warning: saving with no projects will delete your existing project
+          entries.
+        </div>
+      ) : null}
 
       {!noProjects && (
         <>
@@ -91,6 +108,7 @@ export default function Projects({
                 <InputBlock
                   id={`project-${idx}-projectName`}
                   label="Project name"
+                  required
                   value={entry.projectName}
                   onChange={(v) => onEntryChange(idx, { projectName: v })}
                   placeholder="Enter project name"

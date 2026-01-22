@@ -27,12 +27,23 @@ export default function Certification({
 }: Props) {
   const entries = data.entries;
   const isNone = data.noCertification;
+  const showDeleteWarning = isNone && entries.length > 0;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
         0
       )
     : 0;
+
+  const handleToggleNoCertification = (checked: boolean) => {
+    if (checked && entries.length > 0) {
+      const confirmed = window.confirm(
+        "Choosing 'no certification' will remove your existing certifications when you save. Continue?"
+      );
+      if (!confirmed) return;
+    }
+    onToggleNoCertification(checked);
+  };
 
   return (
     <div className="space-y-6">
@@ -50,7 +61,7 @@ export default function Certification({
           id="cert-noCertification"
           type="checkbox"
           checked={Boolean(data.noCertification)}
-          onChange={(e) => onToggleNoCertification(e.target.checked)}
+          onChange={(e) => handleToggleNoCertification(e.target.checked)}
           className="h-4 w-4 accent-orange-600 border-gray-300 rounded"
         />
         <span>No certification</span>
@@ -59,6 +70,12 @@ export default function Certification({
         Don&apos;t have any certifications? Tick &quot;No certification&quot; to
         skip this step.
       </p>
+      {showDeleteWarning ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Warning: saving with no certification will delete your existing
+          certifications.
+        </div>
+      ) : null}
 
       {isNone ? (
         <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
@@ -95,6 +112,7 @@ export default function Certification({
                 <InputBlock
                   id={`cert-${idx}-name`}
                   label="Name of certification"
+                  required
                   value={entry.name}
                   onChange={(v) => onEntryChange(idx, { name: v })}
                   placeholder="Design Thinking for Innovation"
@@ -113,8 +131,18 @@ export default function Certification({
                 />
 
                 <InputBlock
+                  id={`cert-${idx}-expiryDate`}
+                  label="Expiry Date"
+                  value={entry.expiryDate ?? ""}
+                  onChange={(v) => onEntryChange(idx, { expiryDate: v })}
+                  placeholder="Aug 2026"
+                  error={Boolean(entryErrors.expiryDate)}
+                  errorMessage={entryErrors.expiryDate}
+                />
+
+                <InputBlock
                   id={`cert-${idx}-organization`}
-                  label="Issued organization"
+                  label="Issuing organization"
                   value={entry.organization}
                   onChange={(v) => onEntryChange(idx, { organization: v })}
                   placeholder="University of Virginia"
@@ -129,7 +157,7 @@ export default function Certification({
                       credentialError ? "text-red-600" : "text-slate-700"
                     }`}
                   >
-                    Credential ID/URL
+                    Credential URL
                   </label>
                   <div
                     className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${
@@ -145,7 +173,7 @@ export default function Certification({
                       onChange={(e) =>
                         onEntryChange(idx, { credentialIdUrl: e.target.value })
                       }
-                      placeholder="Enter credential id or url"
+                      placeholder="Enter credential url"
                       className="w-full bg-transparent outline-none"
                     />
                     {credentialError ? (

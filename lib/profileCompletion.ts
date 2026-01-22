@@ -48,12 +48,7 @@ const isEducationComplete = (data: UserData) =>
 const isWorkEntryComplete = (
   entry: UserData["workExperience"]["entries"][number]
 ) =>
-  areAllNonEmpty([
-    entry.company,
-    entry.role,
-    entry.from,
-    entry.description,
-  ]) && (entry.current ? true : isNonEmpty(entry.to));
+  areAllNonEmpty([entry.company, entry.role, entry.from]);
 
 const isWorkExperienceComplete = (data: UserData) =>
   data.workExperience.experienceType === "fresher" ||
@@ -67,8 +62,7 @@ const isSkillsComplete = (data: UserData) => {
 const isProjectEntryComplete = (
   entry: UserData["projects"]["entries"][number]
 ) =>
-  areAllNonEmpty([entry.projectName, entry.projectDescription, entry.from]) &&
-  (entry.current ? true : isNonEmpty(entry.to));
+  isNonEmpty(entry.projectName);
 
 const isProjectsComplete = (data: UserData) =>
   data.projects.noProjects ||
@@ -79,12 +73,7 @@ const isAchievementComplete = () => true;
 const isCertificationEntryComplete = (
   entry: UserData["certification"]["entries"][number]
 ) =>
-  areAllNonEmpty([
-    entry.name,
-    entry.issueDate,
-    entry.organization,
-    entry.credentialIdUrl,
-  ]);
+  isNonEmpty(entry.name);
 
 const isCertificationComplete = (data: UserData) =>
   data.certification.noCertification ||

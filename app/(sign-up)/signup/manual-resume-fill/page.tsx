@@ -283,7 +283,6 @@ export default function ManualResumeFill() {
           { field: "company", message: "Please enter Company Name" },
           { field: "role", message: "Please enter Role" },
           { field: "from", message: "Please enter start date" },
-          { field: "description", message: "Please enter Description" },
         ];
         const entries = userData.workExperience.entries;
         const errors: typeof workExpErrors = { entries: {} };
@@ -294,15 +293,12 @@ export default function ManualResumeFill() {
               company: "Please enter Company Name",
               role: "Please enter Role",
               from: "Please enter start date",
-              to: "Please enter end date",
-              description: "Please enter Description",
             },
           };
           firstId = "workExp-0-company";
         }
         entries.forEach((entry, idx) => {
           requiredFields.forEach(({ field, message }) => {
-            if (field === "to" && entry.current) return;
             if (!entry[field]) {
               if (!errors.entries) errors.entries = {};
               if (!errors.entries[idx]) errors.entries[idx] = {};
@@ -312,12 +308,6 @@ export default function ManualResumeFill() {
               }
             }
           });
-          if (!entry.current && !entry.to) {
-            if (!errors.entries) errors.entries = {};
-            if (!errors.entries[idx]) errors.entries[idx] = {};
-            errors.entries[idx]!.to = "Please enter end date";
-            if (!firstId) firstId = `workExp-${idx}-to`;
-          }
         });
         const hasErrors = Boolean(firstId);
         if (hasErrors) {
@@ -353,12 +343,6 @@ export default function ManualResumeFill() {
           message: string;
         }> = [
           { field: "projectName", message: "Please enter Project name" },
-          {
-            field: "projectDescription",
-            message: "Please enter Project description",
-          },
-          { field: "from", message: "Please enter start date" },
-          { field: "to", message: "Please enter end date" },
         ];
         const projectEntries = userData.projects.entries;
         const projectErrs: typeof projectErrors = { entries: {} };
@@ -367,9 +351,6 @@ export default function ManualResumeFill() {
           projectErrs.entries = {
             0: {
               projectName: "Please enter Project name",
-              projectDescription: "Please enter Project description",
-              from: "Please enter start date",
-              to: "Please enter end date",
             },
           };
           firstProjectId = "project-0-projectName";
@@ -404,15 +385,6 @@ export default function ManualResumeFill() {
           message: string;
         }> = [
           { field: "name", message: "Please enter Name of certification" },
-          { field: "issueDate", message: "Please enter Issue Date" },
-          {
-            field: "organization",
-            message: "Please enter Issued organization",
-          },
-          {
-            field: "credentialIdUrl",
-            message: "Please enter Credential ID/URL",
-          },
         ];
         const certEntries = userData.certification.entries;
         const certErrs: typeof certErrors = { entries: {} };
@@ -421,9 +393,6 @@ export default function ManualResumeFill() {
           certErrs.entries = {
             0: {
               name: "Please enter Name of certification",
-              issueDate: "Please enter Issue Date",
-              organization: "Please enter Issued organization",
-              credentialIdUrl: "Please enter Credential ID/URL",
             },
           };
           firstCertId = "cert-0-name";
@@ -1000,6 +969,7 @@ export default function ManualResumeFill() {
                       {
                         name: "",
                         issueDate: "",
+                        expiryDate: "",
                         organization: "",
                         credentialIdUrl: "",
                       },
@@ -1073,6 +1043,7 @@ export default function ManualResumeFill() {
                     {
                       name: "",
                       issueDate: "",
+                      expiryDate: "",
                       organization: "",
                       credentialIdUrl: "",
                     },

@@ -53,8 +53,18 @@ export const API_ENDPOINTS = {
   candidateData: {
     education: `${BACKEND_URL}/api/candidates/education/`,
     skills: `${BACKEND_URL}/api/candidates/skills/`,
+    skillsDetail: (id: string) => `${BACKEND_URL}/api/candidates/skills/${id}/`,
     languages: `${BACKEND_URL}/api/candidates/languages/`,
     notes: `${BACKEND_URL}/api/candidates/notes/`,
+    workExperience: `${BACKEND_URL}/api/candidates/work-experience/`,
+    workExperienceDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/work-experience/${id}/`,
+    projects: `${BACKEND_URL}/api/candidates/projects/`,
+    projectsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/projects/${id}/`,
+    certifications: `${BACKEND_URL}/api/candidates/certifications/`,
+    certificationsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/certifications/${id}/`,
   },
   // Other APIs
   organizations: {
@@ -63,6 +73,7 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/organization/organizations/${pk}/`,
     createInvite: (pk: string) =>
       `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
+    selectedCandidates: `${BACKEND_URL}/api/organization/selected-candidates/`,
   },
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,

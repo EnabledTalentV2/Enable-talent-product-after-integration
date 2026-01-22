@@ -102,6 +102,7 @@ export default function WorkExperience({
               <InputBlock
                 id={`workExp-${idx}-company`}
                 label="Company Name"
+                required
                 value={entry.company}
                 onChange={(v) => onEntryChange(idx, { company: v })}
                 placeholder="Enter company name"
@@ -112,6 +113,7 @@ export default function WorkExperience({
               <InputBlock
                 id={`workExp-${idx}-role`}
                 label="Role"
+                required
                 value={entry.role}
                 onChange={(v) => onEntryChange(idx, { role: v })}
                 placeholder="Job title"
@@ -128,6 +130,11 @@ export default function WorkExperience({
                     }`}
                   >
                     From
+                    <span aria-hidden="true" className="text-red-600">
+                      {" "}
+                      *
+                    </span>
+                    <span className="sr-only"> (required)</span>
                   </label>
                   <input
                     id={`workExp-${idx}-from`}
@@ -137,6 +144,7 @@ export default function WorkExperience({
                       onEntryChange(idx, { from: e.target.value })
                     }
                     placeholder="Select start date"
+                    aria-required="true"
                     className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                       entryErrors.from
                         ? "border-red-400 focus:ring-red-200 focus:border-red-500"

@@ -207,6 +207,8 @@ type Certification = {
   date?: string;
   expiry_date?: string;
   expiryDate?: string;
+  expiration_date?: string;
+  expirationDate?: string;
   credential_id?: string;
   credentialId?: string;
   credential_url?: string;
@@ -684,6 +686,12 @@ const transformCertifications = (
       const issueDate = formatDate(
         cert.issue_date || cert.issueDate || cert.date
       );
+      const expiryDate = formatDate(
+        cert.expiry_date ||
+          cert.expiryDate ||
+          cert.expiration_date ||
+          cert.expirationDate
+      );
       const credentialIdUrl = extractText(
         cert.credential_url || cert.credentialUrl || cert.url || cert.credential_id || cert.credentialId
       );
@@ -694,6 +702,7 @@ const transformCertifications = (
         name,
         organization,
         issueDate,
+        expiryDate,
         credentialIdUrl,
       };
     })

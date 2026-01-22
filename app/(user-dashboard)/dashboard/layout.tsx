@@ -12,7 +12,6 @@ import {
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
-import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 import {
   validateBackendData,
   logValidationToConsole,
@@ -267,21 +266,8 @@ export default function DashboardLayoutPage({
               } else {
                 // Extract basic profile data (employment preferences, etc.)
                 const profileData = mapCandidateProfileToUserData(profile);
-
-                // Transform resume_data if present
-                const resumeDataPayload =
-                  typeof profile === "object" &&
-                  profile !== null &&
-                  "resume_data" in profile
-                    ? profile.resume_data
-                    : null;
-                const resumeData = transformBackendResumeData(resumeDataPayload);
-
-                // Merge both transformations (resume_data takes priority for overlapping fields)
-                const merged = { ...profileData, ...resumeData };
-
-                if (Object.keys(merged).length > 0) {
-                  patchUserData(merged);
+                if (Object.keys(profileData).length > 0) {
+                  patchUserData(profileData);
                 }
               }
             } else {
