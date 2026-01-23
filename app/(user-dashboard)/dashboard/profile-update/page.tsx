@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { apiRequest, isApiError } from "@/lib/api-client";
@@ -75,6 +75,16 @@ const fallbackAccessibilityNeeds =
 
 const cardClass = "rounded-2xl bg-white p-6 shadow-sm";
 const titleClass = "text-lg font-semibold text-slate-900";
+
+const allowedResumeExtensions = [".pdf"];
+const allowedResumeMimeTypes = new Set(["application/pdf"]);
+const MAX_RESUME_FILE_SIZE = 10 * 1024 * 1024;
+
+const isAllowedResumeFile = (file: File) => {
+  if (file.type && allowedResumeMimeTypes.has(file.type)) return true;
+  const name = file.name.toLowerCase();
+  return allowedResumeExtensions.some((ext) => name.endsWith(ext));
+};
 
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
@@ -472,6 +482,17 @@ export default function ProfileUpdatePage() {
     desiredSalary?: string;
   }>({});
   const [reviewAgreeError, setReviewAgreeError] = useState<string | null>(null);
+  const resumeInputRef = useRef<HTMLInputElement | null>(null);
+  const [resumeUploadError, setResumeUploadError] = useState<string | null>(
+    null
+  );
+  const [resumeUploadSuccess, setResumeUploadSuccess] = useState<string | null>(
+    null
+  );
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [selectedResumeName, setSelectedResumeName] = useState<string | null>(
+    null
+  );
 
   const validationMessage = "Please complete required fields before saving.";
 
@@ -586,18 +607,46 @@ export default function ProfileUpdatePage() {
     setSaving(true);
     setSaveError(null);
 
-    try {
-      const firstName = userData.basicInfo.firstName.trim();
-      const lastName = userData.basicInfo.lastName.trim();
-      if (firstName || lastName) {
-        await apiRequest("/api/users/profile/", {
-          method: "PATCH",
-          body: JSON.stringify({
-            first_name: firstName,
-            last_name: lastName,
-          }),
-        });
-      }
+      try {
+        const firstName = userData.basicInfo.firstName.trim();
+        const lastName = userData.basicInfo.lastName.trim();
+        const personalProfile: Record<string, unknown> = {};
+        const phone = userData.basicInfo.phone.trim();
+        const location = userData.basicInfo.location.trim();
+        const citizenshipStatus = userData.basicInfo.citizenshipStatus.trim();
+        const gender = userData.basicInfo.gender.trim();
+        const ethnicity = userData.basicInfo.ethnicity.trim();
+        const linkedinUrl = userData.basicInfo.linkedinUrl.trim();
+        const githubUrl = userData.basicInfo.githubUrl.trim();
+        const portfolioUrl =
+          userData.basicInfo.portfolioUrl.trim() ||
+          userData.basicInfo.socialProfile.trim();
+        const currentStatus = userData.basicInfo.currentStatus.trim();
+
+        if (phone) personalProfile.phone = phone;
+        if (location) personalProfile.location = location;
+        if (citizenshipStatus)
+          personalProfile.citizenship_status = citizenshipStatus;
+        if (gender) personalProfile.gender = gender;
+        if (ethnicity) personalProfile.ethnicity = ethnicity;
+        if (linkedinUrl) personalProfile.linkedin_url = linkedinUrl;
+        if (githubUrl) personalProfile.github_url = githubUrl;
+        if (portfolioUrl) personalProfile.portfolio_url = portfolioUrl;
+        if (currentStatus) personalProfile.current_status = currentStatus;
+
+        const userPayload: Record<string, unknown> = {};
+        if (firstName) userPayload.first_name = firstName;
+        if (lastName) userPayload.last_name = lastName;
+        if (Object.keys(personalProfile).length > 0) {
+          userPayload.profile = personalProfile;
+        }
+
+        if (Object.keys(userPayload).length > 0) {
+          await apiRequest("/api/auth/users/me/", {
+            method: "PATCH",
+            body: JSON.stringify(userPayload),
+          });
+        }
 
       const profilePayload = buildCandidateProfileCorePayload(userData);
       const hasPayload = Object.keys(profilePayload).length > 0;
@@ -1232,6 +1281,87 @@ export default function ProfileUpdatePage() {
     }
   };
 
+  const handleResumeUploadClick = () => {
+    if (isUploadingResume) return;
+    resumeInputRef.current?.click();
+  };
+
+  const handleResumeRemove = () => {
+    setSelectedResumeName(null);
+    setResumeUploadError(null);
+    setResumeUploadSuccess(null);
+    if (resumeInputRef.current) {
+      resumeInputRef.current.value = "";
+    }
+  };
+
+  const handleResumeUpload = async (file: File) => {
+    if (!candidateSlug) {
+      setResumeUploadError("Unable to upload resume. Missing profile details.");
+      return;
+    }
+
+    setResumeUploadError(null);
+    setResumeUploadSuccess(null);
+    setIsUploadingResume(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("resume_file", file);
+
+      await apiRequest(`/api/candidates/profiles/${candidateSlug}/`, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      try {
+        await apiRequest(
+          `/api/candidates/profiles/${candidateSlug}/parsing-status/?include_resume=true`,
+          { method: "GET" }
+        );
+      } catch (err) {
+        console.warn(
+          "[Profile Update] Unable to start resume parsing status check:",
+          err
+        );
+      }
+
+      setResumeUploadSuccess("Resume uploaded successfully.");
+    } catch (err) {
+      if (isApiError(err) && err.status === 401) {
+        resetUserData();
+        router.replace("/login-talent?next=/dashboard/profile-update");
+        return;
+      }
+      setResumeUploadError("Failed to upload resume. Please try again.");
+    } finally {
+      setIsUploadingResume(false);
+    }
+  };
+
+  const handleResumeFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!isAllowedResumeFile(file)) {
+      setResumeUploadError("Upload a PDF file.");
+      setSelectedResumeName(null);
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_RESUME_FILE_SIZE) {
+      setResumeUploadError("File size exceeds 10MB. Upload a smaller PDF.");
+      setSelectedResumeName(null);
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedResumeName(file.name);
+    setResumeUploadError(null);
+    handleResumeUpload(file);
+  };
+
   const renderSection = (key: StepKey) => {
     switch (key) {
       case "basicInfo":
@@ -1656,13 +1786,56 @@ export default function ProfileUpdatePage() {
       <div className={cardClass}>
         <h2 className={titleClass}>Resume</h2>
         <p className="mt-2 text-base text-slate-600">
-          Resume upload is temporarily unavailable.
+          Upload a new resume to replace your existing one.
         </p>
         <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-          <p className="text-sm font-medium text-slate-500">Coming Soon</p>
-          <p className="mt-1 text-xs text-slate-400">
-            Resume upload feature will be available shortly.
+          <input
+            ref={resumeInputRef}
+            id="profile-resume-input"
+            type="file"
+            accept=".pdf,application/pdf"
+            className="sr-only"
+            disabled={isUploadingResume}
+            aria-describedby="profile-resume-help"
+            onChange={handleResumeFileChange}
+          />
+          <button
+            type="button"
+            onClick={handleResumeUploadClick}
+            disabled={isUploadingResume}
+            className="rounded-lg bg-[#D97706] px-6 py-2.5 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#b76005] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isUploadingResume ? "Uploading..." : "Upload resume"}
+          </button>
+          <p
+            id="profile-resume-help"
+            className="mt-2 text-xs text-slate-400"
+          >
+            PDF only, max 10MB.
           </p>
+          {selectedResumeName ? (
+            <div className="mt-3 flex items-center justify-center gap-3 text-sm text-slate-600">
+              <span>Selected: {selectedResumeName}</span>
+              <button
+                type="button"
+                onClick={handleResumeRemove}
+                disabled={isUploadingResume}
+                className="text-slate-500 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
+          {resumeUploadError ? (
+            <p className="mt-3 text-sm font-medium text-red-600">
+              {resumeUploadError}
+            </p>
+          ) : null}
+          {resumeUploadSuccess ? (
+            <p className="mt-3 text-sm font-medium text-emerald-600">
+              {resumeUploadSuccess}
+            </p>
+          ) : null}
         </div>
       </div>
 

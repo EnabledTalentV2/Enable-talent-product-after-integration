@@ -285,6 +285,21 @@ const toStringArray = (value: unknown): string[] => {
   return [];
 };
 
+const normalizeWorkMode = (value: string): string => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized.includes("remote")) return "Remote";
+  if (normalized.includes("hybrid")) return "Hybrid";
+  if (
+    normalized.includes("on-site") ||
+    normalized.includes("onsite") ||
+    normalized.includes("on site")
+  ) {
+    return "Onsite";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 /**
  * Helper: Split full name into first and last name
  */
@@ -839,7 +854,9 @@ const transformPreference = (
   const additionalInfo = getAdditionalInfo(data);
   const jobSearch = toStringArray(
     data.preferred_work_mode || additionalInfo?.preferred_work_mode
-  );
+  )
+    .map(normalizeWorkMode)
+    .filter(Boolean);
 
   if (jobSearch.length > 0) {
     return { jobSearch };

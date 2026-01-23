@@ -16,7 +16,7 @@ export default function Preference({ data, errors, onChange }: Props) {
 
   const companySizeOptions = ["1 - 10", "10 - 100", "100 - 1000", "1000 - 10000"];
   const jobTypeOptions = ["Full time", "Contract", "Part time", "Intern"];
-  const jobSearchOptions = ["Open to Offer", "Ready for Interviews"];
+  const workModeOptions = ["Remote", "Hybrid", "Onsite"];
 
   const Option = ({
     name,
@@ -103,12 +103,12 @@ export default function Preference({ data, errors, onChange }: Props) {
       </div>
 
       <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">Job Search</p>
+        <p className="text-base font-semibold text-slate-800">Work mode</p>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
-          {jobSearchOptions.map((option) => (
+          {workModeOptions.map((option) => (
             <Option
               key={option}
-              name="preference-jobSearch"
+              name="preference-workMode"
               label={option}
               checked={data.jobSearch.includes(option)}
               onCheckedChange={() =>

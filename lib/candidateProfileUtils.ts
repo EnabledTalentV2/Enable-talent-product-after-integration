@@ -67,12 +67,21 @@ const normalizeAccommodationNeed = (value: string) => {
   return value;
 };
 
+const normalizeDisclosurePreference = (value: string) =>
+  value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+
 const toAccommodationNeedValue = (value: string) => {
   const normalized = toLower(value);
   if (normalized === "yes") return "YES";
   if (normalized === "no") return "NO";
   if (normalized.includes("discuss")) return "PREFER_TO_DISCUSS_LATER";
   return value.toUpperCase();
+};
+
+const toDisclosurePreferenceValue = (value: string) => {
+  const normalized = value.trim();
+  if (!normalized) return "";
+  return normalized.replace(/[\s-]+/g, "_").toUpperCase();
 };
 
 const normalizeEmploymentType = (value: string) => {
@@ -84,6 +93,20 @@ const normalizeEmploymentType = (value: string) => {
   return value;
 };
 
+const normalizeWorkMode = (value: string) => {
+  const normalized = toLower(value);
+  if (normalized.includes("remote")) return "Remote";
+  if (normalized.includes("hybrid")) return "Hybrid";
+  if (
+    normalized.includes("on-site") ||
+    normalized.includes("onsite") ||
+    normalized.includes("on site")
+  ) {
+    return "Onsite";
+  }
+  return toTitleCase(value);
+};
+
 const toEmploymentTypeValue = (value: string) => {
   const normalized = toLower(value);
   if (normalized.includes("full")) return "full-time";
@@ -91,6 +114,20 @@ const toEmploymentTypeValue = (value: string) => {
   if (normalized.includes("contract")) return "contract";
   if (normalized.includes("intern")) return "intern";
   return value;
+};
+
+const toWorkModeValue = (value: string) => {
+  const normalized = toLower(value);
+  if (normalized.includes("remote")) return "remote";
+  if (normalized.includes("hybrid")) return "hybrid";
+  if (
+    normalized.includes("on-site") ||
+    normalized.includes("onsite") ||
+    normalized.includes("on site")
+  ) {
+    return "onsite";
+  }
+  return normalized;
 };
 
 const toExpectedSalary = (value: unknown): string => {
@@ -177,11 +214,46 @@ export const mapCandidateProfileToUserData = (
   const lastName = toTrimmedString(user?.last_name ?? user?.lastName);
   const email = toTrimmedString(user?.email);
   const avatar = toTrimmedString(profile?.avatar);
+  const phone = toTrimmedString(
+    profile?.phone ?? profile?.phone_number ?? profile?.phoneNumber
+  );
+  const location = toTrimmedString(profile?.location);
+  const citizenshipStatus = toTrimmedString(
+    profile?.citizenship_status ?? profile?.citizenshipStatus
+  );
+  const gender = toTrimmedString(profile?.gender);
+  const ethnicity = toTrimmedString(profile?.ethnicity);
+  const linkedinUrl = toTrimmedString(
+    profile?.linkedin_url ?? profile?.linkedinUrl ?? profile?.linkedin
+  );
+  const githubUrl = toTrimmedString(
+    profile?.github_url ?? profile?.githubUrl ?? profile?.github
+  );
+  const portfolioUrl = toTrimmedString(
+    profile?.portfolio_url ?? profile?.portfolioUrl ?? profile?.portfolio
+  );
+  const socialProfile = toTrimmedString(
+    profile?.social_profile ?? profile?.socialProfile
+  );
+  const currentStatus = toTrimmedString(
+    profile?.current_status ?? profile?.currentStatus
+  );
+  const resolvedSocialProfile = socialProfile || portfolioUrl;
 
   if (firstName) basicInfo.firstName = firstName;
   if (lastName) basicInfo.lastName = lastName;
   if (email) basicInfo.email = email;
   if (avatar) basicInfo.profilePhoto = avatar;
+  if (phone) basicInfo.phone = phone;
+  if (location) basicInfo.location = location;
+  if (citizenshipStatus) basicInfo.citizenshipStatus = citizenshipStatus;
+  if (gender) basicInfo.gender = gender;
+  if (ethnicity) basicInfo.ethnicity = ethnicity;
+  if (resolvedSocialProfile) basicInfo.socialProfile = resolvedSocialProfile;
+  if (linkedinUrl) basicInfo.linkedinUrl = linkedinUrl;
+  if (githubUrl) basicInfo.githubUrl = githubUrl;
+  if (portfolioUrl) basicInfo.portfolioUrl = portfolioUrl;
+  if (currentStatus) basicInfo.currentStatus = currentStatus;
 
   const preferenceSource =
     (verifiedProfile &&
@@ -193,7 +265,9 @@ export const mapCandidateProfileToUserData = (
   ).map(normalizeEmploymentType);
   const workModes = toStringArray(
     (preferenceSource as Record<string, unknown>)?.work_mode_preferences
-  );
+  )
+    .map(normalizeWorkMode)
+    .filter(Boolean);
   const preference: Partial<UserData["preference"]> = {};
 
   if (employmentTypes.length > 0) {
@@ -255,9 +329,11 @@ export const mapCandidateProfileToUserData = (
         (accessibilitySource as Record<string, unknown>).accommodationNeed ??
         (accessibilitySource as Record<string, unknown>).accommodation_need
     );
-    const disclosurePreference = toTrimmedString(
-      (accessibilitySource as Record<string, unknown>).disclosure_preference ??
-        (accessibilitySource as Record<string, unknown>).disclosurePreference
+    const disclosurePreference = normalizeDisclosurePreference(
+      toTrimmedString(
+        (accessibilitySource as Record<string, unknown>).disclosure_preference ??
+          (accessibilitySource as Record<string, unknown>).disclosurePreference
+      )
     );
 
     if (categories.length > 0) accessibilityNeeds.categories = categories;
@@ -919,7 +995,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
     preferences.job_type = data.preference.jobType;
   }
   if (data.preference.jobSearch.length > 0) {
-    preferences.job_search_status = data.preference.jobSearch;
+    preferences.work_mode_preferences = data.preference.jobSearch
+      .map((value) => toWorkModeValue(value.trim()))
+      .filter(Boolean);
   }
   if (Object.keys(preferences).length > 0) {
     payload.preferences = preferences;
@@ -994,7 +1072,7 @@ export const buildCandidateProfileUpdatePayload = (
     .map((value) => toEmploymentTypeValue(value.trim()))
     .filter(Boolean);
   const workModes = data.preference.jobSearch
-    .map((value) => value.trim())
+    .map((value) => toWorkModeValue(value.trim()))
     .filter(Boolean);
   const desiredSalary = data.otherDetails.desiredSalary.trim();
   const availability = data.otherDetails.availability.trim();
@@ -1025,12 +1103,18 @@ export const buildCandidateProfileUpdatePayload = (
     const categories = data.accessibilityNeeds.categories;
     const accommodations = data.accessibilityNeeds.accommodations;
     const accommodationNeed = data.accessibilityNeeds.accommodationNeed.trim();
+    const disclosurePreference =
+      data.accessibilityNeeds.disclosurePreference.trim();
 
     if (categories.length > 0) {
       payload.disability_categories = categories;
     }
     if (accommodationNeed) {
       payload.accommodation_needs = toAccommodationNeedValue(accommodationNeed);
+    }
+    if (disclosurePreference) {
+      payload.disclosure_preference =
+        toDisclosurePreferenceValue(disclosurePreference);
     }
     if (accommodations.length > 0) {
       payload.workplace_accommodations = accommodations;

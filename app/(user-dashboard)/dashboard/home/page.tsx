@@ -252,7 +252,7 @@ export default function HomePageDashboard() {
       preferenceItems.push(`Job Type: ${jobType.join(", ")}`);
     }
     if (jobSearch.length > 0) {
-      preferenceItems.push(`Job Search: ${jobSearch.join(", ")}`);
+      preferenceItems.push(`Work mode: ${jobSearch.join(", ")}`);
     }
 
     const languageItems = userData.otherDetails.languages
