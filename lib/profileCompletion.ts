@@ -1,4 +1,4 @@
-import type { UserData } from "@/lib/types/user";
+import type { StepKey, UserData } from "@/lib/types/user";
 
 type Completion = { percent: number; isComplete: boolean };
 
@@ -80,7 +80,6 @@ const isCertificationComplete = (data: UserData) =>
   hasCompleteEntries(data.certification.entries, isCertificationEntryComplete);
 
 const isPreferenceComplete = (data: UserData) =>
-  data.preference.companySize.length > 0 &&
   data.preference.jobType.length > 0 &&
   data.preference.jobSearch.length > 0;
 
@@ -97,7 +96,6 @@ const isLanguageComplete = (
 const isOtherDetailsComplete = (data: UserData) =>
   hasCompleteEntries(data.otherDetails.languages, isLanguageComplete) &&
   areAllNonEmpty([
-    data.otherDetails.careerStage,
     data.otherDetails.availability,
     data.otherDetails.desiredSalary,
   ]);
@@ -134,6 +132,34 @@ export const computeProfileSectionCompletion = (data: UserData) => {
     otherDetails: toCompletion(steps.otherDetails),
     accessibilityNeeds: toCompletion(steps.accessibilityNeeds),
     reviewAgree: toCompletion(steps.reviewAgree),
+  };
+};
+
+const dashboardProfileSections: StepKey[] = [
+  "basicInfo",
+  "education",
+  "workExperience",
+  "skills",
+  "projects",
+  "achievements",
+  "certification",
+  "preference",
+  "otherDetails",
+  "accessibilityNeeds",
+];
+
+export const computeDashboardProfileCompletion = (data: UserData) => {
+  const sections = computeProfileSectionCompletion(data);
+  const totalSteps = dashboardProfileSections.length;
+  const completedSteps = dashboardProfileSections.filter(
+    (key) => sections[key]?.isComplete
+  ).length;
+  const percent =
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+  return {
+    percent,
+    isComplete: totalSteps > 0 && completedSteps === totalSteps,
   };
 };
 

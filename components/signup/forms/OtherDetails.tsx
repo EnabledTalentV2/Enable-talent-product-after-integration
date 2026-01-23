@@ -15,6 +15,7 @@ type Errors = {
 type Props = {
   data: UserData["otherDetails"];
   errors?: Errors;
+  hideCareerStage?: boolean;
   onChange: (
     patch: Partial<
       Pick<
@@ -31,6 +32,7 @@ type Props = {
 export default function OtherDetails({
   data,
   errors,
+  hideCareerStage = false,
   onChange,
   onLanguageChange,
   onAddLanguage,
@@ -44,7 +46,7 @@ export default function OtherDetails({
     }`;
 
   const errorCount =
-    (errors?.careerStage ? 1 : 0) +
+    (hideCareerStage ? 0 : errors?.careerStage ? 1 : 0) +
     (errors?.availability ? 1 : 0) +
     (errors?.desiredSalary ? 1 : 0) +
     (errors?.languages
@@ -274,38 +276,40 @@ export default function OtherDetails({
         </button>
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="otherDetails-careerStage"
-          className={`block text-base font-medium ${
-            errors?.careerStage ? "text-red-600" : "text-slate-700"
-          }`}
-        >
-          How would you identify your career stage (choose best option)
-          <span aria-hidden="true" className="text-red-600">
-            {" "}
-            *
-          </span>
-          <span className="sr-only"> (required)</span>
-        </label>
-        <select
-          id="otherDetails-careerStage"
-          value={data.careerStage}
-          onChange={(e) => onChange({ careerStage: e.target.value })}
-          aria-required="true"
-          className={selectClass(Boolean(errors?.careerStage))}
-        >
-          <option value="">Select</option>
-          {careerStageOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        {errors?.careerStage ? (
-          <p className="text-sm text-red-600">{errors.careerStage}</p>
-        ) : null}
-      </div>
+      {!hideCareerStage ? (
+        <div className="space-y-2">
+          <label
+            htmlFor="otherDetails-careerStage"
+            className={`block text-base font-medium ${
+              errors?.careerStage ? "text-red-600" : "text-slate-700"
+            }`}
+          >
+            How would you identify your career stage (choose best option)
+            <span aria-hidden="true" className="text-red-600">
+              {" "}
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <select
+            id="otherDetails-careerStage"
+            value={data.careerStage}
+            onChange={(e) => onChange({ careerStage: e.target.value })}
+            aria-required="true"
+            className={selectClass(Boolean(errors?.careerStage))}
+          >
+            <option value="">Select</option>
+            {careerStageOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          {errors?.careerStage ? (
+            <p className="text-sm text-red-600">{errors.careerStage}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <label

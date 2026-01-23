@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { apiRequest, isApiError } from "@/lib/api-client";
 import {
-  computeProfileCompletion,
   computeProfileSectionCompletion,
 } from "@/lib/profileCompletion";
 import type { StepKey, UserData } from "@/lib/types/user";
@@ -36,7 +35,6 @@ import Certification from "@/components/signup/forms/Certification";
 import Preference from "@/components/signup/forms/Preference";
 import OtherDetails from "@/components/signup/forms/OtherDetails";
 import AccessibilityNeeds from "@/components/signup/forms/AccessibilityNeeds";
-import ReviewAndAgree from "@/components/signup/forms/ReviewAndAgree";
 
 const sectionOrder: StepKey[] = [
   "basicInfo",
@@ -49,7 +47,6 @@ const sectionOrder: StepKey[] = [
   "preference",
   "otherDetails",
   "accessibilityNeeds",
-  "reviewAgree",
 ];
 
 const sectionLabels: Record<StepKey, string> = {
@@ -116,7 +113,6 @@ type RequiredValidationResult = {
     availability?: string;
     desiredSalary?: string;
   };
-  reviewAgreeError: string | null;
   firstErrorId: string | null;
   hasErrors: boolean;
 };
@@ -318,16 +314,11 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
   const requiredOtherFields: Array<{
     field: keyof Pick<
       UserData["otherDetails"],
-      "careerStage" | "availability" | "desiredSalary"
+      "availability" | "desiredSalary"
     >;
     message: string;
     id: string;
   }> = [
-    {
-      field: "careerStage",
-      message: "Please select your career stage",
-      id: "otherDetails-careerStage",
-    },
     {
       field: "availability",
       message:
@@ -383,13 +374,6 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
     if (!firstErrorId) firstErrorId = "preference-hasWorkVisa";
   }
 
-  const reviewAgreeError = data.reviewAgree.agree
-    ? null
-    : "Please accept the terms and conditions.";
-  if (reviewAgreeError) {
-    hasErrors = true;
-  }
-
   return {
     basicInfoErrors,
     educationErrors,
@@ -399,7 +383,6 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
     certErrors,
     preferenceErrors,
     otherDetailsErrors,
-    reviewAgreeError,
     firstErrorId,
     hasErrors,
   };
@@ -483,7 +466,6 @@ export default function ProfileUpdatePage() {
     availability?: string;
     desiredSalary?: string;
   }>({});
-  const [reviewAgreeError, setReviewAgreeError] = useState<string | null>(null);
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
   const [resumeUploadError, setResumeUploadError] = useState<string | null>(
     null
@@ -498,14 +480,23 @@ export default function ProfileUpdatePage() {
 
   const validationMessage = "Please complete required fields before saving.";
 
-  const completion = useMemo(
-    () => computeProfileCompletion(userData),
-    [userData]
-  );
   const sectionCompletion = useMemo(
     () => computeProfileSectionCompletion(userData),
     [userData]
   );
+  const completion = useMemo(() => {
+    const totalSteps = sectionOrder.length;
+    const completedSteps = sectionOrder.filter(
+      (key) => sectionCompletion[key]?.isComplete
+    ).length;
+    const percent =
+      totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+    return {
+      percent,
+      isComplete: totalSteps > 0 && completedSteps === totalSteps,
+    };
+  }, [sectionCompletion]);
   const incompleteSections = useMemo(
     () => sectionOrder.filter((key) => !sectionCompletion[key].isComplete),
     [sectionCompletion]
@@ -564,7 +555,6 @@ export default function ProfileUpdatePage() {
     setCertErrors(validation.certErrors);
     setPreferenceErrors(validation.preferenceErrors);
     setOtherDetailsErrors(validation.otherDetailsErrors);
-    setReviewAgreeError(validation.reviewAgreeError);
 
     if (!validation.hasErrors && saveError === validationMessage) {
       setSaveError(null);
@@ -598,7 +588,6 @@ export default function ProfileUpdatePage() {
     setCertErrors(validation.certErrors);
     setPreferenceErrors(validation.preferenceErrors);
     setOtherDetailsErrors(validation.otherDetailsErrors);
-    setReviewAgreeError(validation.reviewAgreeError);
     setFirstErrorId(validation.firstErrorId);
 
     if (validation.hasErrors) {
@@ -1686,6 +1675,7 @@ export default function ProfileUpdatePage() {
           <Preference
             data={userData.preference}
             errors={preferenceErrors}
+            hideCompanySize
             onChange={(patch) =>
               setUserData((prev) => ({
                 ...prev,
@@ -1699,6 +1689,7 @@ export default function ProfileUpdatePage() {
           <OtherDetails
             data={userData.otherDetails}
             errors={otherDetailsErrors}
+            hideCareerStage
             onChange={(patch) =>
               setUserData((prev) => ({
                 ...prev,
@@ -1762,25 +1753,6 @@ export default function ProfileUpdatePage() {
               }))
             }
           />
-        );
-      case "reviewAgree":
-        return (
-          <div className="space-y-3">
-            <ReviewAndAgree
-              data={userData.reviewAgree}
-              onChange={(patch) =>
-                setUserData((prev) => ({
-                  ...prev,
-                  reviewAgree: { ...prev.reviewAgree, ...patch },
-                }))
-              }
-            />
-            {reviewAgreeError ? (
-              <p className="text-sm font-medium text-red-600">
-                {reviewAgreeError}
-              </p>
-            ) : null}
-          </div>
         );
       default:
         return null;

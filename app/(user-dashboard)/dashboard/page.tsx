@@ -9,7 +9,7 @@ import AttentionWidget from "@/components/employer/dashboard/AttentionWidget";
 import DashboardSummaryCard from "@/components/employer/dashboard/DashboardSummaryCard";
 import TimeRangeTabs from "@/components/employer/dashboard/TimeRangeTabs";
 import { getNotifications, requestNote } from "@/lib/notifications";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 
@@ -119,7 +119,7 @@ export default function DashboardPage() {
   );
 
   const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
+    () => computeDashboardProfileCompletion(userData),
     [userData]
   );
   const profileMatchStrength = Math.round(profilePercent);
