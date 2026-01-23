@@ -2,66 +2,102 @@ import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 /**
  * Backend response structure from /api/candidates/profiles/
+ * Updated to match the actual API response format
  */
 type BackendCandidateProfile = {
-  user: {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    is_verified: boolean;
-  };
+  id: number | string;
   slug: string;
-  resume_file?: string;
-  resume_data?: {
-    skills?: string[];
-    experience?: string;
-    education?: string;
-    summary?: string;
-  };
-  employment_type_preferences?: string[];
-  work_mode_preferences?: string[];
-  expected_salary_range?: string;
+  name?: string;
+  title?: string | null;
+  location?: string | null;
+  about?: string | null;
   is_available?: boolean;
-  bio?: string;
-  linkedin?: string;
-  github?: string;
-  portfolio?: string;
-  video_pitch?: string;
-  visa_sponsorship_required?: boolean;
-  willing_to_relocate?: boolean;
-  organization?: {
-    id: string;
-    name: string;
-    headquarter_location?: string;
+  matching_score?: number | null;
+  work_preferences?: {
+    employment_type?: string[];
+    work_mode?: string[];
+    relocation?: boolean;
+    has_workvisa?: boolean;
+  };
+  skills?: string[];
+  work_experience?: Array<{
+    company?: string;
+    title?: string;
+    description?: string;
+    start_date?: string;
+    end_date?: string;
+  }>;
+  education?: Array<{
+    institution?: string;
+    degree?: string;
+    field?: string;
+    start_date?: string;
+    end_date?: string;
+  }>;
+  certifications?: Array<{
+    name?: string;
+    issuer?: string;
+    date?: string;
+  }>;
+  links?: {
+    linkedin?: string;
+    github?: string;
+    portfolio?: string;
   };
   created_at?: string;
   updated_at?: string;
 };
 
 /**
- * Parse salary range string (e.g., "60000-80000") to min/max numbers
+ * Parse name string into first and last name
  */
-function parseSalaryRange(range?: string): {
-  salary_min?: number;
-  salary_max?: number;
-} {
-  if (!range || typeof range !== "string") {
-    return {};
+function parseName(name?: string): { first_name: string; last_name: string } {
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return { first_name: "", last_name: "" };
   }
 
-  const parts = range.split("-").map((s) => s.trim());
-  if (parts.length !== 2) {
-    return {};
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return { first_name: parts[0], last_name: "" };
   }
 
-  const min = parseInt(parts[0], 10);
-  const max = parseInt(parts[1], 10);
+  const first_name = parts[0];
+  const last_name = parts.slice(1).join(" ");
+  return { first_name, last_name };
+}
 
-  return {
-    salary_min: isNaN(min) ? undefined : min,
-    salary_max: isNaN(max) ? undefined : max,
-  };
+/**
+ * Format work experience for resume_parsed
+ */
+function formatExperience(
+  experience?: BackendCandidateProfile["work_experience"]
+): string | undefined {
+  if (!experience || experience.length === 0) return undefined;
+
+  return experience
+    .map((exp) => {
+      const parts = [exp.title, exp.company].filter(Boolean);
+      return parts.join(" at ");
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+/**
+ * Format education for resume_parsed
+ */
+function formatEducation(
+  education?: BackendCandidateProfile["education"]
+): string | undefined {
+  if (!education || education.length === 0) return undefined;
+
+  return education
+    .map((edu) => {
+      const parts = [edu.degree, edu.field, edu.institution].filter(Boolean);
+      return parts.join(", ");
+    })
+    .filter(Boolean)
+    .join("; ");
 }
 
 /**
@@ -70,40 +106,37 @@ function parseSalaryRange(range?: string): {
 export function transformCandidateProfile(
   backend: BackendCandidateProfile
 ): CandidateProfile {
-  const salary = parseSalaryRange(backend.expected_salary_range);
+  const { first_name, last_name } = parseName(backend.name);
 
   return {
-    id: backend.user.id,
+    id: String(backend.id),
     slug: backend.slug,
-    user_id: backend.user.id,
-    first_name: backend.user.first_name || "",
-    last_name: backend.user.last_name || "",
-    email: backend.user.email,
-    location: backend.organization?.headquarter_location,
+    user_id: String(backend.id),
+    first_name,
+    last_name,
+    email: backend.links?.linkedin || "", // Using linkedin as email fallback since email isn't in response
+    location: backend.location || undefined,
 
-    // Resume
-    resume_url: backend.resume_file,
-    resume_file: backend.resume_file,
-    resume_parsed: backend.resume_data,
-
-    // Verified data
-    is_verified: backend.user.is_verified,
+    // Resume parsed data from skills, work_experience, education
+    resume_parsed: {
+      skills: backend.skills,
+      experience: formatExperience(backend.work_experience),
+      education: formatEducation(backend.education),
+      summary: backend.about || undefined,
+    },
 
     // Work preferences
-    job_type: backend.employment_type_preferences?.[0],
-    work_arrangement: backend.work_mode_preferences?.[0],
+    job_type: backend.work_preferences?.employment_type?.[0],
+    work_arrangement: backend.work_preferences?.work_mode?.[0],
     availability: backend.is_available ? "Available" : "Not available",
-    salary_min: salary.salary_min,
-    salary_max: salary.salary_max,
-    visa_required: backend.visa_sponsorship_required,
-    willing_to_relocate: backend.willing_to_relocate,
+    visa_required: backend.work_preferences?.has_workvisa === false,
+    willing_to_relocate: backend.work_preferences?.relocation,
 
     // Additional info
-    video_pitch: backend.video_pitch,
-    bio: backend.bio,
-    linkedin: backend.linkedin,
-    github: backend.github,
-    portfolio: backend.portfolio,
+    bio: backend.about || undefined,
+    linkedin: backend.links?.linkedin,
+    github: backend.links?.github,
+    portfolio: backend.links?.portfolio,
 
     // Timestamps
     created_at: backend.created_at,
