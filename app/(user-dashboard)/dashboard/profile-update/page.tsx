@@ -24,6 +24,7 @@ import {
   buildCandidateProfileCorePayload,
   buildCandidateSkillPayloads,
   buildCandidateWorkExperiencePayloads,
+  normalizeGenderForBackend,
 } from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
@@ -79,7 +80,7 @@ const titleClass = "text-lg font-semibold text-slate-900";
 const allowedResumeExtensions = [".pdf"];
 const allowedResumeMimeTypes = new Set(["application/pdf"]);
 const MAX_RESUME_FILE_SIZE = 10 * 1024 * 1024;
-const skipUserProfilePatch = true;
+const skipUserProfilePatch = false;
 
 const isAllowedResumeFile = (file: File) => {
   if (file.type && allowedResumeMimeTypes.has(file.type)) return true;
@@ -615,7 +616,7 @@ export default function ProfileUpdatePage() {
         const phone = userData.basicInfo.phone.trim();
         const location = userData.basicInfo.location.trim();
         const citizenshipStatus = userData.basicInfo.citizenshipStatus.trim();
-        const gender = userData.basicInfo.gender.trim();
+        const gender = normalizeGenderForBackend(userData.basicInfo.gender);
         const ethnicity = userData.basicInfo.ethnicity.trim();
         const linkedinUrl = userData.basicInfo.linkedinUrl.trim();
         const githubUrl = userData.basicInfo.githubUrl.trim();

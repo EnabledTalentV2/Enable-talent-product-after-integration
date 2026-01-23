@@ -84,6 +84,32 @@ const toDisclosurePreferenceValue = (value: string) => {
   return normalized.replace(/[\s-]+/g, "_").toUpperCase();
 };
 
+export const normalizeGenderForBackend = (value: string) => {
+  const trimmed = toTrimmedString(value);
+  if (!trimmed) return "";
+  const normalized = toLower(trimmed).replace(/[\s-]+/g, "_");
+  if (normalized === "male") return "male";
+  if (normalized === "female") return "female";
+  if (normalized === "nonbinary" || normalized === "non_binary")
+    return "non_binary";
+  if (normalized === "prefer_not_say" || normalized === "prefer_not_to_say")
+    return "prefer_not_to_say";
+  return normalized;
+};
+
+export const normalizeGenderLabel = (value: unknown) => {
+  const trimmed = toTrimmedString(value);
+  if (!trimmed) return "";
+  const normalized = toLower(trimmed).replace(/[\s-]+/g, "_");
+  if (normalized === "male") return "Male";
+  if (normalized === "female") return "Female";
+  if (normalized === "nonbinary" || normalized === "non_binary")
+    return "Non-binary";
+  if (normalized === "prefer_not_say" || normalized === "prefer_not_to_say")
+    return "Prefer not to say";
+  return toTitleCase(trimmed);
+};
+
 const normalizeEmploymentType = (value: string) => {
   const normalized = toLower(value);
   if (normalized.includes("full")) return "Full time";
@@ -221,7 +247,7 @@ export const mapCandidateProfileToUserData = (
   const citizenshipStatus = toTrimmedString(
     profile?.citizenship_status ?? profile?.citizenshipStatus
   );
-  const gender = toTrimmedString(profile?.gender);
+  const gender = normalizeGenderLabel(profile?.gender);
   const ethnicity = toTrimmedString(profile?.ethnicity);
   const linkedinUrl = toTrimmedString(
     profile?.linkedin_url ?? profile?.linkedinUrl ?? profile?.linkedin
@@ -856,8 +882,9 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   if (data.basicInfo.citizenshipStatus.trim()) {
     basicInfo.citizenship_status = data.basicInfo.citizenshipStatus.trim();
   }
-  if (data.basicInfo.gender.trim()) {
-    basicInfo.gender = data.basicInfo.gender.trim();
+  const genderValue = normalizeGenderForBackend(data.basicInfo.gender);
+  if (genderValue) {
+    basicInfo.gender = genderValue;
   }
   if (data.basicInfo.ethnicity.trim()) {
     basicInfo.ethnicity = data.basicInfo.ethnicity.trim();

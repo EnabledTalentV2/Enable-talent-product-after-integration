@@ -10,7 +10,10 @@ import {
   fetchCandidateProfileFull,
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
+import {
+  mapCandidateProfileToUserData,
+  normalizeGenderLabel,
+} from "@/lib/candidateProfileUtils";
 import { initialUserData as defaultUserData } from "@/lib/userDataDefaults";
 import type { UserData } from "@/lib/types/user";
 
@@ -74,7 +77,8 @@ function transformBackendToFrontend(
         (backendData.citizenshipStatus as string) ||
         defaultUserData.basicInfo.citizenshipStatus,
       gender:
-        (backendData.gender as string) || defaultUserData.basicInfo.gender,
+        normalizeGenderLabel(backendData.gender) ||
+        defaultUserData.basicInfo.gender,
       ethnicity:
         (backendData.ethnicity as string) ||
         defaultUserData.basicInfo.ethnicity,

@@ -32,6 +32,7 @@ import {
   buildCandidateProfileCorePayload,
   buildCandidateSkillPayloads,
   buildCandidateWorkExperiencePayloads,
+  normalizeGenderForBackend,
 } from "@/lib/candidateProfileUtils";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
@@ -54,7 +55,7 @@ const normalizeCertificationKey = (name: string, organization?: string) => {
   const orgKey = (organization ?? "").trim().toLowerCase();
   return orgKey ? `${nameKey}::${orgKey}` : nameKey;
 };
-const skipUserProfilePatch = true;
+const skipUserProfilePatch = false;
 
 const initialSteps: Step[] = [
   {
@@ -568,7 +569,7 @@ export default function ManualResumeFill() {
       const phone = finalizedData.basicInfo.phone.trim();
       const location = finalizedData.basicInfo.location.trim();
       const citizenshipStatus = finalizedData.basicInfo.citizenshipStatus.trim();
-      const gender = finalizedData.basicInfo.gender.trim();
+      const gender = normalizeGenderForBackend(finalizedData.basicInfo.gender);
       const ethnicity = finalizedData.basicInfo.ethnicity.trim();
       const linkedinUrl = finalizedData.basicInfo.linkedinUrl.trim();
       const githubUrl = finalizedData.basicInfo.githubUrl.trim();
