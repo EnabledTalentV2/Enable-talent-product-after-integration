@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 import { useCareerCoach } from "@/lib/hooks/useCareerCoach";

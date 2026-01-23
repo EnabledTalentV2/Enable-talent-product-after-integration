@@ -88,9 +88,17 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
           type="checkbox"
           checked={data.agree}
           onChange={(e) => onChange({ agree: e.target.checked })}
+          aria-required="true"
           className="w-5 h-5 accent-orange-600 border-gray-300"
         />
-        <span className="text-base">I confirm that I have read, understood and agreed with the statement.</span>
+        <span className="text-base">
+          I confirm that I have read, understood and agreed with the statement.
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
+        </span>
       </label>
     </div>
   );

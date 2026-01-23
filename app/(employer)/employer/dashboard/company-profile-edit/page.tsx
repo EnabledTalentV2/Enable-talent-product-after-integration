@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft, Save, ChevronDown } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
@@ -46,6 +47,8 @@ export default function CompanyProfileEditPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Load organization data if not present
   useEffect(() => {
@@ -97,6 +100,10 @@ export default function CompanyProfileEditPage() {
         website: organizationInfo.website || "",
         linkedinUrl: organizationInfo.linkedinUrl || "",
       });
+      // Set existing avatar URL as preview
+      if (organizationInfo.avatarUrl) {
+        setAvatarPreview(organizationInfo.avatarUrl);
+      }
     }
   }, [organizationInfo]);
 
@@ -105,6 +112,37 @@ export default function CompanyProfileEditPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError("Image size must be less than 5MB");
+      return;
+    }
+
+    setAvatarFile(file);
+    setSubmitError(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,14 +208,18 @@ export default function CompanyProfileEditPage() {
       }
       requestFormData.append("employee_size", String(companySizeChoice ?? ""));
       requestFormData.append("industry", String(industryChoice ?? ""));
+      if (avatarFile) {
+        requestFormData.append("avatar", avatarFile);
+      }
 
+      let responseData;
       if (isCreatingNew) {
-        await apiRequest<unknown>("/api/organizations", {
+        responseData = await apiRequest<unknown>("/api/organizations", {
           method: "POST",
           body: requestFormData,
         });
       } else {
-        await apiRequest<unknown>(
+        responseData = await apiRequest<unknown>(
           `/api/organizations/${organizationId}`,
           {
             method: "PATCH",
@@ -186,14 +228,20 @@ export default function CompanyProfileEditPage() {
         );
       }
 
-      // Update local store
-      setEmployerData((prev) => ({
-        ...prev,
-        organizationInfo: {
-          ...prev.organizationInfo,
-          ...formData,
-        },
-      }));
+      // Parse the response to get avatar_url and other fields
+      const { toEmployerOrganizationInfo } = await import("@/lib/organizationUtils");
+      const updatedOrgInfo = toEmployerOrganizationInfo(responseData);
+
+      // Update local store with response data (includes avatar_url)
+      if (updatedOrgInfo) {
+        setEmployerData((prev) => ({
+          ...prev,
+          organizationInfo: {
+            ...prev.organizationInfo,
+            ...updatedOrgInfo,
+          },
+        }));
+      }
 
       // Redirect to profile page or post jobs page
       if (isCreatingNew) {
@@ -252,6 +300,84 @@ export default function CompanyProfileEditPage() {
             <p className="mt-1 whitespace-pre-wrap">{submitError}</p>
           </div>
         )}
+
+        {/* Organization Logo */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">
+            Organization Logo
+          </label>
+          <div className="flex items-center gap-6">
+            <div className="relative h-24 w-24">
+              <div className="h-24 w-24 rounded-full border-4 border-slate-200 bg-slate-100 overflow-hidden">
+                {avatarPreview ? (
+                  <Image
+                    src={avatarPreview}
+                    alt="Organization Logo"
+                    width={96}
+                    height={96}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full w-full text-slate-400">
+                    <svg
+                      width="40"
+                      height="40"
+                      viewBox="0 0 40 40"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M20 20C23.3137 20 26 17.3137 26 14C26 10.6863 23.3137 8 20 8C16.6863 8 14 10.6863 14 14C14 17.3137 16.6863 20 20 20Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M20 22C13.3726 22 8 27.3726 8 34H32C32 27.3726 26.6274 22 20 22Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload button overlay */}
+              <label
+                htmlFor="avatar-upload-edit"
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
+                title="Upload organization logo"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M7 1V13M1 7H13"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </label>
+              <input
+                id="avatar-upload-edit"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={handleAvatarChange}
+              />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-slate-600">
+                Upload your organization logo. Recommended size: 400x400px.
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Max file size: 5MB. Accepted formats: JPG, PNG, WebP
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Organization Name */}
         <div className="space-y-2">

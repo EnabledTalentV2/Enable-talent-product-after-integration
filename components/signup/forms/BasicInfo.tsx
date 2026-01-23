@@ -40,6 +40,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <InputBlock
           id="basicInfo-firstName"
           label="First Name"
+          required
           value={data.firstName}
           onChange={(v) => onChange({ firstName: v })}
           placeholder="Enter first name"
@@ -49,6 +50,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <InputBlock
           id="basicInfo-lastName"
           label="Last Name"
+          required
           value={data.lastName}
           onChange={(v) => onChange({ lastName: v })}
           placeholder="Enter last name"
@@ -131,6 +133,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-email"
         label="Email Address"
+        required
         value={data.email}
         onChange={(v) => onChange({ email: v })}
         placeholder="Enter email address"
@@ -142,6 +145,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-phone"
         label="Phone number"
+        required
         value={data.phone}
         onChange={(v) => onChange({ phone: v })}
         placeholder="Enter phone number"
@@ -152,6 +156,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-location"
         label="Location"
+        required
         value={data.location}
         onChange={(v) => onChange({ location: v })}
         placeholder="City, Country"
@@ -167,12 +172,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Citizenship status
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-citizenshipStatus"
           className={selectClass(Boolean(errors?.citizenshipStatus))}
           value={data.citizenshipStatus}
           onChange={(e) => onChange({ citizenshipStatus: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select status</option>
           <option value="Canadian">Canadian</option>
@@ -206,12 +217,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Gender
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-gender"
           className={selectClass(Boolean(errors?.gender))}
           value={data.gender}
           onChange={(e) => onChange({ gender: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select</option>
           <option value="Female">Female</option>
@@ -244,12 +261,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Ethnicity
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-ethnicity"
           className={selectClass(Boolean(errors?.ethnicity))}
           value={data.ethnicity}
           onChange={(e) => onChange({ ethnicity: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select</option>
           <option value="South Asian">South Asian</option>
@@ -289,6 +312,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-currentStatus"
         label="What is your current status and goal in joining the Enabled Talent Program?"
+        required
         value={data.currentStatus}
         onChange={(v) => onChange({ currentStatus: v })}
         placeholder="Describe your status and goals"

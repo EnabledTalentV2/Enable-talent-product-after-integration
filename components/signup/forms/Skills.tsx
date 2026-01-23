@@ -77,6 +77,11 @@ export default function Skills({ data, errors, onChange }: Props) {
             className="block text-base font-medium text-slate-700"
           >
             Skill Name
+            <span aria-hidden="true" className="text-red-600">
+              {" "}
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
           </label>
           <p className="text-sm text-slate-500">
             Example: Python, React, Data Analysis, Project Management
@@ -93,6 +98,7 @@ export default function Skills({ data, errors, onChange }: Props) {
               onChange={(e) => onChange({ skills: e.target.value })}
               onKeyDown={handleKeyDown}
               placeholder="Type a skill name"
+              aria-required="true"
               className="w-full bg-transparent text-base text-slate-800 outline-none"
             />
           </div>

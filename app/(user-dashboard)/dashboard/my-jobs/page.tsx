@@ -6,7 +6,7 @@ import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { CandidateMyJobsSkeleton } from "@/components/CandidateDashboardSkeletons";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 import {
@@ -141,7 +141,7 @@ export default function MyJobsPage() {
 
   const appliedJobsStore = useAppliedJobsStore((s) => s.appliedJobs);
   const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
+    () => computeDashboardProfileCompletion(userData),
     [userData]
   );
 

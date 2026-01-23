@@ -8,7 +8,7 @@ import placeholder from "@/public/Placeholder.png";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { CandidateHomeSkeleton } from "@/components/CandidateDashboardSkeletons";
 import { getNotifications, requestNote } from "@/lib/notifications";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 
@@ -142,7 +142,7 @@ export default function HomePageDashboard() {
     : placeholder;
   const unreadCount = notifications.filter((notice) => notice.unread).length;
   const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
+    () => computeDashboardProfileCompletion(userData),
     [userData],
   );
 
@@ -252,7 +252,7 @@ export default function HomePageDashboard() {
       preferenceItems.push(`Job Type: ${jobType.join(", ")}`);
     }
     if (jobSearch.length > 0) {
-      preferenceItems.push(`Job Search: ${jobSearch.join(", ")}`);
+      preferenceItems.push(`Work mode: ${jobSearch.join(", ")}`);
     }
 
     const languageItems = userData.otherDetails.languages
@@ -473,8 +473,8 @@ export default function HomePageDashboard() {
                       >
                         {section.items && section.items.length > 0 ? (
                           <ul className="list-disc space-y-1 pl-4">
-                            {section.items.map((item) => (
-                              <li key={item}>{item}</li>
+                            {section.items.map((item, index) => (
+                              <li key={`${index}-${item}`}>{item}</li>
                             ))}
                           </ul>
                         ) : typeof section.count === "number" &&

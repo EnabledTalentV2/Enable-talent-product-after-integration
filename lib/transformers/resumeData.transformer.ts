@@ -207,6 +207,8 @@ type Certification = {
   date?: string;
   expiry_date?: string;
   expiryDate?: string;
+  expiration_date?: string;
+  expirationDate?: string;
   credential_id?: string;
   credentialId?: string;
   credential_url?: string;
@@ -281,6 +283,21 @@ const toStringArray = (value: unknown): string[] => {
       .filter(Boolean);
   }
   return [];
+};
+
+const normalizeWorkMode = (value: string): string => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized.includes("remote")) return "Remote";
+  if (normalized.includes("hybrid")) return "Hybrid";
+  if (
+    normalized.includes("on-site") ||
+    normalized.includes("onsite") ||
+    normalized.includes("on site")
+  ) {
+    return "Onsite";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 /**
@@ -684,6 +701,12 @@ const transformCertifications = (
       const issueDate = formatDate(
         cert.issue_date || cert.issueDate || cert.date
       );
+      const expiryDate = formatDate(
+        cert.expiry_date ||
+          cert.expiryDate ||
+          cert.expiration_date ||
+          cert.expirationDate
+      );
       const credentialIdUrl = extractText(
         cert.credential_url || cert.credentialUrl || cert.url || cert.credential_id || cert.credentialId
       );
@@ -694,6 +717,7 @@ const transformCertifications = (
         name,
         organization,
         issueDate,
+        expiryDate,
         credentialIdUrl,
       };
     })
@@ -830,7 +854,9 @@ const transformPreference = (
   const additionalInfo = getAdditionalInfo(data);
   const jobSearch = toStringArray(
     data.preferred_work_mode || additionalInfo?.preferred_work_mode
-  );
+  )
+    .map(normalizeWorkMode)
+    .filter(Boolean);
 
   if (jobSearch.length > 0) {
     return { jobSearch };

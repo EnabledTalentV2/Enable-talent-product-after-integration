@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Calendar, Globe, MapPin, Users } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 import { useCandidateJobs, useApplyToJob } from "@/lib/hooks/useCandidateJobs";
@@ -150,7 +150,7 @@ export default function CompaniesPage() {
   );
   const appliedJobs = useAppliedJobsStore((s) => s.appliedJobs);
   const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
+    () => computeDashboardProfileCompletion(userData),
     [userData]
   );
 

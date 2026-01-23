@@ -3,6 +3,7 @@ import { apiRequest } from "@/lib/api-client";
 const PROFILE_ENDPOINT = "/api/candidates/profiles/";
 
 export const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
+export const DEFAULT_DISCLOSURE_PREFERENCE = "DURING_APPLICATION";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -110,6 +111,10 @@ export async function ensureCandidateProfileSlug(
     formData.append(
       "accommodation_needs",
       accommodationNeeds || DEFAULT_ACCOMMODATION_NEEDS
+    );
+    formData.append(
+      "disclosure_preference",
+      DEFAULT_DISCLOSURE_PREFERENCE
     );
     const created = await apiRequest<unknown>(PROFILE_ENDPOINT, {
       method: "POST",

@@ -26,6 +26,11 @@ export default function Education({ data, onChange, errors }: Props) {
       <div className="space-y-2">
         <label htmlFor="education-courseName" className={`block text-base font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
           {errors?.courseName || "Course Name"}
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <div
           className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${
@@ -38,6 +43,7 @@ export default function Education({ data, onChange, errors }: Props) {
             value={data.courseName}
             onChange={(e) => onChange({ courseName: e.target.value })}
             placeholder=""
+            aria-required="true"
             className="w-full bg-transparent outline-none"
           />
           {hasCourseError ? <AlertCircle className="h-5 w-5 text-red-500" /> : null}
@@ -48,6 +54,7 @@ export default function Education({ data, onChange, errors }: Props) {
       <InputBlock
         id="education-major"
         label="Major"
+        required
         value={data.major}
         onChange={(v) => onChange({ major: v })}
         placeholder="Design methodologies, Aesthetics, Visual communication, Technical specification..."
@@ -58,6 +65,7 @@ export default function Education({ data, onChange, errors }: Props) {
       <InputBlock
         id="education-institution"
         label="Institution"
+        required
         value={data.institution}
         onChange={(v) => onChange({ institution: v })}
         placeholder="York University"

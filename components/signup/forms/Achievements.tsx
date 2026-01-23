@@ -41,6 +41,7 @@ export default function Achievements({
           <InputBlock
             id={`achievement-${idx}-title`}
             label="Title"
+            required
             value={entry.title}
             onChange={(v) => onEntryChange(idx, { title: v })}
             placeholder="Spot Award"
