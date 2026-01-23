@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
-import BackendValidationBanner from "@/components/BackendValidationBanner";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
   ensureCandidateProfileSlug,
@@ -12,11 +11,6 @@ import {
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
-import {
-  validateBackendData,
-  logValidationToConsole,
-  type ValidationResult,
-} from "@/lib/backendDataValidator";
 import { initialUserData as defaultUserData } from "@/lib/userDataDefaults";
 import type { UserData } from "@/lib/types/user";
 
@@ -185,8 +179,6 @@ export default function DashboardLayoutPage({
   const setCandidateError = useCandidateProfileStore((s) => s.setError);
   const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const [loading, setLoading] = useState(true);
-  const [validationResult, setValidationResult] =
-    useState<ValidationResult | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -281,13 +273,6 @@ export default function DashboardLayoutPage({
         };
 
         if (active) {
-          // Validate backend data and log in development
-          if (process.env.NODE_ENV === "development") {
-            const validation = validateBackendData(rawData);
-            setValidationResult(validation);
-            logValidationToConsole(validation);
-          }
-
           // Get current store state to check for fresh signup
           const storeState = useUserDataStore.getState();
           const currentSignupTime = storeState.signupCompletedAt;
@@ -355,8 +340,6 @@ export default function DashboardLayoutPage({
       <DashBoardNavbar />
       <DashboardSubnav />
       <main className="px-6 pb-10 md:px-12">{children}</main>
-      {/* Developer mode banner for backend data validation */}
-      <BackendValidationBanner validationResult={validationResult} />
     </div>
   );
 }

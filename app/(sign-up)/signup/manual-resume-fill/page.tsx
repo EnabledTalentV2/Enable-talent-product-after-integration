@@ -54,6 +54,7 @@ const normalizeCertificationKey = (name: string, organization?: string) => {
   const orgKey = (organization ?? "").trim().toLowerCase();
   return orgKey ? `${nameKey}::${orgKey}` : nameKey;
 };
+const skipUserProfilePatch = true;
 
 const initialSteps: Step[] = [
   {
@@ -594,7 +595,7 @@ export default function ManualResumeFill() {
         userPayload.profile = personalProfile;
       }
 
-      if (Object.keys(userPayload).length > 0) {
+      if (!skipUserProfilePatch && Object.keys(userPayload).length > 0) {
         await apiRequest("/api/auth/users/me/", {
           method: "PATCH",
           body: JSON.stringify(userPayload),
@@ -617,6 +618,7 @@ export default function ManualResumeFill() {
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
         ? fullProfile?.verified_profile
         : null;
+      const profileRoot = isRecord(fullProfile) ? fullProfile : null;
       const existingEducation = Array.isArray(verifiedProfile?.education)
         ? verifiedProfile.education
         : [];
@@ -632,15 +634,27 @@ export default function ManualResumeFill() {
         ? verifiedProfile.workExperience
         : isRecord(verifiedProfile?.work_experiences)
         ? verifiedProfile.work_experiences
+        : isRecord(profileRoot?.work_experience)
+        ? profileRoot.work_experience
+        : isRecord(profileRoot?.workExperience)
+        ? profileRoot.workExperience
+        : isRecord(profileRoot?.work_experiences)
+        ? profileRoot.work_experiences
         : null;
       const existingWorkExperience = Array.isArray(
         verifiedProfile?.work_experience
       )
         ? verifiedProfile.work_experience
+        : Array.isArray(profileRoot?.work_experience)
+        ? profileRoot.work_experience
         : Array.isArray(verifiedProfile?.work_experiences)
         ? verifiedProfile.work_experiences
+        : Array.isArray(profileRoot?.work_experiences)
+        ? profileRoot.work_experiences
         : Array.isArray(verifiedProfile?.workExperience)
         ? verifiedProfile.workExperience
+        : Array.isArray(profileRoot?.workExperience)
+        ? profileRoot.workExperience
         : Array.isArray(
             (workExperienceContainer as Record<string, unknown>)?.entries
           )
@@ -651,11 +665,19 @@ export default function ManualResumeFill() {
         ? verifiedProfile.projects
         : isRecord(verifiedProfile?.project)
         ? verifiedProfile.project
+        : isRecord(profileRoot?.projects)
+        ? profileRoot.projects
+        : isRecord(profileRoot?.project)
+        ? profileRoot.project
         : null;
       const existingProjects = Array.isArray(verifiedProfile?.projects)
         ? verifiedProfile.projects
+        : Array.isArray(profileRoot?.projects)
+        ? profileRoot.projects
         : Array.isArray(verifiedProfile?.project)
         ? verifiedProfile.project
+        : Array.isArray(profileRoot?.project)
+        ? profileRoot.project
         : Array.isArray((projectsContainer as Record<string, unknown>)?.entries)
         ? ((projectsContainer as Record<string, unknown>)?.entries as unknown[])
         : [];
@@ -665,13 +687,25 @@ export default function ManualResumeFill() {
         ? verifiedProfile.achievement
         : isRecord(verifiedProfile?.awards)
         ? verifiedProfile.awards
+        : isRecord(profileRoot?.achievements)
+        ? profileRoot.achievements
+        : isRecord(profileRoot?.achievement)
+        ? profileRoot.achievement
+        : isRecord(profileRoot?.awards)
+        ? profileRoot.awards
         : null;
       const existingAchievements = Array.isArray(verifiedProfile?.achievements)
         ? verifiedProfile.achievements
+        : Array.isArray(profileRoot?.achievements)
+        ? profileRoot.achievements
         : Array.isArray(verifiedProfile?.achievement)
         ? verifiedProfile.achievement
+        : Array.isArray(profileRoot?.achievement)
+        ? profileRoot.achievement
         : Array.isArray(verifiedProfile?.awards)
         ? verifiedProfile.awards
+        : Array.isArray(profileRoot?.awards)
+        ? profileRoot.awards
         : Array.isArray(
             (achievementsContainer as Record<string, unknown>)?.entries
           )
@@ -684,15 +718,27 @@ export default function ManualResumeFill() {
         ? verifiedProfile.certification
         : isRecord(verifiedProfile?.certificates)
         ? verifiedProfile.certificates
+        : isRecord(profileRoot?.certifications)
+        ? profileRoot.certifications
+        : isRecord(profileRoot?.certification)
+        ? profileRoot.certification
+        : isRecord(profileRoot?.certificates)
+        ? profileRoot.certificates
         : null;
       const existingCertifications = Array.isArray(
         verifiedProfile?.certifications
       )
         ? verifiedProfile.certifications
+        : Array.isArray(profileRoot?.certifications)
+        ? profileRoot.certifications
         : Array.isArray(verifiedProfile?.certification)
         ? verifiedProfile.certification
+        : Array.isArray(profileRoot?.certification)
+        ? profileRoot.certification
         : Array.isArray(verifiedProfile?.certificates)
         ? verifiedProfile.certificates
+        : Array.isArray(profileRoot?.certificates)
+        ? profileRoot.certificates
         : Array.isArray(
             (certificationsContainer as Record<string, unknown>)?.entries
           )

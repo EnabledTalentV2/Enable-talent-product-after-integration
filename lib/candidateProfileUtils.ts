@@ -374,6 +374,10 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.workExperience
     : isRecord(verifiedProfile?.work_experiences)
     ? verifiedProfile.work_experiences
+    : isRecord(payload.work_experience)
+    ? payload.work_experience
+    : isRecord(payload.workExperience)
+    ? payload.workExperience
     : null;
   const workExperienceSource = Array.isArray(verifiedProfile?.work_experience)
     ? verifiedProfile.work_experience
@@ -381,6 +385,10 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.workExperience
     : Array.isArray(verifiedProfile?.work_experiences)
     ? verifiedProfile.work_experiences
+    : Array.isArray(payload.work_experience)
+    ? (payload.work_experience as unknown[])
+    : Array.isArray(payload.workExperience)
+    ? (payload.workExperience as unknown[])
     : Array.isArray(
         (workExperienceContainer as Record<string, unknown>)?.entries
       )
@@ -449,11 +457,19 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.projects
     : isRecord(verifiedProfile?.project)
     ? verifiedProfile.project
+    : isRecord(payload.projects)
+    ? payload.projects
+    : isRecord(payload.project)
+    ? payload.project
     : null;
   const projectSource = Array.isArray(verifiedProfile?.projects)
     ? verifiedProfile.projects
     : Array.isArray(verifiedProfile?.project)
     ? verifiedProfile.project
+    : Array.isArray(payload.projects)
+    ? (payload.projects as unknown[])
+    : Array.isArray(payload.project)
+    ? (payload.project as unknown[])
     : Array.isArray((projectContainer as Record<string, unknown>)?.entries)
     ? ((projectContainer as Record<string, unknown>)?.entries as unknown[])
     : [];
@@ -514,6 +530,12 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.achievement
     : isRecord(verifiedProfile?.awards)
     ? verifiedProfile.awards
+    : isRecord(payload.achievements)
+    ? payload.achievements
+    : isRecord(payload.achievement)
+    ? payload.achievement
+    : isRecord(payload.awards)
+    ? payload.awards
     : null;
   const achievementsSource = Array.isArray(verifiedProfile?.achievements)
     ? verifiedProfile.achievements
@@ -521,6 +543,12 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.achievement
     : Array.isArray(verifiedProfile?.awards)
     ? verifiedProfile.awards
+    : Array.isArray(payload.achievements)
+    ? (payload.achievements as unknown[])
+    : Array.isArray(payload.achievement)
+    ? (payload.achievement as unknown[])
+    : Array.isArray(payload.awards)
+    ? (payload.awards as unknown[])
     : Array.isArray(
         (achievementsContainer as Record<string, unknown>)?.entries
       )
@@ -572,6 +600,12 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.certification
     : isRecord(verifiedProfile?.certificates)
     ? verifiedProfile.certificates
+    : isRecord(payload.certifications)
+    ? payload.certifications
+    : isRecord(payload.certification)
+    ? payload.certification
+    : isRecord(payload.certificates)
+    ? payload.certificates
     : null;
   const certificationSource = Array.isArray(verifiedProfile?.certifications)
     ? verifiedProfile.certifications
@@ -579,6 +613,12 @@ export const mapCandidateProfileToUserData = (
     ? verifiedProfile.certification
     : Array.isArray(verifiedProfile?.certificates)
     ? verifiedProfile.certificates
+    : Array.isArray(payload.certifications)
+    ? (payload.certifications as unknown[])
+    : Array.isArray(payload.certification)
+    ? (payload.certification as unknown[])
+    : Array.isArray(payload.certificates)
+    ? (payload.certificates as unknown[])
     : Array.isArray(
         (certificationContainer as Record<string, unknown>)?.entries
       )
