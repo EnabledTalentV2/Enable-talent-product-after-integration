@@ -15,6 +15,7 @@ type Props = {
   onEntryChange: (index: number, patch: Partial<Entry>) => void;
   onAddEntry: () => void;
   onRemoveEntry?: (index: number) => void;
+  suppressDeleteWarning?: boolean;
 };
 
 export default function Certification({
@@ -24,10 +25,11 @@ export default function Certification({
   onEntryChange,
   onAddEntry,
   onRemoveEntry,
+  suppressDeleteWarning = false,
 }: Props) {
   const entries = data.entries;
   const isNone = data.noCertification;
-  const showDeleteWarning = isNone && entries.length > 0;
+  const showDeleteWarning = !suppressDeleteWarning && isNone && entries.length > 0;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
@@ -36,7 +38,7 @@ export default function Certification({
     : 0;
 
   const handleToggleNoCertification = (checked: boolean) => {
-    if (checked && entries.length > 0) {
+    if (!suppressDeleteWarning && checked && entries.length > 0) {
       const confirmed = window.confirm(
         "Choosing 'no certification' will remove your existing certifications when you save. Continue?"
       );

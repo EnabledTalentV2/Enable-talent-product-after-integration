@@ -339,6 +339,14 @@ export default function ManualResumeFill() {
               }
             }
           });
+          if (!entry.current && !entry.to) {
+            if (!errors.entries) errors.entries = {};
+            if (!errors.entries[idx]) errors.entries[idx] = {};
+            errors.entries[idx]!.to = "Please enter end date";
+            if (!firstId) {
+              firstId = `workExp-${idx}-to`;
+            }
+          }
         });
         const hasErrors = Boolean(firstId);
         if (hasErrors) {
@@ -459,16 +467,11 @@ export default function ManualResumeFill() {
         const requiredOtherFields: Array<{
           field: keyof Pick<
             UserData["otherDetails"],
-            "careerStage" | "availability" | "desiredSalary"
+            "availability" | "desiredSalary"
           >;
           message: string;
           id: string;
         }> = [
-          {
-            field: "careerStage",
-            message: "Please select your career stage",
-            id: "otherDetails-careerStage",
-          },
           {
             field: "availability",
             message:
@@ -1688,6 +1691,7 @@ export default function ManualResumeFill() {
           <Certification
             data={userData.certification}
             errors={certErrors}
+            suppressDeleteWarning
             onToggleNoCertification={(value) => {
               setUserData((prev) => {
                 const nextEntries = prev.certification.entries.length
@@ -1800,6 +1804,7 @@ export default function ManualResumeFill() {
         return (
           <Preference
             data={userData.preference}
+            hideCompanySize
             onChange={(patch) =>
               setUserData((prev) => ({
                 ...prev,
@@ -1813,6 +1818,7 @@ export default function ManualResumeFill() {
           <OtherDetails
             data={userData.otherDetails}
             errors={otherDetailsErrors}
+            hideCareerStage
             onChange={(patch) => {
               setUserData((prev) => ({
                 ...prev,

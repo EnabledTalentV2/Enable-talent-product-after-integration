@@ -163,6 +163,15 @@ export default function WorkExperience({
                     }`}
                   >
                     To
+                    {!entry.current ? (
+                      <>
+                        <span aria-hidden="true" className="text-red-600">
+                          {" "}
+                          *
+                        </span>
+                        <span className="sr-only"> (required)</span>
+                      </>
+                    ) : null}
                   </label>
                   <input
                     id={`workExp-${idx}-to`}
@@ -170,6 +179,8 @@ export default function WorkExperience({
                     value={entry.to}
                     onChange={(e) => onEntryChange(idx, { to: e.target.value })}
                     placeholder="Select end date"
+                    aria-required={!entry.current}
+                    required={!entry.current}
                     className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                       entryErrors.to
                         ? "border-red-400 focus:ring-red-200 focus:border-red-500"

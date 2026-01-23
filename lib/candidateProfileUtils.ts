@@ -488,6 +488,12 @@ export const mapCandidateProfileToUserData = (
     : isRecord(payload.project)
     ? payload.project
     : null;
+  const projectListExists =
+    Array.isArray(verifiedProfile?.projects) ||
+    Array.isArray(verifiedProfile?.project) ||
+    Array.isArray(payload.projects) ||
+    Array.isArray(payload.project) ||
+    Array.isArray((projectContainer as Record<string, unknown>)?.entries);
   const projectSource = Array.isArray(verifiedProfile?.projects)
     ? verifiedProfile.projects
     : Array.isArray(verifiedProfile?.project)
@@ -633,6 +639,14 @@ export const mapCandidateProfileToUserData = (
     : isRecord(payload.certificates)
     ? payload.certificates
     : null;
+  const certificationListExists =
+    Array.isArray(verifiedProfile?.certifications) ||
+    Array.isArray(verifiedProfile?.certification) ||
+    Array.isArray(verifiedProfile?.certificates) ||
+    Array.isArray(payload.certifications) ||
+    Array.isArray(payload.certification) ||
+    Array.isArray(payload.certificates) ||
+    Array.isArray((certificationContainer as Record<string, unknown>)?.entries);
   const certificationSource = Array.isArray(verifiedProfile?.certifications)
     ? verifiedProfile.certifications
     : Array.isArray(verifiedProfile?.certification)
@@ -792,6 +806,11 @@ export const mapCandidateProfileToUserData = (
       noProjects: false,
       entries: mappedProjects,
     };
+  } else if (projectListExists && projectSource.length === 0) {
+    result.projects = {
+      noProjects: true,
+      entries: [],
+    };
   }
   if (mappedAchievements.length > 0) {
     result.achievements = {
@@ -802,6 +821,11 @@ export const mapCandidateProfileToUserData = (
     result.certification = {
       noCertification: false,
       entries: mappedCertifications,
+    };
+  } else if (certificationListExists && certificationSource.length === 0) {
+    result.certification = {
+      noCertification: true,
+      entries: [],
     };
   }
   if (hasValue(preference)) {

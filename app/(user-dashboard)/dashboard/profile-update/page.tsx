@@ -228,6 +228,13 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
           if (!firstErrorId) firstErrorId = `workExp-${idx}-${field}`;
         }
       });
+      if (!entry.current && isBlank(entry.to as string)) {
+        if (!workExpErrors.entries) workExpErrors.entries = {};
+        if (!workExpErrors.entries[idx]) workExpErrors.entries[idx] = {};
+        workExpErrors.entries[idx]!.to = "Please enter end date";
+        hasErrors = true;
+        if (!firstErrorId) firstErrorId = `workExp-${idx}-to`;
+      }
     });
   }
 
@@ -467,6 +474,7 @@ export default function ProfileUpdatePage() {
     desiredSalary?: string;
   }>({});
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
+  const autoNoEntriesRef = useRef(false);
   const [resumeUploadError, setResumeUploadError] = useState<string | null>(
     null
   );
@@ -502,6 +510,46 @@ export default function ProfileUpdatePage() {
     [sectionCompletion]
   );
   const hasIncompleteSections = incompleteSections.length > 0;
+
+  useEffect(() => {
+    if (autoNoEntriesRef.current) return;
+
+    const shouldNoProjects = userData.projects.entries.length === 0;
+    const shouldNoCertifications = userData.certification.entries.length === 0;
+
+    if (!shouldNoProjects && !shouldNoCertifications) {
+      autoNoEntriesRef.current = true;
+      return;
+    }
+
+    autoNoEntriesRef.current = true;
+    setUserData((prev) => {
+      const nextNoProjects =
+        prev.projects.noProjects || prev.projects.entries.length === 0;
+      const nextNoCertifications =
+        prev.certification.noCertification ||
+        prev.certification.entries.length === 0;
+
+      if (
+        nextNoProjects === prev.projects.noProjects &&
+        nextNoCertifications === prev.certification.noCertification
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        projects: {
+          ...prev.projects,
+          noProjects: nextNoProjects,
+        },
+        certification: {
+          ...prev.certification,
+          noCertification: nextNoCertifications,
+        },
+      };
+    });
+  }, [setUserData, userData.projects.entries.length, userData.certification.entries.length]);
 
   useEffect(() => {
     let active = true;
