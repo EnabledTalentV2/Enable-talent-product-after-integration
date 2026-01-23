@@ -18,14 +18,42 @@ import OtherDetails from "@/components/signup/forms/OtherDetails";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeProfileCompletion } from "@/lib/profileCompletion";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
-import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
-import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
-import { buildVerifyProfilePayload } from "@/lib/candidateProfileUtils";
+import {
+  ensureCandidateProfileSlug,
+  fetchCandidateProfileFull,
+} from "@/lib/candidateProfile";
+import { apiRequest, getApiErrorMessage, isApiError } from "@/lib/api-client";
+import {
+  buildCandidateAchievementPayloads,
+  buildCandidateCertificationPayloads,
+  buildCandidateEducationPayloads,
+  buildCandidateLanguagePayloads,
+  buildCandidateProjectPayloads,
+  buildCandidateProfileCorePayload,
+  buildCandidateSkillPayloads,
+  buildCandidateWorkExperiencePayloads,
+} from "@/lib/candidateProfileUtils";
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 type WorkEntry = UserData["workExperience"]["entries"][number];
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const normalizeSkillKey = (value: string) => value.trim().toLowerCase();
+const normalizeProjectKey = (value: string) => value.trim().toLowerCase();
+const normalizeAchievementKey = (title: string, issueDate?: string) => {
+  const titleKey = title.trim().toLowerCase();
+  const dateKey = (issueDate ?? "").trim();
+  return dateKey ? `${titleKey}::${dateKey}` : titleKey;
+};
+const normalizeCertificationKey = (name: string, organization?: string) => {
+  const nameKey = name.trim().toLowerCase();
+  const orgKey = (organization ?? "").trim().toLowerCase();
+  return orgKey ? `${nameKey}::${orgKey}` : nameKey;
+};
 
 const initialSteps: Step[] = [
   {
@@ -51,6 +79,7 @@ export default function ManualResumeFill() {
   const [stepsState, setStepsState] = useState<Step[]>(initialSteps);
   const userData = useUserDataStore((s) => s.userData);
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const resetUserData = useUserDataStore((s) => s.resetUserData);
   const markSignupComplete = useUserDataStore((s) => s.markSignupComplete);
   const { fetchCandidateProfile } = useFetchCandidateProfile();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -532,19 +561,670 @@ export default function ManualResumeFill() {
     setIsUpdating(true);
 
     try {
-      const verifyPayload = buildVerifyProfilePayload(finalizedData);
-      await apiRequest(
-        `/api/candidates/profiles/${candidateSlug}/verify-profile/`,
-        {
+      const firstName = finalizedData.basicInfo.firstName.trim();
+      const lastName = finalizedData.basicInfo.lastName.trim();
+      const personalProfile: Record<string, unknown> = {};
+      const phone = finalizedData.basicInfo.phone.trim();
+      const location = finalizedData.basicInfo.location.trim();
+      const citizenshipStatus = finalizedData.basicInfo.citizenshipStatus.trim();
+      const gender = finalizedData.basicInfo.gender.trim();
+      const ethnicity = finalizedData.basicInfo.ethnicity.trim();
+      const linkedinUrl = finalizedData.basicInfo.linkedinUrl.trim();
+      const githubUrl = finalizedData.basicInfo.githubUrl.trim();
+      const portfolioUrl =
+        finalizedData.basicInfo.portfolioUrl.trim() ||
+        finalizedData.basicInfo.socialProfile.trim();
+      const currentStatus = finalizedData.basicInfo.currentStatus.trim();
+
+      if (phone) personalProfile.phone = phone;
+      if (location) personalProfile.location = location;
+      if (citizenshipStatus)
+        personalProfile.citizenship_status = citizenshipStatus;
+      if (gender) personalProfile.gender = gender;
+      if (ethnicity) personalProfile.ethnicity = ethnicity;
+      if (linkedinUrl) personalProfile.linkedin_url = linkedinUrl;
+      if (githubUrl) personalProfile.github_url = githubUrl;
+      if (portfolioUrl) personalProfile.portfolio_url = portfolioUrl;
+      if (currentStatus) personalProfile.current_status = currentStatus;
+
+      const userPayload: Record<string, unknown> = {};
+      if (firstName) userPayload.first_name = firstName;
+      if (lastName) userPayload.last_name = lastName;
+      if (Object.keys(personalProfile).length > 0) {
+        userPayload.profile = personalProfile;
+      }
+
+      if (Object.keys(userPayload).length > 0) {
+        await apiRequest("/api/auth/users/me/", {
+          method: "PATCH",
+          body: JSON.stringify(userPayload),
+        });
+      }
+
+      const profilePayload = buildCandidateProfileCorePayload(finalizedData);
+      const hasPayload = Object.keys(profilePayload).length > 0;
+      if (hasPayload) {
+        await apiRequest(`/api/candidates/profiles/${candidateSlug}/`, {
+          method: "PATCH",
+          body: JSON.stringify(profilePayload),
+        });
+      }
+
+      const fullProfile = await fetchCandidateProfileFull(
+        candidateSlug,
+        "Manual Resume Fill"
+      );
+      const verifiedProfile = isRecord(fullProfile?.verified_profile)
+        ? fullProfile?.verified_profile
+        : null;
+      const existingEducation = Array.isArray(verifiedProfile?.education)
+        ? verifiedProfile.education
+        : [];
+      const existingSkills = Array.isArray(verifiedProfile?.skills)
+        ? verifiedProfile.skills
+        : [];
+      const existingLanguages = Array.isArray(verifiedProfile?.languages)
+        ? verifiedProfile.languages
+        : [];
+      const workExperienceContainer = isRecord(verifiedProfile?.work_experience)
+        ? verifiedProfile.work_experience
+        : isRecord(verifiedProfile?.workExperience)
+        ? verifiedProfile.workExperience
+        : isRecord(verifiedProfile?.work_experiences)
+        ? verifiedProfile.work_experiences
+        : null;
+      const existingWorkExperience = Array.isArray(
+        verifiedProfile?.work_experience
+      )
+        ? verifiedProfile.work_experience
+        : Array.isArray(verifiedProfile?.work_experiences)
+        ? verifiedProfile.work_experiences
+        : Array.isArray(verifiedProfile?.workExperience)
+        ? verifiedProfile.workExperience
+        : Array.isArray(
+            (workExperienceContainer as Record<string, unknown>)?.entries
+          )
+        ? ((workExperienceContainer as Record<string, unknown>)
+            ?.entries as unknown[])
+        : [];
+      const projectsContainer = isRecord(verifiedProfile?.projects)
+        ? verifiedProfile.projects
+        : isRecord(verifiedProfile?.project)
+        ? verifiedProfile.project
+        : null;
+      const existingProjects = Array.isArray(verifiedProfile?.projects)
+        ? verifiedProfile.projects
+        : Array.isArray(verifiedProfile?.project)
+        ? verifiedProfile.project
+        : Array.isArray((projectsContainer as Record<string, unknown>)?.entries)
+        ? ((projectsContainer as Record<string, unknown>)?.entries as unknown[])
+        : [];
+      const achievementsContainer = isRecord(verifiedProfile?.achievements)
+        ? verifiedProfile.achievements
+        : isRecord(verifiedProfile?.achievement)
+        ? verifiedProfile.achievement
+        : isRecord(verifiedProfile?.awards)
+        ? verifiedProfile.awards
+        : null;
+      const existingAchievements = Array.isArray(verifiedProfile?.achievements)
+        ? verifiedProfile.achievements
+        : Array.isArray(verifiedProfile?.achievement)
+        ? verifiedProfile.achievement
+        : Array.isArray(verifiedProfile?.awards)
+        ? verifiedProfile.awards
+        : Array.isArray(
+            (achievementsContainer as Record<string, unknown>)?.entries
+          )
+        ? ((achievementsContainer as Record<string, unknown>)
+            ?.entries as unknown[])
+        : [];
+      const certificationsContainer = isRecord(verifiedProfile?.certifications)
+        ? verifiedProfile.certifications
+        : isRecord(verifiedProfile?.certification)
+        ? verifiedProfile.certification
+        : isRecord(verifiedProfile?.certificates)
+        ? verifiedProfile.certificates
+        : null;
+      const existingCertifications = Array.isArray(
+        verifiedProfile?.certifications
+      )
+        ? verifiedProfile.certifications
+        : Array.isArray(verifiedProfile?.certification)
+        ? verifiedProfile.certification
+        : Array.isArray(verifiedProfile?.certificates)
+        ? verifiedProfile.certificates
+        : Array.isArray(
+            (certificationsContainer as Record<string, unknown>)?.entries
+          )
+        ? ((certificationsContainer as Record<string, unknown>)
+            ?.entries as unknown[])
+        : [];
+
+      const educationPayloads = buildCandidateEducationPayloads(
+        finalizedData,
+        existingEducation
+      );
+      for (const payload of educationPayloads) {
+        await apiRequest("/api/candidates/education/", {
           method: "POST",
-          body: JSON.stringify(verifyPayload),
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const skillPayloads = buildCandidateSkillPayloads(
+        finalizedData,
+        existingSkills
+      );
+      for (const payload of skillPayloads) {
+        await apiRequest("/api/candidates/skills/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const existingSkillRecords = existingSkills
+        .map((entry) => {
+          if (!isRecord(entry)) {
+            const name =
+              typeof entry === "string" || typeof entry === "number"
+                ? String(entry).trim()
+                : "";
+            return name ? { id: undefined, name } : null;
+          }
+          const name =
+            typeof entry.name === "string"
+              ? entry.name
+              : typeof entry.skill === "string"
+              ? entry.skill
+              : typeof entry.title === "string"
+              ? entry.title
+              : typeof entry.label === "string"
+              ? entry.label
+              : "";
+          const trimmedName = name.trim();
+          if (!trimmedName) return null;
+          const idValue =
+            entry.id ?? entry.pk ?? entry.skill_id ?? entry.skillId;
+          const id =
+            typeof idValue === "number" || typeof idValue === "string"
+              ? idValue
+              : undefined;
+          return { id, name: trimmedName };
+        })
+        .filter(Boolean) as Array<{ id?: number | string; name: string }>;
+      const existingSkillById = new Map<
+        string,
+        { id?: number | string; name: string }
+      >();
+      const existingSkillByKey = new Map<
+        string,
+        { id?: number | string; name: string }
+      >();
+      existingSkillRecords.forEach((record) => {
+        const key = normalizeSkillKey(record.name);
+        if (!key) return;
+        if (!existingSkillByKey.has(key)) {
+          existingSkillByKey.set(key, record);
+        }
+        if (record.id !== undefined && record.id !== null) {
+          existingSkillById.set(String(record.id), record);
+        }
+      });
+
+      const currentSkillMap = new Map<
+        string,
+        { id?: number | string; name: string }
+      >();
+      (finalizedData.skills.primaryList ?? []).forEach((skill) => {
+        const name = skill.name.trim();
+        if (!name) return;
+        const key = normalizeSkillKey(name);
+        if (currentSkillMap.has(key)) return;
+        currentSkillMap.set(key, { id: skill.id, name });
+      });
+      const currentSkillKeys = new Set(currentSkillMap.keys());
+
+      const skillUpdates: Array<{ id: number | string; name: string }> = [];
+      currentSkillMap.forEach((skill, key) => {
+        const resolvedId = skill.id ?? existingSkillByKey.get(key)?.id;
+        if (
+          resolvedId === undefined ||
+          resolvedId === null ||
+          resolvedId === ""
+        ) {
+          return;
+        }
+        const existingRecord = existingSkillById.get(String(resolvedId));
+        if (existingRecord && normalizeSkillKey(existingRecord.name) === key) {
+          return;
+        }
+        skillUpdates.push({ id: resolvedId, name: skill.name });
+      });
+
+      for (const update of skillUpdates) {
+        await apiRequest(`/api/candidates/skills/${update.id}/`, {
+          method: "PATCH",
+          body: JSON.stringify({ name: update.name }),
+        });
+      }
+
+      const skillDeletes = existingSkillRecords.filter((record) => {
+        const key = normalizeSkillKey(record.name);
+        if (!key) return false;
+        if (record.id === undefined || record.id === null || record.id === "") {
+          return false;
+        }
+        return !currentSkillKeys.has(key);
+      });
+
+      for (const record of skillDeletes) {
+        await apiRequest(`/api/candidates/skills/${record.id}/`, {
+          method: "DELETE",
+        });
+      }
+
+      const languagePayloads = buildCandidateLanguagePayloads(
+        finalizedData,
+        existingLanguages
+      );
+      for (const payload of languagePayloads) {
+        await apiRequest("/api/candidates/languages/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      const workExperiencePayloads =
+        buildCandidateWorkExperiencePayloads(finalizedData);
+      const existingWorkIds = existingWorkExperience.map((entry) => {
+        if (!isRecord(entry)) return null;
+        const idValue =
+          entry.id ??
+          entry.pk ??
+          entry.work_experience_id ??
+          entry.workExperienceId;
+        return typeof idValue === "number" || typeof idValue === "string"
+          ? idValue
+          : null;
+      });
+
+      for (const [index, update] of workExperiencePayloads.entries()) {
+        const entryId = update.id ?? existingWorkIds[index];
+        if (entryId !== null && entryId !== undefined && entryId !== "") {
+          await apiRequest(`/api/candidates/work-experience/${entryId}/`, {
+            method: "PATCH",
+            body: JSON.stringify(update.payload),
+          });
+        } else {
+          await apiRequest("/api/candidates/work-experience/", {
+            method: "POST",
+            body: JSON.stringify(update.payload),
+          });
+        }
+      }
+
+      const deleteAllWorkExperience =
+        finalizedData.workExperience.experienceType === "fresher";
+      const currentWorkIds = new Set(
+        finalizedData.workExperience.entries
+          .map((entry) => entry.id)
+          .filter((id) => id !== null && id !== undefined && id !== "")
+          .map((id) => String(id))
+      );
+      const workExperienceDeletes = Array.from(
+        new Set(
+          existingWorkIds
+            .filter(
+              (id): id is number | string =>
+                id !== null && id !== undefined && id !== ""
+            )
+            .map((id) => String(id))
+            .filter((id) => deleteAllWorkExperience || !currentWorkIds.has(id))
+        )
+      );
+
+      for (const id of workExperienceDeletes) {
+        await apiRequest(`/api/candidates/work-experience/${id}/`, {
+          method: "DELETE",
+        });
+      }
+
+      const projectPayloads = buildCandidateProjectPayloads(finalizedData);
+      const existingProjectRecords = existingProjects
+        .map((entry) => {
+          if (!isRecord(entry)) {
+            const name =
+              typeof entry === "string" || typeof entry === "number"
+                ? String(entry).trim()
+                : "";
+            return name ? { id: undefined, name } : null;
+          }
+          const name =
+            typeof entry.project_name === "string"
+              ? entry.project_name
+              : typeof entry.projectName === "string"
+              ? entry.projectName
+              : typeof entry.name === "string"
+              ? entry.name
+              : typeof entry.title === "string"
+              ? entry.title
+              : "";
+          const trimmedName = name.trim();
+          const idValue =
+            entry.id ?? entry.pk ?? entry.project_id ?? entry.projectId;
+          const id =
+            typeof idValue === "number" || typeof idValue === "string"
+              ? idValue
+              : undefined;
+          const keySource = trimmedName || (id ? String(id) : "");
+          if (!keySource) return null;
+          return { id, name: trimmedName || keySource };
+        })
+        .filter(Boolean) as Array<{ id?: number | string; name: string }>;
+      const existingProjectByKey = new Map<
+        string,
+        { id?: number | string; name: string }
+      >();
+      existingProjectRecords.forEach((record) => {
+        const key = normalizeProjectKey(record.name);
+        if (!key) return;
+        if (!existingProjectByKey.has(key)) {
+          existingProjectByKey.set(key, record);
+        }
+      });
+
+      const projectMap = new Map<
+        string,
+        { id?: number | string; payload: Record<string, unknown> }
+      >();
+      projectPayloads.forEach((update) => {
+        const key = normalizeProjectKey(update.payload.project_name);
+        if (!key || projectMap.has(key)) return;
+        projectMap.set(key, update);
+      });
+
+      for (const [key, update] of projectMap.entries()) {
+        const resolvedId = update.id ?? existingProjectByKey.get(key)?.id;
+        if (
+          resolvedId !== null &&
+          resolvedId !== undefined &&
+          resolvedId !== ""
+        ) {
+          await apiRequest(`/api/candidates/projects/${resolvedId}/`, {
+            method: "PATCH",
+            body: JSON.stringify(update.payload),
+          });
+        } else {
+          await apiRequest("/api/candidates/projects/", {
+            method: "POST",
+            body: JSON.stringify(update.payload),
+          });
+        }
+      }
+
+      const deleteAllProjects = finalizedData.projects.noProjects;
+      const projectDeletes = existingProjectRecords.filter((record) => {
+        if (record.id === undefined || record.id === null || record.id === "") {
+          return false;
+        }
+        if (deleteAllProjects) return true;
+        const key = normalizeProjectKey(record.name);
+        if (!key) return true;
+        return !projectMap.has(key);
+      });
+
+      for (const record of projectDeletes) {
+        await apiRequest(`/api/candidates/projects/${record.id}/`, {
+          method: "DELETE",
+        });
+      }
+
+      const achievementPayloads =
+        buildCandidateAchievementPayloads(finalizedData);
+      const existingAchievementRecords = existingAchievements
+        .map((entry) => {
+          if (!isRecord(entry)) {
+            const title =
+              typeof entry === "string" || typeof entry === "number"
+                ? String(entry).trim()
+                : "";
+            return title ? { id: undefined, title, issueDate: "" } : null;
+          }
+          const title =
+            typeof entry.title === "string"
+              ? entry.title
+              : typeof entry.name === "string"
+              ? entry.name
+              : "";
+          const issueDate =
+            typeof entry.issue_date === "string"
+              ? entry.issue_date
+              : typeof entry.issueDate === "string"
+              ? entry.issueDate
+              : typeof entry.date === "string"
+              ? entry.date
+              : "";
+          const trimmedTitle = title.trim();
+          const trimmedIssueDate = issueDate.trim();
+          const idValue =
+            entry.id ??
+            entry.pk ??
+            entry.achievement_id ??
+            entry.achievementId;
+          const id =
+            typeof idValue === "number" || typeof idValue === "string"
+              ? idValue
+              : undefined;
+          if (!trimmedTitle && !id) return null;
+          return {
+            id,
+            title: trimmedTitle || (id ? String(id) : ""),
+            issueDate: trimmedIssueDate,
+          };
+        })
+        .filter(Boolean) as Array<{
+        id?: number | string;
+        title: string;
+        issueDate: string;
+      }>;
+
+      const existingAchievementByKey = new Map<
+        string,
+        { id?: number | string; title: string; issueDate: string }
+      >();
+      existingAchievementRecords.forEach((record) => {
+        const key = normalizeAchievementKey(record.title, record.issueDate);
+        if (!key) return;
+        if (!existingAchievementByKey.has(key)) {
+          existingAchievementByKey.set(key, record);
+        }
+      });
+
+      const achievementMap = new Map<
+        string,
+        { id?: number | string; payload: Record<string, unknown> }
+      >();
+      achievementPayloads.forEach((update) => {
+        const key = normalizeAchievementKey(
+          update.payload.title,
+          update.payload.issue_date
+        );
+        if (!key || achievementMap.has(key)) return;
+        achievementMap.set(key, update);
+      });
+
+      for (const [key, update] of achievementMap.entries()) {
+        const resolvedId = update.id ?? existingAchievementByKey.get(key)?.id;
+        if (
+          resolvedId !== null &&
+          resolvedId !== undefined &&
+          resolvedId !== ""
+        ) {
+          await apiRequest(`/api/candidates/achievements/${resolvedId}/`, {
+            method: "PATCH",
+            body: JSON.stringify(update.payload),
+          });
+        } else {
+          await apiRequest("/api/candidates/achievements/", {
+            method: "POST",
+            body: JSON.stringify(update.payload),
+          });
+        }
+      }
+
+      const achievementDeletes = existingAchievementRecords.filter((record) => {
+        if (record.id === undefined || record.id === null || record.id === "") {
+          return false;
+        }
+        const key = normalizeAchievementKey(record.title, record.issueDate);
+        if (!key) return true;
+        return !achievementMap.has(key);
+      });
+
+      for (const record of achievementDeletes) {
+        await apiRequest(`/api/candidates/achievements/${record.id}/`, {
+          method: "DELETE",
+        });
+      }
+
+      const certificationPayloads =
+        buildCandidateCertificationPayloads(finalizedData);
+      const existingCertificationRecords = existingCertifications
+        .map((entry) => {
+          if (!isRecord(entry)) {
+            const name =
+              typeof entry === "string" || typeof entry === "number"
+                ? String(entry).trim()
+                : "";
+            return name ? { id: undefined, name, organization: "" } : null;
+          }
+          const name =
+            typeof entry.name === "string"
+              ? entry.name
+              : typeof entry.title === "string"
+              ? entry.title
+              : typeof entry.certification_name === "string"
+              ? entry.certification_name
+              : typeof entry.certificationName === "string"
+              ? entry.certificationName
+              : "";
+          const organization =
+            typeof entry.issuing_organization === "string"
+              ? entry.issuing_organization
+              : typeof entry.organization === "string"
+              ? entry.organization
+              : typeof entry.issued_by === "string"
+              ? entry.issued_by
+              : typeof entry.issuedBy === "string"
+              ? entry.issuedBy
+              : typeof entry.issuer === "string"
+              ? entry.issuer
+              : "";
+          const trimmedName = name.trim();
+          const trimmedOrg = organization.trim();
+          const idValue =
+            entry.id ??
+            entry.pk ??
+            entry.certification_id ??
+            entry.certificationId;
+          const id =
+            typeof idValue === "number" || typeof idValue === "string"
+              ? idValue
+              : undefined;
+          if (!trimmedName && !id) return null;
+          return {
+            id,
+            name: trimmedName || (id ? String(id) : ""),
+            organization: trimmedOrg,
+          };
+        })
+        .filter(Boolean) as Array<{
+        id?: number | string;
+        name: string;
+        organization: string;
+      }>;
+
+      const existingCertificationByKey = new Map<
+        string,
+        { id?: number | string; name: string; organization: string }
+      >();
+      existingCertificationRecords.forEach((record) => {
+        const key = normalizeCertificationKey(record.name, record.organization);
+        if (!key) return;
+        if (!existingCertificationByKey.has(key)) {
+          existingCertificationByKey.set(key, record);
+        }
+      });
+
+      const certificationMap = new Map<
+        string,
+        { id?: number | string; payload: Record<string, unknown> }
+      >();
+      certificationPayloads.forEach((update) => {
+        const key = normalizeCertificationKey(
+          update.payload.name,
+          update.payload.issuing_organization
+        );
+        if (!key || certificationMap.has(key)) return;
+        certificationMap.set(key, update);
+      });
+
+      for (const [key, update] of certificationMap.entries()) {
+        const resolvedId =
+          update.id ?? existingCertificationByKey.get(key)?.id;
+        if (
+          resolvedId !== null &&
+          resolvedId !== undefined &&
+          resolvedId !== ""
+        ) {
+          await apiRequest(`/api/candidates/certifications/${resolvedId}/`, {
+            method: "PATCH",
+            body: JSON.stringify(update.payload),
+          });
+        } else {
+          await apiRequest("/api/candidates/certifications/", {
+            method: "POST",
+            body: JSON.stringify(update.payload),
+          });
+        }
+      }
+
+      const deleteAllCertifications = finalizedData.certification.noCertification;
+      const certificationDeletes = existingCertificationRecords.filter(
+        (record) => {
+          if (
+            record.id === undefined ||
+            record.id === null ||
+            record.id === ""
+          ) {
+            return false;
+          }
+          if (deleteAllCertifications) return true;
+          const key = normalizeCertificationKey(
+            record.name,
+            record.organization
+          );
+          if (!key) return true;
+          return !certificationMap.has(key);
         }
       );
+
+      for (const record of certificationDeletes) {
+        await apiRequest(`/api/candidates/certifications/${record.id}/`, {
+          method: "DELETE",
+        });
+      }
 
       setUserData((prev) => finalizedData as typeof prev);
       markSignupComplete();
       router.push("/dashboard");
     } catch (err) {
+      if (isApiError(err) && err.status === 401) {
+        resetUserData();
+        const nextPath = encodeURIComponent("/signup/manual-resume-fill");
+        router.replace(`/login-talent?next=${nextPath}`);
+        return;
+      }
       const message = getApiErrorMessage(
         err,
         "Unable to complete signup. Please try again."
