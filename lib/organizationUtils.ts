@@ -121,6 +121,9 @@ export const toEmployerOrganizationInfo = (
     record.industry ?? record.industry_name ?? record.industryName,
     INDUSTRY_LABELS
   );
+  const avatarUrl = toStringValue(
+    record.avatar_url ?? record.avatarUrl ?? record.avatar
+  );
 
   const hasAny =
     organizationName ||
@@ -142,5 +145,6 @@ export const toEmployerOrganizationInfo = (
     linkedinUrl,
     companySize,
     industry,
+    avatarUrl,
   };
 };
