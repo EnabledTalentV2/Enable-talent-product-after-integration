@@ -64,7 +64,7 @@ export default function DashBoardNavbarEmployer() {
       <nav className="flex h-20 items-center justify-center bg-[#EEF5FF] px-6 md:px-12">
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
-            href="https://enable-talent-landing.vercel.app/"
+            href="https://enabled-talent-landing-v2.vercel.app/"
             className="flex items-center gap-3"
           >
             <Image
