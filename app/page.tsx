@@ -6,7 +6,7 @@ export default function Home() {
     <main id="main-content" className="flex min-h-screen flex-col items-center justify-center bg-[#F0F4F8] p-6">
       <div className="w-full max-w-md space-y-8 text-center">
         <a
-          href="https://enable-talent-landing.vercel.app/"
+          href="https://enabled-talent-landing-v2.vercel.app/"
           className="flex justify-center"
         >
           <Image
