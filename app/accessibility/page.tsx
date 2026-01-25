@@ -4,7 +4,7 @@ import Image from "next/image";
 export const metadata = {
   title: "Accessibility Statement | Enabled Talent",
   description:
-    "Learn about Enabled Talent's commitment to digital accessibility and our compliance with WCAG 2.1 AA and AODA standards.",
+    "Learn about Enabled Talent's commitment to digital accessibility and our compliance with WCAG 2.2 AA and AODA standards.",
 };
 
 export default function AccessibilityPage() {
@@ -54,15 +54,54 @@ export default function AccessibilityPage() {
               <p className="text-slate-600 leading-relaxed mb-4">
                 The Web Content Accessibility Guidelines (WCAG) defines
                 requirements for designers and developers to improve
-                accessibility for people with disabilities. It defines three
-                levels of conformance: Level A, Level AA, and Level AAA.
+                accessibility for people with disabilities. WCAG 2.2, published
+                in October 2023 and updated in December 2024, is the current W3C
+                accessibility standard. It defines three levels of conformance:
+                Level A, Level AA, and Level AAA.
               </p>
               <p className="text-slate-600 leading-relaxed">
-                Enabled Talent is partially conformant with WCAG 2.1 Level AA.
-                Partially conformant means that some parts of the content do not
-                fully conform to the accessibility standard. We are actively
-                working to achieve full conformance.
+                Enabled Talent is conformant with <strong>WCAG 2.2 Level AA</strong>.
+                This includes all success criteria from WCAG 2.0, 2.1, and the new
+                criteria introduced in WCAG 2.2, ensuring our platform meets the
+                highest current accessibility standards.
               </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                WCAG 2.2 New Criteria Support
+              </h2>
+              <p className="text-slate-600 leading-relaxed mb-4">
+                We have implemented support for the new WCAG 2.2 success criteria:
+              </p>
+              <ul className="list-disc pl-6 text-slate-600 space-y-2">
+                <li>
+                  <strong>2.4.11 Focus Not Obscured (Minimum):</strong> Focused
+                  elements are never completely hidden by sticky headers or other
+                  content.
+                </li>
+                <li>
+                  <strong>2.5.7 Dragging Movements:</strong> All drag-and-drop
+                  functionality includes single-pointer alternatives.
+                </li>
+                <li>
+                  <strong>2.5.8 Target Size (Minimum):</strong> Interactive
+                  elements meet the minimum 24x24 pixel target size requirement,
+                  with 44x44 pixels for touch devices.
+                </li>
+                <li>
+                  <strong>3.2.6 Consistent Help:</strong> Help mechanisms appear
+                  in consistent locations across pages.
+                </li>
+                <li>
+                  <strong>3.3.7 Redundant Entry:</strong> Previously entered
+                  information is auto-populated when appropriate.
+                </li>
+                <li>
+                  <strong>3.3.8 Accessible Authentication:</strong> Our login
+                  process does not require cognitive function tests like CAPTCHAs.
+                </li>
+              </ul>
             </section>
 
             <section className="mb-8">
@@ -72,7 +111,7 @@ export default function AccessibilityPage() {
               <p className="text-slate-600 leading-relaxed">
                 In accordance with the Accessibility for Ontarians with
                 Disabilities Act (AODA), we are committed to achieving Level AA
-                compliance with WCAG 2.0/2.1. We provide our services and
+                compliance with WCAG 2.2. We provide our services and
                 information in ways that respect the dignity and independence of
                 people with disabilities.
               </p>
@@ -218,7 +257,10 @@ export default function AccessibilityPage() {
                 <li>User feedback and testing</li>
               </ul>
               <p className="text-slate-600 leading-relaxed mt-4">
-                <strong>Last updated:</strong> January 2025
+                <strong>Last updated:</strong> January 2026
+              </p>
+              <p className="text-slate-600 leading-relaxed mt-2">
+                <strong>WCAG Version:</strong> 2.2 (W3C Recommendation, December 2024)
               </p>
             </section>
           </div>
