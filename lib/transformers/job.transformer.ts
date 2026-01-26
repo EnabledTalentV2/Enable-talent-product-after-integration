@@ -118,7 +118,7 @@ export const transformJobFromBackend = (raw: BackendJob): EmployerJob => {
  */
 export const transformJobToBackend = (values: JobFormValues): BackendJobPayload => {
   // Use description as the job_desc field
-  const jobDesc = values.description || "";
+  const jobDesc = (values.description ?? "").trim();
 
   // Parse salary to number
   const salaryNum = parseSalary(values.salary);
