@@ -83,7 +83,7 @@ export default function EmployerLoginPage() {
     } catch (err: unknown) {
       console.error(err);
       setError(
-        getApiErrorMessage(err, "Something went wrong. Please try again.")
+        getApiErrorMessage(err, "Something went wrong. Please try again."),
       );
     } finally {
       setIsBootstrapping(false);
@@ -91,7 +91,10 @@ export default function EmployerLoginPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center">
+    <main
+      id="main-content"
+      className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center"
+    >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -253,7 +256,7 @@ export default function EmployerLoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-4">
               <p className="text-[13px] text-gray-600">
                 Don't have an account?{" "}
                 <Link
@@ -261,6 +264,16 @@ export default function EmployerLoginPage() {
                   className="text-[#C04622] font-semibold hover:underline"
                 >
                   Sign Up
+                </Link>
+              </p>
+
+              <p className="text-[13px] text-gray-600">
+                Are you a Candidate?{" "}
+                <Link
+                  href="/login-talent"
+                  className="text-[#C04622] font-semibold hover:underline"
+                >
+                  Log in here
                 </Link>
               </p>
             </div>

@@ -45,8 +45,11 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signupCandidate, error: serverError, setError: setServerError } =
-    useCandidateSignupUser();
+  const {
+    signupCandidate,
+    error: serverError,
+    setError: setServerError,
+  } = useCandidateSignupUser();
   const { loginCandidate } = useCandidateLoginUser();
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
@@ -105,7 +108,8 @@ export default function SignUpPage() {
     } else {
       const passwordStrength = validatePasswordStrength(password);
       if (!passwordStrength.isStrong) {
-        nextErrors.password = "Password is not strong enough. Please meet all requirements.";
+        nextErrors.password =
+          "Password is not strong enough. Please meet all requirements.";
       }
     }
     if (!confirmPassword) {
@@ -179,7 +183,7 @@ export default function SignUpPage() {
         } catch (err) {
           console.error("[signup] Failed to update user profile:", err);
           setServerError(
-            "Account created, but we couldn't save your name. Please try again."
+            "Account created, but we couldn't save your name. Please try again.",
           );
           return;
         }
@@ -195,7 +199,10 @@ export default function SignUpPage() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+    <main
+      id="main-content"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+    >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -380,7 +387,7 @@ export default function SignUpPage() {
                 <div className="relative">
                   <input
                     className={`${inputClasses(
-                      Boolean(fieldErrors.password)
+                      Boolean(fieldErrors.password),
                     )} pr-14`}
                     id="password"
                     name="password"
@@ -436,7 +443,7 @@ export default function SignUpPage() {
                 <div className="relative">
                   <input
                     className={`${inputClasses(
-                      Boolean(fieldErrors.confirmPassword)
+                      Boolean(fieldErrors.confirmPassword),
                     )} pr-14`}
                     id="confirmPassword"
                     name="confirmPassword"
@@ -513,6 +520,16 @@ export default function SignUpPage() {
                   href="/login-talent"
                 >
                   Login
+                </Link>
+              </p>
+
+              <p className="text-[13px] text-slate-600">
+                Are you an Employer?{" "}
+                <Link
+                  className="font-semibold text-[#B45309] hover:underline"
+                  href="/signup-employer"
+                >
+                  Sign up here
                 </Link>
               </p>
 

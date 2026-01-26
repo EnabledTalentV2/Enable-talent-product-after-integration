@@ -104,7 +104,10 @@ function LoginPageContent() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+    <main
+      id="main-content"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+    >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -270,6 +273,16 @@ function LoginPageContent() {
                   href="/signup"
                 >
                   Sign up
+                </Link>
+              </p>
+
+              <p className="text-[13px] text-slate-600">
+                Are you an Employer?{" "}
+                <Link
+                  className="font-semibold text-[#B45309] hover:underline"
+                  href="/login-employer"
+                >
+                  Log in here
                 </Link>
               </p>
 

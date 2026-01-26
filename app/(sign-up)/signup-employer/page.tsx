@@ -112,7 +112,8 @@ export default function SignupEmployerPage() {
     } else {
       const passwordStrength = validatePasswordStrength(password);
       if (!passwordStrength.isStrong) {
-        nextErrors.password = "Password is not strong enough. Please meet all requirements.";
+        nextErrors.password =
+          "Password is not strong enough. Please meet all requirements.";
       }
     }
     if (!confirmPassword) {
@@ -420,7 +421,7 @@ export default function SignupEmployerPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter password"
                     className={`${inputClasses(
-                      Boolean(fieldErrors.password)
+                      Boolean(fieldErrors.password),
                     )} pr-14`}
                     id="employer-password"
                     name="password"
@@ -480,7 +481,7 @@ export default function SignupEmployerPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm password"
                     className={`${inputClasses(
-                      Boolean(fieldErrors.confirmPassword)
+                      Boolean(fieldErrors.confirmPassword),
                     )} pr-14`}
                     id="employer-confirm-password"
                     name="confirmPassword"
@@ -539,7 +540,7 @@ export default function SignupEmployerPage() {
               </p>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-4">
               <p className="text-[13px] text-gray-600">
                 Already have an account?{" "}
                 <Link
@@ -547,6 +548,16 @@ export default function SignupEmployerPage() {
                   className="text-[#C04622] font-semibold hover:underline"
                 >
                   Login
+                </Link>
+              </p>
+
+              <p className="text-[13px] text-gray-600">
+                Are you a Candidate?{" "}
+                <Link
+                  href="/signup"
+                  className="text-[#C04622] font-semibold hover:underline"
+                >
+                  Sign up here
                 </Link>
               </p>
             </div>
