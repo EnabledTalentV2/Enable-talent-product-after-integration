@@ -104,7 +104,10 @@ function LoginPageContent() {
   };
 
   return (
-    <main id="main-content" className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center">
+    <main
+      id="main-content"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+    >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -236,7 +239,7 @@ function LoginPageContent() {
                     }
                     aria-pressed={showPassword}
                     aria-controls="password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -270,6 +273,16 @@ function LoginPageContent() {
                   href="/signup"
                 >
                   Sign up
+                </Link>
+              </p>
+
+              <p className="text-[13px] text-slate-600">
+                Are you an Employer?{" "}
+                <Link
+                  className="font-semibold text-[#B45309] hover:underline"
+                  href="/login-employer"
+                >
+                  Log in here
                 </Link>
               </p>
 

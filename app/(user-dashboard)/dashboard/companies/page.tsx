@@ -40,7 +40,7 @@ type CompanyJob = {
   yearsExperience: string;
   salary: string;
   posted: string;
-  description: string[];
+  description: string;
   requirements: string[];
   company: CompanyProfile;
 };
@@ -52,12 +52,10 @@ const getStatusStyles = (status: CompanyJob["status"]) =>
 
 // Helper function to transform EmployerJob to CompanyJob format
 const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
-  // Parse description and requirements from string to array
-  const descriptionArray = job.description
-    ? job.description.split('\n').filter(line => line.trim())
-    : [];
+  // Keep description as raw text; parse requirements into list items
+  const descriptionText = job.description ?? "";
   const requirementsArray = job.requirements
-    ? job.requirements.split('\n').filter(line => line.trim())
+    ? job.requirements.split(/\r?\n/).filter(line => line.trim())
     : [];
 
   return {
@@ -71,7 +69,7 @@ const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
     yearsExperience: job.experience || "Not specified",
     salary: job.salary || "Not disclosed",
     posted: job.postedAt || "Recently posted",
-    description: descriptionArray,
+    description: descriptionText,
     requirements: requirementsArray,
     company: {
       id: job.company || String(job.id),
@@ -191,11 +189,13 @@ export default function CompaniesPage() {
   const isApplied = activeJob ? appliedJobIds.has(activeJob.id) : false;
   const canApply =
     Boolean(activeJob) && activeJob.status === "Active" && !isApplied;
-  const descriptionItems = activeJob?.description ?? [];
-  const canToggleDescription = descriptionItems.length > 2;
-  const visibleDescriptionItems = showFullDescription
-    ? descriptionItems
-    : descriptionItems.slice(0, 2);
+  const descriptionText = activeJob?.description ?? "";
+  const descriptionLines = descriptionText.split(/\r?\n/);
+  const hasDescription = descriptionText.trim().length > 0;
+  const canToggleDescription = descriptionLines.length > 2;
+  const visibleDescriptionText = showFullDescription
+    ? descriptionText
+    : descriptionLines.slice(0, 2).join("\n");
   const hasJobs = jobs.length > 0;
 
   useEffect(() => {
@@ -460,18 +460,16 @@ export default function CompaniesPage() {
                     <h4 className="text-xl font-bold text-slate-900">
                       Job description
                     </h4>
-                    {visibleDescriptionItems.length > 0 ? (
-                      <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-                        {visibleDescriptionItems.map((item, index) => (
-                          <li key={`${activeJob.id}-desc-${index}`}>{item}</li>
-                        ))}
-                      </ul>
+                    {hasDescription ? (
+                      <p className="text-slate-600 whitespace-pre-wrap break-words leading-relaxed">
+                        {visibleDescriptionText}
+                      </p>
                     ) : (
                       <p className="text-slate-600">
                         Details will be shared after you apply.
                       </p>
                     )}
-                    {canToggleDescription && (
+                    {hasDescription && canToggleDescription && (
                       <button
                         type="button"
                         onClick={() => setShowFullDescription((prev) => !prev)}

@@ -26,7 +26,7 @@ type Job = {
   posted: string;
   status: "Active" | "Closed" | "Applied" | "Shortlisted" | "Rejected" | "Accepted";
   applicationStatus?: "Applied" | "Accepted" | "Rejected";
-  description?: string[];
+  description?: string;
   requirements?: string[];
   match?: number;
   appliedAt?: string;
@@ -233,7 +233,7 @@ export default function MyJobsPage() {
         posted: formatPostedDate(job.postedAt),
         status: (job.status === "Active" || job.status === "Closed" ? job.status : "Active") as Job["status"],
         applicationStatus: undefined,
-        description: job.description?.split('\n').filter(line => line.trim()),
+        description: job.description,
         requirements: job.requirements?.split('\n').filter(line => line.trim()),
         appliedAt: undefined,
       }));
@@ -579,11 +579,9 @@ export default function MyJobsPage() {
                       <h4 className="text-xl font-bold text-slate-900">
                         Job Description
                       </h4>
-                      <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
-                        {activeJob.description.map((item, index) => (
-                          <li key={`desc-${index}`}>{item}</li>
-                        ))}
-                      </ul>
+                      <p className="text-slate-600 whitespace-pre-wrap break-words">
+                        {activeJob.description}
+                      </p>
                     </div>
                   )}
 

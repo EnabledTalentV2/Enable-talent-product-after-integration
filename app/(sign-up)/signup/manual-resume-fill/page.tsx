@@ -115,7 +115,7 @@ export default function ManualResumeFill() {
           setCandidateSlug(resolvedSlug);
         } else {
           setFinishError(
-            "Unable to create your profile. Please refresh the page."
+            "Unable to create your profile. Please refresh the page.",
           );
         }
 
@@ -145,7 +145,7 @@ export default function ManualResumeFill() {
 
   const hasCompletedAccessibility = Boolean(
     userData.accessibilityNeeds?.accommodationNeed &&
-      userData.accessibilityNeeds?.disclosurePreference
+    userData.accessibilityNeeds?.disclosurePreference,
   );
 
   useEffect(() => {
@@ -160,13 +160,13 @@ export default function ManualResumeFill() {
     Partial<Record<keyof UserData["basicInfo"], string>>
   >({});
   const [basicInfoFirstError, setBasicInfoFirstError] = useState<string | null>(
-    null
+    null,
   );
   const [educationErrors, setEducationErrors] = useState<
     Partial<Record<keyof UserData["education"], string>>
   >({});
   const [educationFirstError, setEducationFirstError] = useState<string | null>(
-    null
+    null,
   );
   const [workExpErrors, setWorkExpErrors] = useState<{
     experienceType?: string;
@@ -178,7 +178,7 @@ export default function ManualResumeFill() {
     >;
   }>({});
   const [workExpFirstError, setWorkExpFirstError] = useState<string | null>(
-    null
+    null,
   );
   const [skillErrors, setSkillErrors] = useState<
     Partial<Record<keyof UserData["skills"], string>>
@@ -188,7 +188,7 @@ export default function ManualResumeFill() {
     entries?: Record<number, Partial<Record<keyof ProjectEntry, string>>>;
   }>({});
   const [projectFirstError, setProjectFirstError] = useState<string | null>(
-    null
+    null,
   );
   const [certErrors, setCertErrors] = useState<{
     entries?: Record<number, Partial<Record<keyof CertificationEntry, string>>>;
@@ -208,7 +208,7 @@ export default function ManualResumeFill() {
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
   const profilePercent = useMemo(
     () => computeProfileCompletion(userData).percent,
-    [userData]
+    [userData],
   );
   const isLastStep = activeIndex === stepsState.length - 1;
 
@@ -217,14 +217,14 @@ export default function ManualResumeFill() {
       prev.map((step, idx) => ({
         ...step,
         isActive: idx === nextIndex,
-      }))
+      })),
     );
   };
 
   const updateStepStatus = (
     idx: number,
     status: StepStatus,
-    errorText?: string
+    errorText?: string,
   ) => {
     setStepsState((prev) =>
       prev.map((step, i) =>
@@ -234,8 +234,8 @@ export default function ManualResumeFill() {
               status,
               errorText,
             }
-          : step
-      )
+          : step,
+      ),
     );
   };
 
@@ -263,7 +263,7 @@ export default function ManualResumeFill() {
           },
         ];
         const missing = requiredBasicFields.filter(
-          ({ field }) => !userData.basicInfo[field]
+          ({ field }) => !userData.basicInfo[field],
         );
         if (missing.length) {
           const errs: Partial<Record<keyof UserData["basicInfo"], string>> = {};
@@ -274,6 +274,40 @@ export default function ManualResumeFill() {
           setBasicInfoFirstError(`basicInfo-${missing[0].field}`);
           return false;
         }
+
+        // Validate website URL if provided
+        if (userData.basicInfo.socialProfile) {
+          const portfolioUrl = userData.basicInfo.socialProfile.trim();
+          // Regex for verifying website URL (Strictly requires http:// or https://)
+          const urlPattern =
+            /^(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+          if (!urlPattern.test(portfolioUrl)) {
+            setBasicInfoErrors((prev) => ({
+              ...prev,
+              socialProfile:
+                "Please enter a valid URL starting with http:// or https://",
+            }));
+            setBasicInfoFirstError("basicInfo-socialProfile");
+            return false;
+          }
+        }
+
+        // Validate LinkedIn URL if provided
+        if (userData.basicInfo.linkedinUrl) {
+          const linkedinUrl = userData.basicInfo.linkedinUrl.trim();
+          // Regex for verifying LinkedIn URL (Strictly requires http:// or https://)
+          const linkedinPattern = /^(https?:\/\/)(www\.)?linkedin\.com\/.*$/i;
+          if (!linkedinPattern.test(linkedinUrl)) {
+            setBasicInfoErrors((prev) => ({
+              ...prev,
+              linkedinUrl:
+                "Please enter a valid LinkedIn URL starting with http:// or https://",
+            }));
+            setBasicInfoFirstError("basicInfo-linkedinUrl");
+            return false;
+          }
+        }
+
         setBasicInfoErrors({});
         setBasicInfoFirstError(null);
         return true;
@@ -287,7 +321,7 @@ export default function ManualResumeFill() {
           { field: "institution", message: "Please enter Institution" },
         ];
         const missingEdu = requiredEducationFields.filter(
-          ({ field }) => !userData.education[field]
+          ({ field }) => !userData.education[field],
         );
         if (missingEdu.length) {
           const errs: Partial<Record<keyof UserData["education"], string>> = {};
@@ -328,9 +362,14 @@ export default function ManualResumeFill() {
           };
           firstId = "workExp-0-company";
         }
+        // Validate each entry
         entries.forEach((entry, idx) => {
           requiredFields.forEach(({ field, message }) => {
-            if (!entry[field]) {
+            const val = entry[field];
+            const isValid =
+              val && typeof val === "string" && val.trim().length > 0;
+
+            if (!isValid) {
               if (!errors.entries) errors.entries = {};
               if (!errors.entries[idx]) errors.entries[idx] = {};
               errors.entries[idx]![field] = message;
@@ -339,12 +378,17 @@ export default function ManualResumeFill() {
               }
             }
           });
-          if (!entry.current && !entry.to) {
-            if (!errors.entries) errors.entries = {};
-            if (!errors.entries[idx]) errors.entries[idx] = {};
-            errors.entries[idx]!.to = "Please enter end date";
-            if (!firstId) {
-              firstId = `workExp-${idx}-to`;
+          if (!entry.current) {
+            const toVal = entry.to;
+            const isToValid =
+              toVal && typeof toVal === "string" && toVal.trim().length > 0;
+            if (!isToValid) {
+              if (!errors.entries) errors.entries = {};
+              if (!errors.entries[idx]) errors.entries[idx] = {};
+              errors.entries[idx]!.to = "Please enter end date";
+              if (!firstId) {
+                firstId = `workExp-${idx}-to`;
+              }
             }
           }
         });
@@ -380,9 +424,7 @@ export default function ManualResumeFill() {
         const requiredProjectFields: Array<{
           field: keyof ProjectEntry;
           message: string;
-        }> = [
-          { field: "projectName", message: "Please enter Project name" },
-        ];
+        }> = [{ field: "projectName", message: "Please enter Project name" }];
         const projectEntries = userData.projects.entries;
         const projectErrs: typeof projectErrors = { entries: {} };
         let firstProjectId: string | null = null;
@@ -422,9 +464,7 @@ export default function ManualResumeFill() {
         const requiredCertFields: Array<{
           field: keyof CertificationEntry;
           message: string;
-        }> = [
-          { field: "name", message: "Please enter Name of certification" },
-        ];
+        }> = [{ field: "name", message: "Please enter Name of certification" }];
         const certEntries = userData.certification.entries;
         const certErrs: typeof certErrors = { entries: {} };
         let firstCertId: string | null = null;
@@ -571,7 +611,8 @@ export default function ManualResumeFill() {
       const personalProfile: Record<string, unknown> = {};
       const phone = finalizedData.basicInfo.phone.trim();
       const location = finalizedData.basicInfo.location.trim();
-      const citizenshipStatus = finalizedData.basicInfo.citizenshipStatus.trim();
+      const citizenshipStatus =
+        finalizedData.basicInfo.citizenshipStatus.trim();
       const gender = normalizeGenderForBackend(finalizedData.basicInfo.gender);
       const ethnicity = finalizedData.basicInfo.ethnicity.trim();
       const linkedinUrl = finalizedData.basicInfo.linkedinUrl.trim();
@@ -617,7 +658,7 @@ export default function ManualResumeFill() {
 
       const fullProfile = await fetchCandidateProfileFull(
         candidateSlug,
-        "Manual Resume Fill"
+        "Manual Resume Fill",
       );
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
         ? fullProfile?.verified_profile
@@ -635,124 +676,130 @@ export default function ManualResumeFill() {
       const workExperienceContainer = isRecord(verifiedProfile?.work_experience)
         ? verifiedProfile.work_experience
         : isRecord(verifiedProfile?.workExperience)
-        ? verifiedProfile.workExperience
-        : isRecord(verifiedProfile?.work_experiences)
-        ? verifiedProfile.work_experiences
-        : isRecord(profileRoot?.work_experience)
-        ? profileRoot.work_experience
-        : isRecord(profileRoot?.workExperience)
-        ? profileRoot.workExperience
-        : isRecord(profileRoot?.work_experiences)
-        ? profileRoot.work_experiences
-        : null;
+          ? verifiedProfile.workExperience
+          : isRecord(verifiedProfile?.work_experiences)
+            ? verifiedProfile.work_experiences
+            : isRecord(profileRoot?.work_experience)
+              ? profileRoot.work_experience
+              : isRecord(profileRoot?.workExperience)
+                ? profileRoot.workExperience
+                : isRecord(profileRoot?.work_experiences)
+                  ? profileRoot.work_experiences
+                  : null;
       const existingWorkExperience = Array.isArray(
-        verifiedProfile?.work_experience
+        verifiedProfile?.work_experience,
       )
         ? verifiedProfile.work_experience
         : Array.isArray(profileRoot?.work_experience)
-        ? profileRoot.work_experience
-        : Array.isArray(verifiedProfile?.work_experiences)
-        ? verifiedProfile.work_experiences
-        : Array.isArray(profileRoot?.work_experiences)
-        ? profileRoot.work_experiences
-        : Array.isArray(verifiedProfile?.workExperience)
-        ? verifiedProfile.workExperience
-        : Array.isArray(profileRoot?.workExperience)
-        ? profileRoot.workExperience
-        : Array.isArray(
-            (workExperienceContainer as Record<string, unknown>)?.entries
-          )
-        ? ((workExperienceContainer as Record<string, unknown>)
-            ?.entries as unknown[])
-        : [];
+          ? profileRoot.work_experience
+          : Array.isArray(verifiedProfile?.work_experiences)
+            ? verifiedProfile.work_experiences
+            : Array.isArray(profileRoot?.work_experiences)
+              ? profileRoot.work_experiences
+              : Array.isArray(verifiedProfile?.workExperience)
+                ? verifiedProfile.workExperience
+                : Array.isArray(profileRoot?.workExperience)
+                  ? profileRoot.workExperience
+                  : Array.isArray(
+                        (workExperienceContainer as Record<string, unknown>)
+                          ?.entries,
+                      )
+                    ? ((workExperienceContainer as Record<string, unknown>)
+                        ?.entries as unknown[])
+                    : [];
       const projectsContainer = isRecord(verifiedProfile?.projects)
         ? verifiedProfile.projects
         : isRecord(verifiedProfile?.project)
-        ? verifiedProfile.project
-        : isRecord(profileRoot?.projects)
-        ? profileRoot.projects
-        : isRecord(profileRoot?.project)
-        ? profileRoot.project
-        : null;
+          ? verifiedProfile.project
+          : isRecord(profileRoot?.projects)
+            ? profileRoot.projects
+            : isRecord(profileRoot?.project)
+              ? profileRoot.project
+              : null;
       const existingProjects = Array.isArray(verifiedProfile?.projects)
         ? verifiedProfile.projects
         : Array.isArray(profileRoot?.projects)
-        ? profileRoot.projects
-        : Array.isArray(verifiedProfile?.project)
-        ? verifiedProfile.project
-        : Array.isArray(profileRoot?.project)
-        ? profileRoot.project
-        : Array.isArray((projectsContainer as Record<string, unknown>)?.entries)
-        ? ((projectsContainer as Record<string, unknown>)?.entries as unknown[])
-        : [];
+          ? profileRoot.projects
+          : Array.isArray(verifiedProfile?.project)
+            ? verifiedProfile.project
+            : Array.isArray(profileRoot?.project)
+              ? profileRoot.project
+              : Array.isArray(
+                    (projectsContainer as Record<string, unknown>)?.entries,
+                  )
+                ? ((projectsContainer as Record<string, unknown>)
+                    ?.entries as unknown[])
+                : [];
       const achievementsContainer = isRecord(verifiedProfile?.achievements)
         ? verifiedProfile.achievements
         : isRecord(verifiedProfile?.achievement)
-        ? verifiedProfile.achievement
-        : isRecord(verifiedProfile?.awards)
-        ? verifiedProfile.awards
-        : isRecord(profileRoot?.achievements)
-        ? profileRoot.achievements
-        : isRecord(profileRoot?.achievement)
-        ? profileRoot.achievement
-        : isRecord(profileRoot?.awards)
-        ? profileRoot.awards
-        : null;
+          ? verifiedProfile.achievement
+          : isRecord(verifiedProfile?.awards)
+            ? verifiedProfile.awards
+            : isRecord(profileRoot?.achievements)
+              ? profileRoot.achievements
+              : isRecord(profileRoot?.achievement)
+                ? profileRoot.achievement
+                : isRecord(profileRoot?.awards)
+                  ? profileRoot.awards
+                  : null;
       const existingAchievements = Array.isArray(verifiedProfile?.achievements)
         ? verifiedProfile.achievements
         : Array.isArray(profileRoot?.achievements)
-        ? profileRoot.achievements
-        : Array.isArray(verifiedProfile?.achievement)
-        ? verifiedProfile.achievement
-        : Array.isArray(profileRoot?.achievement)
-        ? profileRoot.achievement
-        : Array.isArray(verifiedProfile?.awards)
-        ? verifiedProfile.awards
-        : Array.isArray(profileRoot?.awards)
-        ? profileRoot.awards
-        : Array.isArray(
-            (achievementsContainer as Record<string, unknown>)?.entries
-          )
-        ? ((achievementsContainer as Record<string, unknown>)
-            ?.entries as unknown[])
-        : [];
+          ? profileRoot.achievements
+          : Array.isArray(verifiedProfile?.achievement)
+            ? verifiedProfile.achievement
+            : Array.isArray(profileRoot?.achievement)
+              ? profileRoot.achievement
+              : Array.isArray(verifiedProfile?.awards)
+                ? verifiedProfile.awards
+                : Array.isArray(profileRoot?.awards)
+                  ? profileRoot.awards
+                  : Array.isArray(
+                        (achievementsContainer as Record<string, unknown>)
+                          ?.entries,
+                      )
+                    ? ((achievementsContainer as Record<string, unknown>)
+                        ?.entries as unknown[])
+                    : [];
       const certificationsContainer = isRecord(verifiedProfile?.certifications)
         ? verifiedProfile.certifications
         : isRecord(verifiedProfile?.certification)
-        ? verifiedProfile.certification
-        : isRecord(verifiedProfile?.certificates)
-        ? verifiedProfile.certificates
-        : isRecord(profileRoot?.certifications)
-        ? profileRoot.certifications
-        : isRecord(profileRoot?.certification)
-        ? profileRoot.certification
-        : isRecord(profileRoot?.certificates)
-        ? profileRoot.certificates
-        : null;
+          ? verifiedProfile.certification
+          : isRecord(verifiedProfile?.certificates)
+            ? verifiedProfile.certificates
+            : isRecord(profileRoot?.certifications)
+              ? profileRoot.certifications
+              : isRecord(profileRoot?.certification)
+                ? profileRoot.certification
+                : isRecord(profileRoot?.certificates)
+                  ? profileRoot.certificates
+                  : null;
       const existingCertifications = Array.isArray(
-        verifiedProfile?.certifications
+        verifiedProfile?.certifications,
       )
         ? verifiedProfile.certifications
         : Array.isArray(profileRoot?.certifications)
-        ? profileRoot.certifications
-        : Array.isArray(verifiedProfile?.certification)
-        ? verifiedProfile.certification
-        : Array.isArray(profileRoot?.certification)
-        ? profileRoot.certification
-        : Array.isArray(verifiedProfile?.certificates)
-        ? verifiedProfile.certificates
-        : Array.isArray(profileRoot?.certificates)
-        ? profileRoot.certificates
-        : Array.isArray(
-            (certificationsContainer as Record<string, unknown>)?.entries
-          )
-        ? ((certificationsContainer as Record<string, unknown>)
-            ?.entries as unknown[])
-        : [];
+          ? profileRoot.certifications
+          : Array.isArray(verifiedProfile?.certification)
+            ? verifiedProfile.certification
+            : Array.isArray(profileRoot?.certification)
+              ? profileRoot.certification
+              : Array.isArray(verifiedProfile?.certificates)
+                ? verifiedProfile.certificates
+                : Array.isArray(profileRoot?.certificates)
+                  ? profileRoot.certificates
+                  : Array.isArray(
+                        (certificationsContainer as Record<string, unknown>)
+                          ?.entries,
+                      )
+                    ? ((certificationsContainer as Record<string, unknown>)
+                        ?.entries as unknown[])
+                    : [];
 
       const educationPayloads = buildCandidateEducationPayloads(
         finalizedData,
-        existingEducation
+        existingEducation,
       );
       for (const payload of educationPayloads) {
         await apiRequest("/api/candidates/education/", {
@@ -763,7 +810,7 @@ export default function ManualResumeFill() {
 
       const skillPayloads = buildCandidateSkillPayloads(
         finalizedData,
-        existingSkills
+        existingSkills,
       );
       for (const payload of skillPayloads) {
         await apiRequest("/api/candidates/skills/", {
@@ -785,12 +832,12 @@ export default function ManualResumeFill() {
             typeof entry.name === "string"
               ? entry.name
               : typeof entry.skill === "string"
-              ? entry.skill
-              : typeof entry.title === "string"
-              ? entry.title
-              : typeof entry.label === "string"
-              ? entry.label
-              : "";
+                ? entry.skill
+                : typeof entry.title === "string"
+                  ? entry.title
+                  : typeof entry.label === "string"
+                    ? entry.label
+                    : "";
           const trimmedName = name.trim();
           if (!trimmedName) return null;
           const idValue =
@@ -875,7 +922,7 @@ export default function ManualResumeFill() {
 
       const languagePayloads = buildCandidateLanguagePayloads(
         finalizedData,
-        existingLanguages
+        existingLanguages,
       );
       for (const payload of languagePayloads) {
         await apiRequest("/api/candidates/languages/", {
@@ -919,18 +966,18 @@ export default function ManualResumeFill() {
         finalizedData.workExperience.entries
           .map((entry) => entry.id)
           .filter((id) => id !== null && id !== undefined && id !== "")
-          .map((id) => String(id))
+          .map((id) => String(id)),
       );
       const workExperienceDeletes = Array.from(
         new Set(
           existingWorkIds
             .filter(
               (id): id is number | string =>
-                id !== null && id !== undefined && id !== ""
+                id !== null && id !== undefined && id !== "",
             )
             .map((id) => String(id))
-            .filter((id) => deleteAllWorkExperience || !currentWorkIds.has(id))
-        )
+            .filter((id) => deleteAllWorkExperience || !currentWorkIds.has(id)),
+        ),
       );
 
       for (const id of workExperienceDeletes) {
@@ -953,12 +1000,12 @@ export default function ManualResumeFill() {
             typeof entry.project_name === "string"
               ? entry.project_name
               : typeof entry.projectName === "string"
-              ? entry.projectName
-              : typeof entry.name === "string"
-              ? entry.name
-              : typeof entry.title === "string"
-              ? entry.title
-              : "";
+                ? entry.projectName
+                : typeof entry.name === "string"
+                  ? entry.name
+                  : typeof entry.title === "string"
+                    ? entry.title
+                    : "";
           const trimmedName = name.trim();
           const idValue =
             entry.id ?? entry.pk ?? entry.project_id ?? entry.projectId;
@@ -1044,23 +1091,20 @@ export default function ManualResumeFill() {
             typeof entry.title === "string"
               ? entry.title
               : typeof entry.name === "string"
-              ? entry.name
-              : "";
+                ? entry.name
+                : "";
           const issueDate =
             typeof entry.issue_date === "string"
               ? entry.issue_date
               : typeof entry.issueDate === "string"
-              ? entry.issueDate
-              : typeof entry.date === "string"
-              ? entry.date
-              : "";
+                ? entry.issueDate
+                : typeof entry.date === "string"
+                  ? entry.date
+                  : "";
           const trimmedTitle = title.trim();
           const trimmedIssueDate = issueDate.trim();
           const idValue =
-            entry.id ??
-            entry.pk ??
-            entry.achievement_id ??
-            entry.achievementId;
+            entry.id ?? entry.pk ?? entry.achievement_id ?? entry.achievementId;
           const id =
             typeof idValue === "number" || typeof idValue === "string"
               ? idValue
@@ -1097,7 +1141,7 @@ export default function ManualResumeFill() {
       achievementPayloads.forEach((update) => {
         const key = normalizeAchievementKey(
           update.payload.title,
-          update.payload.issue_date
+          update.payload.issue_date,
         );
         if (!key || achievementMap.has(key)) return;
         achievementMap.set(key, update);
@@ -1152,24 +1196,24 @@ export default function ManualResumeFill() {
             typeof entry.name === "string"
               ? entry.name
               : typeof entry.title === "string"
-              ? entry.title
-              : typeof entry.certification_name === "string"
-              ? entry.certification_name
-              : typeof entry.certificationName === "string"
-              ? entry.certificationName
-              : "";
+                ? entry.title
+                : typeof entry.certification_name === "string"
+                  ? entry.certification_name
+                  : typeof entry.certificationName === "string"
+                    ? entry.certificationName
+                    : "";
           const organization =
             typeof entry.issuing_organization === "string"
               ? entry.issuing_organization
               : typeof entry.organization === "string"
-              ? entry.organization
-              : typeof entry.issued_by === "string"
-              ? entry.issued_by
-              : typeof entry.issuedBy === "string"
-              ? entry.issuedBy
-              : typeof entry.issuer === "string"
-              ? entry.issuer
-              : "";
+                ? entry.organization
+                : typeof entry.issued_by === "string"
+                  ? entry.issued_by
+                  : typeof entry.issuedBy === "string"
+                    ? entry.issuedBy
+                    : typeof entry.issuer === "string"
+                      ? entry.issuer
+                      : "";
           const trimmedName = name.trim();
           const trimmedOrg = organization.trim();
           const idValue =
@@ -1213,15 +1257,14 @@ export default function ManualResumeFill() {
       certificationPayloads.forEach((update) => {
         const key = normalizeCertificationKey(
           update.payload.name,
-          update.payload.issuing_organization
+          update.payload.issuing_organization,
         );
         if (!key || certificationMap.has(key)) return;
         certificationMap.set(key, update);
       });
 
       for (const [key, update] of certificationMap.entries()) {
-        const resolvedId =
-          update.id ?? existingCertificationByKey.get(key)?.id;
+        const resolvedId = update.id ?? existingCertificationByKey.get(key)?.id;
         if (
           resolvedId !== null &&
           resolvedId !== undefined &&
@@ -1239,7 +1282,8 @@ export default function ManualResumeFill() {
         }
       }
 
-      const deleteAllCertifications = finalizedData.certification.noCertification;
+      const deleteAllCertifications =
+        finalizedData.certification.noCertification;
       const certificationDeletes = existingCertificationRecords.filter(
         (record) => {
           if (
@@ -1252,11 +1296,11 @@ export default function ManualResumeFill() {
           if (deleteAllCertifications) return true;
           const key = normalizeCertificationKey(
             record.name,
-            record.organization
+            record.organization,
           );
           if (!key) return true;
           return !certificationMap.has(key);
-        }
+        },
       );
 
       for (const record of certificationDeletes) {
@@ -1277,7 +1321,7 @@ export default function ManualResumeFill() {
       }
       const message = getApiErrorMessage(
         err,
-        "Unable to complete signup. Please try again."
+        "Unable to complete signup. Please try again.",
       );
       setFinishError(message);
     } finally {
@@ -1314,7 +1358,7 @@ export default function ManualResumeFill() {
           return { ...step, isActive: true };
         }
         return step;
-      })
+      }),
     );
   };
 
@@ -1342,7 +1386,7 @@ export default function ManualResumeFill() {
                     if (patch[key]) {
                       delete (cleared as Record<string, string>)[key as string];
                     }
-                  }
+                  },
                 );
                 return cleared;
               });
@@ -1350,10 +1394,10 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const firstKey = prev.replace(
                   "basicInfo-",
-                  ""
+                  "",
                 ) as keyof UserData["basicInfo"];
                 const updatedKeys = Object.keys(
-                  patch
+                  patch,
                 ) as (keyof typeof patch)[];
                 if (updatedKeys.includes(firstKey) && patch[firstKey]) {
                   return null;
@@ -1380,7 +1424,7 @@ export default function ManualResumeFill() {
                     if (patch[key]) {
                       delete (cleared as Record<string, string>)[key as string];
                     }
-                  }
+                  },
                 );
                 return cleared;
               });
@@ -1388,10 +1432,10 @@ export default function ManualResumeFill() {
                 if (!prev) return prev;
                 const firstKey = prev.replace(
                   "education-",
-                  ""
+                  "",
                 ) as keyof UserData["education"];
                 const updatedKeys = Object.keys(
-                  patch
+                  patch,
                 ) as (keyof typeof patch)[];
                 if (updatedKeys.includes(firstKey) && patch[firstKey]) {
                   return null;
@@ -1423,7 +1467,7 @@ export default function ManualResumeFill() {
               setUserData((prev) => {
                 const nextEntries = prev.workExperience.entries.map(
                   (entry, idx) =>
-                    idx === index ? { ...entry, ...patch } : entry
+                    idx === index ? { ...entry, ...patch } : entry,
                 );
                 return {
                   ...prev,
@@ -1444,7 +1488,7 @@ export default function ManualResumeFill() {
                       if (patch[key]) {
                         delete updated[key as string];
                       }
-                    }
+                    },
                   );
                   if (patch.current === true) {
                     delete updated.to;
@@ -1495,7 +1539,7 @@ export default function ManualResumeFill() {
             onRemoveEntry={(index) => {
               setUserData((prev) => {
                 const nextEntries = prev.workExperience.entries.filter(
-                  (_, idx) => idx !== index
+                  (_, idx) => idx !== index,
                 );
                 return {
                   ...prev,
@@ -1564,7 +1608,7 @@ export default function ManualResumeFill() {
             onEntryChange={(index, patch) => {
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.map((entry, idx) =>
-                  idx === index ? { ...entry, ...patch } : entry
+                  idx === index ? { ...entry, ...patch } : entry,
                 );
                 return {
                   ...prev,
@@ -1582,7 +1626,7 @@ export default function ManualResumeFill() {
                       if (patch[key]) {
                         delete updated[key as string];
                       }
-                    }
+                    },
                   );
                   if (patch.current === true) {
                     delete updated.to;
@@ -1633,7 +1677,7 @@ export default function ManualResumeFill() {
             onRemoveEntry={(index) => {
               setUserData((prev) => {
                 const nextEntries = prev.projects.entries.filter(
-                  (_, idx) => idx !== index
+                  (_, idx) => idx !== index,
                 );
                 return {
                   ...prev,
@@ -1653,7 +1697,7 @@ export default function ManualResumeFill() {
               setUserData((prev) => {
                 const nextEntries = prev.achievements.entries.map(
                   (entry, idx) =>
-                    idx === index ? { ...entry, ...patch } : entry
+                    idx === index ? { ...entry, ...patch } : entry,
                 );
                 return {
                   ...prev,
@@ -1676,7 +1720,7 @@ export default function ManualResumeFill() {
             onRemoveEntry={(index) =>
               setUserData((prev) => {
                 const nextEntries = prev.achievements.entries.filter(
-                  (_, idx) => idx !== index
+                  (_, idx) => idx !== index,
                 );
                 return {
                   ...prev,
@@ -1723,7 +1767,7 @@ export default function ManualResumeFill() {
               setUserData((prev) => {
                 const nextEntries = prev.certification.entries.map(
                   (entry, idx) =>
-                    idx === index ? { ...entry, ...patch } : entry
+                    idx === index ? { ...entry, ...patch } : entry,
                 );
                 return {
                   ...prev,
@@ -1744,7 +1788,7 @@ export default function ManualResumeFill() {
                       if (patch[key]) {
                         delete updated[key as string];
                       }
-                    }
+                    },
                   );
                   cleared.entries = { ...cleared.entries, [index]: updated };
                 }
@@ -1785,7 +1829,7 @@ export default function ManualResumeFill() {
             onRemoveEntry={(index) => {
               setUserData((prev) => {
                 const nextEntries = prev.certification.entries.filter(
-                  (_, idx) => idx !== index
+                  (_, idx) => idx !== index,
                 );
                 return {
                   ...prev,
@@ -1833,7 +1877,7 @@ export default function ManualResumeFill() {
                         key as string
                       ];
                     }
-                  }
+                  },
                 );
                 return cleared;
               });
@@ -1845,7 +1889,7 @@ export default function ManualResumeFill() {
                 if (
                   updatedKeys.some(
                     (key) =>
-                      prev === `otherDetails-${String(key)}` && patch[key]
+                      prev === `otherDetails-${String(key)}` && patch[key],
                   )
                 ) {
                   return null;
@@ -1857,7 +1901,7 @@ export default function ManualResumeFill() {
               setUserData((prev) => {
                 const nextLanguages = prev.otherDetails.languages.map(
                   (entry, idx) =>
-                    idx === index ? { ...entry, ...patch } : entry
+                    idx === index ? { ...entry, ...patch } : entry,
                 );
                 return {
                   ...prev,
@@ -1878,7 +1922,7 @@ export default function ManualResumeFill() {
                       if (patch[key]) {
                         delete updated[key as string];
                       }
-                    }
+                    },
                   );
                   cleared.languages = {
                     ...cleared.languages,
@@ -1919,7 +1963,7 @@ export default function ManualResumeFill() {
             onRemoveLanguage={(index) => {
               setUserData((prev) => {
                 const nextLanguages = prev.otherDetails.languages.filter(
-                  (_, idx) => idx !== index
+                  (_, idx) => idx !== index,
                 );
                 return {
                   ...prev,
@@ -2048,61 +2092,63 @@ export default function ManualResumeFill() {
         <div className="max-w-7xl w-full flex flex-col gap-6">
           <Header percent={profilePercent} />
 
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <Sidebar steps={stepsState} />
+          <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <Sidebar steps={stepsState} />
 
-          <main className="md:col-span-9 bg-white rounded-3xl p-8 md:p-10 shadow-lg">
-            <div className="flex items-start justify-between gap-4 mb-8">
-              <div>
-                <p className="text-base text-slate-500">Step {activeStep.id}</p>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {activeStep.label}
-                </h2>
+            <main className="md:col-span-9 bg-white rounded-3xl p-8 md:p-10 shadow-lg">
+              <div className="flex items-start justify-between gap-4 mb-8">
+                <div>
+                  <p className="text-base text-slate-500">
+                    Step {activeStep.id}
+                  </p>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {activeStep.label}
+                  </h2>
+                </div>
+                <div className="hidden md:flex items-center gap-2 text-base text-slate-500">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span>Profile completion tracking</span>
+                </div>
               </div>
-              <div className="hidden md:flex items-center gap-2 text-base text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Profile completion tracking</span>
-              </div>
-            </div>
 
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              {renderForm}
+              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                {renderForm}
 
-              {finishError ? (
-                <p className="text-base font-medium text-red-600">
-                  {finishError}
-                </p>
-              ) : null}
+                {finishError ? (
+                  <p className="text-base font-medium text-red-600">
+                    {finishError}
+                  </p>
+                ) : null}
 
-              <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={handlePrevious}
-                  className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
-                  disabled={activeIndex === 0}
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveAndNext}
-                  className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={
-                    isUpdating ||
-                    (activeStep.key === "reviewAgree" &&
-                      !userData.reviewAgree.agree)
-                  }
-                >
-                  {isUpdating && isLastStep
-                    ? "Finishing..."
-                    : isLastStep
-                    ? "Finish"
-                    : "Save & Next"}
-                </button>
-              </div>
-            </form>
-          </main>
-        </section>
+                <div className="pt-8 border-t border-gray-100 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+                    disabled={activeIndex === 0}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveAndNext}
+                    className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={
+                      isUpdating ||
+                      (activeStep.key === "reviewAgree" &&
+                        !userData.reviewAgree.agree)
+                    }
+                  >
+                    {isUpdating && isLastStep
+                      ? "Finishing..."
+                      : isLastStep
+                        ? "Finish"
+                        : "Save & Next"}
+                  </button>
+                </div>
+              </form>
+            </main>
+          </section>
         </div>
       </div>
     </div>

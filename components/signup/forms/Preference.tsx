@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import { Check } from "lucide-react";
 import type { UserData } from "@/lib/types/user";
 
 type Props = {
@@ -11,11 +12,21 @@ type Props = {
   hideCompanySize?: boolean;
 };
 
-export default function Preference({ data, errors, onChange, hideCompanySize = false }: Props) {
+export default function Preference({
+  data,
+  errors,
+  onChange,
+  hideCompanySize = false,
+}: Props) {
   const toggleValue = (list: string[], value: string) =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
-  const companySizeOptions = ["1 - 10", "10 - 100", "100 - 1000", "1000 - 10000"];
+  const companySizeOptions = [
+    "1 - 10",
+    "10 - 100",
+    "100 - 1000",
+    "1000 - 10000",
+  ];
   const jobTypeOptions = ["Full time", "Contract", "Part time", "Intern"];
   const workModeOptions = ["Remote", "Hybrid", "Onsite"];
 
@@ -38,8 +49,18 @@ export default function Preference({ data, errors, onChange, hideCompanySize = f
         onChange={(e) => onCheckedChange(e.target.checked)}
         className="peer sr-only"
       />
-      <span className="relative flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 bg-white shadow-sm peer-checked:border-orange-600 peer-checked:bg-orange-50 after:content-[''] after:absolute after:h-2 after:w-2 after:rounded-full after:bg-orange-600 after:opacity-0 peer-checked:after:opacity-100" />
-      <span className="text-slate-600 peer-checked:text-slate-800">{label}</span>
+      <span
+        className={`relative flex h-5 w-5 items-center justify-center rounded border shadow-sm transition-colors ${
+          checked
+            ? "border-orange-600 bg-orange-600"
+            : "border-slate-300 bg-white"
+        }`}
+      >
+        {checked && <Check size={14} className="text-white" strokeWidth={3} />}
+      </span>
+      <span className="text-slate-600 peer-checked:text-slate-800">
+        {label}
+      </span>
     </label>
   );
 
@@ -63,7 +84,9 @@ export default function Preference({ data, errors, onChange, hideCompanySize = f
         className="peer sr-only"
       />
       <span className="relative flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 bg-white shadow-sm peer-checked:border-orange-600 peer-checked:bg-orange-50 after:content-[''] after:absolute after:h-2 after:w-2 after:rounded-full after:bg-orange-600 after:opacity-0 peer-checked:after:opacity-100" />
-      <span className="text-slate-600 peer-checked:text-slate-800">{label}</span>
+      <span className="text-slate-600 peer-checked:text-slate-800">
+        {label}
+      </span>
     </label>
   );
 
@@ -80,7 +103,9 @@ export default function Preference({ data, errors, onChange, hideCompanySize = f
                 label={option}
                 checked={data.companySize.includes(option)}
                 onCheckedChange={() =>
-                  onChange({ companySize: toggleValue(data.companySize, option) })
+                  onChange({
+                    companySize: toggleValue(data.companySize, option),
+                  })
                 }
               />
             ))}
@@ -123,7 +148,9 @@ export default function Preference({ data, errors, onChange, hideCompanySize = f
       </div>
 
       <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">Willing to Relocate</p>
+        <p className="text-base font-semibold text-slate-800">
+          Willing to Relocate
+        </p>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           <Option
             name="preference-willingToRelocate"
@@ -169,4 +196,3 @@ export default function Preference({ data, errors, onChange, hideCompanySize = f
     </div>
   );
 }
-

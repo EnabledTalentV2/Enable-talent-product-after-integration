@@ -14,7 +14,6 @@ interface JobDetail {
   experience: string; // 12 years
   salary: string;
   about: string;
-  description: string[];
   requirements: string[];
   stats: {
     accepted: number;
@@ -163,25 +162,12 @@ export default function JobDetailView({
       {/* About */}
       <div className="mb-8">
         <h3 className="font-bold text-slate-900 mb-3">About the job</h3>
-        <p className="text-sm text-slate-600 leading-relaxed">{job.about}</p>
+        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words">
+          {job.about}
+        </p>
       </div>
 
-      {/* Description */}
-      <div className="mb-8">
-        <h3 className="font-bold text-slate-900 mb-3">Description</h3>
-        <ul className="list-disc list-outside ml-4 space-y-2">
-          {job.description.map((item, index) => (
-            <li
-              key={index}
-              className="text-sm text-slate-600 leading-relaxed pl-1"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      </div>
+    </div>
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

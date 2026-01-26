@@ -25,7 +25,7 @@ const WORK_ARRANGEMENT_TO_BACKEND: Record<string, number> = {
 
 export const toBackendJobPayload = (values: JobFormValues) => {
   // Use description as the job_desc field
-  const jobDesc = values.description || "";
+  const jobDesc = (values.description ?? "").trim();
 
   // Parse salary to number if possible, otherwise send as is
   let salaryValue: number | string = values.salary;
@@ -144,7 +144,7 @@ const parseJobFromBackend = (
   // Handle both job_desc (backend response) and description/job_description (alternatives)
   const description = toStringValue(
     record.job_desc ?? record.job_description ?? record.description
-  );
+  ).trim();
   const requirements = toStringValue(record.requirements);
 
   // Handle both estimated_salary (backend response) and salary_range/salary (alternatives)
@@ -283,7 +283,7 @@ export const toListedJob = (job: EmployerJob) => {
 
 export const toJobDetail = (job: EmployerJob) => {
   const stats = emptyJobStats();
-  const descriptionLines = splitLines(job.description);
+  const descriptionText = job.description || "";
   const requirementLines = splitLines(job.requirements);
 
   return {
@@ -295,8 +295,7 @@ export const toJobDetail = (job: EmployerJob) => {
     workMode: job.workArrangement,
     experience: job.experience,
     salary: job.salary,
-    about: job.description || "No description provided.",
-    description: descriptionLines,
+    about: descriptionText || "No description provided.",
     requirements: requirementLines,
     stats: {
       accepted: stats.accepted,
