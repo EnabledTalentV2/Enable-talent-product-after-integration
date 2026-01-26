@@ -2,7 +2,17 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, LogOut, Search, User, Menu, X, Home, LayoutDashboard, BriefcaseBusiness } from "lucide-react";
+import {
+  Bell,
+  LogOut,
+  Search,
+  User,
+  Menu,
+  X,
+  Home,
+  LayoutDashboard,
+  BriefcaseBusiness,
+} from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
@@ -37,7 +47,7 @@ export default function DashBoardNavbar() {
 
     const menu = menuRef.current;
     const focusableElements = menu.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
@@ -102,6 +112,8 @@ export default function DashBoardNavbar() {
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
             href="https://enabled-talent-landing-v2.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-3"
           >
             <Image
@@ -154,7 +166,9 @@ export default function DashBoardNavbar() {
             type="button"
             onClick={toggleMenu}
             className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation-menu"
           >

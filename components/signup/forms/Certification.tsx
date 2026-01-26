@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import InputBlock from "./InputBlock";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
 import type { UserData } from "@/lib/types/user";
 
 type Entry = UserData["certification"]["entries"][number];
@@ -27,6 +29,7 @@ export default function Certification({
   onRemoveEntry,
   suppressDeleteWarning = false,
 }: Props) {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const entries = data.entries;
   const isNone = data.noCertification;
   const showDeleteWarning = !suppressDeleteWarning && isNone && entries.length > 0;
@@ -39,16 +42,37 @@ export default function Certification({
 
   const handleToggleNoCertification = (checked: boolean) => {
     if (!suppressDeleteWarning && checked && entries.length > 0) {
-      const confirmed = window.confirm(
-        "Choosing 'no certification' will remove your existing certifications when you save. Continue?"
-      );
-      if (!confirmed) return;
+      // Show accessible confirmation dialog instead of window.confirm
+      // WCAG 4.1.2: Proper role and ARIA attributes for dialogs
+      setShowConfirmDialog(true);
+      return;
     }
     onToggleNoCertification(checked);
   };
 
+  const handleConfirmNoCertification = () => {
+    setShowConfirmDialog(false);
+    onToggleNoCertification(true);
+  };
+
+  const handleCancelDialog = () => {
+    setShowConfirmDialog(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Accessible confirmation dialog - WCAG 4.1.2 compliant */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Remove Certifications?"
+        message="Choosing 'no certification' will remove your existing certifications when you save. Are you sure you want to continue?"
+        confirmLabel="Yes, remove"
+        cancelLabel="Keep certifications"
+        variant="warning"
+        onConfirm={handleConfirmNoCertification}
+        onCancel={handleCancelDialog}
+      />
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Certifications</h3>
         {errorCount > 0 && !isNone ? (

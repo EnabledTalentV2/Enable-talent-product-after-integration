@@ -2,7 +2,16 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, LogOut, User, Menu, X, LayoutDashboard, BriefcaseBusiness, Building2 } from "lucide-react";
+import {
+  Bell,
+  LogOut,
+  User,
+  Menu,
+  X,
+  LayoutDashboard,
+  BriefcaseBusiness,
+  Building2,
+} from "lucide-react";
 import Link from "next/link";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
@@ -43,19 +52,22 @@ export default function DashBoardNavbarEmployer() {
       href: "/employer/dashboard/candidates",
       label: "Candidates",
       icon: User,
-      isActive: (path: string) => path.startsWith("/employer/dashboard/candidates"),
+      isActive: (path: string) =>
+        path.startsWith("/employer/dashboard/candidates"),
     },
     {
       href: "/employer/dashboard/listed-jobs",
       label: "Listed Jobs",
       icon: BriefcaseBusiness,
-      isActive: (path: string) => path.startsWith("/employer/dashboard/listed-jobs"),
+      isActive: (path: string) =>
+        path.startsWith("/employer/dashboard/listed-jobs"),
     },
     {
       href: "/employer/dashboard/company-profile",
       label: "Company Profile",
       icon: Building2,
-      isActive: (path: string) => path.startsWith("/employer/dashboard/company-profile"),
+      isActive: (path: string) =>
+        path.startsWith("/employer/dashboard/company-profile"),
     },
   ];
 
@@ -65,6 +77,8 @@ export default function DashBoardNavbarEmployer() {
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
             href="https://enabled-talent-landing-v2.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-3"
           >
             <Image
@@ -125,7 +139,10 @@ export default function DashBoardNavbarEmployer() {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden" onClick={toggleMenu}>
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden"
+          onClick={toggleMenu}
+        >
           <div
             className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg"
             onClick={(e) => e.stopPropagation()}
