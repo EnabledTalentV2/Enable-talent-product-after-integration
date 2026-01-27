@@ -768,6 +768,16 @@ export default function ProfileUpdatePage() {
   );
   const hasIncompleteSections = incompleteSections.length > 0;
 
+  const scrollToSection = (key: StepKey) => {
+    if (typeof document === "undefined") return;
+    const target = document.getElementById(`profile-section-${key}`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if ("focus" in target) {
+      (target as HTMLElement).focus({ preventScroll: true });
+    }
+  };
+
   useEffect(() => {
     if (autoNoEntriesRef.current) return;
 
@@ -2367,6 +2377,27 @@ export default function ProfileUpdatePage() {
         </p>
       </header>
 
+      {hasIncompleteSections ? (
+        <div className={cardClass}>
+          <h2 className={titleClass}>Missing information</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Complete these sections to finish your profile.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {incompleteSections.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => scrollToSection(key)}
+                className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+              >
+                {sectionLabels[key]}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {!hasIncompleteSections ? (
         <div className={cardClass}>
           <h2 className={titleClass}>All set</h2>
@@ -2441,8 +2472,24 @@ export default function ProfileUpdatePage() {
 
       <div className="space-y-6">
         {sectionOrder.map((key) => (
-          <section key={key} className={cardClass}>
-            <h2 className={titleClass}>{sectionLabels[key]}</h2>
+          <section
+            key={key}
+            id={`profile-section-${key}`}
+            tabIndex={-1}
+            className={`${cardClass} ${
+              sectionCompletion[key]?.isComplete
+                ? ""
+                : "border border-amber-200 ring-1 ring-amber-100"
+            }`}
+          >
+            <h2 className={`${titleClass} flex items-center gap-2`}>
+              {sectionLabels[key]}
+              {!sectionCompletion[key]?.isComplete ? (
+                <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+                  Incomplete
+                </span>
+              ) : null}
+            </h2>
             <div className="mt-4">{renderSection(key)}</div>
           </section>
         ))}
