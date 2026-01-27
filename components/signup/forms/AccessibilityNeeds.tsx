@@ -91,8 +91,35 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
   const selectedCategories = data.categories ?? [];
   const selectedAccommodations = data.accommodations ?? [];
 
-  const toggleValue = (list: string[], value: string) =>
-    list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+  const toggleCategory = (value: string) => {
+    if (value === "prefer_not_to_disclose") {
+      return selectedCategories.includes(value) ? [] : [value];
+    }
+    const withoutPrefer = selectedCategories.filter(
+      (item) => item !== "prefer_not_to_disclose"
+    );
+    if (withoutPrefer.includes(value)) {
+      return withoutPrefer.filter((item) => item !== value);
+    }
+    return [...withoutPrefer, value];
+  };
+  const toggleAccommodation = (value: string) => {
+    const isExclusiveOption =
+      value === "prefer_discuss_later" || value === "non_needed";
+    if (isExclusiveOption) {
+      return selectedAccommodations.includes(value) ? [] : [value];
+    }
+    if (
+      selectedAccommodations.includes("prefer_discuss_later") ||
+      selectedAccommodations.includes("non_needed")
+    ) {
+      return [value];
+    }
+    if (selectedAccommodations.includes(value)) {
+      return selectedAccommodations.filter((item) => item !== value);
+    }
+    return [...selectedAccommodations, value];
+  };
 
   return (
     <div className="space-y-8">
@@ -123,7 +150,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
                   checked={isSelected}
                   onChange={() =>
                     onChange({
-                      categories: toggleValue(selectedCategories, category.id),
+                      categories: toggleCategory(category.id),
                     })
                   }
                   className="mt-1 h-4 w-4 rounded accent-orange-600"
@@ -208,10 +235,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
                   checked={isSelected}
                   onChange={() =>
                     onChange({
-                      accommodations: toggleValue(
-                        selectedAccommodations,
-                        option.id
-                      ),
+                      accommodations: toggleAccommodation(option.id),
                     })
                   }
                   className="h-4 w-4 rounded accent-orange-600"
