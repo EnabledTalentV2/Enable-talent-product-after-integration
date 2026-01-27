@@ -17,7 +17,6 @@ import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 interface CandidateDetailPanelProps {
   candidate: CandidateProfile;
-  profileScore: number;
   profileHref?: string;
   onInviteClick?: () => void;
 }
@@ -88,7 +87,6 @@ function DetailSection({
 
 export default function CandidateDetailPanel({
   candidate,
-  profileScore,
   profileHref,
   onInviteClick,
 }: CandidateDetailPanelProps) {
@@ -98,6 +96,11 @@ export default function CandidateDetailPanel({
   );
   const skills = candidate.resume_parsed?.skills ?? [];
   const skillsCount = skills.length;
+
+  // Count entries by splitting on newlines
+  const experienceCount = candidate.resume_parsed?.experience?.split("\n").filter(Boolean).length ?? 0;
+  const educationCount = candidate.resume_parsed?.education?.split("\n").filter(Boolean).length ?? 0;
+  const certificationsCount = candidate.resume_parsed?.certifications?.split("\n").filter(Boolean).length ?? 0;
   const links = [
     { label: "LinkedIn", href: candidate.linkedin, icon: Linkedin },
     { label: "GitHub", href: candidate.github, icon: Github },
@@ -134,9 +137,6 @@ export default function CandidateDetailPanel({
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
-  const joinedDate = formatDate(candidate.created_at);
-  const otherDetailsCount =
-    Number(Boolean(candidate.phone)) + Number(Boolean(joinedDate));
 
   return (
     <div className="space-y-4">
@@ -163,12 +163,6 @@ export default function CandidateDetailPanel({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 flex-col items-center justify-center rounded-full bg-white text-slate-900">
-              <span className="text-sm font-bold">{profileScore}%</span>
-              <span className="text-[10px] text-slate-500">Profile</span>
-            </div>
-          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-700">
@@ -265,11 +259,11 @@ export default function CandidateDetailPanel({
         badge={skillsCount ? `${skillsCount} added` : "Not set"}
       >
         {skillsCount ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-1">
             {skills.map((skill) => (
               <span
                 key={skill}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                className="text-sm text-slate-600"
               >
                 {skill}
               </span>
@@ -282,7 +276,7 @@ export default function CandidateDetailPanel({
 
       <DetailSection
         title="Work experience"
-        badge={candidate.resume_parsed?.experience ? "1 added" : "Not set"}
+        badge={experienceCount ? `${experienceCount} added` : "Not set"}
       >
         {candidate.resume_parsed?.experience ? (
           <p className="whitespace-pre-wrap text-slate-600">
@@ -295,7 +289,7 @@ export default function CandidateDetailPanel({
 
       <DetailSection
         title="Education"
-        badge={candidate.resume_parsed?.education ? "1 added" : "Not set"}
+        badge={educationCount ? `${educationCount} added` : "Not set"}
       >
         {candidate.resume_parsed?.education ? (
           <p className="whitespace-pre-wrap text-slate-600">
@@ -303,6 +297,19 @@ export default function CandidateDetailPanel({
           </p>
         ) : (
           <p className="text-slate-500">No education details provided.</p>
+        )}
+      </DetailSection>
+
+      <DetailSection
+        title="Certifications"
+        badge={certificationsCount ? `${certificationsCount} added` : "Not set"}
+      >
+        {candidate.resume_parsed?.certifications ? (
+          <p className="whitespace-pre-wrap text-slate-600">
+            {candidate.resume_parsed.certifications}
+          </p>
+        ) : (
+          <p className="text-slate-500">No certifications provided.</p>
         )}
       </DetailSection>
 
@@ -333,28 +340,6 @@ export default function CandidateDetailPanel({
         )}
       </DetailSection>
 
-      <DetailSection
-        title="Other details"
-        badge={otherDetailsCount ? `${otherDetailsCount} added` : "Not set"}
-      >
-        {(candidate.phone || joinedDate) ? (
-          <div className="space-y-2">
-            {candidate.phone && (
-              <p className="text-sm text-slate-600">
-                Phone: <span className="font-semibold">{candidate.phone}</span>
-              </p>
-            )}
-            {joinedDate && (
-              <p className="text-sm text-slate-600">
-                Joined:{" "}
-                <span className="font-semibold">{joinedDate}</span>
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-slate-500">No additional details provided.</p>
-        )}
-      </DetailSection>
     </div>
   );
 }

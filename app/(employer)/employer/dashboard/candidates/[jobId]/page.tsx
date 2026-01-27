@@ -60,38 +60,6 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-const hasValue = (value: unknown) => {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "number") return !Number.isNaN(value);
-  if (typeof value === "string") return value.trim().length > 0;
-  return Boolean(value);
-};
-
-const getCandidateProfileScore = (candidate: CandidateProfile) => {
-  const fields = [
-    candidate.bio,
-    candidate.location,
-    candidate.resume_url,
-    candidate.resume_parsed?.summary,
-    candidate.resume_parsed?.skills?.length,
-    candidate.resume_parsed?.experience,
-    candidate.resume_parsed?.education,
-    candidate.job_type,
-    candidate.work_arrangement,
-    candidate.availability,
-    candidate.salary_min ?? candidate.salary_max,
-    candidate.linkedin,
-    candidate.github,
-    candidate.portfolio,
-    candidate.video_pitch,
-  ];
-
-  const filled = fields.filter(hasValue).length;
-  if (!fields.length) return 0;
-  const score = Math.round((filled / fields.length) * 100);
-  return Math.max(35, score);
-};
-
 const getRankingScorePercent = (score: number) =>
   score > 1 ? Math.round(score) : Math.round(score * 100);
 
@@ -442,9 +410,6 @@ export default function CandidatesPage() {
   const isProfileReady =
     Boolean(selectedCandidateProfile) &&
     selectedCandidateProfile?.slug === selectedCandidateSlug;
-  const selectedProfileScore = isProfileReady
-    ? getCandidateProfileScore(selectedCandidateProfile as CandidateProfile)
-    : 0;
 
   return (
     <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
@@ -523,9 +488,6 @@ export default function CandidatesPage() {
                         const profile = candidateProfilesBySlug.get(
                           application.candidate.slug
                         );
-                        const score = profile
-                          ? getCandidateProfileScore(profile)
-                          : undefined;
                         const headlineParts = [
                           profile?.job_type,
                           profile?.work_arrangement,
@@ -566,11 +528,6 @@ export default function CandidatesPage() {
                                 },
                               ]}
                               meta={meta}
-                              score={
-                                score !== undefined
-                                  ? { value: score, label: "Profile" }
-                                  : undefined
-                              }
                               isSelected={selectedApplicationId === application.id}
                               onClick={() => {
                                 setSelectedApplicationId(application.id);
@@ -608,7 +565,6 @@ export default function CandidatesPage() {
                                   )}
                                   <CandidateDetailPanel
                                     candidate={selectedCandidateProfile}
-                                    profileScore={selectedProfileScore}
                                     profileHref={profileHref}
                                     onInviteClick={
                                       canSendInvites ? handleInviteClick : undefined
@@ -776,7 +732,6 @@ export default function CandidatesPage() {
                                   )}
                                   <CandidateDetailPanel
                                     candidate={selectedCandidateProfile}
-                                    profileScore={selectedProfileScore}
                                     profileHref={profileHref}
                                     onInviteClick={
                                       canSendInvites ? handleInviteClick : undefined
@@ -852,7 +807,6 @@ export default function CandidatesPage() {
 
                 <CandidateDetailPanel
                   candidate={selectedCandidateProfile}
-                  profileScore={selectedProfileScore}
                   profileHref={profileHref}
                   onInviteClick={canSendInvites ? handleInviteClick : undefined}
                 />
