@@ -3,37 +3,70 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
-// import CandidateDecisionButtons from "@/components/employer/candidates/CandidateDecisionButtons"; // Removed - Backend API not ready yet
 import {
   MapPin,
   Briefcase,
-  DollarSign,
   CheckCircle,
   Mail,
   FileText,
   Linkedin,
   Github,
   Globe,
-  Video
+  Video,
+  ChevronDown,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+interface DetailSectionProps {
+  title: string;
+  badge?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}
+
+function DetailSection({
+  title,
+  badge,
+  defaultOpen = false,
+  children,
+}: DetailSectionProps) {
+  return (
+    <details
+      className="group rounded-2xl bg-white p-4 shadow-sm"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        <span className="flex items-center gap-2 text-xs text-slate-400">
+          {badge && <span>{badge}</span>}
+          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+        </span>
+      </summary>
+      <div className="mt-3 text-sm text-slate-600">{children}</div>
+    </details>
+  );
+}
+
+const getInitials = (firstName: string, lastName: string) => {
+  const first = firstName.trim();
+  const last = lastName.trim();
+  const initials = `${first.charAt(0)}${last.charAt(0)}`.trim();
+  return initials || "C";
+};
 
 export default function CandidateProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const jobId = searchParams.get("jobId") || "";
-  const applicationId = searchParams.get("applicationId") || "";
-
-  // Debug logging
-  console.log("[CandidateProfile] URL Params:", { slug, jobId, applicationId });
-  console.log("[CandidateProfile] Full search params:", Object.fromEntries(searchParams.entries()));
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-[calc(100vh-120px)] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#C27803] border-r-transparent"></div>
         <p className="ml-4 text-slate-600">Loading candidate profile...</p>
       </div>
@@ -43,7 +76,7 @@ export default function CandidateProfilePage() {
   if (error) {
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <div className="rounded-lg bg-red-50 p-6 shadow-sm">
+        <div className="rounded-2xl bg-red-50 p-6 shadow-sm">
           <p className="font-semibold text-red-800">Failed to load candidate profile</p>
           <p className="mt-2 text-sm text-red-600">
             {error instanceof Error ? error.message : "Please try again later"}
@@ -56,269 +89,291 @@ export default function CandidateProfilePage() {
   if (!candidate) {
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <div className="rounded-lg bg-slate-50 p-6 shadow-sm">
+        <div className="rounded-2xl bg-slate-50 p-6 shadow-sm">
           <p className="text-slate-600">Candidate not found</p>
         </div>
       </div>
     );
   }
 
+  const skills = candidate.resume_parsed?.skills ?? [];
+  const skillsCount = skills.length;
+  const experienceCount = candidate.resume_parsed?.experience?.split("\n").filter(Boolean).length ?? 0;
+  const educationCount = candidate.resume_parsed?.education?.split("\n").filter(Boolean).length ?? 0;
+  const certificationsCount = candidate.resume_parsed?.certifications?.split("\n").filter(Boolean).length ?? 0;
+
+  const links = [
+    { label: "LinkedIn", href: candidate.linkedin, icon: Linkedin },
+    { label: "GitHub", href: candidate.github, icon: Github },
+    { label: "Portfolio", href: candidate.portfolio, icon: Globe },
+    { label: "Video Pitch", href: candidate.video_pitch, icon: Video },
+  ].filter(
+    (link): link is { label: string; href: string; icon: typeof Linkedin } =>
+      Boolean(link.href)
+  );
+
+  const preferences = [
+    { label: "Job type", value: candidate.job_type },
+    { label: "Work mode", value: candidate.work_arrangement },
+    { label: "Availability", value: candidate.availability },
+    {
+      label: "Expected salary",
+      value:
+        candidate.salary_min || candidate.salary_max
+          ? `${candidate.salary_min ? `$${candidate.salary_min.toLocaleString()}` : ""}${candidate.salary_min && candidate.salary_max ? " - " : ""}${candidate.salary_max ? `$${candidate.salary_max.toLocaleString()}` : ""}`
+          : "",
+    },
+    {
+      label: "Visa sponsorship",
+      value:
+        candidate.visa_required === undefined
+          ? ""
+          : candidate.visa_required
+          ? "Required"
+          : "Not required",
+    },
+    {
+      label: "Relocation",
+      value:
+        candidate.willing_to_relocate === undefined
+          ? ""
+          : candidate.willing_to_relocate
+          ? "Open to relocate"
+          : "Not willing",
+    },
+  ].filter((item) => item.value);
+
+  const summary = candidate.bio || candidate.resume_parsed?.summary;
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="p-4 md:p-6 max-w-5xl mx-auto">
       {/* Back Link */}
       <Link
         href="/employer/dashboard/candidates"
-        className="inline-flex items-center text-sm text-slate-600 hover:text-[#C27803]"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-[#C27803] transition-colors"
       >
-        ← Back to Candidates
+        <ArrowLeft className="h-4 w-4" />
+        Back to Candidates
       </Link>
 
-      {/* Header Card */}
-      <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-slate-900">
-                {candidate.first_name} {candidate.last_name}
-              </h1>
-              {candidate.is_verified && (
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              )}
+      <div className="space-y-4">
+        {/* Header Card */}
+        <div className="rounded-[28px] bg-[#FFD58C] p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-white/70">
+                <div className="flex h-full w-full items-center justify-center text-xl font-semibold text-slate-700">
+                  {getInitials(candidate.first_name, candidate.last_name)}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-slate-900">
+                    {candidate.first_name} {candidate.last_name}
+                  </h1>
+                  {candidate.is_verified && (
+                    <CheckCircle className="h-6 w-6 text-emerald-700" />
+                  )}
+                </div>
+                <p className="text-sm text-slate-700">
+                  {candidate.job_type && candidate.work_arrangement
+                    ? `${candidate.job_type} • ${candidate.work_arrangement}`
+                    : candidate.job_type || candidate.work_arrangement || "Open to opportunities"}
+                </p>
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-4">
-              {candidate.email && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Mail size={18} />
-                  <a href={`mailto:${candidate.email}`} className="hover:text-[#C27803]">
-                    {candidate.email}
+            {candidate.availability && (
+              <span
+                className={`self-start rounded-full px-3 py-1 text-sm font-medium ${
+                  candidate.availability === "Available"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {candidate.availability}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-700">
+            {candidate.email && (
+              <a
+                href={`mailto:${candidate.email}`}
+                className="flex items-center gap-2 hover:text-slate-900 transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                <span>{candidate.email}</span>
+              </a>
+            )}
+            {candidate.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{candidate.location}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            {candidate.resume_url && (
+              <a
+                href={candidate.resume_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
+              >
+                <FileText className="h-4 w-4" />
+                View Resume
+              </a>
+            )}
+            {jobId && (
+              <button
+                onClick={() => {
+                  console.log("Send invite to candidate:", slug, "for job:", jobId);
+                }}
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#C27831] bg-white px-4 py-2 text-sm font-semibold text-[#A66628] transition-colors hover:bg-white/80"
+              >
+                Send Invite
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* About Section */}
+        <DetailSection title="About" defaultOpen>
+          {summary ? (
+            <p className="leading-relaxed text-slate-600">{summary}</p>
+          ) : (
+            <p className="text-slate-500">No bio or summary provided yet.</p>
+          )}
+        </DetailSection>
+
+        {/* Work Preferences */}
+        <DetailSection
+          title="Work preferences"
+          badge={preferences.length ? `${preferences.length} added` : "Not set"}
+          defaultOpen
+        >
+          {preferences.length ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {preferences.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-3"
+                >
+                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500">No preferences shared yet.</p>
+          )}
+        </DetailSection>
+
+        {/* Skills */}
+        <DetailSection
+          title="Skills"
+          badge={skillsCount ? `${skillsCount} added` : "Not set"}
+          defaultOpen
+        >
+          {skillsCount ? (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500">No skills listed yet.</p>
+          )}
+        </DetailSection>
+
+        {/* Work Experience */}
+        <DetailSection
+          title="Work experience"
+          badge={experienceCount ? `${experienceCount} added` : "Not set"}
+          defaultOpen
+        >
+          {candidate.resume_parsed?.experience ? (
+            <p className="whitespace-pre-wrap text-slate-600">
+              {candidate.resume_parsed.experience}
+            </p>
+          ) : (
+            <p className="text-slate-500">No experience details provided.</p>
+          )}
+        </DetailSection>
+
+        {/* Education */}
+        <DetailSection
+          title="Education"
+          badge={educationCount ? `${educationCount} added` : "Not set"}
+          defaultOpen
+        >
+          {candidate.resume_parsed?.education ? (
+            <p className="whitespace-pre-wrap text-slate-600">
+              {candidate.resume_parsed.education}
+            </p>
+          ) : (
+            <p className="text-slate-500">No education details provided.</p>
+          )}
+        </DetailSection>
+
+        {/* Certifications */}
+        <DetailSection
+          title="Certifications"
+          badge={certificationsCount ? `${certificationsCount} added` : "Not set"}
+        >
+          {candidate.resume_parsed?.certifications ? (
+            <p className="whitespace-pre-wrap text-slate-600">
+              {candidate.resume_parsed.certifications}
+            </p>
+          ) : (
+            <p className="text-slate-500">No certifications provided.</p>
+          )}
+        </DetailSection>
+
+        {/* Links and Media */}
+        <DetailSection
+          title="Links and media"
+          badge={links.length ? `${links.length} added` : "Not set"}
+        >
+          {links.length ? (
+            <div className="flex flex-wrap gap-3">
+              {links.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 transition-colors hover:border-[#C27803] hover:text-[#C27803]"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {link.label}
                   </a>
-                </div>
-              )}
-
-              {candidate.location && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <MapPin size={18} />
-                  <span>{candidate.location}</span>
-                </div>
-              )}
+                );
+              })}
             </div>
-          </div>
-
-          {candidate.resume_url && (
-            <a
-              href={candidate.resume_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg bg-[#C27803] px-6 py-3 font-semibold text-white transition-colors hover:bg-[#A66602]"
-            >
-              View Resume
-            </a>
+          ) : (
+            <p className="text-slate-500">No links shared yet.</p>
           )}
+        </DetailSection>
+
+        {/* AI Resume Chat */}
+        <div className="rounded-2xl bg-white shadow-sm overflow-hidden" style={{ height: "500px" }}>
+          <ResumeChatPanel
+            resumeSlug={slug || ""}
+            candidateName={`${candidate.first_name} ${candidate.last_name}`}
+          />
         </div>
-
-        {/* Bio */}
-        {candidate.bio && (
-          <div className="mt-6 border-t border-slate-100 pt-6">
-            <p className="text-slate-700">{candidate.bio}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Candidate Actions */}
-      {jobId && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">
-            Candidate Actions
-          </h2>
-          <button
-            onClick={() => {
-              // Placeholder - Backend API not ready yet
-              console.log("Send invite to candidate:", slug, "for job:", jobId);
-            }}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-          >
-            Send Invite
-          </button>
-        </div>
-      )}
-
-      {/* Work Preferences */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-bold text-slate-900">Work Preferences</h2>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {candidate.job_type && (
-            <div className="flex items-center gap-3">
-              <Briefcase className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Employment Type</p>
-                <p className="font-medium text-slate-900">{candidate.job_type}</p>
-              </div>
-            </div>
-          )}
-
-          {candidate.work_arrangement && (
-            <div className="flex items-center gap-3">
-              <Briefcase className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Work Mode</p>
-                <p className="font-medium text-slate-900">{candidate.work_arrangement}</p>
-              </div>
-            </div>
-          )}
-
-          {(candidate.salary_min || candidate.salary_max) && (
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Expected Salary</p>
-                <p className="font-medium text-slate-900">
-                  {candidate.salary_min && `$${candidate.salary_min.toLocaleString()}`}
-                  {candidate.salary_min && candidate.salary_max && " - "}
-                  {candidate.salary_max && `$${candidate.salary_max.toLocaleString()}`}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {candidate.availability && (
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Availability</p>
-                <p className="font-medium text-slate-900">{candidate.availability}</p>
-              </div>
-            </div>
-          )}
-
-          {candidate.visa_required !== undefined && (
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-sm text-slate-500">Visa Sponsorship</p>
-                <p className="font-medium text-slate-900">
-                  {candidate.visa_required ? "Required" : "Not Required"}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Resume Data */}
-      {candidate.resume_parsed && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">Resume Summary</h2>
-
-          <div className="space-y-4">
-            {candidate.resume_parsed.summary && (
-              <div>
-                <h3 className="mb-2 font-semibold text-slate-900">Summary</h3>
-                <p className="text-slate-700">{candidate.resume_parsed.summary}</p>
-              </div>
-            )}
-
-            {candidate.resume_parsed.skills && candidate.resume_parsed.skills.length > 0 && (
-              <div>
-                <h3 className="mb-2 font-semibold text-slate-900">Skills</h3>
-                <div className="flex flex-wrap gap-2">
-                  {candidate.resume_parsed.skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {candidate.resume_parsed.experience && (
-              <div>
-                <h3 className="mb-2 font-semibold text-slate-900">Experience</h3>
-                <p className="whitespace-pre-wrap text-slate-700">
-                  {candidate.resume_parsed.experience}
-                </p>
-              </div>
-            )}
-
-            {candidate.resume_parsed.education && (
-              <div>
-                <h3 className="mb-2 font-semibold text-slate-900">Education</h3>
-                <p className="whitespace-pre-wrap text-slate-700">
-                  {candidate.resume_parsed.education}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Links & Media */}
-      {(candidate.linkedin || candidate.github || candidate.portfolio || candidate.video_pitch) && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-slate-900">Links & Media</h2>
-
-          <div className="flex flex-wrap gap-4">
-            {candidate.linkedin && (
-              <a
-                href={candidate.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-700 transition-colors hover:border-[#C27803] hover:text-[#C27803]"
-              >
-                <Linkedin size={20} />
-                <span>LinkedIn</span>
-              </a>
-            )}
-
-            {candidate.github && (
-              <a
-                href={candidate.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-700 transition-colors hover:border-[#C27803] hover:text-[#C27803]"
-              >
-                <Github size={20} />
-                <span>GitHub</span>
-              </a>
-            )}
-
-            {candidate.portfolio && (
-              <a
-                href={candidate.portfolio}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-700 transition-colors hover:border-[#C27803] hover:text-[#C27803]"
-              >
-                <Globe size={20} />
-                <span>Portfolio</span>
-              </a>
-            )}
-
-            {candidate.video_pitch && (
-              <a
-                href={candidate.video_pitch}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-slate-700 transition-colors hover:border-[#C27803] hover:text-[#C27803]"
-              >
-                <Video size={20} />
-                <span>Video Pitch</span>
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* AI Resume Chat */}
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm" style={{ height: "600px" }}>
-        <ResumeChatPanel
-          resumeSlug={slug || ""}
-          candidateName={`${candidate.first_name} ${candidate.last_name}`}
-        />
       </div>
     </div>
   );

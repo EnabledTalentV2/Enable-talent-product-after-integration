@@ -14,41 +14,8 @@ import {
 } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
-import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 const ITEMS_PER_PAGE = 12;
-
-const hasValue = (value: unknown) => {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "number") return !Number.isNaN(value);
-  if (typeof value === "string") return value.trim().length > 0;
-  return Boolean(value);
-};
-
-const getCandidateProfileScore = (candidate: CandidateProfile) => {
-  const fields = [
-    candidate.bio,
-    candidate.location,
-    candidate.resume_url,
-    candidate.resume_parsed?.summary,
-    candidate.resume_parsed?.skills?.length,
-    candidate.resume_parsed?.experience,
-    candidate.resume_parsed?.education,
-    candidate.job_type,
-    candidate.work_arrangement,
-    candidate.availability,
-    candidate.salary_min ?? candidate.salary_max,
-    candidate.linkedin,
-    candidate.github,
-    candidate.portfolio,
-    candidate.video_pitch,
-  ];
-
-  const filled = fields.filter(hasValue).length;
-  if (!fields.length) return 0;
-  const score = Math.round((filled / fields.length) * 100);
-  return Math.max(35, score);
-};
 
 export default function CandidatesListPage() {
   const searchParams = useSearchParams();
@@ -120,14 +87,6 @@ export default function CandidatesListPage() {
       null
     );
   }, [filteredCandidates, selectedCandidateId]);
-
-  const profileScores = useMemo(() => {
-    const scores = new Map<string, number>();
-    filteredCandidates.forEach((candidate) => {
-      scores.set(candidate.id, getCandidateProfileScore(candidate));
-    });
-    return scores;
-  }, [filteredCandidates]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -287,14 +246,12 @@ export default function CandidatesListPage() {
             {paginatedCandidates.length > 0 ? (
               paginatedCandidates.map((candidate) => {
                 const isSelected = selectedCandidateId === candidate.id;
-                const profileScore = profileScores.get(candidate.id) ?? 0;
 
                 return (
                   <div key={candidate.id} className="space-y-4">
                     <CandidateDirectoryCard
                       candidate={candidate}
                       isSelected={isSelected}
-                      profileScore={profileScore}
                       onClick={() => setSelectedCandidateId(candidate.id)}
                     />
                     {isSelected && selectedCandidate && (
@@ -305,7 +262,6 @@ export default function CandidatesListPage() {
                       >
                         <CandidateDetailPanel
                           candidate={selectedCandidate}
-                          profileScore={profileScore}
                           onInviteClick={handleInviteClick}
                         />
                       </div>
@@ -345,7 +301,6 @@ export default function CandidatesListPage() {
             >
               <CandidateDetailPanel
                 candidate={selectedCandidate}
-                profileScore={profileScores.get(selectedCandidate.id) ?? 0}
                 onInviteClick={handleInviteClick}
               />
             </div>

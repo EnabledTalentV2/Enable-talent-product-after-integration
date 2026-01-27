@@ -12,6 +12,7 @@ export type CandidateProfile = {
   email: string;
   phone?: string;
   location?: string;
+  title?: string;
 
   // Resume
   resume_url?: string;
@@ -22,6 +23,7 @@ export type CandidateProfile = {
     skills?: string[];
     experience?: string;
     education?: string;
+    certifications?: string;
     summary?: string;
   };
 
