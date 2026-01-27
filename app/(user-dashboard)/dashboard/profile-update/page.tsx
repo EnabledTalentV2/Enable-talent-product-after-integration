@@ -9,10 +9,7 @@ import {
 } from "@/lib/profileCompletion";
 import type { StepKey, UserData } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
-import {
-  ensureCandidateProfileSlug,
-  fetchCandidateProfileFull,
-} from "@/lib/candidateProfile";
+import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import {
   buildCandidateAchievementPayloads,
@@ -416,6 +413,29 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
     }
   });
 
+  if (data.basicInfo.socialProfile) {
+    const portfolioUrl = data.basicInfo.socialProfile.trim();
+    const urlPattern =
+      /^(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    if (!urlPattern.test(portfolioUrl)) {
+      basicInfoErrors.socialProfile =
+        "Please enter a valid URL starting with http:// or https://";
+      hasErrors = true;
+      if (!firstErrorId) firstErrorId = "basicInfo-socialProfile";
+    }
+  }
+
+  if (data.basicInfo.linkedinUrl) {
+    const linkedinUrl = data.basicInfo.linkedinUrl.trim();
+    const linkedinPattern = /^(https?:\/\/)(www\.)?linkedin\.com\/.*$/i;
+    if (!linkedinPattern.test(linkedinUrl)) {
+      basicInfoErrors.linkedinUrl =
+        "Please enter a valid LinkedIn URL starting with http:// or https://";
+      hasErrors = true;
+      if (!firstErrorId) firstErrorId = "basicInfo-linkedinUrl";
+    }
+  }
+
   const requiredEducationFields: Array<{
     field: keyof UserData["education"];
     message: string;
@@ -788,6 +808,11 @@ export default function ProfileUpdatePage() {
     });
   }, [setUserData, userData.projects.entries.length, userData.certification.entries.length]);
 
+  const redirectToLogin = () => {
+    resetUserData();
+    router.replace("/login-talent?next=/dashboard/profile-update");
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -806,15 +831,30 @@ export default function ProfileUpdatePage() {
         });
         if (!active) return;
         if (!slug) {
-          setError("Unable to load candidate profile.");
+          try {
+            await apiRequest("/api/user/me", { method: "GET" });
+            if (active) {
+              setError("Unable to load candidate profile.");
+            }
+          } catch (err) {
+            if (isApiError(err) && err.status === 401) {
+              redirectToLogin();
+              return;
+            }
+            if (active) {
+              setError("Unable to load candidate profile.");
+            }
+          }
           return;
         }
         setCandidateSlug(slug);
         setError(null);
-      } catch {
-        if (active) {
-          setError("Unable to load candidate profile.");
+      } catch (err) {
+        if (isApiError(err) && err.status === 401) {
+          redirectToLogin();
+          return;
         }
+        if (active) setError("Unable to load candidate profile.");
       } finally {
         if (active) {
           setLoading(false);
@@ -884,14 +924,10 @@ export default function ProfileUpdatePage() {
     setSaveError(null);
 
     try {
-      const fullProfile = await fetchCandidateProfileFull(
-        candidateSlug,
-        "Profile Update"
+      const fullProfile = await apiRequest<Record<string, unknown>>(
+        `/api/candidates/profiles/${candidateSlug}/full/`,
+        { method: "GET" }
       );
-      if (!fullProfile) {
-        setSaveError("Unable to load candidate profile. Please try again.");
-        return;
-      }
 
       const profileRoot = isRecord(fullProfile) ? fullProfile : null;
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
