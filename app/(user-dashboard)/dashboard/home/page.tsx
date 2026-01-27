@@ -279,12 +279,6 @@ export default function HomePageDashboard() {
 
     return [
       {
-        id: "cultural-interest",
-        label: "Cultural Interest",
-        count: 0,
-        items: [],
-      },
-      {
         id: "education",
         label: "Education",
         count: educationItems.length > 0 ? 1 : 0,
