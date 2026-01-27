@@ -240,6 +240,30 @@ const toDateValue = (value: unknown): string => {
   if (!trimmed) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
   if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  const monthYearMatch = trimmed.match(
+    /^(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s,\/-]+(\d{4})$/i
+  );
+  if (monthYearMatch) {
+    const monthToken = monthYearMatch[1].toLowerCase();
+    const year = monthYearMatch[2];
+    const monthMap: Record<string, string> = {
+      jan: "01",
+      feb: "02",
+      mar: "03",
+      apr: "04",
+      may: "05",
+      jun: "06",
+      jul: "07",
+      aug: "08",
+      sep: "09",
+      sept: "09",
+      oct: "10",
+      nov: "11",
+      dec: "12",
+    };
+    const month = monthMap[monthToken];
+    if (month) return `${year}-${month}-01`;
+  }
   return trimmed;
 };
 
