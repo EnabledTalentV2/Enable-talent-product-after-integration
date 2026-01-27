@@ -135,6 +135,244 @@ const normalizeCertificationKey = (name: string, organization?: string) => {
   const orgKey = (organization ?? "").trim().toLowerCase();
   return orgKey ? `${nameKey}::${orgKey}` : nameKey;
 };
+const toNormalizedString = (value: unknown) => {
+  if (typeof value === "string") return value.trim();
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
+};
+const toDateValue = (value: unknown) => {
+  const trimmed = toNormalizedString(value);
+  if (!trimmed) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  return trimmed;
+};
+const normalizeNullableDate = (value: unknown) => {
+  const normalized = toDateValue(value);
+  return normalized ? normalized : null;
+};
+const normalizeStringArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value
+        .map((entry) => toNormalizedString(entry))
+        .filter(Boolean)
+        .sort()
+    : [];
+const areStringArraysEqual = (a: unknown, b: unknown) => {
+  const normalizedA = normalizeStringArray(a);
+  const normalizedB = normalizeStringArray(b);
+  if (normalizedA.length !== normalizedB.length) return false;
+  return normalizedA.every((value, index) => value === normalizedB[index]);
+};
+const areNormalizedEqual = <T extends Record<string, unknown>>(
+  left: T,
+  right: T
+) => JSON.stringify(left) === JSON.stringify(right);
+
+type WorkPayload = {
+  company: string;
+  role: string;
+  start_date: string;
+  end_date: string | null;
+  current: boolean;
+  description?: string;
+};
+type ProjectPayload = {
+  project_name: string;
+  description?: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+};
+type AchievementPayload = {
+  title: string;
+  issue_date?: string;
+  description?: string;
+};
+type CertificationPayload = {
+  name: string;
+  issuing_organization?: string;
+  issue_date?: string;
+  expiry_date?: string;
+  credential_url?: string;
+};
+
+type NormalizedWorkPayload = {
+  company: string;
+  role: string;
+  start_date: string;
+  end_date: string | null;
+  current: boolean;
+  description: string;
+};
+type NormalizedProjectPayload = {
+  project_name: string;
+  description: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+};
+type NormalizedAchievementPayload = {
+  title: string;
+  issue_date: string | null;
+  description: string;
+};
+type NormalizedCertificationPayload = {
+  name: string;
+  issuing_organization: string;
+  issue_date: string | null;
+  expiry_date: string | null;
+  credential_url: string;
+};
+
+const normalizeWorkPayload = (payload: WorkPayload): NormalizedWorkPayload => ({
+  company: toNormalizedString(payload.company),
+  role: toNormalizedString(payload.role),
+  start_date: toDateValue(payload.start_date),
+  end_date: payload.current ? null : normalizeNullableDate(payload.end_date),
+  current: Boolean(payload.current),
+  description: toNormalizedString(payload.description),
+});
+const normalizeWorkEntry = (
+  entry: Record<string, unknown>
+): NormalizedWorkPayload | null => {
+  const company = toNormalizedString(entry.company ?? entry.employer);
+  const role = toNormalizedString(
+    entry.role ?? entry.job_title ?? entry.jobTitle ?? entry.position
+  );
+  const startDate = toDateValue(entry.start_date ?? entry.startDate ?? entry.from);
+  const currentValue = entry.current ?? entry.is_current ?? entry.isCurrent;
+  const current = typeof currentValue === "boolean" ? currentValue : false;
+  const endDateRaw = entry.end_date ?? entry.endDate ?? entry.to;
+  const endDate = current ? null : normalizeNullableDate(endDateRaw);
+  const description = toNormalizedString(entry.description ?? entry.details);
+
+  if (!company && !role && !startDate && !description && !endDate) {
+    return null;
+  }
+
+  return {
+    company,
+    role,
+    start_date: startDate,
+    end_date: endDate,
+    current,
+    description,
+  };
+};
+const normalizeProjectPayload = (
+  payload: ProjectPayload
+): NormalizedProjectPayload => ({
+  project_name: toNormalizedString(payload.project_name),
+  description: toNormalizedString(payload.description),
+  start_date: normalizeNullableDate(payload.start_date),
+  end_date: payload.is_current ? null : normalizeNullableDate(payload.end_date),
+  is_current: Boolean(payload.is_current),
+});
+const normalizeProjectEntry = (
+  entry: Record<string, unknown>
+): NormalizedProjectPayload | null => {
+  const projectName = toNormalizedString(
+    entry.project_name ?? entry.projectName ?? entry.name ?? entry.title
+  );
+  const description = toNormalizedString(
+    entry.description ?? entry.project_description ?? entry.projectDescription
+  );
+  const startDate = normalizeNullableDate(
+    entry.start_date ?? entry.startDate ?? entry.from
+  );
+  const currentValue = entry.is_current ?? entry.isCurrent ?? entry.current;
+  const isCurrent =
+    typeof currentValue === "boolean" ? currentValue : Boolean(currentValue);
+  const endDateRaw = entry.end_date ?? entry.endDate ?? entry.to;
+  const endDate = isCurrent ? null : normalizeNullableDate(endDateRaw);
+
+  if (!projectName && !description && !startDate && !endDate) {
+    return null;
+  }
+
+  return {
+    project_name: projectName,
+    description,
+    start_date: startDate,
+    end_date: endDate,
+    is_current: isCurrent,
+  };
+};
+const normalizeAchievementPayload = (
+  payload: AchievementPayload
+): NormalizedAchievementPayload => ({
+  title: toNormalizedString(payload.title),
+  issue_date: normalizeNullableDate(payload.issue_date),
+  description: toNormalizedString(payload.description),
+});
+const normalizeAchievementEntry = (
+  entry: Record<string, unknown>
+): NormalizedAchievementPayload | null => {
+  const title = toNormalizedString(entry.title ?? entry.name);
+  const issueDate = normalizeNullableDate(
+    entry.issue_date ?? entry.issueDate ?? entry.date
+  );
+  const description = toNormalizedString(entry.description ?? entry.details);
+  if (!title && !issueDate && !description) return null;
+  return {
+    title,
+    issue_date: issueDate,
+    description,
+  };
+};
+const normalizeCertificationPayload = (
+  payload: CertificationPayload
+): NormalizedCertificationPayload => ({
+  name: toNormalizedString(payload.name),
+  issuing_organization: toNormalizedString(payload.issuing_organization),
+  issue_date: normalizeNullableDate(payload.issue_date),
+  expiry_date: normalizeNullableDate(payload.expiry_date),
+  credential_url: toNormalizedString(payload.credential_url),
+});
+const normalizeCertificationEntry = (
+  entry: Record<string, unknown>
+): NormalizedCertificationPayload | null => {
+  const name = toNormalizedString(
+    entry.name ??
+      entry.title ??
+      entry.certification_name ??
+      entry.certificationName
+  );
+  const issuingOrganization = toNormalizedString(
+    entry.issuing_organization ??
+      entry.organization ??
+      entry.issued_by ??
+      entry.issuedBy ??
+      entry.issuer
+  );
+  const issueDate = normalizeNullableDate(
+    entry.issue_date ?? entry.issueDate ?? entry.date
+  );
+  const expiryDate = normalizeNullableDate(
+    entry.expiry_date ??
+      entry.expiryDate ??
+      entry.expiration_date ??
+      entry.expirationDate
+  );
+  const credentialUrl = toNormalizedString(
+    entry.credential_url ??
+      entry.credentialUrl ??
+      entry.credential_id_url ??
+      entry.credentialIdUrl ??
+      entry.url
+  );
+  if (!name && !issuingOrganization && !issueDate && !expiryDate && !credentialUrl) {
+    return null;
+  }
+  return {
+    name,
+    issuing_organization: issuingOrganization,
+    issue_date: issueDate,
+    expiry_date: expiryDate,
+    credential_url: credentialUrl,
+  };
+};
 
 const validateRequiredFields = (data: UserData): RequiredValidationResult => {
   const basicInfoErrors: RequiredValidationResult["basicInfoErrors"] = {};
@@ -646,68 +884,226 @@ export default function ProfileUpdatePage() {
     setSaving(true);
     setSaveError(null);
 
-      try {
-        const firstName = userData.basicInfo.firstName.trim();
-        const lastName = userData.basicInfo.lastName.trim();
-        const personalProfile: Record<string, unknown> = {};
-        const phone = userData.basicInfo.phone.trim();
-        const location = userData.basicInfo.location.trim();
-        const citizenshipStatus = userData.basicInfo.citizenshipStatus.trim();
-        const gender = normalizeGenderForBackend(userData.basicInfo.gender);
-        const ethnicity = userData.basicInfo.ethnicity.trim();
-        const linkedinUrl = userData.basicInfo.linkedinUrl.trim();
-        const githubUrl = userData.basicInfo.githubUrl.trim();
-        const portfolioUrl =
-          userData.basicInfo.portfolioUrl.trim() ||
-          userData.basicInfo.socialProfile.trim();
-        const currentStatus = userData.basicInfo.currentStatus.trim();
-
-        if (phone) personalProfile.phone = phone;
-        if (location) personalProfile.location = location;
-        if (citizenshipStatus)
-          personalProfile.citizenship_status = citizenshipStatus;
-        if (gender) personalProfile.gender = gender;
-        if (ethnicity) personalProfile.ethnicity = ethnicity;
-        if (linkedinUrl) personalProfile.linkedin_url = linkedinUrl;
-        if (githubUrl) personalProfile.github_url = githubUrl;
-        if (portfolioUrl) personalProfile.portfolio_url = portfolioUrl;
-        if (currentStatus) personalProfile.current_status = currentStatus;
-
-        const userPayload: Record<string, unknown> = {};
-        if (firstName) userPayload.first_name = firstName;
-        if (lastName) userPayload.last_name = lastName;
-        if (Object.keys(personalProfile).length > 0) {
-          userPayload.profile = personalProfile;
-        }
-
-        if (!skipUserProfilePatch && Object.keys(userPayload).length > 0) {
-          await apiRequest("/api/auth/users/me/", {
-            method: "PATCH",
-            body: JSON.stringify(userPayload),
-          });
-        }
-
-      const profilePayload = buildCandidateProfileCorePayload(userData);
-      const hasPayload = Object.keys(profilePayload).length > 0;
-
-      if (hasPayload) {
-        await apiRequest<unknown>(
-          `/api/candidates/profiles/${candidateSlug}/`,
-          {
-            method: "PATCH",
-            body: JSON.stringify(profilePayload),
-          }
-        );
-      }
-
+    try {
       const fullProfile = await fetchCandidateProfileFull(
         candidateSlug,
         "Profile Update"
       );
+      if (!fullProfile) {
+        setSaveError("Unable to load candidate profile. Please try again.");
+        return;
+      }
+
+      const profileRoot = isRecord(fullProfile) ? fullProfile : null;
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
         ? fullProfile?.verified_profile
         : null;
-      const profileRoot = isRecord(fullProfile) ? fullProfile : null;
+      const userRoot = isRecord(profileRoot?.user) ? profileRoot.user : null;
+      const existingUserProfile =
+        userRoot && isRecord(userRoot.profile) ? userRoot.profile : null;
+
+      const firstName = userData.basicInfo.firstName.trim();
+      const lastName = userData.basicInfo.lastName.trim();
+      const personalProfile: Record<string, unknown> = {};
+      const phone = userData.basicInfo.phone.trim();
+      const location = userData.basicInfo.location.trim();
+      const citizenshipStatus = userData.basicInfo.citizenshipStatus.trim();
+      const gender = normalizeGenderForBackend(userData.basicInfo.gender);
+      const ethnicity = userData.basicInfo.ethnicity.trim();
+      const linkedinUrl = userData.basicInfo.linkedinUrl.trim();
+      const githubUrl = userData.basicInfo.githubUrl.trim();
+      const portfolioUrl =
+        userData.basicInfo.portfolioUrl.trim() ||
+        userData.basicInfo.socialProfile.trim();
+      const currentStatus = userData.basicInfo.currentStatus.trim();
+
+      const existingFirstName = toNormalizedString(
+        userRoot?.first_name ?? userRoot?.firstName
+      );
+      const existingLastName = toNormalizedString(
+        userRoot?.last_name ?? userRoot?.lastName
+      );
+      const existingPhone = toNormalizedString(
+        existingUserProfile?.phone ??
+          existingUserProfile?.phone_number ??
+          existingUserProfile?.phoneNumber
+      );
+      const existingLocation = toNormalizedString(existingUserProfile?.location);
+      const existingCitizenship = toNormalizedString(
+        existingUserProfile?.citizenship_status ??
+          existingUserProfile?.citizenshipStatus
+      );
+      const existingGender = normalizeGenderForBackend(
+        typeof existingUserProfile?.gender === "string"
+          ? existingUserProfile.gender
+          : ""
+      );
+      const existingEthnicity = toNormalizedString(existingUserProfile?.ethnicity);
+      const existingLinkedin = toNormalizedString(
+        existingUserProfile?.linkedin_url ??
+          existingUserProfile?.linkedinUrl ??
+          existingUserProfile?.linkedin
+      );
+      const existingGithub = toNormalizedString(
+        existingUserProfile?.github_url ??
+          existingUserProfile?.githubUrl ??
+          existingUserProfile?.github
+      );
+      const existingPortfolio = toNormalizedString(
+        existingUserProfile?.portfolio_url ??
+          existingUserProfile?.portfolioUrl ??
+          existingUserProfile?.portfolio ??
+          existingUserProfile?.social_profile ??
+          existingUserProfile?.socialProfile
+      );
+      const existingCurrentStatus = toNormalizedString(
+        existingUserProfile?.current_status ?? existingUserProfile?.currentStatus
+      );
+
+      if (firstName && firstName !== existingFirstName) {
+        personalProfile.first_name = firstName;
+      }
+      if (lastName && lastName !== existingLastName) {
+        personalProfile.last_name = lastName;
+      }
+
+      if (phone && phone !== existingPhone) personalProfile.phone = phone;
+      if (location && location !== existingLocation) {
+        personalProfile.location = location;
+      }
+      if (citizenshipStatus && citizenshipStatus !== existingCitizenship) {
+        personalProfile.citizenship_status = citizenshipStatus;
+      }
+      if (gender && gender !== existingGender) {
+        personalProfile.gender = gender;
+      }
+      if (ethnicity && ethnicity !== existingEthnicity) {
+        personalProfile.ethnicity = ethnicity;
+      }
+      if (linkedinUrl && linkedinUrl !== existingLinkedin) {
+        personalProfile.linkedin_url = linkedinUrl;
+      }
+      if (githubUrl && githubUrl !== existingGithub) {
+        personalProfile.github_url = githubUrl;
+      }
+      if (portfolioUrl && portfolioUrl !== existingPortfolio) {
+        personalProfile.portfolio_url = portfolioUrl;
+      }
+      if (currentStatus && currentStatus !== existingCurrentStatus) {
+        personalProfile.current_status = currentStatus;
+      }
+
+      const userPayload: Record<string, unknown> = {};
+      if (personalProfile.first_name) userPayload.first_name = personalProfile.first_name;
+      if (personalProfile.last_name) userPayload.last_name = personalProfile.last_name;
+      delete personalProfile.first_name;
+      delete personalProfile.last_name;
+
+      if (Object.keys(personalProfile).length > 0) {
+        userPayload.profile = personalProfile;
+      }
+
+      if (!skipUserProfilePatch && Object.keys(userPayload).length > 0) {
+        await apiRequest("/api/auth/users/me/", {
+          method: "PATCH",
+          body: JSON.stringify(userPayload),
+        });
+      }
+
+      const profilePayload = buildCandidateProfileCorePayload(userData);
+      const filteredProfilePayload: Record<string, unknown> = {};
+      Object.entries(profilePayload).forEach(([key, value]) => {
+        switch (key) {
+          case "employment_type_preferences":
+            if (
+              !areStringArraysEqual(
+                value,
+                profileRoot?.employment_type_preferences ??
+                  verifiedProfile?.preferences?.employment_type_preferences
+              )
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "work_mode_preferences":
+            if (
+              !areStringArraysEqual(
+                value,
+                profileRoot?.work_mode_preferences ??
+                  verifiedProfile?.preferences?.work_mode_preferences
+              )
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "expected_salary_range":
+            if (
+              toNormalizedString(value) !==
+              toNormalizedString(profileRoot?.expected_salary_range)
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "is_available":
+            if (Boolean(profileRoot?.is_available) !== Boolean(value)) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "willing_to_relocate":
+            if (Boolean(profileRoot?.willing_to_relocate) !== Boolean(value)) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "has_workvisa":
+            if (Boolean(profileRoot?.has_workvisa) !== Boolean(value)) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "disability_categories":
+            if (!areStringArraysEqual(value, profileRoot?.disability_categories)) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "accommodation_needs":
+            if (
+              toNormalizedString(value) !==
+              toNormalizedString(profileRoot?.accommodation_needs)
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "workplace_accommodations":
+            if (
+              !areStringArraysEqual(
+                value,
+                profileRoot?.workplace_accommodations
+              )
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          case "disclosure_preference":
+            if (
+              toNormalizedString(value) !==
+              toNormalizedString(profileRoot?.disclosure_preference)
+            ) {
+              filteredProfilePayload[key] = value;
+            }
+            break;
+          default:
+            filteredProfilePayload[key] = value;
+        }
+      });
+
+      if (Object.keys(filteredProfilePayload).length > 0) {
+        await apiRequest<unknown>(
+          `/api/candidates/profiles/${candidateSlug}/`,
+          {
+            method: "PATCH",
+            body: JSON.stringify(filteredProfilePayload),
+          }
+        );
+      }
       const existingEducation = Array.isArray(verifiedProfile?.education)
         ? verifiedProfile.education
         : [];
@@ -985,9 +1381,34 @@ export default function ProfileUpdatePage() {
           ? idValue
           : null;
       });
+      const existingWorkById = new Map<string, NormalizedWorkPayload>();
+      existingWorkExperience.forEach((entry) => {
+        if (!isRecord(entry)) return;
+        const idValue =
+          entry.id ??
+          entry.pk ??
+          entry.work_experience_id ??
+          entry.workExperienceId;
+        if (idValue === null || idValue === undefined || idValue === "") {
+          return;
+        }
+        const normalized = normalizeWorkEntry(entry);
+        if (!normalized) return;
+        existingWorkById.set(String(idValue), normalized);
+      });
 
       for (const [index, update] of workExperiencePayloads.entries()) {
         const entryId = update.id ?? existingWorkIds[index];
+        const normalizedPayload = normalizeWorkPayload(
+          update.payload as WorkPayload
+        );
+        const existingNormalized =
+          entryId !== null && entryId !== undefined && entryId !== ""
+            ? existingWorkById.get(String(entryId))
+            : null;
+        if (existingNormalized && areNormalizedEqual(normalizedPayload, existingNormalized)) {
+          continue;
+        }
         if (entryId !== null && entryId !== undefined && entryId !== "") {
           await apiRequest(`/api/candidates/work-experience/${entryId}/`, {
             method: "PATCH",
@@ -1070,6 +1491,17 @@ export default function ProfileUpdatePage() {
           existingProjectByKey.set(key, record);
         }
       });
+      const existingProjectById = new Map<string, NormalizedProjectPayload>();
+      existingProjects.forEach((entry) => {
+        if (!isRecord(entry)) return;
+        const idValue = entry.id ?? entry.pk ?? entry.project_id ?? entry.projectId;
+        if (idValue === null || idValue === undefined || idValue === "") {
+          return;
+        }
+        const normalized = normalizeProjectEntry(entry);
+        if (!normalized) return;
+        existingProjectById.set(String(idValue), normalized);
+      });
 
       const projectMap = new Map<
         string,
@@ -1083,6 +1515,16 @@ export default function ProfileUpdatePage() {
 
       for (const [key, update] of projectMap.entries()) {
         const resolvedId = update.id ?? existingProjectByKey.get(key)?.id;
+        const normalizedPayload = normalizeProjectPayload(
+          update.payload as ProjectPayload
+        );
+        const existingNormalized =
+          resolvedId !== null && resolvedId !== undefined && resolvedId !== ""
+            ? existingProjectById.get(String(resolvedId))
+            : null;
+        if (existingNormalized && areNormalizedEqual(normalizedPayload, existingNormalized)) {
+          continue;
+        }
         if (
           resolvedId !== null &&
           resolvedId !== undefined &&
@@ -1161,6 +1603,21 @@ export default function ProfileUpdatePage() {
         title: string;
         issueDate: string;
       }>;
+      const existingAchievementById = new Map<
+        string,
+        NormalizedAchievementPayload
+      >();
+      existingAchievements.forEach((entry) => {
+        if (!isRecord(entry)) return;
+        const idValue =
+          entry.id ?? entry.pk ?? entry.achievement_id ?? entry.achievementId;
+        if (idValue === null || idValue === undefined || idValue === "") {
+          return;
+        }
+        const normalized = normalizeAchievementEntry(entry);
+        if (!normalized) return;
+        existingAchievementById.set(String(idValue), normalized);
+      });
 
       const existingAchievementByKey = new Map<
         string,
@@ -1189,6 +1646,16 @@ export default function ProfileUpdatePage() {
 
       for (const [key, update] of achievementMap.entries()) {
         const resolvedId = update.id ?? existingAchievementByKey.get(key)?.id;
+        const normalizedPayload = normalizeAchievementPayload(
+          update.payload as AchievementPayload
+        );
+        const existingNormalized =
+          resolvedId !== null && resolvedId !== undefined && resolvedId !== ""
+            ? existingAchievementById.get(String(resolvedId))
+            : null;
+        if (existingNormalized && areNormalizedEqual(normalizedPayload, existingNormalized)) {
+          continue;
+        }
         if (
           resolvedId !== null &&
           resolvedId !== undefined &&
@@ -1274,6 +1741,24 @@ export default function ProfileUpdatePage() {
         name: string;
         organization: string;
       }>;
+      const existingCertificationById = new Map<
+        string,
+        NormalizedCertificationPayload
+      >();
+      existingCertifications.forEach((entry) => {
+        if (!isRecord(entry)) return;
+        const idValue =
+          entry.id ??
+          entry.pk ??
+          entry.certification_id ??
+          entry.certificationId;
+        if (idValue === null || idValue === undefined || idValue === "") {
+          return;
+        }
+        const normalized = normalizeCertificationEntry(entry);
+        if (!normalized) return;
+        existingCertificationById.set(String(idValue), normalized);
+      });
 
       const existingCertificationByKey = new Map<
         string,
@@ -1306,6 +1791,16 @@ export default function ProfileUpdatePage() {
       for (const [key, update] of certificationMap.entries()) {
         const resolvedId =
           update.id ?? existingCertificationByKey.get(key)?.id;
+        const normalizedPayload = normalizeCertificationPayload(
+          update.payload as CertificationPayload
+        );
+        const existingNormalized =
+          resolvedId !== null && resolvedId !== undefined && resolvedId !== ""
+            ? existingCertificationById.get(String(resolvedId))
+            : null;
+        if (existingNormalized && areNormalizedEqual(normalizedPayload, existingNormalized)) {
+          continue;
+        }
         if (
           resolvedId !== null &&
           resolvedId !== undefined &&
