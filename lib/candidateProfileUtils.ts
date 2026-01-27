@@ -331,34 +331,81 @@ export const mapCandidateProfileToUserData = (
     (verifiedProfile &&
       isRecord(verifiedProfile.accessibility_needs) &&
       verifiedProfile.accessibility_needs) ||
+    (verifiedProfile &&
+      isRecord(verifiedProfile.accessibility) &&
+      verifiedProfile.accessibility) ||
     (isRecord(payload.accessibility_needs) && payload.accessibility_needs) ||
     (isRecord(payload.accessibilityNeeds) && payload.accessibilityNeeds) ||
+    (isRecord(payload.accessibility) && payload.accessibility) ||
     (isRecord(user?.accessibility_needs) && user.accessibility_needs) ||
     (isRecord(user?.accessibilityNeeds) && user.accessibilityNeeds) ||
+    (isRecord(user?.accessibility) && user.accessibility) ||
     (isRecord(profile?.accessibility_needs) && profile.accessibility_needs) ||
     (isRecord(profile?.accessibilityNeeds) && profile.accessibilityNeeds) ||
+    (isRecord(profile?.accessibility) && profile.accessibility) ||
+    ((isRecord(payload) &&
+      ("disability_categories" in payload ||
+        "workplace_accommodations" in payload ||
+        "accommodation_needs" in payload ||
+        "disclosure_preference" in payload ||
+        "disabilityCategories" in payload ||
+        "workplaceAccommodations" in payload ||
+        "accommodationNeeds" in payload ||
+        "disclosurePreference" in payload)) &&
+      payload) ||
     null;
   const accessibilityNeeds: Partial<
     NonNullable<UserData["accessibilityNeeds"]>
   > = {};
   if (accessibilitySource) {
+    const accessibilityFallback = isRecord(payload) ? payload : null;
     const categories = toStringArray(
       (accessibilitySource as Record<string, unknown>).disability_categories ??
-        (accessibilitySource as Record<string, unknown>).categories
+        (accessibilitySource as Record<string, unknown>).disabilityCategories ??
+        (accessibilitySource as Record<string, unknown>).categories ??
+        (accessibilityFallback as Record<string, unknown>)?.disability_categories ??
+        (accessibilityFallback as Record<string, unknown>)?.disabilityCategories ??
+        (accessibilityFallback as Record<string, unknown>)?.categories
     );
     const accommodations = toStringArray(
       (accessibilitySource as Record<string, unknown>).workplace_accommodations ??
-        (accessibilitySource as Record<string, unknown>).accommodations
+        (accessibilitySource as Record<string, unknown>)
+          .workplaceAccommodations ??
+        (accessibilitySource as Record<string, unknown>).accommodations ??
+        (accessibilityFallback as Record<string, unknown>)
+          ?.workplace_accommodations ??
+        (accessibilityFallback as Record<string, unknown>)
+          ?.workplaceAccommodations ??
+        (accessibilityFallback as Record<string, unknown>)?.accommodations
     );
-    const accommodationNeed = toTrimmedString(
-      (accessibilitySource as Record<string, unknown>).accommodation_needs ??
-        (accessibilitySource as Record<string, unknown>).accommodationNeed ??
-        (accessibilitySource as Record<string, unknown>).accommodation_need
-    );
+    const accommodationNeed =
+      toTrimmedString(
+        (accessibilitySource as Record<string, unknown>).accommodation_needs ??
+          (accessibilitySource as Record<string, unknown>)
+            .accommodationNeeds ??
+          (accessibilitySource as Record<string, unknown>)
+            .accommodationNeed ??
+          (accessibilitySource as Record<string, unknown>).accommodation_need
+      ) ||
+      toTrimmedString(
+        (accessibilityFallback as Record<string, unknown>)
+          ?.accommodation_needs ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodationNeeds ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodationNeed ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodation_need
+      );
     const disclosurePreference = normalizeDisclosurePreference(
       toTrimmedString(
         (accessibilitySource as Record<string, unknown>).disclosure_preference ??
-          (accessibilitySource as Record<string, unknown>).disclosurePreference
+          (accessibilitySource as Record<string, unknown>)
+            .disclosurePreference ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.disclosure_preference ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.disclosurePreference
       )
     );
 

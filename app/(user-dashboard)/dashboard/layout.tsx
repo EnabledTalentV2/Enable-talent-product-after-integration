@@ -34,16 +34,23 @@ function transformBackendToFrontend(
   const accessibilityRaw =
     (backendData.accessibility_needs as Record<string, unknown>) ||
     (backendData.accessibilityNeeds as Record<string, unknown>) ||
+    (backendData.accessibility as Record<string, unknown>) ||
     null;
   const accessibilityNeeds =
     accessibilityRaw && typeof accessibilityRaw === "object"
       ? {
           categories: Array.isArray(accessibilityRaw.categories)
             ? (accessibilityRaw.categories as string[])
+            : Array.isArray(accessibilityRaw.disability_categories)
+            ? (accessibilityRaw.disability_categories as string[])
+            : Array.isArray(accessibilityRaw.disabilityCategories)
+            ? (accessibilityRaw.disabilityCategories as string[])
             : defaultAccessibility.categories,
           accommodationNeed:
             (accessibilityRaw.accommodation_need as string) ||
+            (accessibilityRaw.accommodation_needs as string) ||
             (accessibilityRaw.accommodationNeed as string) ||
+            (accessibilityRaw.accommodationNeeds as string) ||
             defaultAccessibility.accommodationNeed,
           disclosurePreference:
             (accessibilityRaw.disclosure_preference as string) ||
@@ -51,6 +58,10 @@ function transformBackendToFrontend(
             defaultAccessibility.disclosurePreference,
           accommodations: Array.isArray(accessibilityRaw.accommodations)
             ? (accessibilityRaw.accommodations as string[])
+            : Array.isArray(accessibilityRaw.workplace_accommodations)
+            ? (accessibilityRaw.workplace_accommodations as string[])
+            : Array.isArray(accessibilityRaw.workplaceAccommodations)
+            ? (accessibilityRaw.workplaceAccommodations as string[])
             : defaultAccessibility.accommodations,
         }
       : { ...defaultAccessibility };
