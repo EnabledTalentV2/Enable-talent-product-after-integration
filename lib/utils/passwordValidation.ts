@@ -29,7 +29,7 @@ export function validatePasswordStrength(password: string): PasswordStrength {
 
   const passedChecks = Object.values(checks).filter(Boolean).length;
   const score = passedChecks;
-  const isStrong = score >= 4;
+  const isStrong = Object.values(checks).every(Boolean);
 
   return {
     score,

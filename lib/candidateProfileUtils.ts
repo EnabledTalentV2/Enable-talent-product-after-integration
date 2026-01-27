@@ -60,28 +60,70 @@ const normalizeLanguageLevelForBackend = (value: unknown): string => {
 };
 
 const normalizeAccommodationNeed = (value: string) => {
-  const normalized = toLower(value);
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
   if (normalized.includes("discuss")) return "discuss_later";
+  if (normalized === "prefer_to_discuss_later") return "discuss_later";
   if (normalized === "yes") return "yes";
   if (normalized === "no") return "no";
-  return value;
+  return normalized;
 };
 
-const normalizeDisclosurePreference = (value: string) =>
-  value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+const normalizeDisclosurePreference = (value: string) => {
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (normalized === "after_job_offer") return "after_offer";
+  if (normalized === "after_starting_work") return "after_start";
+  return normalized;
+};
+
+const normalizeDisabilityCategory = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "chronic_health") return "chronic";
+  if (normalized === "prefer_not_disclose") return "prefer_not_to_disclose";
+  return normalized;
+};
+
+const normalizeWorkplaceAccommodation = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "assistive_technology") return "assistive_tech";
+  if (normalized === "prefer_to_discuss_later") return "prefer_discuss_later";
+  if (normalized === "not_needed") return "non_needed";
+  return normalized;
+};
 
 const toAccommodationNeedValue = (value: string) => {
-  const normalized = toLower(value);
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
   if (normalized === "yes") return "YES";
   if (normalized === "no") return "NO";
   if (normalized.includes("discuss")) return "PREFER_TO_DISCUSS_LATER";
-  return value.toUpperCase();
+  if (normalized === "prefer_to_discuss_later")
+    return "PREFER_TO_DISCUSS_LATER";
+  return normalized.toUpperCase();
 };
 
 const toDisclosurePreferenceValue = (value: string) => {
-  const normalized = value.trim();
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
   if (!normalized) return "";
-  return normalized.replace(/[\s-]+/g, "_").toUpperCase();
+  if (normalized === "after_offer") return "AFTER_JOB_OFFER";
+  if (normalized === "after_job_offer") return "AFTER_JOB_OFFER";
+  if (normalized === "after_start") return "AFTER_STARTING_WORK";
+  if (normalized === "after_starting_work") return "AFTER_STARTING_WORK";
+  return normalized.toUpperCase();
+};
+
+const toDisabilityCategoryValue = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "chronic") return "chronic_health";
+  if (normalized === "prefer_not_disclose") return "prefer_not_to_disclose";
+  return normalized;
+};
+
+const toWorkplaceAccommodationValue = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "assistive_tech") return "assistive_technology";
+  if (normalized === "prefer_discuss_later") return "prefer_to_discuss_later";
+  if (normalized === "discuss_later") return "prefer_to_discuss_later";
+  if (normalized === "non_needed") return "not_needed";
+  return normalized;
 };
 
 export const normalizeGenderForBackend = (value: string) => {
@@ -198,6 +240,30 @@ const toDateValue = (value: unknown): string => {
   if (!trimmed) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
   if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  const monthYearMatch = trimmed.match(
+    /^(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s,\/-]+(\d{4})$/i
+  );
+  if (monthYearMatch) {
+    const monthToken = monthYearMatch[1].toLowerCase();
+    const year = monthYearMatch[2];
+    const monthMap: Record<string, string> = {
+      jan: "01",
+      feb: "02",
+      mar: "03",
+      apr: "04",
+      may: "05",
+      jun: "06",
+      jul: "07",
+      aug: "08",
+      sep: "09",
+      sept: "09",
+      oct: "10",
+      nov: "11",
+      dec: "12",
+    };
+    const month = monthMap[monthToken];
+    if (month) return `${year}-${month}-01`;
+  }
   return trimmed;
 };
 
@@ -323,42 +389,89 @@ export const mapCandidateProfileToUserData = (
   if (desiredSalary) {
     otherDetails.desiredSalary = desiredSalary;
   }
-  if (typeof payload.is_available === "boolean" && payload.is_available) {
-    otherDetails.availability = "Immediately / Available now";
+  if (typeof payload.is_available === "boolean") {
+    otherDetails.availability = payload.is_available ? "yes" : "no";
   }
 
   const accessibilitySource =
     (verifiedProfile &&
       isRecord(verifiedProfile.accessibility_needs) &&
       verifiedProfile.accessibility_needs) ||
+    (verifiedProfile &&
+      isRecord(verifiedProfile.accessibility) &&
+      verifiedProfile.accessibility) ||
     (isRecord(payload.accessibility_needs) && payload.accessibility_needs) ||
     (isRecord(payload.accessibilityNeeds) && payload.accessibilityNeeds) ||
+    (isRecord(payload.accessibility) && payload.accessibility) ||
     (isRecord(user?.accessibility_needs) && user.accessibility_needs) ||
     (isRecord(user?.accessibilityNeeds) && user.accessibilityNeeds) ||
+    (isRecord(user?.accessibility) && user.accessibility) ||
     (isRecord(profile?.accessibility_needs) && profile.accessibility_needs) ||
     (isRecord(profile?.accessibilityNeeds) && profile.accessibilityNeeds) ||
+    (isRecord(profile?.accessibility) && profile.accessibility) ||
+    ((isRecord(payload) &&
+      ("disability_categories" in payload ||
+        "workplace_accommodations" in payload ||
+        "accommodation_needs" in payload ||
+        "disclosure_preference" in payload ||
+        "disabilityCategories" in payload ||
+        "workplaceAccommodations" in payload ||
+        "accommodationNeeds" in payload ||
+        "disclosurePreference" in payload)) &&
+      payload) ||
     null;
   const accessibilityNeeds: Partial<
     NonNullable<UserData["accessibilityNeeds"]>
   > = {};
   if (accessibilitySource) {
+    const accessibilityFallback = isRecord(payload) ? payload : null;
     const categories = toStringArray(
       (accessibilitySource as Record<string, unknown>).disability_categories ??
-        (accessibilitySource as Record<string, unknown>).categories
-    );
+        (accessibilitySource as Record<string, unknown>).disabilityCategories ??
+        (accessibilitySource as Record<string, unknown>).categories ??
+        (accessibilityFallback as Record<string, unknown>)?.disability_categories ??
+        (accessibilityFallback as Record<string, unknown>)?.disabilityCategories ??
+        (accessibilityFallback as Record<string, unknown>)?.categories
+    ).map(normalizeDisabilityCategory);
     const accommodations = toStringArray(
       (accessibilitySource as Record<string, unknown>).workplace_accommodations ??
-        (accessibilitySource as Record<string, unknown>).accommodations
-    );
-    const accommodationNeed = toTrimmedString(
-      (accessibilitySource as Record<string, unknown>).accommodation_needs ??
-        (accessibilitySource as Record<string, unknown>).accommodationNeed ??
-        (accessibilitySource as Record<string, unknown>).accommodation_need
-    );
+        (accessibilitySource as Record<string, unknown>)
+          .workplaceAccommodations ??
+        (accessibilitySource as Record<string, unknown>).accommodations ??
+        (accessibilityFallback as Record<string, unknown>)
+          ?.workplace_accommodations ??
+        (accessibilityFallback as Record<string, unknown>)
+          ?.workplaceAccommodations ??
+        (accessibilityFallback as Record<string, unknown>)?.accommodations
+    ).map(normalizeWorkplaceAccommodation);
+    const accommodationNeed =
+      toTrimmedString(
+        (accessibilitySource as Record<string, unknown>).accommodation_needs ??
+          (accessibilitySource as Record<string, unknown>)
+            .accommodationNeeds ??
+          (accessibilitySource as Record<string, unknown>)
+            .accommodationNeed ??
+          (accessibilitySource as Record<string, unknown>).accommodation_need
+      ) ||
+      toTrimmedString(
+        (accessibilityFallback as Record<string, unknown>)
+          ?.accommodation_needs ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodationNeeds ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodationNeed ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.accommodation_need
+      );
     const disclosurePreference = normalizeDisclosurePreference(
       toTrimmedString(
         (accessibilitySource as Record<string, unknown>).disclosure_preference ??
-          (accessibilitySource as Record<string, unknown>).disclosurePreference
+          (accessibilitySource as Record<string, unknown>)
+            .disclosurePreference ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.disclosure_preference ??
+          (accessibilityFallback as Record<string, unknown>)
+            ?.disclosurePreference
       )
     );
 
@@ -1126,18 +1239,22 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   if (data.accessibilityNeeds) {
     const accessibilityNeeds: Record<string, unknown> = {};
     if (data.accessibilityNeeds.categories.length > 0) {
-      accessibilityNeeds.categories = data.accessibilityNeeds.categories;
+      accessibilityNeeds.categories = data.accessibilityNeeds.categories
+        .map((value) => toDisabilityCategoryValue(value))
+        .filter(Boolean);
     }
     if (data.accessibilityNeeds.accommodationNeed.trim()) {
       accessibilityNeeds.accommodation_need =
-        data.accessibilityNeeds.accommodationNeed.trim();
+        toAccommodationNeedValue(data.accessibilityNeeds.accommodationNeed);
     }
     if (data.accessibilityNeeds.disclosurePreference.trim()) {
       accessibilityNeeds.disclosure_preference =
-        data.accessibilityNeeds.disclosurePreference.trim();
+        toDisclosurePreferenceValue(data.accessibilityNeeds.disclosurePreference);
     }
     if (data.accessibilityNeeds.accommodations.length > 0) {
-      accessibilityNeeds.accommodations = data.accessibilityNeeds.accommodations;
+      accessibilityNeeds.accommodations = data.accessibilityNeeds.accommodations
+        .map((value) => toWorkplaceAccommodationValue(value))
+        .filter(Boolean);
     }
     if (Object.keys(accessibilityNeeds).length > 0) {
       payload.accessibility_needs = accessibilityNeeds;
@@ -1166,7 +1283,7 @@ export const buildCandidateProfileUpdatePayload = (
     .map((value) => toWorkModeValue(value.trim()))
     .filter(Boolean);
   const desiredSalary = data.otherDetails.desiredSalary.trim();
-  const availability = data.otherDetails.availability.trim();
+  const availability = data.otherDetails.availability.trim().toLowerCase();
 
   if (employmentTypes.length > 0) {
     payload.employment_type_preferences = employmentTypes;
@@ -1181,7 +1298,17 @@ export const buildCandidateProfileUpdatePayload = (
   }
 
   if (availability) {
-    payload.is_available = true;
+    if (
+      availability === "yes" ||
+      availability.includes("immediately") ||
+      availability.includes("available now")
+    ) {
+      payload.is_available = true;
+    } else if (availability === "no") {
+      payload.is_available = false;
+    } else {
+      payload.is_available = false;
+    }
   }
 
   // Relocation and work visa preferences
@@ -1198,7 +1325,9 @@ export const buildCandidateProfileUpdatePayload = (
       data.accessibilityNeeds.disclosurePreference.trim();
 
     if (categories.length > 0) {
-      payload.disability_categories = categories;
+      payload.disability_categories = categories
+        .map((value) => toDisabilityCategoryValue(value))
+        .filter(Boolean);
     }
     if (accommodationNeed) {
       payload.accommodation_needs = toAccommodationNeedValue(accommodationNeed);
@@ -1208,7 +1337,9 @@ export const buildCandidateProfileUpdatePayload = (
         toDisclosurePreferenceValue(disclosurePreference);
     }
     if (accommodations.length > 0) {
-      payload.workplace_accommodations = accommodations;
+      payload.workplace_accommodations = accommodations
+        .map((value) => toWorkplaceAccommodationValue(value))
+        .filter(Boolean);
     }
   }
 

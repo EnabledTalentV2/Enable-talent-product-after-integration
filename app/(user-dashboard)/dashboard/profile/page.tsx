@@ -123,9 +123,14 @@ export default function ProfilePage() {
     toTrimmed(lang.language)
   );
   const jobTypeList = preference.jobType.map(toTrimmed).filter(Boolean);
-  const companySizeList = preference.companySize.map(toTrimmed).filter(Boolean);
   const desiredSalaryLabel = withFallback(otherDetails.desiredSalary);
-  const availabilityLabel = withFallback(otherDetails.availability);
+  const availabilityValue = toTrimmed(otherDetails.availability).toLowerCase();
+  const availabilityLabel =
+    availabilityValue === "yes"
+      ? "Yes"
+      : availabilityValue === "no"
+        ? "No"
+        : withFallback(otherDetails.availability);
   const courseLabel = withFallback(education.courseName);
   const majorLabel = withFallback(education.major);
   const institutionLabel = withFallback(education.institution);
@@ -468,30 +473,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Company Size
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {companySizeList.length > 0 ? (
-                    companySizeList.map((size, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
-                      >
-                        {size}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-slate-500">
-                      {fallbackText}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="pt-2 border-t border-slate-50">
-                <p className="text-sm text-slate-600">
-                  <span className="font-bold text-slate-800">
-                    Desired Salary:
+                <div className="pt-2 border-t border-slate-50">
+                  <p className="text-sm text-slate-600">
+                    <span className="font-bold text-slate-800">
+                      Desired Salary:
                   </span>{" "}
                   {desiredSalaryLabel}
                 </p>
@@ -503,6 +488,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+          </div>
           </section>
         </div>
       </div>

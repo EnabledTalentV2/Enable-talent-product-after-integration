@@ -76,12 +76,8 @@ export default function OtherDetails({
   const proficiencyOptions = ["Basic", "Intermediate", "Proficient", "Fluent"];
 
   const availabilityOptions = [
-    "Immediately / Available now",
-    "Within 1 week",
-    "2 weeks (standard notice period)",
-    "3–4 weeks",
-    "2–3 months",
-    "More than 3 months",
+    { label: "Yes", value: "yes" },
+    { label: "No", value: "no" },
   ];
 
   const desiredSalaryOptions = [
@@ -319,7 +315,7 @@ export default function OtherDetails({
           }`}
         >
           {availabilityError ||
-            "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
+            "Are you available immediately for any full-time opportunities that may come from the Enabled Talent Access Service?"}
           <span aria-hidden="true" className="text-red-600">
             {" "}
             *
@@ -329,15 +325,23 @@ export default function OtherDetails({
         <div className="relative">
           <select
             id="otherDetails-availability"
-            value={data.availability}
+            value={(() => {
+              const raw = data.availability.trim().toLowerCase();
+              if (!raw) return "";
+              if (raw === "yes" || raw === "no") return raw;
+              if (raw.includes("immediately") || raw.includes("available now")) {
+                return "yes";
+              }
+              return "no";
+            })()}
             onChange={(e) => onChange({ availability: e.target.value })}
             aria-required="true"
             className={`${selectClass(Boolean(availabilityError))} pr-10`}
           >
-            <option value="">Select availability</option>
+            <option value="">Select</option>
             {availabilityOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -382,3 +386,4 @@ export default function OtherDetails({
     </div>
   );
 }
+

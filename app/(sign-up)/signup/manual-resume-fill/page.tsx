@@ -514,8 +514,7 @@ export default function ManualResumeFill() {
         }> = [
           {
             field: "availability",
-            message:
-              "Please enter your earliest availability for full-time opportunities",
+            message: "Please select whether you are available immediately",
             id: "otherDetails-availability",
           },
           {
@@ -1369,15 +1368,16 @@ export default function ManualResumeFill() {
 
   const renderForm = useMemo(() => {
     switch (activeStep.key) {
-      case "basicInfo":
-        return (
-          <BasicInfo
-            data={userData.basicInfo}
-            errors={basicInfoErrors}
-            onChange={(patch) => {
-              setUserData((prev) => ({
-                ...prev,
-                basicInfo: { ...prev.basicInfo, ...patch },
+        case "basicInfo":
+          return (
+            <BasicInfo
+              data={userData.basicInfo}
+              errors={basicInfoErrors}
+              hideProfilePhoto
+              onChange={(patch) => {
+                setUserData((prev) => ({
+                  ...prev,
+                  basicInfo: { ...prev.basicInfo, ...patch },
               }));
               setBasicInfoErrors((prev) => {
                 const cleared = { ...prev };
