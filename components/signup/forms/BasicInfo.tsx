@@ -9,9 +9,15 @@ type Props = {
   data: UserData["basicInfo"];
   onChange: (patch: Partial<UserData["basicInfo"]>) => void;
   errors?: Partial<Record<keyof UserData["basicInfo"], string>>;
+  hideProfilePhoto?: boolean;
 };
 
-export default function BasicInfo({ data, onChange, errors }: Props) {
+export default function BasicInfo({
+  data,
+  onChange,
+  errors,
+  hideProfilePhoto = false,
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const minPhotoSizeBytes = 10 * 1024;
@@ -59,76 +65,78 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         />
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="basicInfo-profilePhoto"
-          className={`block text-base font-medium ${
-            hasPhotoError ? "text-red-600" : "text-slate-700"
-          }`}
-        >
-          Profile photo
-        </label>
-        <div
-          className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 focus-within:ring-2 ${
-            hasPhotoError
-              ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-200"
-              : "border-gray-300 focus-within:border-orange-500 focus-within:ring-orange-500/30"
-          }`}
-        >
+      {!hideProfilePhoto ? (
+        <div className="space-y-2">
           <label
             htmlFor="basicInfo-profilePhoto"
-            className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+            className={`block text-base font-medium ${
+              hasPhotoError ? "text-red-600" : "text-slate-700"
+            }`}
           >
-            <UploadCloud className="h-5 w-5 text-orange-500" />
-            <div className="flex items-center gap-1">
-              <span>Drag and drop or,</span>
-              <span className="text-orange-500 font-medium">Browse</span>
-            </div>
-            <input
-              id="basicInfo-profilePhoto"
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                const file = event.target.files?.[0];
-                if (!file) {
-                  setPhotoError(null);
-                  onChange({ profilePhoto: "" });
-                  return;
-                }
-
-                if (file.size < minPhotoSizeBytes || file.size > maxPhotoSizeBytes) {
-                  setPhotoError("Image must be between 10KB and 2MB.");
-                  onChange({ profilePhoto: "" });
-                  event.target.value = "";
-                  return;
-                }
-
-                setPhotoError(null);
-                onChange({ profilePhoto: file.name });
-              }}
-            />
+            Profile photo
           </label>
-          {data.profilePhoto ? (
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
-              <span className="text-slate-500">
-                Selected: {data.profilePhoto}
-              </span>
-              <button
-                type="button"
-                onClick={clearProfilePhoto}
-                className="font-medium text-red-600 hover:text-red-700"
-              >
-                Remove photo
-              </button>
-            </div>
+          <div
+            className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 focus-within:ring-2 ${
+              hasPhotoError
+                ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-200"
+                : "border-gray-300 focus-within:border-orange-500 focus-within:ring-orange-500/30"
+            }`}
+          >
+            <label
+              htmlFor="basicInfo-profilePhoto"
+              className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+            >
+              <UploadCloud className="h-5 w-5 text-orange-500" />
+              <div className="flex items-center gap-1">
+                <span>Drag and drop or,</span>
+                <span className="text-orange-500 font-medium">Browse</span>
+              </div>
+              <input
+                id="basicInfo-profilePhoto"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0];
+                  if (!file) {
+                    setPhotoError(null);
+                    onChange({ profilePhoto: "" });
+                    return;
+                  }
+
+                  if (file.size < minPhotoSizeBytes || file.size > maxPhotoSizeBytes) {
+                    setPhotoError("Image must be between 10KB and 2MB.");
+                    onChange({ profilePhoto: "" });
+                    event.target.value = "";
+                    return;
+                  }
+
+                  setPhotoError(null);
+                  onChange({ profilePhoto: file.name });
+                }}
+              />
+            </label>
+            {data.profilePhoto ? (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
+                <span className="text-slate-500">
+                  Selected: {data.profilePhoto}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearProfilePhoto}
+                  className="font-medium text-red-600 hover:text-red-700"
+                >
+                  Remove photo
+                </button>
+              </div>
+            ) : null}
+          </div>
+          {resolvedPhotoError ? (
+            <p className="text-sm text-red-600">{resolvedPhotoError}</p>
           ) : null}
         </div>
-        {resolvedPhotoError ? (
-          <p className="text-sm text-red-600">{resolvedPhotoError}</p>
-        ) : null}
-      </div>
+      ) : null}
 
       <InputBlock
         id="basicInfo-email"

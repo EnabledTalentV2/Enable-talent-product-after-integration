@@ -60,28 +60,70 @@ const normalizeLanguageLevelForBackend = (value: unknown): string => {
 };
 
 const normalizeAccommodationNeed = (value: string) => {
-  const normalized = toLower(value);
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
   if (normalized.includes("discuss")) return "discuss_later";
+  if (normalized === "prefer_to_discuss_later") return "discuss_later";
   if (normalized === "yes") return "yes";
   if (normalized === "no") return "no";
-  return value;
+  return normalized;
 };
 
-const normalizeDisclosurePreference = (value: string) =>
-  value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+const normalizeDisclosurePreference = (value: string) => {
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (normalized === "after_job_offer") return "after_offer";
+  if (normalized === "after_starting_work") return "after_start";
+  return normalized;
+};
+
+const normalizeDisabilityCategory = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "chronic_health") return "chronic";
+  if (normalized === "prefer_not_disclose") return "prefer_not_to_disclose";
+  return normalized;
+};
+
+const normalizeWorkplaceAccommodation = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "assistive_technology") return "assistive_tech";
+  if (normalized === "prefer_to_discuss_later") return "prefer_discuss_later";
+  if (normalized === "not_needed") return "non_needed";
+  return normalized;
+};
 
 const toAccommodationNeedValue = (value: string) => {
-  const normalized = toLower(value);
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
   if (normalized === "yes") return "YES";
   if (normalized === "no") return "NO";
   if (normalized.includes("discuss")) return "PREFER_TO_DISCUSS_LATER";
-  return value.toUpperCase();
+  if (normalized === "prefer_to_discuss_later")
+    return "PREFER_TO_DISCUSS_LATER";
+  return normalized.toUpperCase();
 };
 
 const toDisclosurePreferenceValue = (value: string) => {
-  const normalized = value.trim();
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
   if (!normalized) return "";
-  return normalized.replace(/[\s-]+/g, "_").toUpperCase();
+  if (normalized === "after_offer") return "AFTER_JOB_OFFER";
+  if (normalized === "after_job_offer") return "AFTER_JOB_OFFER";
+  if (normalized === "after_start") return "AFTER_STARTING_WORK";
+  if (normalized === "after_starting_work") return "AFTER_STARTING_WORK";
+  return normalized.toUpperCase();
+};
+
+const toDisabilityCategoryValue = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "chronic") return "chronic_health";
+  if (normalized === "prefer_not_disclose") return "prefer_not_to_disclose";
+  return normalized;
+};
+
+const toWorkplaceAccommodationValue = (value: string) => {
+  const normalized = toLower(value).replace(/[\s-]+/g, "_");
+  if (normalized === "assistive_tech") return "assistive_technology";
+  if (normalized === "prefer_discuss_later") return "prefer_to_discuss_later";
+  if (normalized === "discuss_later") return "prefer_to_discuss_later";
+  if (normalized === "non_needed") return "not_needed";
+  return normalized;
 };
 
 export const normalizeGenderForBackend = (value: string) => {
@@ -366,7 +408,7 @@ export const mapCandidateProfileToUserData = (
         (accessibilityFallback as Record<string, unknown>)?.disability_categories ??
         (accessibilityFallback as Record<string, unknown>)?.disabilityCategories ??
         (accessibilityFallback as Record<string, unknown>)?.categories
-    );
+    ).map(normalizeDisabilityCategory);
     const accommodations = toStringArray(
       (accessibilitySource as Record<string, unknown>).workplace_accommodations ??
         (accessibilitySource as Record<string, unknown>)
@@ -377,7 +419,7 @@ export const mapCandidateProfileToUserData = (
         (accessibilityFallback as Record<string, unknown>)
           ?.workplaceAccommodations ??
         (accessibilityFallback as Record<string, unknown>)?.accommodations
-    );
+    ).map(normalizeWorkplaceAccommodation);
     const accommodationNeed =
       toTrimmedString(
         (accessibilitySource as Record<string, unknown>).accommodation_needs ??
@@ -1173,18 +1215,22 @@ export const buildVerifyProfilePayload = (data: UserData) => {
   if (data.accessibilityNeeds) {
     const accessibilityNeeds: Record<string, unknown> = {};
     if (data.accessibilityNeeds.categories.length > 0) {
-      accessibilityNeeds.categories = data.accessibilityNeeds.categories;
+      accessibilityNeeds.categories = data.accessibilityNeeds.categories
+        .map((value) => toDisabilityCategoryValue(value))
+        .filter(Boolean);
     }
     if (data.accessibilityNeeds.accommodationNeed.trim()) {
       accessibilityNeeds.accommodation_need =
-        data.accessibilityNeeds.accommodationNeed.trim();
+        toAccommodationNeedValue(data.accessibilityNeeds.accommodationNeed);
     }
     if (data.accessibilityNeeds.disclosurePreference.trim()) {
       accessibilityNeeds.disclosure_preference =
-        data.accessibilityNeeds.disclosurePreference.trim();
+        toDisclosurePreferenceValue(data.accessibilityNeeds.disclosurePreference);
     }
     if (data.accessibilityNeeds.accommodations.length > 0) {
-      accessibilityNeeds.accommodations = data.accessibilityNeeds.accommodations;
+      accessibilityNeeds.accommodations = data.accessibilityNeeds.accommodations
+        .map((value) => toWorkplaceAccommodationValue(value))
+        .filter(Boolean);
     }
     if (Object.keys(accessibilityNeeds).length > 0) {
       payload.accessibility_needs = accessibilityNeeds;
@@ -1255,7 +1301,9 @@ export const buildCandidateProfileUpdatePayload = (
       data.accessibilityNeeds.disclosurePreference.trim();
 
     if (categories.length > 0) {
-      payload.disability_categories = categories;
+      payload.disability_categories = categories
+        .map((value) => toDisabilityCategoryValue(value))
+        .filter(Boolean);
     }
     if (accommodationNeed) {
       payload.accommodation_needs = toAccommodationNeedValue(accommodationNeed);
@@ -1265,7 +1313,9 @@ export const buildCandidateProfileUpdatePayload = (
         toDisclosurePreferenceValue(disclosurePreference);
     }
     if (accommodations.length > 0) {
-      payload.workplace_accommodations = accommodations;
+      payload.workplace_accommodations = accommodations
+        .map((value) => toWorkplaceAccommodationValue(value))
+        .filter(Boolean);
     }
   }
 
