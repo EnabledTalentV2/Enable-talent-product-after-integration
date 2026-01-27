@@ -514,8 +514,7 @@ export default function ManualResumeFill() {
         }> = [
           {
             field: "availability",
-            message:
-              "Please enter your earliest availability for full-time opportunities",
+            message: "Please select whether you are available immediately",
             id: "otherDetails-availability",
           },
           {

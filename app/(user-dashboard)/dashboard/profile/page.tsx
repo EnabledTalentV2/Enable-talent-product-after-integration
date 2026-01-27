@@ -125,7 +125,13 @@ export default function ProfilePage() {
   const jobTypeList = preference.jobType.map(toTrimmed).filter(Boolean);
   const companySizeList = preference.companySize.map(toTrimmed).filter(Boolean);
   const desiredSalaryLabel = withFallback(otherDetails.desiredSalary);
-  const availabilityLabel = withFallback(otherDetails.availability);
+  const availabilityValue = toTrimmed(otherDetails.availability).toLowerCase();
+  const availabilityLabel =
+    availabilityValue === "yes"
+      ? "Yes"
+      : availabilityValue === "no"
+        ? "No"
+        : withFallback(otherDetails.availability);
   const courseLabel = withFallback(education.courseName);
   const majorLabel = withFallback(education.major);
   const institutionLabel = withFallback(education.institution);

@@ -323,8 +323,8 @@ export const mapCandidateProfileToUserData = (
   if (desiredSalary) {
     otherDetails.desiredSalary = desiredSalary;
   }
-  if (typeof payload.is_available === "boolean" && payload.is_available) {
-    otherDetails.availability = "Immediately / Available now";
+  if (typeof payload.is_available === "boolean") {
+    otherDetails.availability = payload.is_available ? "yes" : "no";
   }
 
   const accessibilitySource =
@@ -1166,7 +1166,7 @@ export const buildCandidateProfileUpdatePayload = (
     .map((value) => toWorkModeValue(value.trim()))
     .filter(Boolean);
   const desiredSalary = data.otherDetails.desiredSalary.trim();
-  const availability = data.otherDetails.availability.trim();
+  const availability = data.otherDetails.availability.trim().toLowerCase();
 
   if (employmentTypes.length > 0) {
     payload.employment_type_preferences = employmentTypes;
@@ -1181,7 +1181,17 @@ export const buildCandidateProfileUpdatePayload = (
   }
 
   if (availability) {
-    payload.is_available = true;
+    if (
+      availability === "yes" ||
+      availability.includes("immediately") ||
+      availability.includes("available now")
+    ) {
+      payload.is_available = true;
+    } else if (availability === "no") {
+      payload.is_available = false;
+    } else {
+      payload.is_available = false;
+    }
   }
 
   // Relocation and work visa preferences

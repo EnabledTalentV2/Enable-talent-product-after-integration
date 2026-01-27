@@ -566,8 +566,7 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
   }> = [
     {
       field: "availability",
-      message:
-        "Please enter your earliest availability for full-time opportunities",
+      message: "Please select whether you are available immediately",
       id: "otherDetails-availability",
     },
     {
@@ -898,6 +897,9 @@ export default function ProfileUpdatePage() {
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
         ? fullProfile?.verified_profile
         : null;
+      const verifiedPreferences = isRecord(verifiedProfile?.preferences)
+        ? verifiedProfile.preferences
+        : null;
       const userRoot = isRecord(profileRoot?.user) ? profileRoot.user : null;
       const existingUserProfile =
         userRoot && isRecord(userRoot.profile) ? userRoot.profile : null;
@@ -1019,7 +1021,7 @@ export default function ProfileUpdatePage() {
               !areStringArraysEqual(
                 value,
                 profileRoot?.employment_type_preferences ??
-                  verifiedProfile?.preferences?.employment_type_preferences
+                  verifiedPreferences?.employment_type_preferences
               )
             ) {
               filteredProfilePayload[key] = value;
@@ -1030,7 +1032,7 @@ export default function ProfileUpdatePage() {
               !areStringArraysEqual(
                 value,
                 profileRoot?.work_mode_preferences ??
-                  verifiedProfile?.preferences?.work_mode_preferences
+                  verifiedPreferences?.work_mode_preferences
               )
             ) {
               filteredProfilePayload[key] = value;
