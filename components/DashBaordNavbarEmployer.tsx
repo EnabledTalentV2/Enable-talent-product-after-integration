@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Bell,
   LogOut,
   User,
   Menu,
@@ -109,13 +108,6 @@ export default function DashBoardNavbarEmployer() {
               <LogOut size={18} />
               <span>Log Out</span>
             </button>
-            <button
-              className="relative text-slate-600 transition-colors hover:text-slate-900"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-              <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
-            </button>
             <Link
               href="/employer/dashboard/post-jobs"
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
@@ -182,19 +174,6 @@ export default function DashBoardNavbarEmployer() {
 
                 {/* Divider */}
                 <div className="border-t border-slate-200 my-2" />
-
-                {/* Notifications */}
-                <button
-                  className="flex items-center gap-3 px-4 py-3 text-left text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 rounded-lg"
-                  aria-label="Notifications"
-                  onClick={toggleMenu}
-                >
-                  <div className="relative">
-                    <Bell size={18} />
-                    <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
-                  </div>
-                  <span>Notifications</span>
-                </button>
 
                 {/* Post a Job */}
                 <Link
