@@ -70,7 +70,7 @@ export default function CandidateDirectoryCard({
         )}
       </div>
 
-      {(candidate.title || candidate.location || candidate.linkedin) && (
+      {(candidate.title || candidate.location) && (
         <div className="mt-4 space-y-2 text-xs text-slate-500">
           {candidate.title && (
             <div className="flex items-center gap-1">
@@ -82,20 +82,6 @@ export default function CandidateDirectoryCard({
             <div className="flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5 text-slate-400" />
               <span>{candidate.location}</span>
-            </div>
-          )}
-          {candidate.linkedin && (
-            <div className="flex items-center gap-1">
-              <Linkedin className="h-3.5 w-3.5 text-slate-400" />
-              <a
-                href={candidate.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-[#0A66C2] hover:underline"
-              >
-                LinkedIn
-              </a>
             </div>
           )}
         </div>

@@ -3,7 +3,10 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useCandidateProfiles } from "@/lib/hooks/useCandidateProfiles";
+import {
+  useCandidateProfile,
+  useCandidateProfiles,
+} from "@/lib/hooks/useCandidateProfiles";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import Pagination from "@/components/ui/Pagination";
 import CandidateDirectoryCard from "@/components/employer/candidates/CandidateDirectoryCard";
@@ -87,6 +90,21 @@ export default function CandidatesListPage() {
       null
     );
   }, [filteredCandidates, selectedCandidateId]);
+
+  const selectedCandidateSlug = selectedCandidate?.slug ?? "";
+  const {
+    data: selectedCandidateProfile,
+    isLoading: isCandidateLoading,
+    isFetching: isCandidateFetching,
+    error: candidateError,
+  } = useCandidateProfile(selectedCandidateSlug);
+  const isCandidateDetailLoading = isCandidateLoading || isCandidateFetching;
+  const isProfileReady =
+    Boolean(selectedCandidateProfile) &&
+    selectedCandidateProfile?.slug === selectedCandidateSlug;
+  const profileHref = selectedCandidateSlug
+    ? `/employer/dashboard/candidates/profile/${selectedCandidateSlug}`
+    : undefined;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -260,10 +278,19 @@ export default function CandidatesListPage() {
                         tabIndex={-1}
                         className="lg:hidden"
                       >
-                        <CandidateDetailPanel
-                          candidate={selectedCandidate}
-                          onInviteClick={handleInviteClick}
-                        />
+                        {isProfileReady && selectedCandidateProfile ? (
+                          <CandidateDetailPanel
+                            candidate={selectedCandidateProfile}
+                            profileHref={profileHref}
+                            onInviteClick={handleInviteClick}
+                          />
+                        ) : isCandidateDetailLoading ? (
+                          <CandidateDetailSkeleton />
+                        ) : candidateError ? (
+                          <div className="rounded-[28px] bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+                            Unable to load candidate details.
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -294,15 +321,24 @@ export default function CandidatesListPage() {
         </div>
 
         <div className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10">
-          {selectedCandidate ? (
+          {isProfileReady && selectedCandidateProfile ? (
             <div
               id={`candidate-details-desktop-${selectedCandidateId}`}
               tabIndex={-1}
             >
               <CandidateDetailPanel
-                candidate={selectedCandidate}
+                candidate={selectedCandidateProfile}
+                profileHref={profileHref}
                 onInviteClick={handleInviteClick}
               />
+            </div>
+          ) : isCandidateDetailLoading ? (
+            <CandidateDetailSkeleton />
+          ) : selectedCandidate ? (
+            <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
+              {candidateError
+                ? "Unable to load candidate details."
+                : "Select a candidate to view their profile details."}
             </div>
           ) : (
             <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">

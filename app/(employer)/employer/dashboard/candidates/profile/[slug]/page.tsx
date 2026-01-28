@@ -3,6 +3,7 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
+import { CandidateDetailSkeleton } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import {
   MapPin,
   Briefcase,
@@ -66,9 +67,9 @@ export default function CandidateProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#C27803] border-r-transparent"></div>
-        <p className="ml-4 text-slate-600">Loading candidate profile...</p>
+      <div className="p-4 md:p-6 max-w-5xl mx-auto">
+        <div className="sr-only">Loading candidate profile...</div>
+        <CandidateDetailSkeleton />
       </div>
     );
   }
