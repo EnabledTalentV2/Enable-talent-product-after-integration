@@ -12,7 +12,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.candidateData.achievementsDetail(id),
+      API_ENDPOINTS.candidateData.educationDetail(id),
       {
         method: "PUT",
         body: JSON.stringify(body),
@@ -30,9 +30,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Update candidate achievement error:", error);
+    console.error("Update candidate education error:", error);
     return NextResponse.json(
-      { error: "Failed to update candidate achievement" },
+      { error: "Failed to update candidate education" },
       { status: 500 }
     );
   }
@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.candidateData.achievementsDetail(id),
+      API_ENDPOINTS.candidateData.educationDetail(id),
       {
         method: "PATCH",
         body: JSON.stringify(body),
@@ -63,9 +63,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Update candidate achievement error:", error);
+    console.error("Update candidate education error:", error);
     return NextResponse.json(
-      { error: "Failed to update candidate achievement" },
+      { error: "Failed to update candidate education" },
       { status: 500 }
     );
   }
@@ -77,7 +77,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.candidateData.achievementsDetail(id),
+      API_ENDPOINTS.candidateData.educationDetail(id),
       {
         method: "DELETE",
       },
@@ -94,9 +94,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       status: backendResponse.status,
     });
   } catch (error) {
-    console.error("Delete candidate achievement error:", error);
+    console.error("Delete candidate education error:", error);
     return NextResponse.json(
-      { error: "Failed to delete candidate achievement" },
+      { error: "Failed to delete candidate education" },
       { status: 500 }
     );
   }

@@ -144,7 +144,7 @@ export default function DashBoardNavbar() {
               <span>Log Out</span>
             </button>
             <Link
-              href="/dashboard/career-coach"
+              href="/dashboard/career-coach/start"
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
             >
               <Search size={18} strokeWidth={3} />
@@ -236,7 +236,7 @@ export default function DashBoardNavbar() {
                   </Link>
 
                   <Link
-                    href="/dashboard/career-coach"
+                    href="/dashboard/career-coach/start"
                     className="flex items-center gap-3 px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 rounded-xl"
                     onClick={toggleMenu}
                   >

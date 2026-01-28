@@ -57,7 +57,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     }
 
-    return NextResponse.json(data, { status: backendResponse.status });
+      if (backendResponse.status === 204) {
+        return new NextResponse(null, { status: 204 });
+      }
+
+      return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
     console.error("[Parsing Status GET] Error:", error);
     return NextResponse.json(
