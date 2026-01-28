@@ -93,7 +93,8 @@ function LoginPageContent() {
         setCandidateLoading(false);
       }
 
-      const nextPath = searchParams.get("next");
+      const nextPath =
+        searchParams.get("next") ?? searchParams.get("returnUrl");
       const redirectTarget =
         nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
       router.push(redirectTarget);

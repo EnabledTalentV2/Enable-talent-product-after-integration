@@ -5,7 +5,7 @@ import Link from "next/link";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import { useLoginUser } from "@/lib/hooks/useLoginUser";
@@ -17,6 +17,7 @@ const inputClasses =
 
 export default function EmployerLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -79,7 +80,13 @@ export default function EmployerLoginPage() {
         }));
       }
 
-      router.push("/employer/dashboard");
+      const nextPath =
+        searchParams.get("next") ?? searchParams.get("returnUrl");
+      const redirectTarget =
+        nextPath && nextPath.startsWith("/employer")
+          ? nextPath
+          : "/employer/dashboard";
+      router.push(redirectTarget);
     } catch (err: unknown) {
       console.error(err);
       setError(

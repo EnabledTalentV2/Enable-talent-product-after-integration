@@ -355,7 +355,7 @@ export default function ResumeUpload() {
           );
           // Add return URL for better UX
           const returnUrl = encodeURIComponent("/signup/resume-upload");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -385,7 +385,7 @@ export default function ResumeUpload() {
       } catch (err) {
         console.error("[Resume Upload] Session check error:", err);
         const returnUrl = encodeURIComponent("/signup/resume-upload");
-        router.replace(`/login-talent?returnUrl=${returnUrl}`);
+        router.replace(`/login-talent?next=${returnUrl}`);
       }
     };
 

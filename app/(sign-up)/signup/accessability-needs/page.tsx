@@ -451,7 +451,7 @@ export default function AccessabilityNeedsPage() {
             response.status,
           );
           const returnUrl = encodeURIComponent("/signup/accessability-needs");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -463,7 +463,7 @@ export default function AccessabilityNeedsPage() {
         if (!userData || !userData.email) {
           console.log("[Accessibility Needs] No user data found");
           const returnUrl = encodeURIComponent("/signup/accessability-needs");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -475,7 +475,7 @@ export default function AccessabilityNeedsPage() {
       } catch (err) {
         console.error("[Accessibility Needs] Session check error:", err);
         const returnUrl = encodeURIComponent("/signup/accessability-needs");
-        router.replace(`/login-talent?returnUrl=${returnUrl}`);
+        router.replace(`/login-talent?next=${returnUrl}`);
       }
     };
 

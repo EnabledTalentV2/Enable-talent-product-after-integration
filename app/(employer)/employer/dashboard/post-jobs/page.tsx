@@ -28,7 +28,7 @@ export default function PostJobsPage() {
     const currentPath =
       typeof window !== "undefined" ? window.location.pathname : "";
     const returnUrl = currentPath
-      ? `?returnUrl=${encodeURIComponent(currentPath)}`
+      ? `?next=${encodeURIComponent(currentPath)}`
       : "";
     router.push(`/login-employer${returnUrl}`);
   };

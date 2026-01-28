@@ -118,11 +118,11 @@ export const handleSessionExpiry = (
     // Get current path for return URL
     const currentPath =
       typeof window !== "undefined" ? window.location.pathname : "";
-    const returnUrl = currentPath && currentPath !== "/login-talent"
-      ? `?returnUrl=${encodeURIComponent(currentPath)}`
+    const nextParam = currentPath && currentPath !== "/login-talent"
+      ? `?next=${encodeURIComponent(currentPath)}`
       : "";
 
-    router.push(`/login-talent${returnUrl}`);
+    router.push(`/login-talent${nextParam}`);
     return true;
   }
   return false;
