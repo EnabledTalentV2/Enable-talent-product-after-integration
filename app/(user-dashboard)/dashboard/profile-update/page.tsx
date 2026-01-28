@@ -11,17 +11,16 @@ import type { StepKey, UserData } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
 import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import {
-  buildCandidateAchievementPayloads,
-  buildCandidateCertificationPayloads,
-  buildCandidateEducationPayloads,
-  buildCandidateLanguagePayloads,
-  buildCandidateProjectPayloads,
-  buildCandidateProfileCorePayload,
-  buildCandidateSkillPayloads,
-  buildCandidateWorkExperiencePayloads,
-  normalizeGenderForBackend,
-} from "@/lib/candidateProfileUtils";
+  import {
+    buildCandidateAchievementPayloads,
+    buildCandidateCertificationPayloads,
+    buildCandidateLanguagePayloads,
+    buildCandidateProjectPayloads,
+    buildCandidateProfileCorePayload,
+    buildCandidateSkillPayloads,
+    buildCandidateWorkExperiencePayloads,
+    normalizeGenderForBackend,
+  } from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -137,13 +136,19 @@ const toNormalizedString = (value: unknown) => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
 };
-const toDateValue = (value: unknown) => {
-  const trimmed = toNormalizedString(value);
-  if (!trimmed) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
-  return trimmed;
-};
+  const toDateValue = (value: unknown) => {
+    const trimmed = toNormalizedString(value);
+    if (!trimmed) return "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+    return trimmed;
+  };
+  const toYearValue = (value: unknown) => {
+    const trimmed = toNormalizedString(value);
+    if (!trimmed) return "";
+    const match = trimmed.match(/\d{4}/);
+    return match ? match[0] : "";
+  };
 const normalizeNullableDate = (value: unknown) => {
   const normalized = toDateValue(value);
   return normalized ? normalized : null;
@@ -155,12 +160,43 @@ const normalizeStringArray = (value: unknown) =>
         .filter(Boolean)
         .sort()
     : [];
-const areStringArraysEqual = (a: unknown, b: unknown) => {
-  const normalizedA = normalizeStringArray(a);
-  const normalizedB = normalizeStringArray(b);
-  if (normalizedA.length !== normalizedB.length) return false;
-  return normalizedA.every((value, index) => value === normalizedB[index]);
-};
+  const areStringArraysEqual = (a: unknown, b: unknown) => {
+    const normalizedA = normalizeStringArray(a);
+    const normalizedB = normalizeStringArray(b);
+    if (normalizedA.length !== normalizedB.length) return false;
+    return normalizedA.every((value, index) => value === normalizedB[index]);
+  };
+  const buildEducationPayload = (data: UserData) => {
+    const payload: Record<string, unknown> = {};
+    const courseName = data.education.courseName.trim();
+    const major = data.education.major.trim();
+    const institution = data.education.institution.trim();
+    const startYear = toYearValue(data.education.from);
+    const endYear = toYearValue(data.education.graduationDate || data.education.to);
+
+    if (courseName) payload.course_name = courseName;
+    if (major) payload.major = major;
+    if (institution) payload.institution = institution;
+    if (startYear) payload.start_year = startYear;
+    if (endYear) payload.end_year = endYear;
+
+    return payload;
+  };
+  const normalizeEducationEntry = (entry: Record<string, unknown>) => ({
+    course_name: toNormalizedString(
+      entry.course_name ?? entry.courseName ?? entry.degree ?? entry.course
+    ),
+    major: toNormalizedString(entry.major),
+    institution: toNormalizedString(entry.institution ?? entry.school),
+    start_year: toYearValue(entry.start_year ?? entry.startYear ?? entry.from),
+    end_year: toYearValue(
+      entry.end_year ??
+        entry.endYear ??
+        entry.graduation_date ??
+        entry.graduationDate ??
+        entry.to
+    ),
+  });
 const areNormalizedEqual = <T extends Record<string, unknown>>(
   left: T,
   right: T
@@ -1166,9 +1202,11 @@ export default function ProfileUpdatePage() {
           }
         );
       }
-      const existingEducation = Array.isArray(verifiedProfile?.education)
-        ? verifiedProfile.education
-        : [];
+        const existingEducation = Array.isArray(verifiedProfile?.education)
+          ? verifiedProfile.education
+          : Array.isArray(profileRoot?.education)
+          ? profileRoot.education
+          : [];
       const existingSkills = Array.isArray(verifiedProfile?.skills)
         ? verifiedProfile.skills
         : [];
@@ -1293,16 +1331,37 @@ export default function ProfileUpdatePage() {
             ?.entries as unknown[])
         : [];
 
-      const educationPayloads = buildCandidateEducationPayloads(
-        userData,
-        existingEducation
-      );
-      for (const payload of educationPayloads) {
-        await apiRequest("/api/candidates/education/", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-      }
+        const educationPayload = buildEducationPayload(userData);
+        const existingEducationEntry =
+          Array.isArray(existingEducation) && existingEducation.length > 0
+            ? (existingEducation[0] as Record<string, unknown>)
+            : null;
+        if (Object.keys(educationPayload).length > 0) {
+          if (existingEducationEntry && existingEducationEntry.id) {
+            const normalizedExisting = normalizeEducationEntry(existingEducationEntry);
+            const normalizedPayload = normalizeEducationEntry(educationPayload);
+            const isSame =
+              normalizedExisting.course_name === normalizedPayload.course_name &&
+              normalizedExisting.major === normalizedPayload.major &&
+              normalizedExisting.institution === normalizedPayload.institution &&
+              normalizedExisting.start_year === normalizedPayload.start_year &&
+              normalizedExisting.end_year === normalizedPayload.end_year;
+            if (!isSame) {
+              await apiRequest(
+                `/api/candidates/education/${existingEducationEntry.id}/`,
+                {
+                  method: "PATCH",
+                  body: JSON.stringify(educationPayload),
+                }
+              );
+            }
+          } else {
+            await apiRequest("/api/candidates/education/", {
+              method: "POST",
+              body: JSON.stringify(educationPayload),
+            });
+          }
+        }
 
       const skillPayloads = buildCandidateSkillPayloads(
         userData,

@@ -50,9 +50,10 @@ export const API_ENDPOINTS = {
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
     resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
   },
-  candidateData: {
-    education: `${BACKEND_URL}/api/candidates/education/`,
-    skills: `${BACKEND_URL}/api/candidates/skills/`,
+    candidateData: {
+      education: `${BACKEND_URL}/api/candidates/education/`,
+      educationDetail: (id: string) => `${BACKEND_URL}/api/candidates/education/${id}/`,
+      skills: `${BACKEND_URL}/api/candidates/skills/`,
     skillsDetail: (id: string) => `${BACKEND_URL}/api/candidates/skills/${id}/`,
     languages: `${BACKEND_URL}/api/candidates/languages/`,
     notes: `${BACKEND_URL}/api/candidates/notes/`,
