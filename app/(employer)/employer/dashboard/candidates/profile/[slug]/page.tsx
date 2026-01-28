@@ -61,6 +61,14 @@ const getInitials = (firstName: string, lastName: string) => {
   return initials || "C";
 };
 
+const formatDateRange = (start?: string, end?: string) => {
+  const startLabel = start?.trim();
+  const endLabel = end?.trim();
+  if (!startLabel && !endLabel) return "";
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  return startLabel ? `${startLabel} - Present` : endLabel || "";
+};
+
 export default function CandidateProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -82,6 +90,20 @@ export default function CandidateProfilePage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
+
+  const handleInviteClick = useCallback(() => {
+    if (!hasFetchedJobs && !isJobsLoading) {
+      fetchJobs();
+    }
+    setIsInviteModalOpen(true);
+  }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
+
+  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
+    setIsInviteModalOpen(false);
+    if (selectedJobIds.length > 0) {
+      setIsSuccessModalOpen(true);
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -117,9 +139,37 @@ export default function CandidateProfilePage() {
 
   const skills = candidate.resume_parsed?.skills ?? [];
   const skillsCount = skills.length;
-  const experienceCount = candidate.resume_parsed?.experience?.split("\n").filter(Boolean).length ?? 0;
-  const educationCount = candidate.resume_parsed?.education?.split("\n").filter(Boolean).length ?? 0;
-  const certificationsCount = candidate.resume_parsed?.certifications?.split("\n").filter(Boolean).length ?? 0;
+  const experienceEntries = candidate.resume_parsed?.experience_entries ?? [];
+  const educationEntries = candidate.resume_parsed?.education_entries ?? [];
+  const certificationEntries =
+    candidate.resume_parsed?.certification_entries ?? [];
+  const experienceTextEntries =
+    candidate.resume_parsed?.experience
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+  const educationTextEntries =
+    candidate.resume_parsed?.education
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+  const certificationTextEntries =
+    candidate.resume_parsed?.certifications
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+  const experienceCount =
+    experienceEntries.length ||
+    experienceTextEntries.length ||
+    0;
+  const educationCount =
+    educationEntries.length ||
+    educationTextEntries.length ||
+    0;
+  const certificationsCount =
+    certificationEntries.length ||
+    certificationTextEntries.length ||
+    0;
 
   const links = [
     { label: "LinkedIn", href: candidate.linkedin, icon: Linkedin },
@@ -163,20 +213,6 @@ export default function CandidateProfilePage() {
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
-
-  const handleInviteClick = useCallback(() => {
-    if (!hasFetchedJobs && !isJobsLoading) {
-      fetchJobs();
-    }
-    setIsInviteModalOpen(true);
-  }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
-
-  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
-    setIsInviteModalOpen(false);
-    if (selectedJobIds.length > 0) {
-      setIsSuccessModalOpen(true);
-    }
-  }, []);
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
@@ -330,10 +366,58 @@ export default function CandidateProfilePage() {
           badge={experienceCount ? `${experienceCount} added` : "Not set"}
           defaultOpen
         >
-          {candidate.resume_parsed?.experience ? (
-            <p className="whitespace-pre-wrap text-slate-600">
-              {candidate.resume_parsed.experience}
-            </p>
+          {experienceEntries.length > 0 ? (
+            <div className="space-y-4">
+              {experienceEntries.map((entry, index) => {
+                const title =
+                  entry.role || entry.company || "Experience entry";
+                const subtitle =
+                  [entry.company, entry.location].filter(Boolean).join(" • ");
+                const timeline = formatDateRange(
+                  entry.start_date,
+                  entry.end_date
+                );
+                const description = entry.description || entry.raw_text;
+                return (
+                  <div
+                    key={`${entry.role ?? "experience"}-${index}`}
+                    className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900">
+                          {title}
+                        </h3>
+                        {subtitle ? (
+                          <p className="text-xs text-slate-500">{subtitle}</p>
+                        ) : null}
+                      </div>
+                      {timeline ? (
+                        <span className="text-xs text-slate-500">
+                          {timeline}
+                        </span>
+                      ) : null}
+                    </div>
+                    {description ? (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                        {description}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : experienceTextEntries.length > 0 ? (
+            <div className="space-y-3">
+              {experienceTextEntries.map((entry, index) => (
+                <div
+                  key={`experience-line-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <p className="text-sm text-slate-600">{entry}</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-slate-500">No experience details provided.</p>
           )}
@@ -345,10 +429,63 @@ export default function CandidateProfilePage() {
           badge={educationCount ? `${educationCount} added` : "Not set"}
           defaultOpen
         >
-          {candidate.resume_parsed?.education ? (
-            <p className="whitespace-pre-wrap text-slate-600">
-              {candidate.resume_parsed.education}
-            </p>
+          {educationEntries.length > 0 ? (
+            <div className="space-y-4">
+              {educationEntries.map((entry, index) => {
+                const degreeLine = [entry.degree, entry.field_of_study]
+                  .filter(Boolean)
+                  .join(" • ");
+                const institution = entry.institution;
+                const timeline = formatDateRange(
+                  entry.start_date,
+                  entry.end_date
+                );
+                const description = entry.description || entry.raw_text;
+                return (
+                  <div
+                    key={`${entry.degree ?? "education"}-${index}`}
+                    className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900">
+                          {degreeLine || "Education entry"}
+                        </h3>
+                        {institution ? (
+                          <p className="text-xs text-slate-500">{institution}</p>
+                        ) : null}
+                      </div>
+                      {timeline ? (
+                        <span className="text-xs text-slate-500">
+                          {timeline}
+                        </span>
+                      ) : null}
+                    </div>
+                    {entry.grade ? (
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        Grade: {entry.grade}
+                      </p>
+                    ) : null}
+                    {description ? (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                        {description}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : educationTextEntries.length > 0 ? (
+            <div className="space-y-3">
+              {educationTextEntries.map((entry, index) => (
+                <div
+                  key={`education-line-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <p className="text-sm text-slate-600">{entry}</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-slate-500">No education details provided.</p>
           )}
@@ -359,10 +496,39 @@ export default function CandidateProfilePage() {
           title="Certifications"
           badge={certificationsCount ? `${certificationsCount} added` : "Not set"}
         >
-          {candidate.resume_parsed?.certifications ? (
-            <p className="whitespace-pre-wrap text-slate-600">
-              {candidate.resume_parsed.certifications}
-            </p>
+          {certificationEntries.length > 0 ? (
+            <div className="space-y-3">
+              {certificationEntries.map((entry, index) => {
+                const name = entry.name || entry.raw_text || "Certification";
+                const details = [entry.issuer, entry.issued_date]
+                  .filter(Boolean)
+                  .join(" • ");
+                return (
+                  <div
+                    key={`${entry.name ?? "certification"}-${index}`}
+                    className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                  >
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      {name}
+                    </h3>
+                    {details ? (
+                      <p className="text-xs text-slate-500">{details}</p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : certificationTextEntries.length > 0 ? (
+            <div className="space-y-3">
+              {certificationTextEntries.map((entry, index) => (
+                <div
+                  key={`certification-line-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <p className="text-sm text-slate-600">{entry}</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-slate-500">No certifications provided.</p>
           )}
