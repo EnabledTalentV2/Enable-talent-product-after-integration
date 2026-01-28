@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Trash2 } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { apiRequest, isApiError } from "@/lib/api-client";
 import {
@@ -9,18 +10,19 @@ import {
 } from "@/lib/profileCompletion";
 import type { StepKey, UserData } from "@/lib/types/user";
 import { initialUserData } from "@/lib/userDataDefaults";
-import { ensureCandidateProfileSlug } from "@/lib/candidateProfile";
+import { ensureCandidateProfileSlug, fetchCandidateProfileFull } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-  import {
-    buildCandidateAchievementPayloads,
-    buildCandidateCertificationPayloads,
-    buildCandidateLanguagePayloads,
-    buildCandidateProjectPayloads,
-    buildCandidateProfileCorePayload,
-    buildCandidateSkillPayloads,
-    buildCandidateWorkExperiencePayloads,
-    normalizeGenderForBackend,
-  } from "@/lib/candidateProfileUtils";
+import {
+  buildCandidateAchievementPayloads,
+  buildCandidateCertificationPayloads,
+  buildCandidateLanguagePayloads,
+  buildCandidateProjectPayloads,
+  buildCandidateProfileCorePayload,
+  buildCandidateSkillPayloads,
+  buildCandidateWorkExperiencePayloads,
+  mapCandidateProfileToUserData,
+  normalizeGenderForBackend,
+} from "@/lib/candidateProfileUtils";
 import BasicInfo from "@/components/signup/forms/BasicInfo";
 import Education from "@/components/signup/forms/Education";
 import WorkExperience from "@/components/signup/forms/WorkExperience";
@@ -82,6 +84,7 @@ const isAllowedResumeFile = (file: File) => {
 };
 
 type WorkEntry = UserData["workExperience"]["entries"][number];
+type EducationEntry = UserData["education"] & { id?: number | string };
 type ProjectEntry = UserData["projects"]["entries"][number];
 type CertificationEntry = UserData["certification"]["entries"][number];
 type LanguageEntry = UserData["otherDetails"]["languages"][number];
@@ -149,6 +152,10 @@ const toNormalizedString = (value: unknown) => {
     const match = trimmed.match(/\d{4}/);
     return match ? match[0] : "";
   };
+  const toDateFromYear = (value: unknown) => {
+    const year = toYearValue(value);
+    return year ? `${year}-01-01` : "";
+  };
 const normalizeNullableDate = (value: unknown) => {
   const normalized = toDateValue(value);
   return normalized ? normalized : null;
@@ -166,22 +173,6 @@ const normalizeStringArray = (value: unknown) =>
     if (normalizedA.length !== normalizedB.length) return false;
     return normalizedA.every((value, index) => value === normalizedB[index]);
   };
-  const buildEducationPayload = (data: UserData) => {
-    const payload: Record<string, unknown> = {};
-    const courseName = data.education.courseName.trim();
-    const major = data.education.major.trim();
-    const institution = data.education.institution.trim();
-    const startYear = toYearValue(data.education.from);
-    const endYear = toYearValue(data.education.graduationDate || data.education.to);
-
-    if (courseName) payload.course_name = courseName;
-    if (major) payload.major = major;
-    if (institution) payload.institution = institution;
-    if (startYear) payload.start_year = startYear;
-    if (endYear) payload.end_year = endYear;
-
-    return payload;
-  };
   const normalizeEducationEntry = (entry: Record<string, unknown>) => ({
     course_name: toNormalizedString(
       entry.course_name ?? entry.courseName ?? entry.degree ?? entry.course
@@ -197,6 +188,50 @@ const normalizeStringArray = (value: unknown) =>
         entry.to
     ),
   });
+  const buildEducationPayloadFromEntry = (entry: EducationEntry) => {
+    const payload: Record<string, unknown> = {};
+    const courseName = entry.courseName.trim();
+    const major = entry.major.trim();
+    const institution = entry.institution.trim();
+    const startYear = toYearValue(entry.from);
+    const endYear = toYearValue(entry.graduationDate || entry.to);
+
+    if (courseName) payload.course_name = courseName;
+    if (major) payload.major = major;
+    if (institution) payload.institution = institution;
+    if (startYear) payload.start_year = startYear;
+    if (endYear) payload.end_year = endYear;
+
+    return payload;
+  };
+  const toEducationEntry = (entry: Record<string, unknown>): EducationEntry => ({
+    id: entry.id as number | string | undefined,
+    courseName: toNormalizedString(
+      entry.course_name ?? entry.courseName ?? entry.degree ?? entry.course
+    ),
+    major: toNormalizedString(entry.major),
+    institution: toNormalizedString(entry.institution ?? entry.school),
+    graduationDate:
+      toDateValue(
+        entry.graduation_date ?? entry.graduationDate ?? entry.end_date ?? entry.to
+      ) ||
+      toDateFromYear(entry.end_year ?? entry.endYear ?? entry.graduation_year),
+    grade: toNormalizedString(entry.grade ?? entry.gpa),
+    from:
+      toDateValue(entry.start_date ?? entry.startDate ?? entry.from) ||
+      toDateFromYear(entry.start_year ?? entry.startYear),
+    to: toDateValue(entry.end_date ?? entry.endDate ?? entry.to),
+  });
+  const hasEducationValues = (entry: EducationEntry) =>
+    Boolean(
+      entry.courseName.trim() ||
+        entry.major.trim() ||
+        entry.institution.trim() ||
+        entry.graduationDate.trim() ||
+        entry.from.trim() ||
+        entry.to.trim() ||
+        entry.grade.trim()
+    );
 const areNormalizedEqual = <T extends Record<string, unknown>>(
   left: T,
   right: T
@@ -691,6 +726,7 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
 export default function ProfileUpdatePage() {
   const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
+  const patchUserData = useUserDataStore((s) => s.patchUserData);
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -731,6 +767,11 @@ export default function ProfileUpdatePage() {
   const resetUserData = useUserDataStore((s) => s.resetUserData);
   const candidateSlug = useCandidateProfileStore((s) => s.slug);
   const setCandidateSlug = useCandidateProfileStore((s) => s.setSlug);
+  const candidateProfile = useCandidateProfileStore((s) => s.profile);
+  const candidateProfileLoading = useCandidateProfileStore((s) => s.isLoading);
+  const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
+  const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
+  const educationInitializedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -781,9 +822,17 @@ export default function ProfileUpdatePage() {
 
   const validationMessage = "Please complete required fields before saving.";
 
+  const [educationEntries, setEducationEntries] = useState<EducationEntry[]>([
+    { ...userData.education },
+  ]);
+  const primaryEducation = educationEntries[0] ?? userData.education;
+  const effectiveUserData = useMemo(
+    () => ({ ...userData, education: primaryEducation }),
+    [primaryEducation, userData]
+  );
   const sectionCompletion = useMemo(
-    () => computeProfileSectionCompletion(userData),
-    [userData]
+    () => computeProfileSectionCompletion(effectiveUserData),
+    [effectiveUserData]
   );
   const completion = useMemo(() => {
     const totalSteps = sectionOrder.length;
@@ -813,6 +862,34 @@ export default function ProfileUpdatePage() {
       (target as HTMLElement).focus({ preventScroll: true });
     }
   };
+
+  useEffect(() => {
+    if (educationInitializedRef.current || candidateProfileLoading) return;
+    const profileRoot = isRecord(candidateProfile) ? candidateProfile : null;
+    const verifiedProfile = isRecord(profileRoot?.verified_profile)
+      ? profileRoot?.verified_profile
+      : isRecord(profileRoot?.verifiedProfile)
+      ? profileRoot?.verifiedProfile
+      : null;
+    const existingEducation = Array.isArray(verifiedProfile?.education)
+      ? verifiedProfile.education
+      : Array.isArray(profileRoot?.education)
+      ? profileRoot.education
+      : [];
+    if (existingEducation.length > 0) {
+      const mapped = existingEducation
+        .filter(isRecord)
+        .map((entry) => toEducationEntry(entry as Record<string, unknown>))
+        .filter(hasEducationValues);
+      if (mapped.length > 0) {
+        setEducationEntries(mapped);
+        educationInitializedRef.current = true;
+        return;
+      }
+    }
+    setEducationEntries([{ ...userData.education }]);
+    educationInitializedRef.current = true;
+  }, [candidateProfile, userData.education]);
 
   useEffect(() => {
     if (autoNoEntriesRef.current) return;
@@ -917,7 +994,7 @@ export default function ProfileUpdatePage() {
 
   useEffect(() => {
     if (!showValidation) return;
-    const validation = validateRequiredFields(userData);
+    const validation = validateRequiredFields(effectiveUserData);
     setBasicInfoErrors(validation.basicInfoErrors);
     setEducationErrors(validation.educationErrors);
     setWorkExpErrors(validation.workExpErrors);
@@ -930,7 +1007,7 @@ export default function ProfileUpdatePage() {
     if (!validation.hasErrors && saveError === validationMessage) {
       setSaveError(null);
     }
-  }, [showValidation, userData, saveError, validationMessage]);
+  }, [effectiveUserData, saveError, showValidation, validationMessage]);
 
   useEffect(() => {
     if (!firstErrorId) return;
@@ -949,7 +1026,7 @@ export default function ProfileUpdatePage() {
     }
     setSaveSuccess(null);
 
-    const validation = validateRequiredFields(userData);
+    const validation = validateRequiredFields(effectiveUserData);
     setShowValidation(true);
     setBasicInfoErrors(validation.basicInfoErrors);
     setEducationErrors(validation.educationErrors);
@@ -1331,36 +1408,68 @@ export default function ProfileUpdatePage() {
             ?.entries as unknown[])
         : [];
 
-        const educationPayload = buildEducationPayload(userData);
-        const existingEducationEntry =
-          Array.isArray(existingEducation) && existingEducation.length > 0
-            ? (existingEducation[0] as Record<string, unknown>)
-            : null;
-        if (Object.keys(educationPayload).length > 0) {
-          if (existingEducationEntry && existingEducationEntry.id) {
-            const normalizedExisting = normalizeEducationEntry(existingEducationEntry);
-            const normalizedPayload = normalizeEducationEntry(educationPayload);
-            const isSame =
-              normalizedExisting.course_name === normalizedPayload.course_name &&
-              normalizedExisting.major === normalizedPayload.major &&
-              normalizedExisting.institution === normalizedPayload.institution &&
-              normalizedExisting.start_year === normalizedPayload.start_year &&
-              normalizedExisting.end_year === normalizedPayload.end_year;
-            if (!isSame) {
-              await apiRequest(
-                `/api/candidates/education/${existingEducationEntry.id}/`,
-                {
-                  method: "PATCH",
-                  body: JSON.stringify(educationPayload),
-                }
-              );
+        const existingEducationRecords = Array.isArray(existingEducation)
+          ? existingEducation.filter(isRecord)
+          : [];
+        const existingEducationById = new Map<string, Record<string, unknown>>();
+        existingEducationRecords.forEach((entry) => {
+          const id = entry.id;
+          if (id !== null && id !== undefined && id !== "") {
+            existingEducationById.set(String(id), entry);
+          }
+        });
+        const currentEducationEntries = educationEntries.filter(hasEducationValues);
+        const currentEducationIds = new Set(
+          currentEducationEntries
+            .map((entry) => entry.id)
+            .filter((id) => id !== null && id !== undefined && id !== "")
+            .map((id) => String(id))
+        );
+        for (const entry of currentEducationEntries) {
+          const payload = buildEducationPayloadFromEntry(entry);
+          if (Object.keys(payload).length === 0) continue;
+          if (entry.id !== null && entry.id !== undefined && entry.id !== "") {
+            const existingEntry = existingEducationById.get(String(entry.id));
+            if (existingEntry) {
+              const normalizedExisting = normalizeEducationEntry(existingEntry);
+              const normalizedPayload = normalizeEducationEntry(payload);
+              const isSame =
+                normalizedExisting.course_name === normalizedPayload.course_name &&
+                normalizedExisting.major === normalizedPayload.major &&
+                normalizedExisting.institution === normalizedPayload.institution &&
+                normalizedExisting.start_year === normalizedPayload.start_year &&
+                normalizedExisting.end_year === normalizedPayload.end_year;
+              if (!isSame) {
+                await apiRequest(
+                  `/api/candidates/education/${entry.id}/`,
+                  {
+                    method: "PATCH",
+                    body: JSON.stringify(payload),
+                  }
+                );
+              }
+            } else {
+              await apiRequest("/api/candidates/education/", {
+                method: "POST",
+                body: JSON.stringify(payload),
+              });
             }
           } else {
             await apiRequest("/api/candidates/education/", {
               method: "POST",
-              body: JSON.stringify(educationPayload),
+              body: JSON.stringify(payload),
             });
           }
+        }
+        const educationDeletes = existingEducationRecords.filter((entry) => {
+          const id = entry.id;
+          if (id === null || id === undefined || id === "") return false;
+          return !currentEducationIds.has(String(id));
+        });
+        for (const entry of educationDeletes) {
+          await apiRequest(`/api/candidates/education/${entry.id}/`, {
+            method: "DELETE",
+          });
         }
 
       const skillPayloads = buildCandidateSkillPayloads(
@@ -1965,6 +2074,25 @@ export default function ProfileUpdatePage() {
         });
       }
 
+      if (candidateSlug) {
+        try {
+          setCandidateLoading(true);
+          const refreshedProfile = await fetchCandidateProfileFull(
+            candidateSlug,
+            "ProfileUpdate"
+          );
+          if (refreshedProfile) {
+            setCandidateProfile(refreshedProfile);
+            const patch = mapCandidateProfileToUserData(refreshedProfile);
+            if (Object.keys(patch).length > 0) {
+              patchUserData(patch);
+            }
+          }
+        } finally {
+          setCandidateLoading(false);
+        }
+      }
+
       setSaveSuccess("Profile saved.");
       if (redirect) {
         router.push("/dashboard");
@@ -2078,19 +2206,86 @@ export default function ProfileUpdatePage() {
             }
           />
         );
-      case "education":
-        return (
-          <Education
-            data={userData.education}
-            errors={educationErrors}
-            onChange={(patch) =>
-              setUserData((prev) => ({
-                ...prev,
-                education: { ...prev.education, ...patch },
-              }))
-            }
-          />
-        );
+        case "education":
+          return (
+            <div className="space-y-6">
+              {educationEntries.map((entry, index) => {
+                const idPrefix = index === 0 ? "education" : `education-${index + 1}`;
+                return (
+                  <div
+                    key={entry.id ?? `education-${index}`}
+                    className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-semibold text-slate-900">
+                        Education {index + 1}
+                      </h4>
+                      {educationEntries.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEducationEntries((prev) => {
+                              const next = prev.filter((_, idx) => idx !== index);
+                              const nextPrimary = next[0] ?? {
+                                ...initialUserData.education,
+                              };
+                              if (index === 0) {
+                                setUserData((prevData) => ({
+                                  ...prevData,
+                                  education: { ...prevData.education, ...nextPrimary },
+                                }));
+                              }
+                              return next.length > 0 ? next : [nextPrimary];
+                            });
+                          }}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="mt-4">
+                      <Education
+                        data={entry}
+                        idPrefix={idPrefix}
+                        title={`Education ${index + 1}`}
+                        showHeading={false}
+                        errors={index === 0 ? educationErrors : {}}
+                        onChange={(patch) => {
+                          setEducationEntries((prev) =>
+                            prev.map((item, idx) =>
+                              idx === index ? { ...item, ...patch } : item
+                            )
+                          );
+                          if (index === 0) {
+                            setUserData((prevData) => ({
+                              ...prevData,
+                              education: { ...prevData.education, ...patch },
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setEducationEntries((prev) => [
+                    ...prev,
+                    { ...initialUserData.education },
+                  ])
+                }
+                className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Add another education
+              </button>
+            </div>
+          );
       case "workExperience":
         return (
           <WorkExperience
