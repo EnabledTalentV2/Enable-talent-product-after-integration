@@ -943,10 +943,20 @@ export default function ProfileUpdatePage() {
       const verifiedProfile = isRecord(fullProfile?.verified_profile)
         ? fullProfile?.verified_profile
         : null;
-      const verifiedPreferences = isRecord(verifiedProfile?.preferences)
-        ? verifiedProfile.preferences
-        : null;
-      const userRoot = isRecord(profileRoot?.user) ? profileRoot.user : null;
+        const verifiedPreferences = isRecord(verifiedProfile?.preferences)
+          ? verifiedProfile.preferences
+          : null;
+        const profileAccessibility = isRecord(profileRoot?.accessibility_needs)
+          ? (profileRoot?.accessibility_needs as Record<string, unknown>)
+          : isRecord(profileRoot?.accessibility)
+          ? (profileRoot?.accessibility as Record<string, unknown>)
+          : null;
+        const verifiedAccessibility = isRecord(verifiedProfile?.accessibility_needs)
+          ? (verifiedProfile?.accessibility_needs as Record<string, unknown>)
+          : isRecord(verifiedProfile?.accessibility)
+          ? (verifiedProfile?.accessibility as Record<string, unknown>)
+          : null;
+        const userRoot = isRecord(profileRoot?.user) ? profileRoot.user : null;
       const existingUserProfile =
         userRoot && isRecord(userRoot.profile) ? userRoot.profile : null;
 
@@ -1130,14 +1140,18 @@ export default function ProfileUpdatePage() {
               filteredProfilePayload[key] = value;
             }
             break;
-          case "disclosure_preference":
-            if (
-              toNormalizedString(value) !==
-              toNormalizedString(profileRoot?.disclosure_preference)
-            ) {
-              filteredProfilePayload[key] = value;
+            case "disclosure_preference": {
+              const disclosureBaseline =
+                profileRoot?.disclosure_preference ??
+                profileAccessibility?.disclosure_preference ??
+                profileAccessibility?.disclosurePreference ??
+                verifiedAccessibility?.disclosure_preference ??
+                verifiedAccessibility?.disclosurePreference;
+              if (toNormalizedString(value) !== toNormalizedString(disclosureBaseline)) {
+                filteredProfilePayload[key] = value;
+              }
+              break;
             }
-            break;
           default:
             filteredProfilePayload[key] = value;
         }
@@ -1991,15 +2005,16 @@ export default function ProfileUpdatePage() {
 
   const renderSection = (key: StepKey) => {
     switch (key) {
-      case "basicInfo":
-        return (
-          <BasicInfo
-            data={userData.basicInfo}
-            errors={basicInfoErrors}
-            onChange={(patch) =>
-              setUserData((prev) => ({
-                ...prev,
-                basicInfo: { ...prev.basicInfo, ...patch },
+        case "basicInfo":
+          return (
+            <BasicInfo
+              data={userData.basicInfo}
+              errors={basicInfoErrors}
+              hideProfilePhoto
+              onChange={(patch) =>
+                setUserData((prev) => ({
+                  ...prev,
+                  basicInfo: { ...prev.basicInfo, ...patch },
               }))
             }
           />
