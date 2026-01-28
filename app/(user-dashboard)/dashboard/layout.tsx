@@ -206,12 +206,9 @@ export default function DashboardLayoutPage({
           credentials: "include",
         });
 
-        if (response.status === 401) {
-          router.replace("/login-talent");
-          return;
-        }
-
-        if (!response.ok) {
+        if (response.status === 401 || !response.ok) {
+          // Clear loading state before redirect to prevent stuck UI
+          if (active) setLoading(false);
           router.replace("/login-talent");
           return;
         }
@@ -331,6 +328,7 @@ export default function DashboardLayoutPage({
         void refreshCandidateProfile(rawData);
       } catch (error) {
         console.error("Auth check failed:", error);
+        if (active) setLoading(false);
         router.replace("/login-talent");
       }
     };
