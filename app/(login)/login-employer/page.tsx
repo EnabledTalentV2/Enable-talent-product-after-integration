@@ -11,6 +11,7 @@ import { useEmployerDataStore } from "@/lib/employerDataStore";
 import { useLoginUser } from "@/lib/hooks/useLoginUser";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
+import { deriveUserRoleFromUserData } from "@/lib/roleUtils";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
@@ -25,14 +26,19 @@ function EmployerLoginPageContent() {
   const { loginUser, isLoading, error, setError } = useLoginUser();
   const [isBootstrapping, setIsBootstrapping] = useState(false);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const warningSummaryRef = useRef<HTMLDivElement | null>(null);
+  const [roleWarning, setRoleWarning] = useState<string | null>(null);
   const hasError = Boolean(error);
+  const hasWarning = Boolean(roleWarning);
   const isSubmitting = isLoading || isBootstrapping;
 
   useEffect(() => {
-    if (hasError) {
+    if (hasWarning) {
+      warningSummaryRef.current?.focus();
+    } else if (hasError) {
       errorSummaryRef.current?.focus();
     }
-  }, [hasError]);
+  }, [hasError, hasWarning]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,6 +48,7 @@ function EmployerLoginPageContent() {
     }
 
     setError(null);
+    setRoleWarning(null);
 
     const trimmedEmail = email.trim();
 
@@ -64,7 +71,21 @@ function EmployerLoginPageContent() {
         return;
       }
 
-      await apiRequest<unknown>("/api/user/me", { method: "GET" });
+      const userData = await apiRequest<unknown>("/api/user/me", {
+        method: "GET",
+      });
+      const derivedRole = deriveUserRoleFromUserData(userData);
+      if (derivedRole === "candidate") {
+        try {
+          await apiRequest("/api/auth/logout", { method: "POST" });
+        } catch (logoutError) {
+          console.warn("[Employer Login] Logout failed:", logoutError);
+        }
+        setRoleWarning(
+          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+        );
+        return;
+      }
 
       const organizations = await apiRequest<unknown>("/api/organizations", {
         method: "GET",
@@ -158,6 +179,31 @@ function EmployerLoginPageContent() {
               noValidate
               onSubmit={handleSubmit}
             >
+              {roleWarning ? (
+                <div
+                  ref={warningSummaryRef}
+                  id="employer-login-warning"
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                >
+                  <p>{roleWarning}</p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Link
+                      href="/login-talent"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                    >
+                      Go to Talent Login
+                    </Link>
+                    <Link
+                      href="/signup-employer"
+                      className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-800"
+                    >
+                      Create Employer Account
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
               {error ? (
                 <div
                   ref={errorSummaryRef}

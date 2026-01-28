@@ -15,6 +15,8 @@ import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
+import { apiRequest } from "@/lib/api-client";
+import { deriveUserRoleFromUserData } from "@/lib/roleUtils";
 
 const inputClasses =
   "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
@@ -34,13 +36,18 @@ function LoginPageContent() {
   const { loginCandidate, isLoading, error, setError } =
     useCandidateLoginUser();
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const warningSummaryRef = useRef<HTMLDivElement | null>(null);
+  const [roleWarning, setRoleWarning] = useState<string | null>(null);
   const hasError = Boolean(error);
+  const hasWarning = Boolean(roleWarning);
 
   useEffect(() => {
-    if (hasError) {
+    if (hasWarning) {
+      warningSummaryRef.current?.focus();
+    } else if (hasError) {
       errorSummaryRef.current?.focus();
     }
-  }, [hasError]);
+  }, [hasError, hasWarning]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -50,6 +57,7 @@ function LoginPageContent() {
     }
 
     setError(null);
+    setRoleWarning(null);
 
     try {
       const trimmedEmail = email.trim();
@@ -64,6 +72,22 @@ function LoginPageContent() {
       });
 
       if (!result.data) {
+        return;
+      }
+
+      const userData = await apiRequest<unknown>("/api/user/me", {
+        method: "GET",
+      });
+      const derivedRole = deriveUserRoleFromUserData(userData);
+      if (derivedRole === "employer") {
+        try {
+          await apiRequest("/api/auth/logout", { method: "POST" });
+        } catch (logoutError) {
+          console.warn("[Talent Login] Logout failed:", logoutError);
+        }
+        setRoleWarning(
+          "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one."
+        );
         return;
       }
 
@@ -164,6 +188,31 @@ function LoginPageContent() {
               noValidate
               onSubmit={handleSubmit}
             >
+              {roleWarning ? (
+                <div
+                  ref={warningSummaryRef}
+                  id="talent-login-warning"
+                  role="alert"
+                  tabIndex={-1}
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+                >
+                  <p>{roleWarning}</p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Link
+                      href="/login-employer"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                    >
+                      Go to Employer Login
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="inline-flex items-center justify-center rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-800"
+                    >
+                      Create Talent Account
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
               {error ? (
                 <div
                   ref={errorSummaryRef}
