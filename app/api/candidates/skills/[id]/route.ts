@@ -53,6 +53,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       cookies
     );
 
+    if (backendResponse.status === 204) {
+      return new NextResponse(null, { status: 204 });
+    }
+
     const data = await backendResponse.json().catch(() => ({}));
 
     return NextResponse.json(data, {
@@ -79,6 +83,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       },
       cookies
     );
+
+    if (backendResponse.status === 204) {
+      return new NextResponse(null, { status: 204 });
+    }
 
     const data = await backendResponse.json().catch(() => ({}));
 
