@@ -355,7 +355,7 @@ export default function ResumeUpload() {
           );
           // Add return URL for better UX
           const returnUrl = encodeURIComponent("/signup/resume-upload");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -385,7 +385,7 @@ export default function ResumeUpload() {
       } catch (err) {
         console.error("[Resume Upload] Session check error:", err);
         const returnUrl = encodeURIComponent("/signup/resume-upload");
-        router.replace(`/login-talent?returnUrl=${returnUrl}`);
+        router.replace(`/login-talent?next=${returnUrl}`);
       }
     };
 
@@ -463,10 +463,18 @@ export default function ResumeUpload() {
         );
 
         const status = getParsingStatus(statusData);
+        const hasResumeData = Boolean(
+          (isRecord(statusData) &&
+            (statusData.has_resume_data ||
+              statusData.hasResumeData ||
+              statusData.resume_data ||
+              statusData.resumeData)) ||
+            false
+        );
         console.log(`[Resume Upload] Current parsing status: ${status}`);
 
-        // Check if parsing is complete
-        if (status === "parsed") {
+        // Check if parsing is complete or resume_data already present
+        if (status === "parsed" || hasResumeData) {
           console.log("[Resume Upload] Parsing completed! Using parsed data from status response.");
           const patch = extractUserDataPatch(statusData);
           console.log("[Resume Upload] Extracted patch:", JSON.stringify(patch, null, 2));

@@ -309,9 +309,15 @@ const pollForParsedData = async (slug: string): Promise<PollResult> => {
       // Check parsing status
       if (isRecord(response)) {
         const status = String(response.parsing_status || "").toLowerCase();
+        const hasResumeData = Boolean(
+          response.has_resume_data ||
+            response.hasResumeData ||
+            response.resume_data ||
+            response.resumeData
+        );
 
-        // Status: parsed - resume parsing completed successfully
-        if (status === "parsed") {
+        // Status: parsed OR resume_data already present
+        if (status === "parsed" || hasResumeData) {
           console.log("[Accessibility Needs] Resume parsing completed!");
           console.log("[Accessibility Needs] Full response:", response);
 
@@ -325,7 +331,7 @@ const pollForParsedData = async (slug: string): Promise<PollResult> => {
           }
 
           console.warn(
-            "[Accessibility Needs] Status is 'parsed' but no data found",
+            "[Accessibility Needs] Parsing completed but no data found",
           );
           console.warn(
             "[Accessibility Needs] Response structure:",
@@ -451,7 +457,7 @@ export default function AccessabilityNeedsPage() {
             response.status,
           );
           const returnUrl = encodeURIComponent("/signup/accessability-needs");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -463,7 +469,7 @@ export default function AccessabilityNeedsPage() {
         if (!userData || !userData.email) {
           console.log("[Accessibility Needs] No user data found");
           const returnUrl = encodeURIComponent("/signup/accessability-needs");
-          router.replace(`/login-talent?returnUrl=${returnUrl}`);
+          router.replace(`/login-talent?next=${returnUrl}`);
           return;
         }
 
@@ -475,7 +481,7 @@ export default function AccessabilityNeedsPage() {
       } catch (err) {
         console.error("[Accessibility Needs] Session check error:", err);
         const returnUrl = encodeURIComponent("/signup/accessability-needs");
-        router.replace(`/login-talent?returnUrl=${returnUrl}`);
+        router.replace(`/login-talent?next=${returnUrl}`);
       }
     };
 
