@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -15,7 +15,7 @@ import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
 const inputClasses =
   "w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-orange-500 focus:ring-orange-500";
 
-export default function EmployerLoginPage() {
+function EmployerLoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
@@ -288,5 +288,13 @@ export default function EmployerLoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function EmployerLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <EmployerLoginPageContent />
+    </Suspense>
   );
 }
