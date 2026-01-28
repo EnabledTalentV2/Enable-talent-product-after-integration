@@ -3,6 +3,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { UploadCloud } from "lucide-react";
 import InputBlock from "./InputBlock";
+import SimpleText from "./SimpleText";
 import type { UserData } from "@/lib/types/user";
 
 type Props = {
@@ -105,7 +106,10 @@ export default function BasicInfo({
                     return;
                   }
 
-                  if (file.size < minPhotoSizeBytes || file.size > maxPhotoSizeBytes) {
+                  if (
+                    file.size < minPhotoSizeBytes ||
+                    file.size > maxPhotoSizeBytes
+                  ) {
                     setPhotoError("Image must be between 10KB and 2MB.");
                     onChange({ profilePhoto: "" });
                     event.target.value = "";
@@ -317,17 +321,16 @@ export default function BasicInfo({
         errorMessage={errors?.linkedinUrl}
       />
 
-      <InputBlock
+      <SimpleText
         id="basicInfo-currentStatus"
-        label="What is your current status and goal in joining the Enabled Talent Program?"
+        label="About"
         required
         value={data.currentStatus}
         onChange={(v) => onChange({ currentStatus: v })}
-        placeholder="Describe your status and goals"
+        placeholder="Describe about yourself"
         error={Boolean(errors?.currentStatus)}
         errorMessage={errors?.currentStatus}
       />
     </div>
   );
 }
-

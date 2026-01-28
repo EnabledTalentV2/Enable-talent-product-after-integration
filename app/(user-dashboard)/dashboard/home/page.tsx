@@ -424,7 +424,7 @@ export default function HomePageDashboard() {
                         </div>
                       </div>
                       {entry.description && (
-                        <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                        <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
                           {entry.description}
                         </p>
                       )}

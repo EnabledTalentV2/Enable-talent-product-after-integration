@@ -52,7 +52,9 @@ export default function Achievements({
             label="Issue Date"
             value={entry.issueDate}
             onChange={(v) => onEntryChange(idx, { issueDate: v })}
-            placeholder="2022"
+            type="date"
+            placeholder="YYYY-MM-DD"
+            hint="Use the format YYYY-MM-DD."
           />
 
           <InputBlock
