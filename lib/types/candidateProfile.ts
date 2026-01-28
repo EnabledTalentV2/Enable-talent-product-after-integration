@@ -25,6 +25,9 @@ export type CandidateProfile = {
     education?: string;
     certifications?: string;
     summary?: string;
+    experience_entries?: CandidateExperienceEntry[];
+    education_entries?: CandidateEducationEntry[];
+    certification_entries?: CandidateCertificationEntry[];
   };
 
   // Verified data
@@ -53,6 +56,34 @@ export type CandidateProfile = {
   // Timestamps
   created_at?: string;
   updated_at?: string;
+};
+
+export type CandidateExperienceEntry = {
+  role?: string;
+  company?: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  raw_text?: string;
+};
+
+export type CandidateEducationEntry = {
+  degree?: string;
+  field_of_study?: string;
+  institution?: string;
+  start_date?: string;
+  end_date?: string;
+  grade?: string;
+  description?: string;
+  raw_text?: string;
+};
+
+export type CandidateCertificationEntry = {
+  name?: string;
+  issuer?: string;
+  issued_date?: string;
+  raw_text?: string;
 };
 
 export type CandidateNote = {

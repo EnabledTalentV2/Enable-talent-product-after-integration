@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useCandidateProfiles } from "@/lib/hooks/useCandidateProfiles";
+import {
+  useCandidateProfile,
+  useCandidateProfiles,
+} from "@/lib/hooks/useCandidateProfiles";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import Pagination from "@/components/ui/Pagination";
 import CandidateDirectoryCard from "@/components/employer/candidates/CandidateDirectoryCard";
@@ -17,59 +20,182 @@ import SuccessModal from "@/components/employer/candidates/SuccessModal";
 
 const ITEMS_PER_PAGE = 12;
 
+const DEFAULT_JOB_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Temporary",
+  "Freelance",
+];
+
+const DEFAULT_WORK_ARRANGEMENTS = [
+  "Remote",
+  "Hybrid",
+  "On-site",
+  "In-person",
+  "Flexible",
+];
+
+const normalizeFilterValue = (value?: string) =>
+  value ? value.toLowerCase().replace(/[\s_-]+/g, "") : "";
+
+const mergeOptions = (
+  defaults: string[],
+  values: Array<string | undefined>
+) => {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (value?: string) => {
+    if (!value) return;
+    const key = normalizeFilterValue(value);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(value);
+  };
+
+  defaults.forEach(add);
+  values.forEach(add);
+
+  return result;
+};
+
+type CandidateFilters = {
+  availability: string[];
+  jobType: string[];
+  workArrangement: string[];
+  verifiedOnly: boolean;
+};
+
 export default function CandidatesListPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
   const queryFromUrl = searchParams.get("search") || "";
+  const pageFromUrl = useMemo(() => {
+    const value = searchParams.get("page");
+    const parsed = value ? Number(value) : 1;
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }, [searchParams]);
   const { data: candidates = [], isLoading, error } = useCandidateProfiles();
   const {
     fetchJobs,
     hasFetched: hasFetchedJobs,
     isLoading: isJobsLoading,
   } = useEmployerJobsStore();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [localQuery, setLocalQuery] = useState(queryFromUrl);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null
   );
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<CandidateFilters>({
+    availability: [],
+    jobType: [],
+    workArrangement: [],
+    verifiedOnly: false,
+  });
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const didMountRef = useRef(false);
+  const didInitQueryRef = useRef(false);
+  const updatePageParamRef = useRef<(page: number) => void>(() => undefined);
 
   useEffect(() => {
     setLocalQuery(queryFromUrl);
   }, [queryFromUrl]);
 
+  useEffect(() => {
+    setCurrentPage(pageFromUrl);
+  }, [pageFromUrl]);
+
+  const availabilityOptions = useMemo(() => {
+    const values = candidates.map((candidate) => candidate.availability);
+    return mergeOptions([], values).sort();
+  }, [candidates]);
+
+  const jobTypeOptions = useMemo(() => {
+    const values = candidates.map((candidate) => candidate.job_type);
+    return mergeOptions(DEFAULT_JOB_TYPES, values);
+  }, [candidates]);
+
+  const workArrangementOptions = useMemo(() => {
+    const values = candidates.map((candidate) => candidate.work_arrangement);
+    return mergeOptions(DEFAULT_WORK_ARRANGEMENTS, values);
+  }, [candidates]);
+
+  const hasActiveFilters =
+    filters.verifiedOnly ||
+    filters.availability.length > 0 ||
+    filters.jobType.length > 0 ||
+    filters.workArrangement.length > 0;
+
   const filteredCandidates = useMemo(() => {
-    if (!localQuery.trim()) return candidates;
-
-    const query = localQuery.toLowerCase();
+    const query = localQuery.trim().toLowerCase();
     return candidates.filter((candidate) => {
-      const nameMatch = `${candidate.first_name} ${candidate.last_name}`
-        .toLowerCase()
-        .includes(query);
-      const emailMatch = candidate.email?.toLowerCase().includes(query);
-      const locationMatch = candidate.location?.toLowerCase().includes(query);
-      const summaryMatch =
-        candidate.bio?.toLowerCase().includes(query) ||
-        candidate.resume_parsed?.summary?.toLowerCase().includes(query);
-      const preferenceMatch =
-        candidate.job_type?.toLowerCase().includes(query) ||
-        candidate.work_arrangement?.toLowerCase().includes(query);
-      const skillsMatch =
-        candidate.resume_parsed?.skills?.some((skill) =>
-          skill.toLowerCase().includes(query)
-        ) || false;
+      const matchesQuery = !query
+        ? true
+        : (() => {
+            const nameMatch = `${candidate.first_name} ${candidate.last_name}`
+              .toLowerCase()
+              .includes(query);
+            const emailMatch = candidate.email?.toLowerCase().includes(query);
+            const locationMatch = candidate.location?.toLowerCase().includes(query);
+            const summaryMatch =
+              candidate.bio?.toLowerCase().includes(query) ||
+              candidate.resume_parsed?.summary?.toLowerCase().includes(query);
+            const preferenceMatch =
+              candidate.job_type?.toLowerCase().includes(query) ||
+              candidate.work_arrangement?.toLowerCase().includes(query);
+            const skillsMatch =
+              candidate.resume_parsed?.skills?.some((skill) =>
+                skill.toLowerCase().includes(query)
+              ) || false;
 
-      return (
-        nameMatch ||
-        emailMatch ||
-        locationMatch ||
-        summaryMatch ||
-        preferenceMatch ||
-        skillsMatch
-      );
+            return (
+              nameMatch ||
+              emailMatch ||
+              locationMatch ||
+              summaryMatch ||
+              preferenceMatch ||
+              skillsMatch
+            );
+          })();
+
+      if (!matchesQuery) return false;
+
+      if (filters.verifiedOnly && !candidate.is_verified) {
+        return false;
+      }
+
+      if (filters.availability.length > 0) {
+        const availability = normalizeFilterValue(candidate.availability);
+        const matchesAvailability = filters.availability.some(
+          (value) => normalizeFilterValue(value) === availability
+        );
+        if (!matchesAvailability) return false;
+      }
+
+      if (filters.jobType.length > 0) {
+        const jobType = normalizeFilterValue(candidate.job_type);
+        const matchesJobType = filters.jobType.some(
+          (value) => normalizeFilterValue(value) === jobType
+        );
+        if (!matchesJobType) return false;
+      }
+
+      if (filters.workArrangement.length > 0) {
+        const workArrangement = normalizeFilterValue(candidate.work_arrangement);
+        const matchesArrangement = filters.workArrangement.some(
+          (value) => normalizeFilterValue(value) === workArrangement
+        );
+        if (!matchesArrangement) return false;
+      }
+
+      return true;
     });
-  }, [candidates, localQuery]);
+  }, [candidates, localQuery, filters]);
 
   const totalItems = filteredCandidates.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -88,8 +214,59 @@ export default function CandidatesListPage() {
     );
   }, [filteredCandidates, selectedCandidateId]);
 
+  const selectedCandidateSlug = selectedCandidate?.slug ?? "";
+  const {
+    data: selectedCandidateProfile,
+    isLoading: isCandidateLoading,
+    isFetching: isCandidateFetching,
+    error: candidateError,
+  } = useCandidateProfile(selectedCandidateSlug);
+  const isCandidateDetailLoading = isCandidateLoading || isCandidateFetching;
+  const isProfileReady =
+    Boolean(selectedCandidateProfile) &&
+    selectedCandidateProfile?.slug === selectedCandidateSlug;
+  const profileHref = useMemo(() => {
+    if (!selectedCandidateSlug) return undefined;
+    const params = new URLSearchParams();
+    if (queryFromUrl) params.set("search", queryFromUrl);
+    if (currentPage > 1) params.set("page", String(currentPage));
+    const query = params.toString();
+    return query
+      ? `/employer/dashboard/candidates/profile/${selectedCandidateSlug}?${query}`
+      : `/employer/dashboard/candidates/profile/${selectedCandidateSlug}`;
+  }, [selectedCandidateSlug, queryFromUrl, currentPage]);
+
+  const updatePageParam = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParamsString);
+      if (page <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(page));
+      }
+      const query = params.toString();
+      const nextHref = query
+        ? `/employer/dashboard/candidates?${query}`
+        : "/employer/dashboard/candidates";
+      if (query === searchParamsString) {
+        return;
+      }
+      router.push(nextHref);
+    },
+    [router, searchParamsString]
+  );
+
   useEffect(() => {
+    updatePageParamRef.current = updatePageParam;
+  }, [updatePageParam]);
+
+  useEffect(() => {
+    if (!didInitQueryRef.current) {
+      didInitQueryRef.current = true;
+      return;
+    }
     setCurrentPage(1);
+    updatePageParamRef.current(1);
   }, [localQuery]);
 
   useEffect(() => {
@@ -136,8 +313,9 @@ export default function CandidatesListPage() {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    updatePageParam(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [updatePageParam]);
 
   const handleInviteClick = useCallback(() => {
     if (!hasFetchedJobs && !isJobsLoading) {
@@ -151,6 +329,32 @@ export default function CandidatesListPage() {
     if (selectedJobIds.length > 0) {
       setIsSuccessModalOpen(true);
     }
+  }, []);
+
+  const toggleFilter = useCallback(
+    (key: keyof Omit<CandidateFilters, "verifiedOnly">, value: string) => {
+      setFilters((prev) => {
+        const currentValues = prev[key];
+        const nextValues = currentValues.includes(value)
+          ? currentValues.filter((item) => item !== value)
+          : [...currentValues, value];
+        return { ...prev, [key]: nextValues };
+      });
+    },
+    []
+  );
+
+  const handleVerifiedToggle = useCallback(() => {
+    setFilters((prev) => ({ ...prev, verifiedOnly: !prev.verifiedOnly }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      availability: [],
+      jobType: [],
+      workArrangement: [],
+      verifiedOnly: false,
+    });
   }, []);
 
   if (error) {
@@ -235,12 +439,139 @@ export default function CandidatesListPage() {
             </div>
             <button
               type="button"
+              onClick={() => setIsFiltersOpen((prev) => !prev)}
+              aria-expanded={isFiltersOpen}
+              aria-controls="candidate-filters"
               className="flex items-center gap-2 rounded-xl bg-[#D95F35] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B84D28]"
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Filters
+              Filters{hasActiveFilters ? ` (${filters.availability.length + filters.jobType.length + filters.workArrangement.length + (filters.verifiedOnly ? 1 : 0)})` : ""}
             </button>
           </form>
+
+          {isFiltersOpen && (
+            <div
+              id="candidate-filters"
+              className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-slate-900">Filters</h2>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <fieldset className="space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Availability
+                  </legend>
+                  {availabilityOptions.length > 0 ? (
+                    availabilityOptions.map((option) => {
+                      const id = `filter-availability-${normalizeFilterValue(option)}`;
+                      return (
+                        <label
+                          key={option}
+                          htmlFor={id}
+                          className="flex items-center gap-2 text-sm text-slate-600"
+                        >
+                          <input
+                            id={id}
+                            type="checkbox"
+                            checked={filters.availability.includes(option)}
+                            onChange={() => toggleFilter("availability", option)}
+                            className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                          />
+                          {option}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No availability data yet.</p>
+                  )}
+                </fieldset>
+
+                <fieldset className="space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Work Arrangement
+                  </legend>
+                  {workArrangementOptions.length > 0 ? (
+                    workArrangementOptions.map((option) => {
+                      const id = `filter-work-${normalizeFilterValue(option)}`;
+                      return (
+                        <label
+                          key={option}
+                          htmlFor={id}
+                          className="flex items-center gap-2 text-sm text-slate-600"
+                        >
+                          <input
+                            id={id}
+                            type="checkbox"
+                            checked={filters.workArrangement.includes(option)}
+                            onChange={() => toggleFilter("workArrangement", option)}
+                            className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                          />
+                          {option}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No work modes listed.</p>
+                  )}
+                </fieldset>
+
+                <fieldset className="space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Job Type
+                  </legend>
+                  {jobTypeOptions.length > 0 ? (
+                    jobTypeOptions.map((option) => {
+                      const id = `filter-job-${normalizeFilterValue(option)}`;
+                      return (
+                        <label
+                          key={option}
+                          htmlFor={id}
+                          className="flex items-center gap-2 text-sm text-slate-600"
+                        >
+                          <input
+                            id={id}
+                            type="checkbox"
+                            checked={filters.jobType.includes(option)}
+                            onChange={() => toggleFilter("jobType", option)}
+                            className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                          />
+                          {option}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-slate-400">No job types listed.</p>
+                  )}
+                </fieldset>
+
+                <fieldset className="space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Verification
+                  </legend>
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={filters.verifiedOnly}
+                      onChange={handleVerifiedToggle}
+                      className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                    />
+                    Verified candidates only
+                  </label>
+                </fieldset>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4 lg:pr-2 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent">
             {paginatedCandidates.length > 0 ? (
@@ -260,10 +591,19 @@ export default function CandidatesListPage() {
                         tabIndex={-1}
                         className="lg:hidden"
                       >
-                        <CandidateDetailPanel
-                          candidate={selectedCandidate}
-                          onInviteClick={handleInviteClick}
-                        />
+                        {isProfileReady && selectedCandidateProfile ? (
+                          <CandidateDetailPanel
+                            candidate={selectedCandidateProfile}
+                            profileHref={profileHref}
+                            onInviteClick={handleInviteClick}
+                          />
+                        ) : isCandidateDetailLoading ? (
+                          <CandidateDetailSkeleton />
+                        ) : candidateError ? (
+                          <div className="rounded-[28px] bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+                            Unable to load candidate details.
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -294,15 +634,24 @@ export default function CandidatesListPage() {
         </div>
 
         <div className="hidden lg:block lg:col-span-8 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent pb-10">
-          {selectedCandidate ? (
+          {isProfileReady && selectedCandidateProfile ? (
             <div
               id={`candidate-details-desktop-${selectedCandidateId}`}
               tabIndex={-1}
             >
               <CandidateDetailPanel
-                candidate={selectedCandidate}
+                candidate={selectedCandidateProfile}
+                profileHref={profileHref}
                 onInviteClick={handleInviteClick}
               />
+            </div>
+          ) : isCandidateDetailLoading ? (
+            <CandidateDetailSkeleton />
+          ) : selectedCandidate ? (
+            <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
+              {candidateError
+                ? "Unable to load candidate details."
+                : "Select a candidate to view their profile details."}
             </div>
           ) : (
             <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">

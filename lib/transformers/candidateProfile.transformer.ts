@@ -1,4 +1,9 @@
-import type { CandidateProfile } from "@/lib/types/candidateProfile";
+import type {
+  CandidateCertificationEntry,
+  CandidateEducationEntry,
+  CandidateExperienceEntry,
+  CandidateProfile,
+} from "@/lib/types/candidateProfile";
 
 /**
  * Backend response structure from /api/candidates/
@@ -269,6 +274,98 @@ function extractCertifications(backend: any): any[] | undefined {
   );
 }
 
+const toText = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+  return undefined;
+};
+
+const hasEntryValues = (entry: Record<string, unknown>) =>
+  Object.values(entry).some(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+
+function parseExperienceEntries(
+  workExperience?: any[]
+): CandidateExperienceEntry[] {
+  if (!Array.isArray(workExperience)) return [];
+  return workExperience
+    .map((exp) => {
+      if (typeof exp === "string") {
+        return { raw_text: toText(exp) };
+      }
+      return {
+        role: toText(exp.role) || toText(exp.position) || toText(exp.title),
+        company: toText(exp.company),
+        location: toText(exp.location),
+        start_date: toText(exp.start_date) || toText(exp.startDate),
+        end_date: toText(exp.end_date) || toText(exp.endDate),
+        description: toText(exp.description) || toText(exp.summary),
+        raw_text: toText(exp.raw_text) || toText(exp.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
+function parseEducationEntries(
+  education?: any[]
+): CandidateEducationEntry[] {
+  if (!Array.isArray(education)) return [];
+  return education
+    .map((edu) => {
+      if (typeof edu === "string") {
+        return { raw_text: toText(edu) };
+      }
+      return {
+        degree:
+          toText(edu.degree) || toText(edu.course_name) || toText(edu.title),
+        field_of_study:
+          toText(edu.field_of_study) ||
+          toText(edu.field) ||
+          toText(edu.major),
+        institution: toText(edu.institution) || toText(edu.school),
+        start_date: toText(edu.start_date) || toText(edu.startDate),
+        end_date: toText(edu.end_date) || toText(edu.endDate),
+        grade: toText(edu.grade) || toText(edu.gpa),
+        description: toText(edu.description),
+        raw_text: toText(edu.raw_text) || toText(edu.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
+function parseCertificationEntries(
+  certifications?: any[]
+): CandidateCertificationEntry[] {
+  if (!Array.isArray(certifications)) return [];
+  return certifications
+    .map((cert) => {
+      if (typeof cert === "string") {
+        return { raw_text: toText(cert) };
+      }
+      return {
+        name:
+          toText(cert.name) ||
+          toText(cert.title) ||
+          toText(cert.certification),
+        issuer:
+          toText(cert.issuer) ||
+          toText(cert.organization) ||
+          toText(cert.institution) ||
+          toText(cert.authority),
+        issued_date:
+          toText(cert.issue_date) ||
+          toText(cert.issued_date) ||
+          toText(cert.date) ||
+          toText(cert.year),
+        raw_text: toText(cert.raw_text) || toText(cert.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
 /**
  * Extract bio/summary from various possible locations
  */
@@ -306,6 +403,9 @@ export function transformCandidateProfile(
   const education = extractEducation(backend);
   const certifications = extractCertifications(backend);
   const salaryRange = parseSalaryRange(backend.expected_salary_range);
+  const experienceEntries = parseExperienceEntries(workExperience);
+  const educationEntries = parseEducationEntries(education);
+  const certificationEntries = parseCertificationEntries(certifications);
 
   // Format work experience - each job on its own line
   const experienceStr = workExperience?.map((exp: any) => {
@@ -356,6 +456,9 @@ export function transformCandidateProfile(
       education: educationStr || undefined,
       certifications: certificationsStr || undefined,
       summary: extractBio(backend),
+      experience_entries: experienceEntries.length ? experienceEntries : undefined,
+      education_entries: educationEntries.length ? educationEntries : undefined,
+      certification_entries: certificationEntries.length ? certificationEntries : undefined,
     },
 
     // Verified data
