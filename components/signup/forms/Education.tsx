@@ -25,7 +25,7 @@ export default function Education({
   const errorCount = Object.keys(errors || {}).length;
   const graduationYearValue =
     typeof data.graduationDate === "string"
-      ? data.graduationDate.match(/\d{4}/)?.[0] ?? ""
+      ? data.graduationDate.replace(/\D/g, "").slice(0, 4)
       : "";
 
   return (
@@ -104,7 +104,11 @@ export default function Education({
             min={1900}
             max={new Date().getFullYear() + 10}
             value={graduationYearValue}
-            onChange={(e) => onChange({ graduationDate: e.target.value })}
+            onChange={(e) =>
+              onChange({
+                graduationDate: e.target.value.replace(/\D/g, "").slice(0, 4),
+              })
+            }
             placeholder="YYYY"
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
           />
