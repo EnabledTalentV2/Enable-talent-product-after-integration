@@ -208,6 +208,7 @@ export default function ProfilePage() {
     if (mapped.length > 0) return mapped;
     return [
       {
+        id: undefined,
         courseName: toTrimmed(education.courseName),
         major: toTrimmed(education.major),
         institution: toTrimmed(education.institution),
@@ -413,7 +414,11 @@ export default function ProfilePage() {
 
                     return (
                       <div
-                        key={entry.id ?? `${entry.courseName}-${index}`}
+                        key={
+                          typeof entry.id === "string" || typeof entry.id === "number"
+                            ? String(entry.id)
+                            : `${entry.courseName}-${index}`
+                        }
                         className="flex justify-between items-start flex-wrap gap-2"
                       >
                         <div>
