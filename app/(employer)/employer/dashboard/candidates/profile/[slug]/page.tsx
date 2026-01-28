@@ -1,9 +1,13 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
 import { CandidateDetailSkeleton } from "@/components/employer/candidates/CandidateLoadingSkeleton";
+import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
+import SuccessModal from "@/components/employer/candidates/SuccessModal";
+import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import {
   MapPin,
   Briefcase,
@@ -61,7 +65,21 @@ export default function CandidateProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  const jobId = searchParams.get("jobId") || "";
+  const pageParam = searchParams.get("page");
+  const searchQuery = searchParams.get("search");
+  const backParams = new URLSearchParams();
+  if (searchQuery) backParams.set("search", searchQuery);
+  if (pageParam) backParams.set("page", pageParam);
+  const backHref = backParams.toString()
+    ? `/employer/dashboard/candidates?${backParams.toString()}`
+    : "/employer/dashboard/candidates";
+  const {
+    fetchJobs,
+    hasFetched: hasFetchedJobs,
+    isLoading: isJobsLoading,
+  } = useEmployerJobsStore();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
 
@@ -146,11 +164,25 @@ export default function CandidateProfilePage() {
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
 
+  const handleInviteClick = useCallback(() => {
+    if (!hasFetchedJobs && !isJobsLoading) {
+      fetchJobs();
+    }
+    setIsInviteModalOpen(true);
+  }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
+
+  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
+    setIsInviteModalOpen(false);
+    if (selectedJobIds.length > 0) {
+      setIsSuccessModalOpen(true);
+    }
+  }, []);
+
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
       {/* Back Link */}
       <Link
-        href="/employer/dashboard/candidates"
+        href={backHref}
         className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-[#C27803] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -227,16 +259,12 @@ export default function CandidateProfilePage() {
                 View Resume
               </a>
             )}
-            {jobId && (
-              <button
-                onClick={() => {
-                  console.log("Send invite to candidate:", slug, "for job:", jobId);
-                }}
-                className="flex items-center justify-center gap-2 rounded-xl border border-[#C27831] bg-white px-4 py-2 text-sm font-semibold text-[#A66628] transition-colors hover:bg-white/80"
-              >
-                Send Invite
-              </button>
-            )}
+            <button
+              onClick={handleInviteClick}
+              className="flex items-center justify-center gap-2 rounded-xl border border-[#C27831] bg-white px-4 py-2 text-sm font-semibold text-[#A66628] transition-colors hover:bg-white/80"
+            >
+              Send Invites for Jobs
+            </button>
           </div>
         </div>
 
@@ -376,6 +404,16 @@ export default function CandidateProfilePage() {
           />
         </div>
       </div>
+
+      <SendInvitesModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSendInvites={handleSendInvites}
+      />
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+      />
     </div>
   );
 }

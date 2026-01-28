@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import {
   useCandidateProfile,
@@ -69,15 +69,22 @@ type CandidateFilters = {
 };
 
 export default function CandidatesListPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsString = searchParams.toString();
   const queryFromUrl = searchParams.get("search") || "";
+  const pageFromUrl = useMemo(() => {
+    const value = searchParams.get("page");
+    const parsed = value ? Number(value) : 1;
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  }, [searchParams]);
   const { data: candidates = [], isLoading, error } = useCandidateProfiles();
   const {
     fetchJobs,
     hasFetched: hasFetchedJobs,
     isLoading: isJobsLoading,
   } = useEmployerJobsStore();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [localQuery, setLocalQuery] = useState(queryFromUrl);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null
@@ -92,10 +99,16 @@ export default function CandidatesListPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const didMountRef = useRef(false);
+  const didInitQueryRef = useRef(false);
+  const updatePageParamRef = useRef<(page: number) => void>(() => undefined);
 
   useEffect(() => {
     setLocalQuery(queryFromUrl);
   }, [queryFromUrl]);
+
+  useEffect(() => {
+    setCurrentPage(pageFromUrl);
+  }, [pageFromUrl]);
 
   const availabilityOptions = useMemo(() => {
     const values = candidates.map((candidate) => candidate.availability);
@@ -212,12 +225,48 @@ export default function CandidatesListPage() {
   const isProfileReady =
     Boolean(selectedCandidateProfile) &&
     selectedCandidateProfile?.slug === selectedCandidateSlug;
-  const profileHref = selectedCandidateSlug
-    ? `/employer/dashboard/candidates/profile/${selectedCandidateSlug}`
-    : undefined;
+  const profileHref = useMemo(() => {
+    if (!selectedCandidateSlug) return undefined;
+    const params = new URLSearchParams();
+    if (queryFromUrl) params.set("search", queryFromUrl);
+    if (currentPage > 1) params.set("page", String(currentPage));
+    const query = params.toString();
+    return query
+      ? `/employer/dashboard/candidates/profile/${selectedCandidateSlug}?${query}`
+      : `/employer/dashboard/candidates/profile/${selectedCandidateSlug}`;
+  }, [selectedCandidateSlug, queryFromUrl, currentPage]);
+
+  const updatePageParam = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParamsString);
+      if (page <= 1) {
+        params.delete("page");
+      } else {
+        params.set("page", String(page));
+      }
+      const query = params.toString();
+      const nextHref = query
+        ? `/employer/dashboard/candidates?${query}`
+        : "/employer/dashboard/candidates";
+      if (query === searchParamsString) {
+        return;
+      }
+      router.push(nextHref);
+    },
+    [router, searchParamsString]
+  );
 
   useEffect(() => {
+    updatePageParamRef.current = updatePageParam;
+  }, [updatePageParam]);
+
+  useEffect(() => {
+    if (!didInitQueryRef.current) {
+      didInitQueryRef.current = true;
+      return;
+    }
     setCurrentPage(1);
+    updatePageParamRef.current(1);
   }, [localQuery]);
 
   useEffect(() => {
@@ -264,8 +313,9 @@ export default function CandidatesListPage() {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
+    updatePageParam(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [updatePageParam]);
 
   const handleInviteClick = useCallback(() => {
     if (!hasFetchedJobs && !isJobsLoading) {
