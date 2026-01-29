@@ -28,8 +28,20 @@ export async function GET(
         errorText
       );
 
+      // Try to parse the error as JSON to pass through the actual error message
+      let errorData: { detail?: string; error?: string; message?: string };
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText || "Failed to fetch candidate profile" };
+      }
+
+      // Pass through auth-related error messages for proper session expiry detection
+      const errorMessage =
+        errorData.detail || errorData.error || errorData.message || "Failed to fetch candidate profile";
+
       return NextResponse.json(
-        { error: "Failed to fetch candidate profile" },
+        { error: errorMessage, detail: errorMessage },
         { status: backendResponse.status }
       );
     }
