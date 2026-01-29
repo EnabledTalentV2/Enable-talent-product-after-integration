@@ -81,11 +81,17 @@ function DetailSection({
       className="group rounded-2xl bg-white p-4 shadow-sm"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
         <span>{title}</span>
         <span className="flex items-center gap-2 text-xs text-slate-400">
-          {badge && <span>{badge}</span>}
-          <ChevronDown className="h-4 w-4" />
+          {badge && <span aria-hidden="true">{badge}</span>}
+          <ChevronDown
+            className="h-4 w-4 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {badge ? `, ${badge}` : ""}, click to {defaultOpen ? "collapse" : "expand"}
+          </span>
         </span>
       </summary>
       <div className="mt-3 text-sm text-slate-600">{children}</div>
@@ -184,7 +190,9 @@ export default function CandidateDetailPanel({
                   {candidate.first_name} {candidate.last_name}
                 </h2>
                 {candidate.is_verified && (
-                  <CheckCircle className="h-5 w-5 text-emerald-700" />
+                  <span title="Verified candidate" aria-label="Verified candidate">
+                    <CheckCircle className="h-5 w-5 text-emerald-700" aria-hidden="true" />
+                  </span>
                 )}
               </div>
               <p className="text-sm text-slate-700">

@@ -10,8 +10,9 @@ export default function Home() {
           href="https://enabled-talent-landing-v2.vercel.app/"
           className="group flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#C05621]"
         >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
           Back to Homepage
+          <span className="sr-only">(opens external site)</span>
         </a>
       </header>
       <main
@@ -24,14 +25,16 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-center"
+            aria-label="Enabled Talent logo - opens main website in new tab"
           >
             <Image
               src="/logo/et-new.svg"
-              alt="EnabledTalent logo"
+              alt=""
               width={200}
               height={54}
               priority
               className="h-12 w-auto object-contain"
+              aria-hidden="true"
             />
           </a>
 

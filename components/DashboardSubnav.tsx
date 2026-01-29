@@ -90,10 +90,10 @@ export default function DashboardSubnav() {
         </div>
 
         {/* Search Bar - Visible on All Screen Sizes */}
-        <div className="w-full md:w-[420px]">
+        <div className="w-full md:w-[420px]" role="search" aria-label="Search jobs">
           <div className="relative w-full">
             <input
-              type="text"
+              type="search"
               placeholder="Search by skills, company or job"
               aria-label="Search by skills, company or job"
               value={searchQuery}
@@ -114,9 +114,9 @@ export default function DashboardSubnav() {
                 }
               }}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-              aria-label="Search"
+              aria-label="Submit search"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
