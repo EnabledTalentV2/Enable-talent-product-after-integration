@@ -1,4 +1,4 @@
-import type { UserData } from "@/lib/types/user";
+import type { StepKey, UserData } from "@/lib/types/user";
 
 type Completion = { percent: number; isComplete: boolean };
 
@@ -48,12 +48,7 @@ const isEducationComplete = (data: UserData) =>
 const isWorkEntryComplete = (
   entry: UserData["workExperience"]["entries"][number]
 ) =>
-  areAllNonEmpty([
-    entry.company,
-    entry.role,
-    entry.from,
-    entry.description,
-  ]) && (entry.current ? true : isNonEmpty(entry.to));
+  areAllNonEmpty([entry.company, entry.role, entry.from]);
 
 const isWorkExperienceComplete = (data: UserData) =>
   data.workExperience.experienceType === "fresher" ||
@@ -67,8 +62,7 @@ const isSkillsComplete = (data: UserData) => {
 const isProjectEntryComplete = (
   entry: UserData["projects"]["entries"][number]
 ) =>
-  areAllNonEmpty([entry.projectName, entry.projectDescription, entry.from]) &&
-  (entry.current ? true : isNonEmpty(entry.to));
+  isNonEmpty(entry.projectName);
 
 const isProjectsComplete = (data: UserData) =>
   data.projects.noProjects ||
@@ -79,19 +73,13 @@ const isAchievementComplete = () => true;
 const isCertificationEntryComplete = (
   entry: UserData["certification"]["entries"][number]
 ) =>
-  areAllNonEmpty([
-    entry.name,
-    entry.issueDate,
-    entry.organization,
-    entry.credentialIdUrl,
-  ]);
+  isNonEmpty(entry.name);
 
 const isCertificationComplete = (data: UserData) =>
   data.certification.noCertification ||
   hasCompleteEntries(data.certification.entries, isCertificationEntryComplete);
 
 const isPreferenceComplete = (data: UserData) =>
-  data.preference.companySize.length > 0 &&
   data.preference.jobType.length > 0 &&
   data.preference.jobSearch.length > 0;
 
@@ -108,7 +96,6 @@ const isLanguageComplete = (
 const isOtherDetailsComplete = (data: UserData) =>
   hasCompleteEntries(data.otherDetails.languages, isLanguageComplete) &&
   areAllNonEmpty([
-    data.otherDetails.careerStage,
     data.otherDetails.availability,
     data.otherDetails.desiredSalary,
   ]);
@@ -145,6 +132,34 @@ export const computeProfileSectionCompletion = (data: UserData) => {
     otherDetails: toCompletion(steps.otherDetails),
     accessibilityNeeds: toCompletion(steps.accessibilityNeeds),
     reviewAgree: toCompletion(steps.reviewAgree),
+  };
+};
+
+const dashboardProfileSections: StepKey[] = [
+  "basicInfo",
+  "education",
+  "workExperience",
+  "skills",
+  "projects",
+  "achievements",
+  "certification",
+  "preference",
+  "otherDetails",
+  "accessibilityNeeds",
+];
+
+export const computeDashboardProfileCompletion = (data: UserData) => {
+  const sections = computeProfileSectionCompletion(data);
+  const totalSteps = dashboardProfileSections.length;
+  const completedSteps = dashboardProfileSections.filter(
+    (key) => sections[key]?.isComplete
+  ).length;
+  const percent =
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+  return {
+    percent,
+    isComplete: totalSteps > 0 && completedSteps === totalSteps,
   };
 };
 

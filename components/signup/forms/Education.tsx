@@ -8,24 +8,45 @@ type Props = {
   data: UserData["education"];
   onChange: (patch: Partial<UserData["education"]>) => void;
   errors?: Partial<Record<keyof UserData["education"], string>>;
+  idPrefix?: string;
+  title?: string;
+  showHeading?: boolean;
 };
 
-export default function Education({ data, onChange, errors }: Props) {
+export default function Education({
+  data,
+  onChange,
+  errors,
+  idPrefix = "education",
+  title = "Education",
+  showHeading = true,
+}: Props) {
   const hasCourseError = Boolean(errors?.courseName);
   const errorCount = Object.keys(errors || {}).length;
+  const graduationYearValue =
+    typeof data.graduationDate === "string"
+      ? data.graduationDate.replace(/\D/g, "").slice(0, 4)
+      : "";
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">Education</h3>
-        {errorCount > 0 ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
-        ) : null}
-      </div>
+      {showHeading ? (
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+          {errorCount > 0 ? (
+            <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
-        <label htmlFor="education-courseName" className={`block text-base font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor={`${idPrefix}-courseName`} className={`block text-base font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
           {errors?.courseName || "Course Name"}
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <div
           className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${
@@ -33,11 +54,12 @@ export default function Education({ data, onChange, errors }: Props) {
           }`}
         >
           <input
-            id="education-courseName"
+            id={`${idPrefix}-courseName`}
             type="text"
             value={data.courseName}
             onChange={(e) => onChange({ courseName: e.target.value })}
             placeholder=""
+            aria-required="true"
             className="w-full bg-transparent outline-none"
           />
           {hasCourseError ? <AlertCircle className="h-5 w-5 text-red-500" /> : null}
@@ -46,8 +68,9 @@ export default function Education({ data, onChange, errors }: Props) {
       </div>
 
       <InputBlock
-        id="education-major"
+        id={`${idPrefix}-major`}
         label="Major"
+        required
         value={data.major}
         onChange={(v) => onChange({ major: v })}
         placeholder="Design methodologies, Aesthetics, Visual communication, Technical specification..."
@@ -56,8 +79,9 @@ export default function Education({ data, onChange, errors }: Props) {
       />
 
       <InputBlock
-        id="education-institution"
+        id={`${idPrefix}-institution`}
         label="Institution"
+        required
         value={data.institution}
         onChange={(v) => onChange({ institution: v })}
         placeholder="York University"
@@ -66,16 +90,26 @@ export default function Education({ data, onChange, errors }: Props) {
       />
 
       <div className="space-y-1.5">
-        <label htmlFor="education-graduationDate" className="block text-base font-medium text-slate-700">
-          Graduation Date
+        <label
+          htmlFor={`${idPrefix}-graduationDate`}
+          className="block text-base font-medium text-slate-700"
+        >
+          Graduation Year
         </label>
         <div className="relative">
           <input
-            id="education-graduationDate"
-            type="date"
-            value={data.graduationDate}
-            onChange={(e) => onChange({ graduationDate: e.target.value })}
-            placeholder="Enter graduation date"
+            id={`${idPrefix}-graduationDate`}
+            type="number"
+            inputMode="numeric"
+            min={1900}
+            max={new Date().getFullYear() + 10}
+            value={graduationYearValue}
+            onChange={(e) =>
+              onChange({
+                graduationDate: e.target.value.replace(/\D/g, "").slice(0, 4),
+              })
+            }
+            placeholder="YYYY"
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
           />
         </div>

@@ -4,20 +4,16 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
-import BackendValidationBanner from "@/components/BackendValidationBanner";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
   ensureCandidateProfileSlug,
-  fetchCandidateProfileDetail,
+  fetchCandidateProfileFull,
 } from "@/lib/candidateProfile";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
-import { transformBackendResumeData } from "@/lib/transformers/resumeData.transformer";
 import {
-  validateBackendData,
-  logValidationToConsole,
-  type ValidationResult,
-} from "@/lib/backendDataValidator";
+  mapCandidateProfileToUserData,
+  normalizeGenderLabel,
+} from "@/lib/candidateProfileUtils";
 import { initialUserData as defaultUserData } from "@/lib/userDataDefaults";
 import type { UserData } from "@/lib/types/user";
 
@@ -38,16 +34,23 @@ function transformBackendToFrontend(
   const accessibilityRaw =
     (backendData.accessibility_needs as Record<string, unknown>) ||
     (backendData.accessibilityNeeds as Record<string, unknown>) ||
+    (backendData.accessibility as Record<string, unknown>) ||
     null;
   const accessibilityNeeds =
     accessibilityRaw && typeof accessibilityRaw === "object"
       ? {
           categories: Array.isArray(accessibilityRaw.categories)
             ? (accessibilityRaw.categories as string[])
+            : Array.isArray(accessibilityRaw.disability_categories)
+            ? (accessibilityRaw.disability_categories as string[])
+            : Array.isArray(accessibilityRaw.disabilityCategories)
+            ? (accessibilityRaw.disabilityCategories as string[])
             : defaultAccessibility.categories,
           accommodationNeed:
             (accessibilityRaw.accommodation_need as string) ||
+            (accessibilityRaw.accommodation_needs as string) ||
             (accessibilityRaw.accommodationNeed as string) ||
+            (accessibilityRaw.accommodationNeeds as string) ||
             defaultAccessibility.accommodationNeed,
           disclosurePreference:
             (accessibilityRaw.disclosure_preference as string) ||
@@ -55,6 +58,10 @@ function transformBackendToFrontend(
             defaultAccessibility.disclosurePreference,
           accommodations: Array.isArray(accessibilityRaw.accommodations)
             ? (accessibilityRaw.accommodations as string[])
+            : Array.isArray(accessibilityRaw.workplace_accommodations)
+            ? (accessibilityRaw.workplace_accommodations as string[])
+            : Array.isArray(accessibilityRaw.workplaceAccommodations)
+            ? (accessibilityRaw.workplaceAccommodations as string[])
             : defaultAccessibility.accommodations,
         }
       : { ...defaultAccessibility };
@@ -81,7 +88,8 @@ function transformBackendToFrontend(
         (backendData.citizenshipStatus as string) ||
         defaultUserData.basicInfo.citizenshipStatus,
       gender:
-        (backendData.gender as string) || defaultUserData.basicInfo.gender,
+        normalizeGenderLabel(backendData.gender) ||
+        defaultUserData.basicInfo.gender,
       ethnicity:
         (backendData.ethnicity as string) ||
         defaultUserData.basicInfo.ethnicity,
@@ -186,8 +194,6 @@ export default function DashboardLayoutPage({
   const setCandidateError = useCandidateProfileStore((s) => s.setError);
   const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const [loading, setLoading] = useState(true);
-  const [validationResult, setValidationResult] =
-    useState<ValidationResult | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -200,12 +206,9 @@ export default function DashboardLayoutPage({
           credentials: "include",
         });
 
-        if (response.status === 401) {
-          router.replace("/login-talent");
-          return;
-        }
-
-        if (!response.ok) {
+        if (response.status === 401 || !response.ok) {
+          // Clear loading state before redirect to prevent stuck UI
+          if (active) setLoading(false);
           router.replace("/login-talent");
           return;
         }
@@ -246,10 +249,7 @@ export default function DashboardLayoutPage({
 
             setCandidateSlug(slug);
 
-            const profile = await fetchCandidateProfileDetail(
-              slug,
-              "Dashboard"
-            );
+            const profile = await fetchCandidateProfileFull(slug, "Dashboard");
 
             if (!active) return;
 
@@ -270,21 +270,8 @@ export default function DashboardLayoutPage({
               } else {
                 // Extract basic profile data (employment preferences, etc.)
                 const profileData = mapCandidateProfileToUserData(profile);
-
-                // Transform resume_data if present
-                const resumeDataPayload =
-                  typeof profile === "object" &&
-                  profile !== null &&
-                  "resume_data" in profile
-                    ? profile.resume_data
-                    : null;
-                const resumeData = transformBackendResumeData(resumeDataPayload);
-
-                // Merge both transformations (resume_data takes priority for overlapping fields)
-                const merged = { ...profileData, ...resumeData };
-
-                if (Object.keys(merged).length > 0) {
-                  patchUserData(merged);
+                if (Object.keys(profileData).length > 0) {
+                  patchUserData(profileData);
                 }
               }
             } else {
@@ -298,13 +285,6 @@ export default function DashboardLayoutPage({
         };
 
         if (active) {
-          // Validate backend data and log in development
-          if (process.env.NODE_ENV === "development") {
-            const validation = validateBackendData(rawData);
-            setValidationResult(validation);
-            logValidationToConsole(validation);
-          }
-
           // Get current store state to check for fresh signup
           const storeState = useUserDataStore.getState();
           const currentSignupTime = storeState.signupCompletedAt;
@@ -348,6 +328,7 @@ export default function DashboardLayoutPage({
         void refreshCandidateProfile(rawData);
       } catch (error) {
         console.error("Auth check failed:", error);
+        if (active) setLoading(false);
         router.replace("/login-talent");
       }
     };
@@ -372,8 +353,6 @@ export default function DashboardLayoutPage({
       <DashBoardNavbar />
       <DashboardSubnav />
       <main className="px-6 pb-10 md:px-12">{children}</main>
-      {/* Developer mode banner for backend data validation */}
-      <BackendValidationBanner validationResult={validationResult} />
     </div>
   );
 }

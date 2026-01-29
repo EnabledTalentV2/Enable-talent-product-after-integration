@@ -70,7 +70,7 @@ export default function JobHeader({ jobInfo, stats }: JobHeaderProps) {
           color="bg-[#FCD34D]" // Yellow
         />
         <StatBox
-          label="Declined candidates"
+          label="Rejected candidates"
           value={stats.declined}
           color="bg-slate-100"
         />

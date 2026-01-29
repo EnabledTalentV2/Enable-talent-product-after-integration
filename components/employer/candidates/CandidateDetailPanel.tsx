@@ -17,7 +17,6 @@ import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 interface CandidateDetailPanelProps {
   candidate: CandidateProfile;
-  profileScore: number;
   profileHref?: string;
   onInviteClick?: () => void;
 }
@@ -56,6 +55,14 @@ const formatDate = (date?: string) => {
   });
 };
 
+const formatDateRange = (start?: string, end?: string) => {
+  const startLabel = start?.trim();
+  const endLabel = end?.trim();
+  if (!startLabel && !endLabel) return "";
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  return startLabel ? `${startLabel} - Present` : endLabel || "";
+};
+
 interface DetailSectionProps {
   title: string;
   badge?: string;
@@ -74,11 +81,17 @@ function DetailSection({
       className="group rounded-2xl bg-white p-4 shadow-sm"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
         <span>{title}</span>
         <span className="flex items-center gap-2 text-xs text-slate-400">
-          {badge && <span>{badge}</span>}
-          <ChevronDown className="h-4 w-4" />
+          {badge && <span aria-hidden="true">{badge}</span>}
+          <ChevronDown
+            className="h-4 w-4 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {badge ? `, ${badge}` : ""}, click to {defaultOpen ? "collapse" : "expand"}
+          </span>
         </span>
       </summary>
       <div className="mt-3 text-sm text-slate-600">{children}</div>
@@ -88,7 +101,6 @@ function DetailSection({
 
 export default function CandidateDetailPanel({
   candidate,
-  profileScore,
   profileHref,
   onInviteClick,
 }: CandidateDetailPanelProps) {
@@ -98,6 +110,33 @@ export default function CandidateDetailPanel({
   );
   const skills = candidate.resume_parsed?.skills ?? [];
   const skillsCount = skills.length;
+
+  const experienceEntries = candidate.resume_parsed?.experience_entries ?? [];
+  const educationEntries = candidate.resume_parsed?.education_entries ?? [];
+  const certificationEntries =
+    candidate.resume_parsed?.certification_entries ?? [];
+  const experienceTextEntries =
+    candidate.resume_parsed?.experience
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+  const educationTextEntries =
+    candidate.resume_parsed?.education
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+  const certificationTextEntries =
+    candidate.resume_parsed?.certifications
+      ?.split("\n")
+      .map((entry) => entry.trim())
+      .filter(Boolean) ?? [];
+
+  const experienceCount =
+    experienceEntries.length || experienceTextEntries.length || 0;
+  const educationCount =
+    educationEntries.length || educationTextEntries.length || 0;
+  const certificationsCount =
+    certificationEntries.length || certificationTextEntries.length || 0;
   const links = [
     { label: "LinkedIn", href: candidate.linkedin, icon: Linkedin },
     { label: "GitHub", href: candidate.github, icon: Github },
@@ -134,9 +173,6 @@ export default function CandidateDetailPanel({
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
-  const joinedDate = formatDate(candidate.created_at);
-  const otherDetailsCount =
-    Number(Boolean(candidate.phone)) + Number(Boolean(joinedDate));
 
   return (
     <div className="space-y-4">
@@ -154,7 +190,9 @@ export default function CandidateDetailPanel({
                   {candidate.first_name} {candidate.last_name}
                 </h2>
                 {candidate.is_verified && (
-                  <CheckCircle className="h-5 w-5 text-emerald-700" />
+                  <span title="Verified candidate" aria-label="Verified candidate">
+                    <CheckCircle className="h-5 w-5 text-emerald-700" aria-hidden="true" />
+                  </span>
                 )}
               </div>
               <p className="text-sm text-slate-700">
@@ -163,12 +201,6 @@ export default function CandidateDetailPanel({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-14 w-14 flex-col items-center justify-center rounded-full bg-white text-slate-900">
-              <span className="text-sm font-bold">{profileScore}%</span>
-              <span className="text-[10px] text-slate-500">Profile</span>
-            </div>
-          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-700">
@@ -282,12 +314,60 @@ export default function CandidateDetailPanel({
 
       <DetailSection
         title="Work experience"
-        badge={candidate.resume_parsed?.experience ? "1 added" : "Not set"}
+        badge={experienceCount ? `${experienceCount} added` : "Not set"}
       >
-        {candidate.resume_parsed?.experience ? (
-          <p className="whitespace-pre-wrap text-slate-600">
-            {candidate.resume_parsed.experience}
-          </p>
+        {experienceEntries.length > 0 ? (
+          <div className="space-y-4">
+            {experienceEntries.map((entry, index) => {
+              const title = entry.role || entry.company || "Experience entry";
+              const subtitle = [entry.company, entry.location]
+                .filter(Boolean)
+                .join(" • ");
+              const timeline = formatDateRange(
+                entry.start_date,
+                entry.end_date
+              );
+              const description = entry.description || entry.raw_text;
+              return (
+                <div
+                  key={`${entry.role ?? "experience"}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        {title}
+                      </h3>
+                      {subtitle ? (
+                        <p className="text-xs text-slate-500">{subtitle}</p>
+                      ) : null}
+                    </div>
+                    {timeline ? (
+                      <span className="text-xs text-slate-500">
+                        {timeline}
+                      </span>
+                    ) : null}
+                  </div>
+                  {description ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                      {description}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : experienceTextEntries.length > 0 ? (
+          <div className="space-y-3">
+            {experienceTextEntries.map((entry, index) => (
+              <div
+                key={`experience-line-${index}`}
+                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+              >
+                <p className="text-sm text-slate-600">{entry}</p>
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="text-slate-500">No experience details provided.</p>
         )}
@@ -295,14 +375,109 @@ export default function CandidateDetailPanel({
 
       <DetailSection
         title="Education"
-        badge={candidate.resume_parsed?.education ? "1 added" : "Not set"}
+        badge={educationCount ? `${educationCount} added` : "Not set"}
       >
-        {candidate.resume_parsed?.education ? (
-          <p className="whitespace-pre-wrap text-slate-600">
-            {candidate.resume_parsed.education}
-          </p>
+        {educationEntries.length > 0 ? (
+          <div className="space-y-4">
+            {educationEntries.map((entry, index) => {
+              const degreeLine = [entry.degree, entry.field_of_study]
+                .filter(Boolean)
+                .join(" • ");
+              const institution = entry.institution;
+              const timeline = formatDateRange(
+                entry.start_date,
+                entry.end_date
+              );
+              const description = entry.description || entry.raw_text;
+              return (
+                <div
+                  key={`${entry.degree ?? "education"}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        {degreeLine || "Education entry"}
+                      </h3>
+                      {institution ? (
+                        <p className="text-xs text-slate-500">{institution}</p>
+                      ) : null}
+                    </div>
+                    {timeline ? (
+                      <span className="text-xs text-slate-500">
+                        {timeline}
+                      </span>
+                    ) : null}
+                  </div>
+                  {entry.grade ? (
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                      Grade: {entry.grade}
+                    </p>
+                  ) : null}
+                  {description ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                      {description}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : educationTextEntries.length > 0 ? (
+          <div className="space-y-3">
+            {educationTextEntries.map((entry, index) => (
+              <div
+                key={`education-line-${index}`}
+                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+              >
+                <p className="text-sm text-slate-600">{entry}</p>
+              </div>
+            ))}
+          </div>
         ) : (
           <p className="text-slate-500">No education details provided.</p>
+        )}
+      </DetailSection>
+
+      <DetailSection
+        title="Certifications"
+        badge={certificationsCount ? `${certificationsCount} added` : "Not set"}
+      >
+        {certificationEntries.length > 0 ? (
+          <div className="space-y-3">
+            {certificationEntries.map((entry, index) => {
+              const name = entry.name || entry.raw_text || "Certification";
+              const details = [entry.issuer, entry.issued_date]
+                .filter(Boolean)
+                .join(" • ");
+              return (
+                <div
+                  key={`${entry.name ?? "certification"}-${index}`}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    {name}
+                  </h3>
+                  {details ? (
+                    <p className="text-xs text-slate-500">{details}</p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ) : certificationTextEntries.length > 0 ? (
+          <div className="space-y-3">
+            {certificationTextEntries.map((entry, index) => (
+              <div
+                key={`certification-line-${index}`}
+                className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+              >
+                <p className="text-sm text-slate-600">{entry}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-slate-500">No certifications provided.</p>
         )}
       </DetailSection>
 
@@ -333,28 +508,6 @@ export default function CandidateDetailPanel({
         )}
       </DetailSection>
 
-      <DetailSection
-        title="Other details"
-        badge={otherDetailsCount ? `${otherDetailsCount} added` : "Not set"}
-      >
-        {(candidate.phone || joinedDate) ? (
-          <div className="space-y-2">
-            {candidate.phone && (
-              <p className="text-sm text-slate-600">
-                Phone: <span className="font-semibold">{candidate.phone}</span>
-              </p>
-            )}
-            {joinedDate && (
-              <p className="text-sm text-slate-600">
-                Joined:{" "}
-                <span className="font-semibold">{joinedDate}</span>
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-slate-500">No additional details provided.</p>
-        )}
-      </DetailSection>
     </div>
   );
 }

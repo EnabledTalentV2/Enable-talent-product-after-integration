@@ -25,15 +25,43 @@ import {
 } from "lucide-react";
 
 const fallbackText = "Data unavailable";
-const toTrimmed = (value?: string) => value?.trim() ?? "";
+const toTrimmed = (value?: unknown) => {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value).trim();
+  return "";
+};
 const withFallback = (value?: string) => {
   const trimmed = toTrimmed(value);
   return trimmed ? trimmed : fallbackText;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+const toYearDate = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  if (!trimmed) return "";
+  const match = trimmed.match(/\d{4}/);
+  return match ? `${match[0]}-01-01` : "";
+};
+const toDateValue = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  if (!trimmed) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  if (/^\d{4}$/.test(trimmed)) return `${trimmed}-01-01`;
+  return trimmed;
+};
+const toYearLabel = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  if (!trimmed) return "";
+  const match = trimmed.match(/\d{4}/);
+  return match ? match[0] : "";
+};
+
 export default function ProfilePage() {
   const rawUserData = useUserDataStore((s) => s.userData);
   const isProfileLoading = useCandidateProfileStore((s) => s.isLoading);
+  const candidateProfile = useCandidateProfileStore((s) => s.profile);
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -43,7 +71,7 @@ export default function ProfilePage() {
         ...initialUserData.workExperience,
         ...rawUserData?.workExperience,
       },
-      education: { ...initialUserData.education, ...rawUserData?.education },
+    education: { ...initialUserData.education, ...rawUserData?.education },
       skills: { ...initialUserData.skills, ...rawUserData?.skills },
       projects: { ...initialUserData.projects, ...rawUserData?.projects },
       achievements: {
@@ -111,7 +139,7 @@ export default function ProfilePage() {
       toTrimmed(project.projectDescription)
   );
   const primarySkills = (skills.primaryList ?? [])
-    .map(toTrimmed)
+    .map((skill) => toTrimmed(skill.name))
     .filter(Boolean);
   const certificationEntries = certification.entries.filter(
     (cert) =>
@@ -123,13 +151,74 @@ export default function ProfilePage() {
     toTrimmed(lang.language)
   );
   const jobTypeList = preference.jobType.map(toTrimmed).filter(Boolean);
-  const companySizeList = preference.companySize.map(toTrimmed).filter(Boolean);
   const desiredSalaryLabel = withFallback(otherDetails.desiredSalary);
-  const availabilityLabel = withFallback(otherDetails.availability);
-  const courseLabel = withFallback(education.courseName);
-  const majorLabel = withFallback(education.major);
-  const institutionLabel = withFallback(education.institution);
-  const graduationLabel = withFallback(education.graduationDate);
+  const availabilityValue = toTrimmed(otherDetails.availability).toLowerCase();
+  const availabilityLabel =
+    availabilityValue === "yes"
+      ? "Yes"
+      : availabilityValue === "no"
+        ? "No"
+        : withFallback(otherDetails.availability);
+  const educationEntries = useMemo(() => {
+    const profileRoot = isRecord(candidateProfile) ? candidateProfile : null;
+    const verifiedProfile = isRecord(profileRoot?.verified_profile)
+      ? profileRoot?.verified_profile
+      : isRecord(profileRoot?.verifiedProfile)
+      ? profileRoot?.verifiedProfile
+      : null;
+    const rawEducation = Array.isArray(verifiedProfile?.education)
+      ? verifiedProfile.education
+      : Array.isArray(profileRoot?.education)
+      ? profileRoot.education
+      : [];
+    const mapped = rawEducation
+      .filter(isRecord)
+      .map((entry) => ({
+        id: entry.id ?? entry.education_id ?? entry.educationId,
+        courseName: toTrimmed(
+          entry.course_name ?? entry.courseName ?? entry.degree ?? entry.course
+        ),
+        major: toTrimmed(entry.major ?? entry.field_of_study),
+        institution: toTrimmed(entry.institution ?? entry.school),
+        graduationDate:
+          toDateValue(
+            typeof entry.graduation_date === "string"
+              ? entry.graduation_date
+              : typeof entry.graduationDate === "string"
+              ? entry.graduationDate
+              : typeof entry.end_date === "string"
+              ? entry.end_date
+              : typeof entry.to === "string"
+              ? entry.to
+              : undefined
+          ) ||
+          toYearDate(
+            typeof entry.end_year === "string" || typeof entry.end_year === "number"
+              ? String(entry.end_year)
+              : typeof entry.graduation_year === "string" ||
+                typeof entry.graduation_year === "number"
+              ? String(entry.graduation_year)
+              : undefined
+          ),
+      }))
+      .filter(
+        (entry) =>
+          entry.courseName || entry.major || entry.institution || entry.graduationDate
+      );
+    if (mapped.length > 0) return mapped;
+    return [
+      {
+        id: undefined,
+        courseName: toTrimmed(education.courseName),
+        major: toTrimmed(education.major),
+        institution: toTrimmed(education.institution),
+        graduationDate: toDateValue(education.graduationDate),
+      },
+    ].filter(
+      (entry) =>
+        entry.courseName || entry.major || entry.institution || entry.graduationDate
+    );
+  }, [candidateProfile, education]);
 
   if (isProfileLoading) {
     return <CandidateProfileSkeleton />;
@@ -306,28 +395,51 @@ export default function ProfilePage() {
             )}
           </section>
 
-          {/* Education */}
-          <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <GraduationCap className="text-orange-600" />
-              <h2 className="text-xl font-bold text-slate-900">Education</h2>
-            </div>
-            <div className="space-y-6">
-              <div className="flex justify-between items-start flex-wrap gap-2">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-lg">
-                    {courseLabel} in {majorLabel}
-                  </h3>
-                  <p className="text-slate-600 font-medium">
-                    {institutionLabel}
-                  </p>
-                </div>
-                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                  Graduated: {graduationLabel}
-                </span>
+            {/* Education */}
+            <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3 mb-6">
+                <GraduationCap className="text-orange-600" />
+                <h2 className="text-xl font-bold text-slate-900">Education</h2>
               </div>
-            </div>
-          </section>
+              {educationEntries.length > 0 ? (
+                <div className="space-y-6">
+                  {educationEntries.map((entry, index) => {
+                    const courseLabel = withFallback(entry.courseName);
+                    const majorLabel = withFallback(entry.major);
+                    const institutionLabel = withFallback(entry.institution);
+                    const graduationYear = toYearLabel(entry.graduationDate);
+                    const graduationLabel = graduationYear
+                      ? graduationYear
+                      : withFallback(entry.graduationDate);
+
+                    return (
+                      <div
+                        key={
+                          typeof entry.id === "string" || typeof entry.id === "number"
+                            ? String(entry.id)
+                            : `${entry.courseName}-${index}`
+                        }
+                        className="flex justify-between items-start flex-wrap gap-2"
+                      >
+                        <div>
+                          <h3 className="font-bold text-slate-800 text-lg">
+                            {courseLabel} in {majorLabel}
+                          </h3>
+                          <p className="text-slate-600 font-medium">
+                            {institutionLabel}
+                          </p>
+                        </div>
+                        <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                          Graduated: {graduationLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-slate-500">No education details provided.</p>
+              )}
+            </section>
         </div>
 
         {/* Right Column */}
@@ -468,30 +580,10 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Company Size
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {companySizeList.length > 0 ? (
-                    companySizeList.map((size, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs font-medium bg-slate-100 text-slate-700 px-2 py-1 rounded-md"
-                      >
-                        {size}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-slate-500">
-                      {fallbackText}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="pt-2 border-t border-slate-50">
-                <p className="text-sm text-slate-600">
-                  <span className="font-bold text-slate-800">
-                    Desired Salary:
+                <div className="pt-2 border-t border-slate-50">
+                  <p className="text-sm text-slate-600">
+                    <span className="font-bold text-slate-800">
+                      Desired Salary:
                   </span>{" "}
                   {desiredSalaryLabel}
                 </p>
@@ -503,6 +595,7 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+          </div>
           </section>
         </div>
       </div>

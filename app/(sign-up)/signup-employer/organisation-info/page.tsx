@@ -116,6 +116,8 @@ export default function OrganisationInfoPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const orgNameRef = useRef<HTMLInputElement | null>(null);
   const aboutRef = useRef<HTMLTextAreaElement | null>(null);
   const locationRef = useRef<HTMLInputElement | null>(null);
@@ -166,6 +168,37 @@ export default function OrganisationInfoPage() {
       delete next[field];
       return next;
     });
+  };
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setSubmitError("Please select a valid image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setSubmitError("Image size must be less than 5MB");
+      return;
+    }
+
+    setAvatarFile(file);
+    setSubmitError(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -238,6 +271,9 @@ export default function OrganisationInfoPage() {
       if (trimmedLinkedin) {
         formData.append("linkedin_url", trimmedLinkedin);
       }
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
 
       const orgData = await apiRequest<unknown>("/api/organizations", {
         method: "POST",
@@ -286,30 +322,44 @@ export default function OrganisationInfoPage() {
               </div>
 
               <div className="relative z-10 flex flex-col gap-4">
-                <div className="relative h-24 w-24 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
-                  <Image
-                    src={defaultImage}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute bottom-1 right-1 h-5 w-5 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center">
+                <div className="relative h-24 w-24">
+                  <div className="h-24 w-24 rounded-full border-4 border-white bg-gray-200 overflow-hidden">
+                    <Image
+                      src={avatarPreview || defaultImage}
+                      alt="Organization Logo"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+
+                  {/* Upload button overlay */}
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors"
+                    title="Upload organization logo"
+                  >
                     <svg
-                      width="10"
-                      height="8"
-                      viewBox="0 0 10 8"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
-                        d="M1 4L3.5 6.5L9 1"
+                        d="M7 1V13M1 7H13"
                         stroke="white"
-                        strokeWidth="1.5"
+                        strokeWidth="2"
                         strokeLinecap="round"
-                        strokeLinejoin="round"
                       />
                     </svg>
-                  </div>
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleAvatarChange}
+                  />
                 </div>
 
                 <div>
@@ -317,6 +367,9 @@ export default function OrganisationInfoPage() {
                   <h2 className="text-3xl font-bold text-black">
                     {welcomeName}
                   </h2>
+                  <p className="text-sm text-gray-700 mt-2">
+                    Click + to upload logo
+                  </p>
                 </div>
               </div>
             </div>

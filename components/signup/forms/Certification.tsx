@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import InputBlock from "./InputBlock";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
 import type { UserData } from "@/lib/types/user";
 
 type Entry = UserData["certification"]["entries"][number];
@@ -15,6 +17,7 @@ type Props = {
   onEntryChange: (index: number, patch: Partial<Entry>) => void;
   onAddEntry: () => void;
   onRemoveEntry?: (index: number) => void;
+  suppressDeleteWarning?: boolean;
 };
 
 export default function Certification({
@@ -24,9 +27,12 @@ export default function Certification({
   onEntryChange,
   onAddEntry,
   onRemoveEntry,
+  suppressDeleteWarning = false,
 }: Props) {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const entries = data.entries;
   const isNone = data.noCertification;
+  const showDeleteWarning = !suppressDeleteWarning && isNone && entries.length > 0;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
@@ -34,8 +40,39 @@ export default function Certification({
       )
     : 0;
 
+  const handleToggleNoCertification = (checked: boolean) => {
+    if (!suppressDeleteWarning && checked && entries.length > 0) {
+      // Show accessible confirmation dialog instead of window.confirm
+      // WCAG 4.1.2: Proper role and ARIA attributes for dialogs
+      setShowConfirmDialog(true);
+      return;
+    }
+    onToggleNoCertification(checked);
+  };
+
+  const handleConfirmNoCertification = () => {
+    setShowConfirmDialog(false);
+    onToggleNoCertification(true);
+  };
+
+  const handleCancelDialog = () => {
+    setShowConfirmDialog(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Accessible confirmation dialog - WCAG 4.1.2 compliant */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title="Remove Certifications?"
+        message="Choosing 'no certification' will remove your existing certifications when you save. Are you sure you want to continue?"
+        confirmLabel="Yes, remove"
+        cancelLabel="Keep certifications"
+        variant="warning"
+        onConfirm={handleConfirmNoCertification}
+        onCancel={handleCancelDialog}
+      />
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Certifications</h3>
         {errorCount > 0 && !isNone ? (
@@ -50,7 +87,7 @@ export default function Certification({
           id="cert-noCertification"
           type="checkbox"
           checked={Boolean(data.noCertification)}
-          onChange={(e) => onToggleNoCertification(e.target.checked)}
+          onChange={(e) => handleToggleNoCertification(e.target.checked)}
           className="h-4 w-4 accent-orange-600 border-gray-300 rounded"
         />
         <span>No certification</span>
@@ -59,6 +96,12 @@ export default function Certification({
         Don&apos;t have any certifications? Tick &quot;No certification&quot; to
         skip this step.
       </p>
+      {showDeleteWarning ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Warning: saving with no certification will delete your existing
+          certifications.
+        </div>
+      ) : null}
 
       {isNone ? (
         <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
@@ -95,6 +138,7 @@ export default function Certification({
                 <InputBlock
                   id={`cert-${idx}-name`}
                   label="Name of certification"
+                  required
                   value={entry.name}
                   onChange={(v) => onEntryChange(idx, { name: v })}
                   placeholder="Design Thinking for Innovation"
@@ -113,8 +157,18 @@ export default function Certification({
                 />
 
                 <InputBlock
+                  id={`cert-${idx}-expiryDate`}
+                  label="Expiry Date"
+                  value={entry.expiryDate ?? ""}
+                  onChange={(v) => onEntryChange(idx, { expiryDate: v })}
+                  placeholder="Aug 2026"
+                  error={Boolean(entryErrors.expiryDate)}
+                  errorMessage={entryErrors.expiryDate}
+                />
+
+                <InputBlock
                   id={`cert-${idx}-organization`}
-                  label="Issued organization"
+                  label="Issuing organization"
                   value={entry.organization}
                   onChange={(v) => onEntryChange(idx, { organization: v })}
                   placeholder="University of Virginia"
@@ -129,7 +183,7 @@ export default function Certification({
                       credentialError ? "text-red-600" : "text-slate-700"
                     }`}
                   >
-                    Credential ID/URL
+                    Credential URL
                   </label>
                   <div
                     className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${
@@ -145,7 +199,7 @@ export default function Certification({
                       onChange={(e) =>
                         onEntryChange(idx, { credentialIdUrl: e.target.value })
                       }
-                      placeholder="Enter credential id or url"
+                      placeholder="Enter credential url"
                       className="w-full bg-transparent outline-none"
                     />
                     {credentialError ? (

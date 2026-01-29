@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect } from "react";
 import { ArrowRight, Pencil } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
@@ -67,9 +68,11 @@ export default function EmployerCompanyProfilePage() {
     employees: organizationInfo.companySize || "Company size not set",
     website: organizationInfo.website || "",
     linkedin: organizationInfo.linkedinUrl || "",
+    avatarUrl: organizationInfo.avatarUrl || "",
   };
   const hasWebsite = Boolean(displayData.website.trim());
   const hasLinkedin = Boolean(displayData.linkedin.trim());
+  const hasAvatar = Boolean(displayData.avatarUrl.trim());
 
   return (
     <section className="mx-auto max-w-[1200px] space-y-6 py-8 px-6 ">
@@ -79,6 +82,19 @@ export default function EmployerCompanyProfilePage() {
         <div className="absolute -right-20 -top-40 h-[400px] w-[400px] rounded-full border-[40px] border-white/20" />
 
         <div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-center">
+          {/* Organization Avatar */}
+          {hasAvatar && (
+            <div className="h-24 w-24 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg shrink-0">
+              <Image
+                src={displayData.avatarUrl}
+                alt={displayData.name}
+                width={96}
+                height={96}
+                className="object-cover w-full h-full"
+              />
+            </div>
+          )}
+
           <div className="flex-1 space-y-1">
             <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
               {displayData.name}

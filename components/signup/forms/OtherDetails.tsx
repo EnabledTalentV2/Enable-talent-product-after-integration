@@ -15,6 +15,7 @@ type Errors = {
 type Props = {
   data: UserData["otherDetails"];
   errors?: Errors;
+  hideCareerStage?: boolean;
   onChange: (
     patch: Partial<
       Pick<
@@ -31,6 +32,7 @@ type Props = {
 export default function OtherDetails({
   data,
   errors,
+  hideCareerStage = false,
   onChange,
   onLanguageChange,
   onAddLanguage,
@@ -44,7 +46,7 @@ export default function OtherDetails({
     }`;
 
   const errorCount =
-    (errors?.careerStage ? 1 : 0) +
+    (hideCareerStage ? 0 : errors?.careerStage ? 1 : 0) +
     (errors?.availability ? 1 : 0) +
     (errors?.desiredSalary ? 1 : 0) +
     (errors?.languages
@@ -74,12 +76,8 @@ export default function OtherDetails({
   const proficiencyOptions = ["Basic", "Intermediate", "Proficient", "Fluent"];
 
   const availabilityOptions = [
-    "Immediately / Available now",
-    "Within 1 week",
-    "2 weeks (standard notice period)",
-    "3–4 weeks",
-    "2–3 months",
-    "More than 3 months",
+    { label: "Yes", value: "yes" },
+    { label: "No", value: "no" },
   ];
 
   const desiredSalaryOptions = [
@@ -117,6 +115,11 @@ export default function OtherDetails({
                   }`}
                 >
                   Language
+                  <span aria-hidden="true" className="text-red-600">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only"> (required)</span>
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-language`}
@@ -124,6 +127,7 @@ export default function OtherDetails({
                   onChange={(e) =>
                     onLanguageChange(idx, { language: e.target.value })
                   }
+                  aria-required="true"
                   className={selectClass(Boolean(entryErrors.language))}
                 >
                   <option value="">Select</option>
@@ -146,6 +150,11 @@ export default function OtherDetails({
                   }`}
                 >
                   Speaking
+                  <span aria-hidden="true" className="text-red-600">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only"> (required)</span>
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-speaking`}
@@ -153,6 +162,7 @@ export default function OtherDetails({
                   onChange={(e) =>
                     onLanguageChange(idx, { speaking: e.target.value })
                   }
+                  aria-required="true"
                   className={selectClass(Boolean(entryErrors.speaking))}
                 >
                   <option value="">Select</option>
@@ -175,6 +185,11 @@ export default function OtherDetails({
                   }`}
                 >
                   Reading
+                  <span aria-hidden="true" className="text-red-600">
+                    {" "}
+                    *
+                  </span>
+                  <span className="sr-only"> (required)</span>
                 </label>
                 <select
                   id={`otherDetails-lang-${idx}-reading`}
@@ -182,6 +197,7 @@ export default function OtherDetails({
                   onChange={(e) =>
                     onLanguageChange(idx, { reading: e.target.value })
                   }
+                  aria-required="true"
                   className={selectClass(Boolean(entryErrors.reading))}
                 >
                   <option value="">Select</option>
@@ -205,6 +221,11 @@ export default function OtherDetails({
                     }`}
                   >
                     Writing
+                    <span aria-hidden="true" className="text-red-600">
+                      {" "}
+                      *
+                    </span>
+                    <span className="sr-only"> (required)</span>
                   </label>
                   {onRemoveLanguage && data.languages.length > 1 ? (
                     <button
@@ -223,6 +244,7 @@ export default function OtherDetails({
                   onChange={(e) =>
                     onLanguageChange(idx, { writing: e.target.value })
                   }
+                  aria-required="true"
                   className={selectClass(Boolean(entryErrors.writing))}
                 >
                   <option value="">Select</option>
@@ -250,32 +272,40 @@ export default function OtherDetails({
         </button>
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="otherDetails-careerStage"
-          className={`block text-base font-medium ${
-            errors?.careerStage ? "text-red-600" : "text-slate-700"
-          }`}
-        >
-          How would you identify your career stage (choose best option)
-        </label>
-        <select
-          id="otherDetails-careerStage"
-          value={data.careerStage}
-          onChange={(e) => onChange({ careerStage: e.target.value })}
-          className={selectClass(Boolean(errors?.careerStage))}
-        >
-          <option value="">Select</option>
-          {careerStageOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        {errors?.careerStage ? (
-          <p className="text-sm text-red-600">{errors.careerStage}</p>
-        ) : null}
-      </div>
+      {!hideCareerStage ? (
+        <div className="space-y-2">
+          <label
+            htmlFor="otherDetails-careerStage"
+            className={`block text-base font-medium ${
+              errors?.careerStage ? "text-red-600" : "text-slate-700"
+            }`}
+          >
+            How would you identify your career stage (choose best option)
+            <span aria-hidden="true" className="text-red-600">
+              {" "}
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <select
+            id="otherDetails-careerStage"
+            value={data.careerStage}
+            onChange={(e) => onChange({ careerStage: e.target.value })}
+            aria-required="true"
+            className={selectClass(Boolean(errors?.careerStage))}
+          >
+            <option value="">Select</option>
+            {careerStageOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          {errors?.careerStage ? (
+            <p className="text-sm text-red-600">{errors.careerStage}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <label
@@ -285,19 +315,33 @@ export default function OtherDetails({
           }`}
         >
           {availabilityError ||
-            "What is your earliest availability for any full-time opportunities that may come from the Enabled Talent Access Service?"}
+            "Are you available immediately for any full-time opportunities that may come from the Enabled Talent Access Service?"}
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <div className="relative">
           <select
             id="otherDetails-availability"
-            value={data.availability}
+            value={(() => {
+              const raw = data.availability.trim().toLowerCase();
+              if (!raw) return "";
+              if (raw === "yes" || raw === "no") return raw;
+              if (raw.includes("immediately") || raw.includes("available now")) {
+                return "yes";
+              }
+              return "no";
+            })()}
             onChange={(e) => onChange({ availability: e.target.value })}
+            aria-required="true"
             className={`${selectClass(Boolean(availabilityError))} pr-10`}
           >
-            <option value="">Select availability</option>
+            <option value="">Select</option>
             {availabilityOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -315,11 +359,17 @@ export default function OtherDetails({
           }`}
         >
           Desired salary (CAD)
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="otherDetails-desiredSalary"
           value={data.desiredSalary}
           onChange={(e) => onChange({ desiredSalary: e.target.value })}
+          aria-required="true"
           className={selectClass(Boolean(errors?.desiredSalary))}
         >
           <option value="">Select</option>
@@ -336,3 +386,4 @@ export default function OtherDetails({
     </div>
   );
 }
+

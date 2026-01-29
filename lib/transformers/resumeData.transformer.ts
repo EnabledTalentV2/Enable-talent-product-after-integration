@@ -207,6 +207,8 @@ type Certification = {
   date?: string;
   expiry_date?: string;
   expiryDate?: string;
+  expiration_date?: string;
+  expirationDate?: string;
   credential_id?: string;
   credentialId?: string;
   credential_url?: string;
@@ -283,6 +285,21 @@ const toStringArray = (value: unknown): string[] => {
   return [];
 };
 
+const normalizeWorkMode = (value: string): string => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized.includes("remote")) return "Remote";
+  if (normalized.includes("hybrid")) return "Hybrid";
+  if (
+    normalized.includes("on-site") ||
+    normalized.includes("onsite") ||
+    normalized.includes("on site")
+  ) {
+    return "Onsite";
+  }
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 /**
  * Helper: Split full name into first and last name
  */
@@ -299,13 +316,20 @@ const splitFullName = (fullName: string): { firstName: string; lastName: string 
 /**
  * Helper: Normalize skills from string or array to required format
  */
-const normalizeSkills = (value: unknown): { skills: string; primaryList: string[] } => {
+type SkillEntry = { name: string; level: "basic" | "intermediate" | "advanced" };
+
+const normalizeSkills = (value: unknown): { skills: string; primaryList: SkillEntry[] } => {
+  const toSkillEntry = (name: string): SkillEntry => ({
+    name,
+    level: "intermediate",
+  });
+
   if (Array.isArray(value)) {
     const list = value
       .filter((entry): entry is string => typeof entry === "string")
       .map((entry) => entry.trim())
       .filter(Boolean);
-    return { skills: list.join(", "), primaryList: list };
+    return { skills: list.join(", "), primaryList: list.map(toSkillEntry) };
   }
 
   if (typeof value === "string") {
@@ -314,7 +338,10 @@ const normalizeSkills = (value: unknown): { skills: string; primaryList: string[
       .split(/[,;\n]+/)
       .map((entry) => entry.trim())
       .filter(Boolean);
-    return { skills: text, primaryList: list.length > 0 ? list : text ? [text] : [] };
+    return {
+      skills: text,
+      primaryList: list.length > 0 ? list.map(toSkillEntry) : text ? [toSkillEntry(text)] : [],
+    };
   }
 
   return { skills: "", primaryList: [] };
@@ -674,6 +701,12 @@ const transformCertifications = (
       const issueDate = formatDate(
         cert.issue_date || cert.issueDate || cert.date
       );
+      const expiryDate = formatDate(
+        cert.expiry_date ||
+          cert.expiryDate ||
+          cert.expiration_date ||
+          cert.expirationDate
+      );
       const credentialIdUrl = extractText(
         cert.credential_url || cert.credentialUrl || cert.url || cert.credential_id || cert.credentialId
       );
@@ -684,6 +717,7 @@ const transformCertifications = (
         name,
         organization,
         issueDate,
+        expiryDate,
         credentialIdUrl,
       };
     })
@@ -820,7 +854,9 @@ const transformPreference = (
   const additionalInfo = getAdditionalInfo(data);
   const jobSearch = toStringArray(
     data.preferred_work_mode || additionalInfo?.preferred_work_mode
-  );
+  )
+    .map(normalizeWorkMode)
+    .filter(Boolean);
 
   if (jobSearch.length > 0) {
     return { jobSearch };

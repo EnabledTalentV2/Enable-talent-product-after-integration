@@ -51,6 +51,7 @@ export type UserData = {
   workExperience: {
     experienceType: "experienced" | "fresher";
     entries: Array<{
+      id?: number | string;
       company: string;
       role: string;
       from: string;
@@ -59,10 +60,18 @@ export type UserData = {
       description: string;
     }>;
   };
-  skills: { skills: string; primaryList?: string[] };
+  skills: {
+    skills: string;
+    primaryList?: Array<{
+      id?: number | string;
+      name: string;
+      level: "basic" | "intermediate" | "advanced";
+    }>;
+  };
   projects: {
     noProjects: boolean;
     entries: Array<{
+      id?: number | string;
       projectName: string;
       projectDescription: string;
       current: boolean;
@@ -72,6 +81,7 @@ export type UserData = {
   };
   achievements: {
     entries: Array<{
+      id?: number | string;
       title: string;
       issueDate: string;
       description: string;
@@ -80,8 +90,10 @@ export type UserData = {
   certification: {
     noCertification: boolean;
     entries: Array<{
+      id?: number | string;
       name: string;
       issueDate: string;
+      expiryDate?: string;
       organization: string;
       credentialIdUrl: string;
     }>;
@@ -90,6 +102,8 @@ export type UserData = {
     companySize: string[];
     jobType: string[];
     jobSearch: string[];
+    willingToRelocate: boolean;
+    hasWorkVisa: boolean | null;
   };
   otherDetails: {
     languages: Array<{

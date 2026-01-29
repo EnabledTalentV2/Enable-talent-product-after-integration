@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Briefcase,
@@ -22,7 +28,10 @@ import SuccessModal from "@/components/employer/candidates/SuccessModal";
 import Pagination from "@/components/ui/Pagination";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { emptyJobStats, toJobHeaderInfo } from "@/lib/employerJobsUtils";
-import { useCandidateProfiles, useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
+import {
+  useCandidateProfiles,
+  useCandidateProfile,
+} from "@/lib/hooks/useCandidateProfiles";
 import { useAIRanking } from "@/lib/hooks/useAIRanking";
 import type { CandidateProfile } from "@/lib/types/candidateProfile";
 import type { Application } from "@/components/employer/candidates/ApplicantsList";
@@ -31,22 +40,76 @@ const TABS = [
   { id: "ai_ranking", label: "AI Ranking", status: null },
   { id: "applicants", label: "Applicants", status: "applied" },
   { id: "shortlisted", label: "Shortlisted", status: "shortlisted" },
-  { id: "declined", label: "Declined", status: "rejected" },
+  { id: "declined", label: "Rejected", status: "rejected" },
   { id: "hired", label: "Hired", status: "hired" },
   { id: "request_sent", label: "Request sent", status: "request_sent" },
 ] as const;
 
 const ITEMS_PER_PAGE = 10;
 
+const DEFAULT_JOB_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Temporary",
+  "Freelance",
+];
+
+const DEFAULT_WORK_ARRANGEMENTS = [
+  "Remote",
+  "Hybrid",
+  "On-site",
+  "In-person",
+  "Flexible",
+];
+
+const normalizeFilterValue = (value?: string) =>
+  value ? value.toLowerCase().replace(/[\s_-]+/g, "") : "";
+
+const mergeOptions = (
+  defaults: string[],
+  values: Array<string | undefined>
+) => {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (value?: string) => {
+    if (!value) return;
+    const key = normalizeFilterValue(value);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(value);
+  };
+
+  defaults.forEach(add);
+  values.forEach(add);
+
+  return result;
+};
+
+type CandidateFilters = {
+  availability: string[];
+  jobType: string[];
+  workArrangement: string[];
+  verifiedOnly: boolean;
+};
+
 const STATUS_BADGES: Record<
   Application["status"],
   { label: string; className: string }
 > = {
   applied: { label: "Applied", className: "bg-blue-50 text-blue-700" },
-  shortlisted: { label: "Shortlisted", className: "bg-emerald-50 text-emerald-700" },
-  rejected: { label: "Declined", className: "bg-rose-50 text-rose-700" },
+  shortlisted: {
+    label: "Shortlisted",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  rejected: { label: "Rejected", className: "bg-rose-50 text-rose-700" },
   hired: { label: "Hired", className: "bg-green-50 text-green-700" },
-  request_sent: { label: "Request sent", className: "bg-orange-50 text-orange-700" },
+  request_sent: {
+    label: "Request sent",
+    className: "bg-orange-50 text-orange-700",
+  },
 };
 
 const formatDate = (dateString?: string) => {
@@ -60,38 +123,6 @@ const formatDate = (dateString?: string) => {
   });
 };
 
-const hasValue = (value: unknown) => {
-  if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === "number") return !Number.isNaN(value);
-  if (typeof value === "string") return value.trim().length > 0;
-  return Boolean(value);
-};
-
-const getCandidateProfileScore = (candidate: CandidateProfile) => {
-  const fields = [
-    candidate.bio,
-    candidate.location,
-    candidate.resume_url,
-    candidate.resume_parsed?.summary,
-    candidate.resume_parsed?.skills?.length,
-    candidate.resume_parsed?.experience,
-    candidate.resume_parsed?.education,
-    candidate.job_type,
-    candidate.work_arrangement,
-    candidate.availability,
-    candidate.salary_min ?? candidate.salary_max,
-    candidate.linkedin,
-    candidate.github,
-    candidate.portfolio,
-    candidate.video_pitch,
-  ];
-
-  const filled = fields.filter(hasValue).length;
-  if (!fields.length) return 0;
-  const score = Math.round((filled / fields.length) * 100);
-  return Math.max(35, score);
-};
-
 const getRankingScorePercent = (score: number) =>
   score > 1 ? Math.round(score) : Math.round(score * 100);
 
@@ -103,7 +134,7 @@ const getRankingBadge = (scorePercent: number, index: number) => {
 };
 
 const fetchApplications = async (
-  jobId: string
+  jobId: string,
 ): Promise<{ data: Application[]; error?: string }> => {
   try {
     const response = await fetch(`/api/jobs/${jobId}/applications`);
@@ -111,14 +142,16 @@ const fetchApplications = async (
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage =
-        errorData.error || `HTTP ${response.status}: Failed to fetch applications`;
+        errorData.error ||
+        `HTTP ${response.status}: Failed to fetch applications`;
       return { data: [], error: errorMessage };
     }
 
     const data = await response.json();
     return { data, error: undefined };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Network error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Network error";
     return { data: [], error: errorMessage };
   }
 };
@@ -126,7 +159,9 @@ const fetchApplications = async (
 export default function CandidatesPage() {
   const router = useRouter();
   const params = useParams();
-  const jobIdParam = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId;
+  const jobIdParam = Array.isArray(params.jobId)
+    ? params.jobId[0]
+    : params.jobId;
   const currentJobId = typeof jobIdParam === "string" ? jobIdParam : "";
   const {
     jobs,
@@ -143,17 +178,28 @@ export default function CandidatesPage() {
   const [activeTab, setActiveTab] =
     useState<(typeof TABS)[number]["id"]>("ai_ranking");
   const [allApplications, setAllApplications] = useState<Application[]>([]);
-  const [applicationsError, setApplicationsError] = useState<string | undefined>();
+  const [applicationsError, setApplicationsError] = useState<
+    string | undefined
+  >();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(
-    null
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<CandidateFilters>({
+    availability: [],
+    jobType: [],
+    workArrangement: [],
+    verifiedOnly: false,
+  });
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    number | null
+  >(null);
+  const [selectedRankingId, setSelectedRankingId] = useState<number | null>(
+    null,
   );
-  const [selectedRankingId, setSelectedRankingId] = useState<number | null>(null);
-  const [selectedCandidateSlug, setSelectedCandidateSlug] = useState<string | null>(
-    null
-  );
+  const [selectedCandidateSlug, setSelectedCandidateSlug] = useState<
+    string | null
+  >(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const didMountRef = useRef(false);
@@ -167,6 +213,33 @@ export default function CandidatesPage() {
     return map;
   }, [candidateProfiles]);
 
+  const availabilityOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.availability);
+    return mergeOptions([], values).sort();
+  }, [candidateProfiles]);
+
+  const jobTypeOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.job_type);
+    return mergeOptions(DEFAULT_JOB_TYPES, values);
+  }, [candidateProfiles]);
+
+  const workArrangementOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.work_arrangement);
+    return mergeOptions(DEFAULT_WORK_ARRANGEMENTS, values);
+  }, [candidateProfiles]);
+
+  const hasActiveFilters =
+    filters.verifiedOnly ||
+    filters.availability.length > 0 ||
+    filters.jobType.length > 0 ||
+    filters.workArrangement.length > 0;
+
+  const activeFilterCount =
+    filters.availability.length +
+    filters.jobType.length +
+    filters.workArrangement.length +
+    (filters.verifiedOnly ? 1 : 0);
+
   const {
     isRanking,
     rankingStatus,
@@ -178,8 +251,11 @@ export default function CandidatesPage() {
     clearError,
   } = useAIRanking();
 
-  const { data: selectedCandidateProfile, isLoading: isCandidateLoading, error: candidateError } =
-    useCandidateProfile(selectedCandidateSlug || "");
+  const {
+    data: selectedCandidateProfile,
+    isLoading: isCandidateLoading,
+    error: candidateError,
+  } = useCandidateProfile(selectedCandidateSlug || "");
 
   const filteredApplications = useMemo(() => {
     const currentTabConfig = TABS.find((tab) => tab.id === activeTab);
@@ -199,9 +275,42 @@ export default function CandidatesPage() {
       const roleMatch =
         profile?.job_type?.toLowerCase().includes(query) ||
         profile?.work_arrangement?.toLowerCase().includes(query);
-      return nameMatch || emailMatch || locationMatch || roleMatch;
+      const matchesQuery =
+        nameMatch || emailMatch || locationMatch || roleMatch;
+
+      if (!matchesQuery) return false;
+
+      if (filters.verifiedOnly && !profile?.is_verified) {
+        return false;
+      }
+
+      if (filters.availability.length > 0) {
+        const availability = normalizeFilterValue(profile?.availability);
+        const matchesAvailability = filters.availability.some(
+          (value) => normalizeFilterValue(value) === availability
+        );
+        if (!matchesAvailability) return false;
+      }
+
+      if (filters.jobType.length > 0) {
+        const jobType = normalizeFilterValue(profile?.job_type);
+        const matchesJobType = filters.jobType.some(
+          (value) => normalizeFilterValue(value) === jobType
+        );
+        if (!matchesJobType) return false;
+      }
+
+      if (filters.workArrangement.length > 0) {
+        const workArrangement = normalizeFilterValue(profile?.work_arrangement);
+        const matchesArrangement = filters.workArrangement.some(
+          (value) => normalizeFilterValue(value) === workArrangement
+        );
+        if (!matchesArrangement) return false;
+      }
+
+      return true;
     });
-  }, [allApplications, activeTab, searchQuery, candidateProfilesBySlug]);
+  }, [allApplications, activeTab, searchQuery, candidateProfilesBySlug, filters]);
 
   const totalItems = filteredApplications.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -214,14 +323,17 @@ export default function CandidatesPage() {
 
   const selectedApplication = useMemo(() => {
     if (!selectedApplicationId) return null;
-    return filteredApplications.find((app) => app.id === selectedApplicationId) ?? null;
+    return (
+      filteredApplications.find((app) => app.id === selectedApplicationId) ??
+      null
+    );
   }, [filteredApplications, selectedApplicationId]);
 
   const selectedRankedCandidate = useMemo(() => {
     if (!selectedRankingId) return null;
     return (
       rankedCandidates.find(
-        (candidate) => candidate.candidate_id === selectedRankingId
+        (candidate) => candidate.candidate_id === selectedRankingId,
       ) ?? null
     );
   }, [rankedCandidates, selectedRankingId]);
@@ -230,11 +342,16 @@ export default function CandidatesPage() {
     if (activeTab === "ai_ranking") {
       return selectedRankingId ? `ranking-${selectedRankingId}` : null;
     }
-    return selectedApplicationId ? `application-${selectedApplicationId}` : null;
+    return selectedApplicationId
+      ? `application-${selectedApplicationId}`
+      : null;
   }, [activeTab, selectedRankingId, selectedApplicationId]);
 
   const profileHref = useMemo(() => {
-    if (!selectedCandidateProfile || selectedCandidateProfile.slug !== selectedCandidateSlug) {
+    if (
+      !selectedCandidateProfile ||
+      selectedCandidateProfile.slug !== selectedCandidateSlug
+    ) {
       return undefined;
     }
     const applicationId =
@@ -256,13 +373,16 @@ export default function CandidatesPage() {
 
   const canSendInvites = useMemo(
     () => activeTab === "ai_ranking" || activeTab === "shortlisted",
-    [activeTab]
+    [activeTab],
   );
 
   const jobStats = useMemo(() => {
     const stats = emptyJobStats();
     allApplications.forEach((application) => {
-      if (application.status === "shortlisted" || application.status === "hired") {
+      if (
+        application.status === "shortlisted" ||
+        application.status === "hired"
+      ) {
         stats.accepted += 1;
       } else if (application.status === "rejected") {
         stats.declined += 1;
@@ -325,7 +445,7 @@ export default function CandidatesPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, filters]);
 
   useEffect(() => {
     setSelectedCandidateSlug(null);
@@ -342,7 +462,7 @@ export default function CandidatesPage() {
     }
 
     const selected = paginatedApplications.find(
-      (app) => app.id === selectedApplicationId
+      (app) => app.id === selectedApplicationId,
     );
     if (selected) {
       setSelectedCandidateSlug(selected.candidate.slug);
@@ -363,7 +483,7 @@ export default function CandidatesPage() {
     }
 
     const selected = rankedCandidates.find(
-      (candidate) => candidate.candidate_id === selectedRankingId
+      (candidate) => candidate.candidate_id === selectedRankingId,
     );
     if (selected) {
       setSelectedCandidateSlug(selected.candidate_slug ?? null);
@@ -408,6 +528,32 @@ export default function CandidatesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const toggleFilter = useCallback(
+    (key: keyof Omit<CandidateFilters, "verifiedOnly">, value: string) => {
+      setFilters((prev) => {
+        const currentValues = prev[key];
+        const nextValues = currentValues.includes(value)
+          ? currentValues.filter((item) => item !== value)
+          : [...currentValues, value];
+        return { ...prev, [key]: nextValues };
+      });
+    },
+    []
+  );
+
+  const handleVerifiedToggle = useCallback(() => {
+    setFilters((prev) => ({ ...prev, verifiedOnly: !prev.verifiedOnly }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      availability: [],
+      jobType: [],
+      workArrangement: [],
+      verifiedOnly: false,
+    });
+  }, []);
+
   const handleInviteClick = useCallback(() => {
     if (!hasFetched && !isJobsLoading) {
       fetchJobs();
@@ -442,9 +588,6 @@ export default function CandidatesPage() {
   const isProfileReady =
     Boolean(selectedCandidateProfile) &&
     selectedCandidateProfile?.slug === selectedCandidateSlug;
-  const selectedProfileScore = isProfileReady
-    ? getCandidateProfileScore(selectedCandidateProfile as CandidateProfile)
-    : 0;
 
   return (
     <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
@@ -490,12 +633,151 @@ export default function CandidatesPage() {
                   </div>
                   <button
                     type="button"
+                    onClick={() => setIsFiltersOpen((prev) => !prev)}
+                    aria-expanded={isFiltersOpen}
+                    aria-controls="job-candidate-filters"
                     className="flex items-center gap-2 rounded-xl bg-[#D95F35] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B84D28]"
                   >
                     <SlidersHorizontal className="h-4 w-4" />
-                    Filters
+                    Filters{hasActiveFilters ? ` (${activeFilterCount})` : ""}
                   </button>
                 </form>
+
+                {isFiltersOpen && (
+                  <div
+                    id="job-candidate-filters"
+                    className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-slate-900">
+                        Filters
+                      </h2>
+                      {hasActiveFilters && (
+                        <button
+                          type="button"
+                          onClick={clearFilters}
+                          className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Availability
+                        </legend>
+                        {availabilityOptions.length > 0 ? (
+                          availabilityOptions.map((option) => {
+                            const id = `job-filter-availability-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.availability.includes(option)}
+                                  onChange={() =>
+                                    toggleFilter("availability", option)
+                                  }
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No availability data yet.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Work Arrangement
+                        </legend>
+                        {workArrangementOptions.length > 0 ? (
+                          workArrangementOptions.map((option) => {
+                            const id = `job-filter-work-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.workArrangement.includes(option)}
+                                  onChange={() =>
+                                    toggleFilter("workArrangement", option)
+                                  }
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No work modes listed.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Job Type
+                        </legend>
+                        {jobTypeOptions.length > 0 ? (
+                          jobTypeOptions.map((option) => {
+                            const id = `job-filter-type-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.jobType.includes(option)}
+                                  onChange={() => toggleFilter("jobType", option)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No job types listed.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Verification
+                        </legend>
+                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={filters.verifiedOnly}
+                            onChange={handleVerifiedToggle}
+                            className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                          />
+                          Verified candidates only
+                        </label>
+                      </fieldset>
+                    </div>
+                  </div>
+                )}
 
                 {applicationsError ? (
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -521,11 +803,8 @@ export default function CandidatesPage() {
                     ) : paginatedApplications.length > 0 ? (
                       paginatedApplications.map((application) => {
                         const profile = candidateProfilesBySlug.get(
-                          application.candidate.slug
+                          application.candidate.slug,
                         );
-                        const score = profile
-                          ? getCandidateProfileScore(profile)
-                          : undefined;
                         const headlineParts = [
                           profile?.job_type,
                           profile?.work_arrangement,
@@ -536,11 +815,15 @@ export default function CandidatesPage() {
                             : application.candidate.email;
                         const meta = [
                           profile?.location && {
-                            icon: <MapPin className="h-3.5 w-3.5 text-slate-400" />,
+                            icon: (
+                              <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            ),
                             text: profile.location,
                           },
                           profile?.job_type && {
-                            icon: <Briefcase className="h-3.5 w-3.5 text-slate-400" />,
+                            icon: (
+                              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                            ),
                             text: profile.job_type,
                           },
                           application.applied_at && {
@@ -549,7 +832,10 @@ export default function CandidatesPage() {
                             ),
                             text: `Applied ${formatDate(application.applied_at)}`,
                           },
-                        ].filter(Boolean) as { icon: React.ReactNode; text: string }[];
+                        ].filter(Boolean) as {
+                          icon: React.ReactNode;
+                          text: string;
+                        }[];
                         const statusBadge = STATUS_BADGES[application.status];
                         const listKey = `application-${application.id}`;
 
@@ -566,63 +852,67 @@ export default function CandidatesPage() {
                                 },
                               ]}
                               meta={meta}
-                              score={
-                                score !== undefined
-                                  ? { value: score, label: "Profile" }
-                                  : undefined
+                              isSelected={
+                                selectedApplicationId === application.id
                               }
-                              isSelected={selectedApplicationId === application.id}
                               onClick={() => {
                                 setSelectedApplicationId(application.id);
-                                setSelectedCandidateSlug(application.candidate.slug);
+                                setSelectedCandidateSlug(
+                                  application.candidate.slug,
+                                );
                               }}
                             />
-                          {selectedApplicationId === application.id && (
-                            <div
-                              id={`job-candidate-details-inline-${listKey}`}
-                              tabIndex={-1}
-                              className="lg:hidden"
-                            >
-                              {isProfileReady && selectedCandidateProfile ? (
-                                <div className="space-y-4">
-                                  {application.status === "applied" && (
-                                    <div className="rounded-2xl bg-white p-4 shadow-sm">
-                                      <h3 className="text-sm font-semibold text-slate-900">
-                                        Candidate actions
-                                      </h3>
-                                      <div className="mt-3">
-                                        <CandidateDecisionButtons
-                                          jobId={currentJobId}
-                                          applicationId={application.id}
-                                          variant="compact"
-                                          currentStatus={undefined}
-                                          onDecisionUpdate={() => {
-                                            fetchApplications(currentJobId).then((result) => {
-                                              setAllApplications(result.data);
-                                              setApplicationsError(result.error);
-                                            });
-                                          }}
-                                        />
+                            {selectedApplicationId === application.id && (
+                              <div
+                                id={`job-candidate-details-inline-${listKey}`}
+                                tabIndex={-1}
+                                className="lg:hidden"
+                              >
+                                {isProfileReady && selectedCandidateProfile ? (
+                                  <div className="space-y-4">
+                                    {application.status === "applied" && (
+                                      <div className="rounded-2xl bg-white p-4 shadow-sm">
+                                        <h3 className="text-sm font-semibold text-slate-900">
+                                          Candidate actions
+                                        </h3>
+                                        <div className="mt-3">
+                                          <CandidateDecisionButtons
+                                            jobId={currentJobId}
+                                            applicationId={application.id}
+                                            variant="compact"
+                                            currentStatus={undefined}
+                                            onDecisionUpdate={() => {
+                                              fetchApplications(
+                                                currentJobId,
+                                              ).then((result) => {
+                                                setAllApplications(result.data);
+                                                setApplicationsError(
+                                                  result.error,
+                                                );
+                                              });
+                                            }}
+                                          />
+                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                  <CandidateDetailPanel
-                                    candidate={selectedCandidateProfile}
-                                    profileScore={selectedProfileScore}
-                                    profileHref={profileHref}
-                                    onInviteClick={
-                                      canSendInvites ? handleInviteClick : undefined
-                                    }
-                                  />
-                                </div>
-                              ) : isCandidateLoading ? (
-                                <CandidateDetailSkeleton />
-                              ) : null}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
+                                    )}
+                                    <CandidateDetailPanel
+                                      candidate={selectedCandidateProfile}
+                                      profileHref={profileHref}
+                                      onInviteClick={
+                                        canSendInvites
+                                          ? handleInviteClick
+                                          : undefined
+                                      }
+                                    />
+                                  </div>
+                                ) : isCandidateLoading ? (
+                                  <CandidateDetailSkeleton />
+                                ) : null}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
                         <p className="text-slate-600">
@@ -707,7 +997,9 @@ export default function CandidatesPage() {
                       const profile = candidate.candidate_slug
                         ? candidateProfilesBySlug.get(candidate.candidate_slug)
                         : undefined;
-                      const scorePercent = getRankingScorePercent(candidate.score);
+                      const scorePercent = getRankingScorePercent(
+                        candidate.score,
+                      );
                       const badge = getRankingBadge(scorePercent, index);
                       const headlineParts = [
                         profile?.job_type,
@@ -719,14 +1011,21 @@ export default function CandidatesPage() {
                           : `Candidate ID ${candidate.candidate_id}`;
                       const meta = [
                         profile?.location && {
-                          icon: <MapPin className="h-3.5 w-3.5 text-slate-400" />,
+                          icon: (
+                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                          ),
                           text: profile.location,
                         },
                         profile?.job_type && {
-                          icon: <Briefcase className="h-3.5 w-3.5 text-slate-400" />,
+                          icon: (
+                            <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+                          ),
                           text: profile.job_type,
                         },
-                      ].filter(Boolean) as { icon: React.ReactNode; text: string }[];
+                      ].filter(Boolean) as {
+                        icon: React.ReactNode;
+                        text: string;
+                      }[];
                       const listKey = `ranking-${candidate.candidate_id}`;
 
                       return (
@@ -743,17 +1042,22 @@ export default function CandidatesPage() {
                                 ? [
                                     {
                                       label: badge,
-                                      className: "bg-emerald-50 text-emerald-700",
+                                      className:
+                                        "bg-emerald-50 text-emerald-700",
                                     },
                                   ]
                                 : []
                             }
                             meta={meta}
                             score={{ value: scorePercent, label: "Matching" }}
-                            isSelected={selectedRankingId === candidate.candidate_id}
+                            isSelected={
+                              selectedRankingId === candidate.candidate_id
+                            }
                             onClick={() => {
                               setSelectedRankingId(candidate.candidate_id);
-                              setSelectedCandidateSlug(candidate.candidate_slug ?? null);
+                              setSelectedCandidateSlug(
+                                candidate.candidate_slug ?? null,
+                              );
                             }}
                           />
                           {selectedRankingId === candidate.candidate_id && (
@@ -776,10 +1080,11 @@ export default function CandidatesPage() {
                                   )}
                                   <CandidateDetailPanel
                                     candidate={selectedCandidateProfile}
-                                    profileScore={selectedProfileScore}
                                     profileHref={profileHref}
                                     onInviteClick={
-                                      canSendInvites ? handleInviteClick : undefined
+                                      canSendInvites
+                                        ? handleInviteClick
+                                        : undefined
                                     }
                                   />
                                 </div>
@@ -816,16 +1121,17 @@ export default function CandidatesPage() {
                 tabIndex={-1}
                 className="space-y-4"
               >
-                {activeTab === "ai_ranking" && selectedRankedCandidate?.match_reason && (
-                  <div className="rounded-2xl bg-white p-4 shadow-sm">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Match reason
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {selectedRankedCandidate.match_reason}
-                    </p>
-                  </div>
-                )}
+                {activeTab === "ai_ranking" &&
+                  selectedRankedCandidate?.match_reason && (
+                    <div className="rounded-2xl bg-white p-4 shadow-sm">
+                      <h3 className="text-sm font-semibold text-slate-900">
+                        Match reason
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {selectedRankedCandidate.match_reason}
+                      </p>
+                    </div>
+                  )}
 
                 {activeTab !== "ai_ranking" &&
                   selectedApplication?.status === "applied" && (
@@ -852,7 +1158,6 @@ export default function CandidatesPage() {
 
                 <CandidateDetailPanel
                   candidate={selectedCandidateProfile}
-                  profileScore={selectedProfileScore}
                   profileHref={profileHref}
                   onInviteClick={canSendInvites ? handleInviteClick : undefined}
                 />

@@ -2,7 +2,16 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Bell, LogOut, Search, User, Menu, X, Home, LayoutDashboard, BriefcaseBusiness } from "lucide-react";
+import {
+  LogOut,
+  Search,
+  User,
+  Menu,
+  X,
+  Home,
+  LayoutDashboard,
+  BriefcaseBusiness,
+} from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
 import { apiRequest } from "@/lib/api-client";
@@ -37,7 +46,7 @@ export default function DashBoardNavbar() {
 
     const menu = menuRef.current;
     const focusableElements = menu.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
@@ -101,16 +110,20 @@ export default function DashBoardNavbar() {
       <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
-            href="https://enable-talent-landing.vercel.app/"
+            href="https://enabled-talent-landing-v2.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-3"
+            aria-label="Enabled Talent - opens main website in new tab"
           >
             <Image
               src="/logo/et-new.svg"
-              alt="EnabledTalent logo"
+              alt=""
               width={150}
               height={40}
               priority
               className="h-10 w-auto object-contain"
+              aria-hidden="true"
             />
           </a>
 
@@ -118,9 +131,10 @@ export default function DashBoardNavbar() {
           <div className="hidden items-center gap-7 md:flex">
             <Link
               href="/dashboard/profile"
+              aria-current={pathname === "/dashboard/profile" ? "page" : undefined}
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              <User size={18} />
+              <User size={18} aria-hidden="true" />
               <span>Profile</span>
             </Link>
 
@@ -129,21 +143,15 @@ export default function DashBoardNavbar() {
               onClick={handleLogout}
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              <LogOut size={18} />
+              <LogOut size={18} aria-hidden="true" />
               <span>Log Out</span>
             </button>
-            <button
-              className="relative text-slate-600 transition-colors hover:text-slate-900"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-              <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
-            </button>
             <Link
-              href="/dashboard/career-coach"
+              href="/dashboard/career-coach/start"
+              aria-current={pathname.startsWith("/dashboard/career-coach") ? "page" : undefined}
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
             >
-              <Search size={18} strokeWidth={3} />
+              <Search size={18} strokeWidth={3} aria-hidden="true" />
               <span>AI Career Coach</span>
             </Link>
           </div>
@@ -154,7 +162,9 @@ export default function DashBoardNavbar() {
             type="button"
             onClick={toggleMenu}
             className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation-menu"
           >
@@ -166,7 +176,7 @@ export default function DashBoardNavbar() {
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden"
+          className="fixed inset-0 z-50 bg-black/50 md:hidden"
           onClick={toggleMenu}
           role="presentation"
         >
@@ -175,91 +185,82 @@ export default function DashBoardNavbar() {
             id="mobile-navigation-menu"
             role="navigation"
             aria-label="Mobile navigation"
-            className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg"
+            className="absolute right-0 top-0 h-full w-72 bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col p-6">
-              <button
-                type="button"
-                onClick={toggleMenu}
-                className="self-end text-slate-600 transition-colors hover:text-slate-900 mb-6"
-                aria-label="Close menu"
-              >
-                <X size={24} />
-              </button>
-
-              <div className="flex flex-col gap-4">
-                {/* Navigation Links */}
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.isActive(pathname);
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex items-center gap-3 px-4 py-3 text-base font-medium transition-colors rounded-lg ${
-                        isActive
-                          ? "bg-slate-100 text-slate-900"
-                          : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                      onClick={toggleMenu}
-                    >
-                      <Icon size={18} />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-
-                {/* Divider */}
-                <div className="border-t border-slate-200 my-2" />
-
-                {/* Profile */}
-                <Link
-                  href="/dashboard/profile"
-                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 rounded-lg"
-                  onClick={toggleMenu}
-                >
-                  <User size={18} />
-                  <span>Profile</span>
-                </Link>
-
-                {/* Notifications */}
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                <span className="text-lg font-semibold text-slate-900">Menu</span>
                 <button
-                  className="flex items-center gap-3 px-4 py-3 text-left text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 rounded-lg"
-                  aria-label="Notifications"
+                  type="button"
                   onClick={toggleMenu}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  aria-label="Close menu"
                 >
-                  <div className="relative">
-                    <Bell size={18} />
-                    <span className="absolute -right-1 -top-1 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
-                  </div>
-                  <span>Notifications</span>
+                  <X size={20} />
                 </button>
+              </div>
 
-                {/* AI Career Coach */}
-                <Link
-                  href="/dashboard/career-coach"
-                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-100 rounded-lg"
-                  onClick={toggleMenu}
-                >
-                  <Search size={18} />
-                  <span>AI Career Coach</span>
-                </Link>
+              {/* Navigation Links */}
+              <div className="flex-1 overflow-y-auto py-4">
+                <div className="px-3 space-y-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = item.isActive(pathname);
 
-                {/* Divider */}
-                <div className="border-t border-slate-200 my-2" />
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-4 py-3 text-base font-medium transition-colors rounded-xl ${
+                          isActive
+                            ? "bg-orange-50 text-orange-700"
+                            : "text-slate-700 hover:bg-slate-50"
+                        }`}
+                        onClick={toggleMenu}
+                      >
+                        <Icon size={20} />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
 
-                {/* Log Out */}
+                <div className="my-4 mx-5 border-t border-slate-100" />
+
+                <div className="px-3 space-y-1">
+                  <Link
+                    href="/dashboard/profile"
+                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 rounded-xl"
+                    onClick={toggleMenu}
+                  >
+                    <User size={20} />
+                    <span>Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/career-coach/start"
+                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 rounded-xl"
+                    onClick={toggleMenu}
+                  >
+                    <Search size={20} />
+                    <span>AI Career Coach</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => {
                     toggleMenu();
                     handleLogout();
                   }}
-                  className="flex items-center gap-3 px-4 py-3 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50 rounded-lg"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
                 >
-                  <LogOut size={18} />
+                  <LogOut size={20} />
                   <span>Log Out</span>
                 </button>
               </div>

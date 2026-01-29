@@ -49,6 +49,8 @@ export const initialUserData: UserData = {
     companySize: [],
     jobType: [],
     jobSearch: [],
+    willingToRelocate: false,
+    hasWorkVisa: null,
   },
   otherDetails: {
     languages: [{ language: "", speaking: "", reading: "", writing: "" }],

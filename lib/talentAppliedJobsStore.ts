@@ -20,7 +20,7 @@ export type AppliedJob = {
   workMode?: string;
   yearsExperience?: string;
   about?: string;
-  description?: string[];
+  description?: string;
   requirements?: string[];
 };
 

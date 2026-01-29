@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     me: `${BACKEND_URL}/api/auth/users/me/`,
     list: `${BACKEND_URL}/api/auth/users/`,
     detail: (pk: string) => `${BACKEND_URL}/api/auth/users/${pk}/`,
+    profile: `${BACKEND_URL}/api/users/profile/`,
   },
   // Resume parsing
   resume: {},
@@ -36,14 +37,38 @@ export const API_ENDPOINTS = {
   candidateProfiles: {
     list: `${BACKEND_URL}/api/candidates/profiles/`,
     detail: (slug: string) => `${BACKEND_URL}/api/candidates/profiles/${slug}/`,
+    full: (slug: string) =>
+      `${BACKEND_URL}/api/candidates/profiles/${slug}/full/`,
     parseResume: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/parse-resume/`,
-    parsingStatus: (slug: string) =>
-      `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`,
+    parsingStatus: (slug: string, includeResume?: boolean) => {
+      const url = `${BACKEND_URL}/api/candidates/profiles/${slug}/parsing-status/`;
+      return includeResume ? `${url}?include_resume=true` : url;
+    },
     verifyProfile: (slug: string) =>
       `${BACKEND_URL}/api/candidates/profiles/${slug}/verify-profile/`,
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
     resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
+  },
+    candidateData: {
+      education: `${BACKEND_URL}/api/candidates/education/`,
+      educationDetail: (id: string) => `${BACKEND_URL}/api/candidates/education/${id}/`,
+      skills: `${BACKEND_URL}/api/candidates/skills/`,
+    skillsDetail: (id: string) => `${BACKEND_URL}/api/candidates/skills/${id}/`,
+    languages: `${BACKEND_URL}/api/candidates/languages/`,
+    notes: `${BACKEND_URL}/api/candidates/notes/`,
+    workExperience: `${BACKEND_URL}/api/candidates/work-experience/`,
+    workExperienceDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/work-experience/${id}/`,
+    projects: `${BACKEND_URL}/api/candidates/projects/`,
+    projectsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/projects/${id}/`,
+    achievements: `${BACKEND_URL}/api/candidates/achievements/`,
+    achievementsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/achievements/${id}/`,
+    certifications: `${BACKEND_URL}/api/candidates/certifications/`,
+    certificationsDetail: (id: string) =>
+      `${BACKEND_URL}/api/candidates/certifications/${id}/`,
   },
   // Other APIs
   organizations: {
@@ -52,6 +77,7 @@ export const API_ENDPOINTS = {
       `${BACKEND_URL}/api/organization/organizations/${pk}/`,
     createInvite: (pk: string) =>
       `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
+    selectedCandidates: `${BACKEND_URL}/api/organization/selected-candidates/`,
   },
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,
@@ -79,6 +105,7 @@ export const defaultFetchOptions: RequestInit = {
 };
 
 const CSRF_COOKIE_NAME = "csrftoken";
+const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 
 const getCookieValue = (cookieHeader: string, name: string): string | null => {
   if (!cookieHeader) return null;
@@ -94,9 +121,7 @@ const getCookieValue = (cookieHeader: string, name: string): string | null => {
 };
 
 const isWriteMethod = (method?: string) =>
-  ["POST", "PUT", "PATCH", "DELETE"].includes(
-    (method || "GET").toUpperCase()
-  );
+  ["POST", "PUT", "PATCH", "DELETE"].includes((method || "GET").toUpperCase());
 
 /**
  * Helper function to make API requests to the Django backend
@@ -105,7 +130,7 @@ const isWriteMethod = (method?: string) =>
 export async function backendFetch(
   endpoint: string,
   options: RequestInit = {},
-  incomingCookies?: string
+  incomingCookies?: string,
 ): Promise<Response> {
   const headers = new Headers(options.headers);
   const hasBody = options.body !== undefined && options.body !== null;
@@ -120,6 +145,17 @@ export async function backendFetch(
   // Forward cookies from incoming request to backend
   if (incomingCookies) {
     headers.set("Cookie", incomingCookies);
+  }
+
+  // Add Authorization header from HttpOnly JWT cookie when available
+  if (!headers.has("Authorization") && incomingCookies) {
+    const accessToken = getCookieValue(
+      incomingCookies,
+      ACCESS_TOKEN_COOKIE_NAME,
+    );
+    if (accessToken) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+    }
   }
 
   // Add CSRF token for write requests if available
@@ -170,7 +206,7 @@ export function extractSetCookieHeaders(backendResponse: Response): string[] {
  */
 export function forwardCookiesToResponse(
   backendResponse: Response,
-  nextResponse: Response
+  nextResponse: Response,
 ): void {
   const setCookieHeaders = extractSetCookieHeaders(backendResponse);
 

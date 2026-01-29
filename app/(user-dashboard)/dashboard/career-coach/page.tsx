@@ -9,7 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
-import { computeProfileCompletion } from "@/lib/profileCompletion";
+import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 
@@ -64,7 +64,7 @@ export default function CareerCoachPage() {
     [rawUserData]
   );
   const { percent: profilePercent } = useMemo(
-    () => computeProfileCompletion(userData),
+    () => computeDashboardProfileCompletion(userData),
     [userData]
   );
 

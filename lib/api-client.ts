@@ -1,12 +1,23 @@
-export type ApiError = {
-  message: string;
+export class ApiError extends Error {
   status: number;
   data?: unknown;
-};
 
-export type SessionExpiredError = ApiError & {
-  isSessionExpired: true;
-};
+  constructor(message: string, status: number, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
+export class SessionExpiredError extends ApiError {
+  isSessionExpired: true = true;
+
+  constructor(message: string, status: number, data?: unknown) {
+    super(message, status, data);
+    this.name = "SessionExpiredError";
+  }
+}
 
 export type ApiResult<T> = {
   data: T | null;
@@ -86,17 +97,12 @@ const extractErrorMessage = (data: unknown, fallback: string): string => {
 };
 
 export const isApiError = (error: unknown): error is ApiError =>
-  isRecord(error) &&
-  typeof error.message === "string" &&
-  typeof error.status === "number";
+  error instanceof ApiError;
 
 export const isSessionExpiredError = (
   error: unknown
 ): error is SessionExpiredError =>
-  isRecord(error) &&
-  typeof error.message === "string" &&
-  typeof error.status === "number" &&
-  error.isSessionExpired === true;
+  error instanceof SessionExpiredError;
 
 export const getApiErrorMessage = (error: unknown, fallback: string): string => {
   if (isApiError(error)) return error.message || fallback;
@@ -118,11 +124,11 @@ export const handleSessionExpiry = (
     // Get current path for return URL
     const currentPath =
       typeof window !== "undefined" ? window.location.pathname : "";
-    const returnUrl = currentPath && currentPath !== "/login-talent"
-      ? `?returnUrl=${encodeURIComponent(currentPath)}`
+    const nextParam = currentPath && currentPath !== "/login-talent"
+      ? `?next=${encodeURIComponent(currentPath)}`
       : "";
 
-    router.push(`/login-talent${returnUrl}`);
+    router.push(`/login-talent${nextParam}`);
     return true;
   }
   return false;
@@ -190,19 +196,10 @@ export async function apiRequest<T>(
 
     // Check if this is a session expiry error (401 with auth-related message)
     if (isAuthenticationError(message, response.status)) {
-      throw {
-        status: response.status,
-        message: message,
-        data,
-        isSessionExpired: true,
-      } satisfies SessionExpiredError;
+      throw new SessionExpiredError(message, response.status, data);
     }
 
-    throw {
-      status: response.status,
-      message: message,
-      data,
-    } satisfies ApiError;
+    throw new ApiError(message, response.status, data);
   }
 
   return data as T;

@@ -67,7 +67,13 @@ export default function EmployerDashboardLayout({
     <div className="min-h-screen bg-[#EEF5FF]">
       <DashBoardNavbarEmployer />
       <DashboardSubNavEmployer />
-      {children}
+      <main id="main-content" aria-labelledby="employer-dashboard-heading">
+        {/* Screen reader only heading for accessibility - WCAG 2.4.1, 2.4.2 */}
+        <h1 id="employer-dashboard-heading" className="sr-only">
+          Employer Dashboard
+        </h1>
+        {children}
+      </main>
     </div>
   );
 }

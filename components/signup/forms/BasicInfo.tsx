@@ -1,20 +1,33 @@
 ﻿"use client";
 
-import { useRef } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { UploadCloud } from "lucide-react";
 import InputBlock from "./InputBlock";
+import SimpleText from "./SimpleText";
 import type { UserData } from "@/lib/types/user";
 
 type Props = {
   data: UserData["basicInfo"];
   onChange: (patch: Partial<UserData["basicInfo"]>) => void;
   errors?: Partial<Record<keyof UserData["basicInfo"], string>>;
+  hideProfilePhoto?: boolean;
 };
 
-export default function BasicInfo({ data, onChange, errors }: Props) {
+export default function BasicInfo({
+  data,
+  onChange,
+  errors,
+  hideProfilePhoto = false,
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const minPhotoSizeBytes = 10 * 1024;
+  const maxPhotoSizeBytes = 2 * 1024 * 1024;
+  const resolvedPhotoError = errors?.profilePhoto || photoError;
+  const hasPhotoError = Boolean(resolvedPhotoError);
 
   const clearProfilePhoto = () => {
+    setPhotoError(null);
     onChange({ profilePhoto: "" });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -34,6 +47,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <InputBlock
           id="basicInfo-firstName"
           label="First Name"
+          required
           value={data.firstName}
           onChange={(v) => onChange({ firstName: v })}
           placeholder="Enter first name"
@@ -43,6 +57,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         <InputBlock
           id="basicInfo-lastName"
           label="Last Name"
+          required
           value={data.lastName}
           onChange={(v) => onChange({ lastName: v })}
           placeholder="Enter last name"
@@ -51,65 +66,86 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         />
       </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="basicInfo-profilePhoto"
-          className={`block text-base font-medium ${
-            errors?.profilePhoto ? "text-red-600" : "text-slate-700"
-          }`}
-        >
-          Profile photo
-        </label>
-        <div
-          className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 focus-within:ring-2 ${
-            errors?.profilePhoto
-              ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-200"
-              : "border-gray-300 focus-within:border-orange-500 focus-within:ring-orange-500/30"
-          }`}
-        >
+      {!hideProfilePhoto ? (
+        <div className="space-y-2">
           <label
             htmlFor="basicInfo-profilePhoto"
-            className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+            className={`block text-base font-medium ${
+              hasPhotoError ? "text-red-600" : "text-slate-700"
+            }`}
           >
-            <UploadCloud className="h-5 w-5 text-orange-500" />
-            <div className="flex items-center gap-1">
-              <span>Drag and drop or,</span>
-              <span className="text-orange-500 font-medium">Browse</span>
-            </div>
-            <input
-              id="basicInfo-profilePhoto"
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(e) =>
-                onChange({ profilePhoto: e.target.files?.[0]?.name || "" })
-              }
-            />
+            Profile photo
           </label>
-          {data.profilePhoto ? (
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
-              <span className="text-slate-500">
-                Selected: {data.profilePhoto}
-              </span>
-              <button
-                type="button"
-                onClick={clearProfilePhoto}
-                className="font-medium text-red-600 hover:text-red-700"
-              >
-                Remove photo
-              </button>
-            </div>
+          <div
+            className={`w-full rounded-lg border border-dashed bg-white px-4 py-4 focus-within:ring-2 ${
+              hasPhotoError
+                ? "border-red-400 focus-within:border-red-500 focus-within:ring-red-200"
+                : "border-gray-300 focus-within:border-orange-500 focus-within:ring-orange-500/30"
+            }`}
+          >
+            <label
+              htmlFor="basicInfo-profilePhoto"
+              className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+            >
+              <UploadCloud className="h-5 w-5 text-orange-500" />
+              <div className="flex items-center gap-1">
+                <span>Drag and drop or,</span>
+                <span className="text-orange-500 font-medium">Browse</span>
+              </div>
+              <input
+                id="basicInfo-profilePhoto"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0];
+                  if (!file) {
+                    setPhotoError(null);
+                    onChange({ profilePhoto: "" });
+                    return;
+                  }
+
+                  if (
+                    file.size < minPhotoSizeBytes ||
+                    file.size > maxPhotoSizeBytes
+                  ) {
+                    setPhotoError("Image must be between 10KB and 2MB.");
+                    onChange({ profilePhoto: "" });
+                    event.target.value = "";
+                    return;
+                  }
+
+                  setPhotoError(null);
+                  onChange({ profilePhoto: file.name });
+                }}
+              />
+            </label>
+            {data.profilePhoto ? (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
+                <span className="text-slate-500">
+                  Selected: {data.profilePhoto}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearProfilePhoto}
+                  className="font-medium text-red-600 hover:text-red-700"
+                >
+                  Remove photo
+                </button>
+              </div>
+            ) : null}
+          </div>
+          {resolvedPhotoError ? (
+            <p className="text-sm text-red-600">{resolvedPhotoError}</p>
           ) : null}
         </div>
-        {errors?.profilePhoto ? (
-          <p className="text-sm text-red-600">{errors.profilePhoto}</p>
-        ) : null}
-      </div>
+      ) : null}
 
       <InputBlock
         id="basicInfo-email"
         label="Email Address"
+        required
         value={data.email}
         onChange={(v) => onChange({ email: v })}
         placeholder="Enter email address"
@@ -121,6 +157,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-phone"
         label="Phone number"
+        required
         value={data.phone}
         onChange={(v) => onChange({ phone: v })}
         placeholder="Enter phone number"
@@ -131,6 +168,7 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
       <InputBlock
         id="basicInfo-location"
         label="Location"
+        required
         value={data.location}
         onChange={(v) => onChange({ location: v })}
         placeholder="City, Country"
@@ -146,12 +184,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Citizenship status
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-citizenshipStatus"
           className={selectClass(Boolean(errors?.citizenshipStatus))}
           value={data.citizenshipStatus}
           onChange={(e) => onChange({ citizenshipStatus: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select status</option>
           <option value="Canadian">Canadian</option>
@@ -185,12 +229,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Gender
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-gender"
           className={selectClass(Boolean(errors?.gender))}
           value={data.gender}
           onChange={(e) => onChange({ gender: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select</option>
           <option value="Female">Female</option>
@@ -223,12 +273,18 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
           }`}
         >
           Ethnicity
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <select
           id="basicInfo-ethnicity"
           className={selectClass(Boolean(errors?.ethnicity))}
           value={data.ethnicity}
           onChange={(e) => onChange({ ethnicity: e.target.value })}
+          aria-required="true"
         >
           <option value="">Select</option>
           <option value="South Asian">South Asian</option>
@@ -265,16 +321,16 @@ export default function BasicInfo({ data, onChange, errors }: Props) {
         errorMessage={errors?.linkedinUrl}
       />
 
-      <InputBlock
+      <SimpleText
         id="basicInfo-currentStatus"
-        label="What is your current status and goal in joining the Enabled Talent Program?"
+        label="About"
+        required
         value={data.currentStatus}
         onChange={(v) => onChange({ currentStatus: v })}
-        placeholder="Describe your status and goals"
+        placeholder="Describe about yourself"
         error={Boolean(errors?.currentStatus)}
         errorMessage={errors?.currentStatus}
       />
     </div>
   );
 }
-

@@ -11,6 +11,7 @@ export type EmployerOrganizationInfo = {
   linkedinUrl: string;
   companySize: string;
   industry: string;
+  avatarUrl?: string;
 };
 
 export type EmployerData = {
@@ -26,6 +27,7 @@ const initialEmployerData: EmployerData = {
     linkedinUrl: "",
     companySize: "",
     industry: "",
+    avatarUrl: "",
   },
 };
 

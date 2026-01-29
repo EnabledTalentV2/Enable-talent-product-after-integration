@@ -2,6 +2,7 @@ import { apiRequest } from "@/lib/api-client";
 import type { EmployerJob } from "@/lib/employerJobsTypes";
 import { BackendJobsResponseSchema } from "@/lib/schemas/job.schema";
 import { transformJobsArray } from "@/lib/transformers/job.transformer";
+import type { CandidateApplication } from "@/lib/types/candidate-applications";
 
 /**
  * Candidate Jobs API Service
@@ -76,6 +77,26 @@ export const candidateJobsAPI = {
       return response;
     } catch (error) {
       console.error(`Failed to apply to job ${jobId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch candidate's job applications
+   * Returns all applications submitted by the current candidate
+   */
+  fetchApplications: async (): Promise<CandidateApplication[]> => {
+    try {
+      const response = await apiRequest<CandidateApplication[]>(
+        "/api/candidate/applications",
+        {
+          method: "GET",
+        }
+      );
+
+      return Array.isArray(response) ? response : [];
+    } catch (error) {
+      console.error("Failed to fetch candidate applications:", error);
       throw error;
     }
   },

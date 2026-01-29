@@ -3,6 +3,7 @@ import { apiRequest } from "@/lib/api-client";
 const PROFILE_ENDPOINT = "/api/candidates/profiles/";
 
 export const DEFAULT_ACCOMMODATION_NEEDS = "PREFER_TO_DISCUSS_LATER";
+export const DEFAULT_DISCLOSURE_PREFERENCE = "DURING_APPLICATION";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -111,6 +112,10 @@ export async function ensureCandidateProfileSlug(
       "accommodation_needs",
       accommodationNeeds || DEFAULT_ACCOMMODATION_NEEDS
     );
+    formData.append(
+      "disclosure_preference",
+      DEFAULT_DISCLOSURE_PREFERENCE
+    );
     const created = await apiRequest<unknown>(PROFILE_ENDPOINT, {
       method: "POST",
       body: formData,
@@ -141,6 +146,25 @@ export async function fetchCandidateProfileDetail(
     return profile;
   } catch (error) {
     warnWithLabel(logLabel, "Failed to fetch candidate profile detail", error);
+    return null;
+  }
+}
+
+export async function fetchCandidateProfileFull(
+  slug: string,
+  logLabel?: string
+): Promise<Record<string, unknown> | null> {
+  try {
+    const data = await apiRequest<unknown>(`${PROFILE_ENDPOINT}${slug}/full/`, {
+      method: "GET",
+    });
+    if (!isRecord(data)) {
+      warnWithLabel(logLabel, "Unexpected candidate full profile response");
+      return null;
+    }
+    return data;
+  } catch (error) {
+    warnWithLabel(logLabel, "Failed to fetch candidate full profile", error);
     return null;
   }
 }

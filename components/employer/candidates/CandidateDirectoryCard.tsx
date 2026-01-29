@@ -1,10 +1,9 @@
-import { Briefcase, CheckCircle, MapPin } from "lucide-react";
+import { Briefcase, CheckCircle, Linkedin, MapPin } from "lucide-react";
 import type { CandidateProfile } from "@/lib/types/candidateProfile";
 
 interface CandidateDirectoryCardProps {
   candidate: CandidateProfile;
   isSelected: boolean;
-  profileScore: number;
   onClick: () => void;
 }
 
@@ -23,7 +22,6 @@ const formatHeadline = (candidate: CandidateProfile) => {
 export default function CandidateDirectoryCard({
   candidate,
   isSelected,
-  profileScore,
   onClick,
 }: CandidateDirectoryCardProps) {
   const availability = candidate.availability;
@@ -72,27 +70,22 @@ export default function CandidateDirectoryCard({
         )}
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <div className="space-y-2 text-xs text-slate-500">
+      {(candidate.title || candidate.location) && (
+        <div className="mt-4 space-y-2 text-xs text-slate-500">
+          {candidate.title && (
+            <div className="flex items-center gap-1">
+              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
+              <span>{candidate.title}</span>
+            </div>
+          )}
           {candidate.location && (
             <div className="flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5 text-slate-400" />
               <span>{candidate.location}</span>
             </div>
           )}
-          {candidate.job_type && (
-            <div className="flex items-center gap-1">
-              <Briefcase className="h-3.5 w-3.5 text-slate-400" />
-              <span>{candidate.job_type}</span>
-            </div>
-          )}
         </div>
-
-        <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-[#FFF1D6] text-slate-900">
-          <span className="text-sm font-semibold">{profileScore}%</span>
-          <span className="text-[10px] text-slate-500">Profile</span>
-        </div>
-      </div>
+      )}
     </button>
   );
 }

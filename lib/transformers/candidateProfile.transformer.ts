@@ -1,109 +1,610 @@
-import type { CandidateProfile } from "@/lib/types/candidateProfile";
+import type {
+  CandidateCertificationEntry,
+  CandidateEducationEntry,
+  CandidateExperienceEntry,
+  CandidateProfile,
+} from "@/lib/types/candidateProfile";
 
 /**
- * Backend response structure from /api/candidates/profiles/
+ * Backend response structure from /api/candidates/
+ * Updated to match the actual API response format
  */
 type BackendCandidateProfile = {
-  user: {
-    id: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    is_verified: boolean;
-  };
+  id: number | string;
   slug: string;
-  resume_file?: string;
-  resume_data?: {
-    skills?: string[];
-    experience?: string;
-    education?: string;
-    summary?: string;
+  user?: {
+    id: number | string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    is_active?: boolean;
+    is_verified?: boolean;
+    is_candidate?: boolean;
+    profile?: {
+      avatar?: string | null;
+      phone?: string | null;
+      location?: string | null;
+      citizenship_status?: string | null;
+      gender?: string | null;
+      ethnicity?: string | null;
+      linkedin_url?: string | null;
+      github_url?: string | null;
+      portfolio_url?: string | null;
+      current_status?: string | null;
+      referral_code?: string | null;
+      total_referrals?: number;
+    };
   };
+  organization?: unknown;
+  resume_file?: string | null;
+  resume_data?: {
+    resume_data?: {
+      skills?: {
+        technical?: string[];
+        categories?: Record<string, unknown>;
+        soft_skills?: string[];
+      };
+      summary?: string | null;
+      projects?: Array<{ raw_text?: string | null }>;
+      education?: Array<{
+        grade?: string | null;
+        degree?: string | null;
+        end_date?: string | null;
+        raw_text?: string | null;
+        start_date?: string | null;
+        description?: string | null;
+        institution?: string | null;
+        field_of_study?: string | null;
+      }>;
+      languages?: string[];
+      achievements?: Array<{ raw_text?: string | null }>;
+      personal_info?: {
+        email?: string | null;
+        phone?: string | null;
+        location?: string | null;
+        last_name?: string | null;
+        first_name?: string | null;
+        github_url?: string | null;
+        linkedin_url?: string | null;
+        portfolio_url?: string | null;
+      };
+      certifications?: Array<{ raw_text?: string | null }>;
+      additional_info?: {
+        notice_period?: string | null;
+        expected_salary_max?: number | null;
+        expected_salary_min?: number | null;
+        preferred_work_mode?: string[];
+        willing_to_relocate?: boolean | null;
+        visa_sponsorship_required?: boolean | null;
+      };
+      work_experience?: Array<{
+        company?: string | null;
+        end_date?: string | null;
+        location?: string | null;
+        position?: string | null;
+        raw_text?: string | null;
+        start_date?: string | null;
+        description?: string | null;
+      }>;
+    };
+    parsing_metadata?: {
+      parsing_date?: string;
+      fields_failed?: string[];
+      schema_version?: string;
+      confidence_score?: number;
+      fields_extracted?: string[];
+    };
+  };
+  verified_profile?: unknown;
+  verifiedProfile?: unknown;
+  skills?: unknown;
+  skill_set?: unknown;
+  skillSet?: unknown;
+  work_experience?: unknown;
+  workExperience?: unknown;
+  work_experiences?: unknown;
+  education?: unknown;
+  educations?: unknown;
+  certifications?: unknown;
+  certification?: unknown;
+  certificates?: unknown;
+  willing_to_relocate?: boolean;
   employment_type_preferences?: string[];
   work_mode_preferences?: string[];
-  expected_salary_range?: string;
+  has_workvisa?: boolean;
+  expected_salary_range?: string | null;
+  video_pitch?: string | null;
   is_available?: boolean;
-  bio?: string;
-  linkedin?: string;
-  github?: string;
-  portfolio?: string;
-  video_pitch?: string;
-  visa_sponsorship_required?: boolean;
-  willing_to_relocate?: boolean;
-  organization?: {
-    id: string;
-    name: string;
-    headquarter_location?: string;
-  };
+  get_all_notes?: unknown[];
+  disability_categories?: string[];
+  accommodation_needs?: string | null;
+  workplace_accommodations?: string[];
   created_at?: string;
   updated_at?: string;
 };
 
 /**
- * Parse salary range string (e.g., "60000-80000") to min/max numbers
+ * Parse salary range string to min/max values
  */
-function parseSalaryRange(range?: string): {
-  salary_min?: number;
-  salary_max?: number;
-} {
-  if (!range || typeof range !== "string") {
-    return {};
+function parseSalaryRange(
+  salaryRange?: string | null
+): { min?: number; max?: number } {
+  if (!salaryRange) return {};
+
+  // Handle formats like "< 40000", "40000-60000", "> 100000"
+  if (salaryRange.startsWith("<")) {
+    const max = parseInt(salaryRange.replace(/[<\s]/g, ""), 10);
+    return { max: isNaN(max) ? undefined : max };
+  }
+  if (salaryRange.startsWith(">")) {
+    const min = parseInt(salaryRange.replace(/[>\s]/g, ""), 10);
+    return { min: isNaN(min) ? undefined : min };
+  }
+  if (salaryRange.includes("-")) {
+    const [minStr, maxStr] = salaryRange.split("-");
+    const min = parseInt(minStr.trim(), 10);
+    const max = parseInt(maxStr.trim(), 10);
+    return {
+      min: isNaN(min) ? undefined : min,
+      max: isNaN(max) ? undefined : max,
+    };
   }
 
-  const parts = range.split("-").map((s) => s.trim());
-  if (parts.length !== 2) {
-    return {};
+  return {};
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getVerifiedProfile = (backend: any): Record<string, unknown> | null => {
+  if (isRecord(backend?.verified_profile)) return backend.verified_profile;
+  if (isRecord(backend?.verifiedProfile)) return backend.verifiedProfile;
+  return null;
+};
+
+const getEntriesArray = (value: unknown): unknown[] => {
+  if (Array.isArray(value)) return value;
+  if (isRecord(value) && Array.isArray(value.entries)) {
+    return value.entries;
   }
+  return [];
+};
 
-  const min = parseInt(parts[0], 10);
-  const max = parseInt(parts[1], 10);
+/**
+ * Extract first name from various possible locations in the backend data
+ */
+function extractFirstName(backend: any): string {
+  return (
+    backend.user?.first_name ||
+    backend.first_name ||
+    (backend.name ? backend.name.trim().split(/\s+/)[0] : "") ||
+    ""
+  );
+}
 
-  return {
-    salary_min: isNaN(min) ? undefined : min,
-    salary_max: isNaN(max) ? undefined : max,
-  };
+/**
+ * Extract last name from various possible locations in the backend data
+ */
+function extractLastName(backend: any): string {
+  if (backend.user?.last_name) return backend.user.last_name;
+  if (backend.last_name) return backend.last_name;
+  if (backend.name) {
+    const parts = backend.name.trim().split(/\s+/);
+    return parts.slice(1).join(" ") || "";
+  }
+  return "";
+}
+
+/**
+ * Extract email from various possible locations
+ */
+function extractEmail(backend: any): string {
+  return (
+    backend.user?.email ||
+    backend.email ||
+    ""
+  );
+}
+
+/**
+ * Extract location from various possible locations
+ */
+function extractLocation(backend: any): string | undefined {
+  return (
+    backend.user?.profile?.location ||
+    backend.location ||
+    undefined
+  );
+}
+
+/**
+ * Extract LinkedIn URL from various possible locations
+ */
+function extractLinkedIn(backend: any): string | undefined {
+  return (
+    backend.user?.profile?.linkedin_url ||
+    backend.links?.linkedin ||
+    backend.linkedin_url ||
+    backend.linkedin ||
+    undefined
+  );
+}
+
+/**
+ * Extract GitHub URL from various possible locations
+ */
+function extractGitHub(backend: any): string | undefined {
+  return (
+    backend.user?.profile?.github_url ||
+    backend.links?.github ||
+    backend.github_url ||
+    backend.github ||
+    undefined
+  );
+}
+
+/**
+ * Extract Portfolio URL from various possible locations
+ */
+function extractPortfolio(backend: any): string | undefined {
+  return (
+    backend.user?.profile?.portfolio_url ||
+    backend.links?.portfolio ||
+    backend.portfolio_url ||
+    backend.portfolio ||
+    undefined
+  );
+}
+
+/**
+ * Extract skills from various possible locations
+ */
+function extractSkills(backend: any): string[] {
+  const verifiedProfile = getVerifiedProfile(backend);
+  const sources = [
+    verifiedProfile?.skills,
+    backend.skills,
+    backend.skill_set,
+    backend.skillSet,
+  ];
+  const skills: string[] = [];
+  sources.forEach((source) => {
+    if (!Array.isArray(source)) return;
+    source.forEach((entry) => {
+      if (typeof entry === "string") {
+        const trimmed = entry.trim();
+        if (trimmed) skills.push(trimmed);
+        return;
+      }
+      if (isRecord(entry)) {
+        const name =
+          toText(entry.name) ||
+          toText(entry.skill) ||
+          toText(entry.title) ||
+          toText(entry.label);
+        if (name) skills.push(name);
+      }
+    });
+  });
+  return skills;
+}
+
+/**
+ * Extract work experience from various possible locations
+ */
+function extractWorkExperience(backend: any): any[] | undefined {
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.work_experience,
+    verifiedProfile?.workExperience,
+    verifiedProfile?.work_experiences,
+    backend.work_experience,
+    backend.workExperience,
+    backend.work_experiences,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
+}
+
+/**
+ * Extract education from various possible locations
+ */
+function extractEducation(backend: any): any[] | undefined {
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.education,
+    verifiedProfile?.educations,
+    backend.education,
+    backend.educations,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
+}
+
+/**
+ * Extract certifications from various possible locations
+ */
+function extractCertifications(backend: any): any[] | undefined {
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.certifications,
+    verifiedProfile?.certification,
+    verifiedProfile?.certificates,
+    backend.certifications,
+    backend.certification,
+    backend.certificates,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
+}
+
+const toText = (value: unknown): string | undefined => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+  return undefined;
+};
+
+const hasEntryValues = (entry: Record<string, unknown>) =>
+  Object.values(entry).some(
+    (value) => typeof value === "string" && value.trim().length > 0
+  );
+
+function parseExperienceEntries(
+  workExperience?: any[]
+): CandidateExperienceEntry[] {
+  if (!Array.isArray(workExperience)) return [];
+  return workExperience
+    .map((exp) => {
+      if (typeof exp === "string") {
+        return { raw_text: toText(exp) };
+      }
+      return {
+        role:
+          toText(exp.role) ||
+          toText(exp.position) ||
+          toText(exp.title) ||
+          toText(exp.job_title) ||
+          toText(exp.jobTitle),
+        company:
+          toText(exp.company) ||
+          toText(exp.employer) ||
+          toText(exp.organization),
+        location: toText(exp.location),
+        start_date:
+          toText(exp.start_date) ||
+          toText(exp.startDate) ||
+          toText(exp.from),
+        end_date:
+          toText(exp.end_date) ||
+          toText(exp.endDate) ||
+          toText(exp.to),
+        description:
+          toText(exp.description) ||
+          toText(exp.summary) ||
+          toText(exp.details),
+        raw_text: toText(exp.raw_text) || toText(exp.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
+function parseEducationEntries(
+  education?: any[]
+): CandidateEducationEntry[] {
+  if (!Array.isArray(education)) return [];
+  return education
+    .map((edu) => {
+      if (typeof edu === "string") {
+        return { raw_text: toText(edu) };
+      }
+      return {
+        degree:
+          toText(edu.degree) ||
+          toText(edu.course_name) ||
+          toText(edu.courseName) ||
+          toText(edu.course) ||
+          toText(edu.title),
+        field_of_study:
+          toText(edu.field_of_study) ||
+          toText(edu.field) ||
+          toText(edu.major) ||
+          toText(edu.fieldOfStudy),
+        institution:
+          toText(edu.institution) || toText(edu.school) || toText(edu.institute),
+        start_date:
+          toText(edu.start_date) ||
+          toText(edu.startDate) ||
+          toText(edu.from) ||
+          toText(edu.start_year) ||
+          toText(edu.startYear),
+        end_date:
+          toText(edu.end_date) ||
+          toText(edu.endDate) ||
+          toText(edu.to) ||
+          toText(edu.graduation_date) ||
+          toText(edu.graduationDate) ||
+          toText(edu.end_year) ||
+          toText(edu.endYear) ||
+          toText(edu.graduation_year),
+        grade: toText(edu.grade) || toText(edu.gpa),
+        description: toText(edu.description),
+        raw_text: toText(edu.raw_text) || toText(edu.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
+function parseCertificationEntries(
+  certifications?: any[]
+): CandidateCertificationEntry[] {
+  if (!Array.isArray(certifications)) return [];
+  return certifications
+    .map((cert) => {
+      if (typeof cert === "string") {
+        return { raw_text: toText(cert) };
+      }
+      return {
+        name:
+          toText(cert.name) ||
+          toText(cert.title) ||
+          toText(cert.certification) ||
+          toText(cert.certification_name) ||
+          toText(cert.certificationName),
+        issuer:
+          toText(cert.issuer) ||
+          toText(cert.organization) ||
+          toText(cert.issuing_organization) ||
+          toText(cert.issuingOrganization) ||
+          toText(cert.issued_by) ||
+          toText(cert.issuedBy) ||
+          toText(cert.institution) ||
+          toText(cert.authority),
+        issued_date:
+          toText(cert.issue_date) ||
+          toText(cert.issueDate) ||
+          toText(cert.issued_date) ||
+          toText(cert.date) ||
+          toText(cert.year),
+        raw_text: toText(cert.raw_text) || toText(cert.rawText),
+      };
+    })
+    .filter((entry) => hasEntryValues(entry as Record<string, unknown>));
+}
+
+/**
+ * Extract bio/summary from various possible locations
+ */
+function extractBio(backend: any): string | undefined {
+  return (
+    backend.user?.profile?.current_status ||
+    backend.about ||
+    backend.bio ||
+    backend.summary ||
+    undefined
+  );
+}
+
+/**
+ * Check if the backend response uses the list format (simplified)
+ * List format has: name, about, skills (flat array), links object
+ */
+function isListFormat(backend: any): boolean {
+  return (
+    typeof backend.name === "string" ||
+    (Array.isArray(backend.skills) && backend.skills.length > 0 && typeof backend.skills[0] === "string") ||
+    (backend.links && typeof backend.links === "object")
+  );
 }
 
 /**
  * Transform backend candidate profile to frontend format
+ * Uses flexible extractors to handle various API response structures
  */
 export function transformCandidateProfile(
   backend: BackendCandidateProfile
 ): CandidateProfile {
-  const salary = parseSalaryRange(backend.expected_salary_range);
+  const skills = extractSkills(backend);
+  const workExperience = extractWorkExperience(backend);
+  const education = extractEducation(backend);
+  const certifications = extractCertifications(backend);
+  const salaryRange = parseSalaryRange(backend.expected_salary_range);
+  const experienceEntries = parseExperienceEntries(workExperience);
+  const educationEntries = parseEducationEntries(education);
+  const certificationEntries = parseCertificationEntries(certifications);
+
+  // Format work experience - each job on its own line
+  const experienceStr = workExperience?.map((exp: any) => {
+    const role =
+      exp.role || exp.position || exp.title || exp.job_title || exp.jobTitle;
+    const company = exp.company || exp.employer || exp.organization;
+    if (role && company) {
+      return `${role} at ${company}`;
+    }
+    return role || company || "";
+  }).filter(Boolean).join("\n");
+
+  // Format education - each entry on its own line
+  const educationStr = education?.map((edu: any) => {
+    const degree =
+      edu.degree || edu.course_name || edu.courseName || edu.title;
+    const field =
+      edu.field_of_study || edu.field || edu.major || edu.fieldOfStudy;
+    const institution = edu.institution || edu.school;
+    const parts = [degree, field, institution].filter(Boolean);
+    return parts.join(", ");
+  }).filter(Boolean).join("\n");
+
+  // Format certifications - each on its own line
+  const certificationsStr = certifications?.map((cert: any) => {
+    return (
+      cert.name ||
+      cert.title ||
+      cert.certification ||
+      cert.certification_name ||
+      cert.certificationName ||
+      ""
+    );
+  }).filter(Boolean).join("\n");
+
+  const firstName = extractFirstName(backend);
+  const lastName = extractLastName(backend);
 
   return {
-    id: backend.user.id,
+    id: String(backend.id),
     slug: backend.slug,
-    user_id: backend.user.id,
-    first_name: backend.user.first_name || "",
-    last_name: backend.user.last_name || "",
-    email: backend.user.email,
-    location: backend.organization?.headquarter_location,
+    user_id: String(backend.user?.id || backend.id),
+    first_name: firstName,
+    last_name: lastName,
+    email: extractEmail(backend),
+    phone: backend.user?.profile?.phone || undefined,
+    location: extractLocation(backend),
+    title: (backend as any).title || undefined,
 
     // Resume
-    resume_url: backend.resume_file,
-    resume_file: backend.resume_file,
-    resume_parsed: backend.resume_data,
+    resume_url: backend.resume_file || undefined,
+    resume_file: backend.resume_file || undefined,
+
+    // Resume parsed data
+    resume_parsed: {
+      skills: skills.length > 0 ? skills : undefined,
+      experience: experienceStr || undefined,
+      education: educationStr || undefined,
+      certifications: certificationsStr || undefined,
+      summary: extractBio(backend),
+      experience_entries: experienceEntries.length ? experienceEntries : undefined,
+      education_entries: educationEntries.length ? educationEntries : undefined,
+      certification_entries: certificationEntries.length ? certificationEntries : undefined,
+    },
 
     // Verified data
-    is_verified: backend.user.is_verified,
+    is_verified: backend.user?.is_verified,
 
-    // Work preferences
-    job_type: backend.employment_type_preferences?.[0],
-    work_arrangement: backend.work_mode_preferences?.[0],
+    // Work preferences - check multiple locations
+    job_type: backend.employment_type_preferences?.[0] || (backend as any).work_preferences?.employment_type?.[0],
+    work_arrangement: backend.work_mode_preferences?.[0] || (backend as any).work_preferences?.work_mode?.[0],
     availability: backend.is_available ? "Available" : "Not available",
-    salary_min: salary.salary_min,
-    salary_max: salary.salary_max,
-    visa_required: backend.visa_sponsorship_required,
-    willing_to_relocate: backend.willing_to_relocate,
+    salary_min: salaryRange.min,
+    salary_max: salaryRange.max,
+    visa_required: backend.has_workvisa === false || (backend as any).work_preferences?.has_workvisa === false,
+    willing_to_relocate: backend.willing_to_relocate ?? (backend as any).work_preferences?.relocation,
 
     // Additional info
-    video_pitch: backend.video_pitch,
-    bio: backend.bio,
-    linkedin: backend.linkedin,
-    github: backend.github,
-    portfolio: backend.portfolio,
+    video_pitch: backend.video_pitch || undefined,
+    bio: extractBio(backend),
+    linkedin: extractLinkedIn(backend),
+    github: extractGitHub(backend),
+    portfolio: extractPortfolio(backend),
 
     // Timestamps
     created_at: backend.created_at,

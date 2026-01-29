@@ -16,8 +16,34 @@ export const candidateProfilesAPI = {
         method: "GET",
       });
 
+      // Handle both paginated response and flat array
+      let rawProfiles: unknown[];
+      if (Array.isArray(response)) {
+        rawProfiles = response;
+      } else if (
+        response &&
+        typeof response === "object" &&
+        "results" in response &&
+        Array.isArray((response as { results: unknown[] }).results)
+      ) {
+        // Paginated response from Django REST Framework
+        rawProfiles = (response as { results: unknown[] }).results;
+      } else {
+        console.error("[candidateProfilesAPI] Unexpected response format:", response);
+        rawProfiles = [];
+      }
+
+      // Filter out any profiles that don't have the expected structure (id and slug are required)
+      const validProfiles = rawProfiles.filter(
+        (profile): profile is { id: number | string; slug: string } =>
+          profile !== null &&
+          typeof profile === "object" &&
+          "id" in profile &&
+          "slug" in profile
+      );
+
       // Transform backend response to frontend format
-      const profiles = transformCandidateProfiles(response as any[]);
+      const profiles = transformCandidateProfiles(validProfiles as any[]);
       return profiles;
     } catch (error) {
       console.error("Failed to fetch candidate profiles:", error);
