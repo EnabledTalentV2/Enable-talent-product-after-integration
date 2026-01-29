@@ -79,7 +79,7 @@ export default function DashboardSubNavEmployer() {
                 aria-current={isActive ? "page" : undefined}
                 className={`${baseClass} ${stateClass}`}
               >
-                <Icon size={16} />
+                <Icon size={16} aria-hidden="true" />
                 <span>{item.label}</span>
               </Link>
             );
@@ -87,10 +87,10 @@ export default function DashboardSubNavEmployer() {
         </div>
 
         {/* Search Bar - Visible on All Screen Sizes */}
-        <form onSubmit={handleSearch} className="w-full md:w-[420px]">
+        <form onSubmit={handleSearch} className="w-full md:w-[420px]" role="search" aria-label="Search candidates">
           <div className="relative w-full">
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search candidates by name..."
@@ -102,7 +102,7 @@ export default function DashboardSubNavEmployer() {
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
               aria-label="Search"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </form>

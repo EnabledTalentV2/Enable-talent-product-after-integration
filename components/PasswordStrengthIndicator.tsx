@@ -21,7 +21,7 @@ export function PasswordStrengthIndicator({
   const label = getStrengthLabel(strength.score);
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className="mt-2 space-y-2" aria-live="polite" aria-atomic="false">
       {/* Strength Bar */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
@@ -32,7 +32,14 @@ export function PasswordStrengthIndicator({
             {label}
           </span>
         </div>
-        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+        <div
+          className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={strength.score}
+          aria-valuemin={0}
+          aria-valuemax={5}
+          aria-label={`Password strength: ${label}`}
+        >
           <div
             className={`h-full ${colors.bar} transition-all duration-300`}
             style={{ width: `${(strength.score / 5) * 100}%` }}
@@ -41,12 +48,12 @@ export function PasswordStrengthIndicator({
       </div>
 
       {/* Requirements Checklist */}
-      <div className="space-y-1 text-xs">
-        <div className="flex items-center gap-1.5">
+      <ul className="space-y-1 text-xs list-none" aria-label="Password requirements">
+        <li className="flex items-center gap-1.5">
           {strength.checks.length ? (
-            <Check className="h-3.5 w-3.5 text-green-600" />
+            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
           ) : (
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
@@ -54,13 +61,16 @@ export function PasswordStrengthIndicator({
             }
           >
             At least 8 characters
+            <span className="sr-only">
+              {strength.checks.length ? " - met" : " - not met"}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-1.5">
+        </li>
+        <li className="flex items-center gap-1.5">
           {strength.checks.uppercase ? (
-            <Check className="h-3.5 w-3.5 text-green-600" />
+            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
           ) : (
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
@@ -68,13 +78,16 @@ export function PasswordStrengthIndicator({
             }
           >
             One uppercase letter (A-Z)
+            <span className="sr-only">
+              {strength.checks.uppercase ? " - met" : " - not met"}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-1.5">
+        </li>
+        <li className="flex items-center gap-1.5">
           {strength.checks.lowercase ? (
-            <Check className="h-3.5 w-3.5 text-green-600" />
+            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
           ) : (
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
@@ -82,13 +95,16 @@ export function PasswordStrengthIndicator({
             }
           >
             One lowercase letter (a-z)
+            <span className="sr-only">
+              {strength.checks.lowercase ? " - met" : " - not met"}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-1.5">
+        </li>
+        <li className="flex items-center gap-1.5">
           {strength.checks.number ? (
-            <Check className="h-3.5 w-3.5 text-green-600" />
+            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
           ) : (
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
@@ -96,13 +112,16 @@ export function PasswordStrengthIndicator({
             }
           >
             One number (0-9)
+            <span className="sr-only">
+              {strength.checks.number ? " - met" : " - not met"}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-1.5">
+        </li>
+        <li className="flex items-center gap-1.5">
           {strength.checks.special ? (
-            <Check className="h-3.5 w-3.5 text-green-600" />
+            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
           ) : (
-            <X className="h-3.5 w-3.5 text-slate-400" />
+            <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
@@ -110,9 +129,12 @@ export function PasswordStrengthIndicator({
             }
           >
             One special character (!@#$%...)
+            <span className="sr-only">
+              {strength.checks.special ? " - met" : " - not met"}
+            </span>
           </span>
-        </div>
-      </div>
+        </li>
+      </ul>
     </div>
   );
 }

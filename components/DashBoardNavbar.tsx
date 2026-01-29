@@ -114,14 +114,16 @@ export default function DashBoardNavbar() {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3"
+            aria-label="Enabled Talent - opens main website in new tab"
           >
             <Image
               src="/logo/et-new.svg"
-              alt="EnabledTalent logo"
+              alt=""
               width={150}
               height={40}
               priority
               className="h-10 w-auto object-contain"
+              aria-hidden="true"
             />
           </a>
 
@@ -129,9 +131,10 @@ export default function DashBoardNavbar() {
           <div className="hidden items-center gap-7 md:flex">
             <Link
               href="/dashboard/profile"
+              aria-current={pathname === "/dashboard/profile" ? "page" : undefined}
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              <User size={18} />
+              <User size={18} aria-hidden="true" />
               <span>Profile</span>
             </Link>
 
@@ -140,14 +143,15 @@ export default function DashBoardNavbar() {
               onClick={handleLogout}
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
-              <LogOut size={18} />
+              <LogOut size={18} aria-hidden="true" />
               <span>Log Out</span>
             </button>
             <Link
               href="/dashboard/career-coach/start"
+              aria-current={pathname.startsWith("/dashboard/career-coach") ? "page" : undefined}
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
             >
-              <Search size={18} strokeWidth={3} />
+              <Search size={18} strokeWidth={3} aria-hidden="true" />
               <span>AI Career Coach</span>
             </Link>
           </div>

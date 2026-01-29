@@ -98,14 +98,16 @@ export default function JobForm({
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* Job Title (Corrected from screenshot typo 'Job Location') */}
+    <form className="space-y-6" onSubmit={handleSubmit} aria-label="Job posting form">
+      {/* Job Title */}
       <div>
         <label
           htmlFor={`${formId}-title`}
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Title
+          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span className="sr-only">(required)</span>
         </label>
         <input
           id={`${formId}-title`}
@@ -114,6 +116,8 @@ export default function JobForm({
           value={values.title}
           onChange={handleChange}
           placeholder="e.g. Senior UX Designer"
+          required
+          aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
         />
       </div>
@@ -125,6 +129,8 @@ export default function JobForm({
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Location
+          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span className="sr-only">(required)</span>
         </label>
         <input
           id={`${formId}-location`}
@@ -133,6 +139,8 @@ export default function JobForm({
           value={values.location}
           onChange={handleChange}
           placeholder="e.g. Toronto, ON"
+          required
+          aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
         />
       </div>
@@ -201,6 +209,8 @@ export default function JobForm({
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Description
+          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span className="sr-only">(required)</span>
         </label>
         <textarea
           id={`${formId}-description`}
@@ -208,6 +218,8 @@ export default function JobForm({
           name="description"
           value={values.description}
           onChange={handleChange}
+          required
+          aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
           placeholder={`Briefly describe the role and responsibilities.\n- Own the end-to-end design process\n- Collaborate with product and engineering\n- Deliver high-quality UI flows`}
         />
@@ -230,6 +242,7 @@ export default function JobForm({
               onChange={(e) => setSkillInput(e.target.value)}
               onKeyDown={handleSkillKeyDown}
               placeholder="e.g. React, TypeScript, Python"
+              aria-describedby={`${formId}-skills-hint`}
               className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
             />
             <button
@@ -241,10 +254,15 @@ export default function JobForm({
             </button>
           </div>
           {(values.skills || []).length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div
+              className="flex flex-wrap gap-2"
+              role="list"
+              aria-label="Added skills"
+            >
               {(values.skills || []).map((skill) => (
                 <span
                   key={skill}
+                  role="listitem"
                   className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm"
                 >
                   {skill}
@@ -252,13 +270,14 @@ export default function JobForm({
                     type="button"
                     onClick={() => handleRemoveSkill(skill)}
                     className="hover:text-blue-900"
-                    aria-label={`Remove ${skill}`}
+                    aria-label={`Remove ${skill} from required skills`}
                   >
                     <svg
                       className="w-4 h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -272,7 +291,7 @@ export default function JobForm({
               ))}
             </div>
           )}
-          <p className="text-xs text-gray-500">
+          <p id={`${formId}-skills-hint`} className="text-xs text-gray-500">
             Add skills one at a time. Press Enter or click Add button.
           </p>
         </div>
