@@ -13,7 +13,7 @@ import {
 } from "@/lib/candidateProfile";
 import { mapCandidateProfileToUserData } from "@/lib/candidateProfileUtils";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { apiRequest } from "@/lib/api-client";
 import { deriveUserRoleFromUserData } from "@/lib/roleUtils";
@@ -86,7 +86,7 @@ function LoginPageContent() {
           console.warn("[Talent Login] Logout failed:", logoutError);
         }
         setRoleWarning(
-          "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one."
+          "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one.",
         );
         return;
       }
@@ -131,8 +131,21 @@ function LoginPageContent() {
   return (
     <main
       id="main-content"
-      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex flex-col items-center md:justify-center"
     >
+      <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
+        <a
+          href="https://enabled-talent-landing-v2.vercel.app/"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+            aria-hidden="true"
+          />
+          Back to Homepage
+          <span className="sr-only">(opens external site)</span>
+        </a>
+      </div>
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -151,13 +164,18 @@ function LoginPageContent() {
               {/* Golden aura behind logo */}
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
+              <a
+                href="https://enabled-talent-landing-v2.vercel.app/"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
+                aria-label="Enabled Talent Logo - Back to Homepage"
+              >
                 <Image
                   src={logo}
-                  alt="Enabled Talent Logo"
+                  alt=""
                   className="h-12 w-12 object-contain"
+                  aria-hidden="true"
                 />
-              </div>
+              </a>
             </div>
 
             <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
@@ -326,16 +344,6 @@ function LoginPageContent() {
                 </Link>
               </p>
 
-              <p className="text-[13px] text-slate-600">
-                Are you an Employer?{" "}
-                <Link
-                  className="font-semibold text-[#B45309] hover:underline"
-                  href="/login-employer"
-                >
-                  Log in here
-                </Link>
-              </p>
-
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
                 <Link
@@ -355,6 +363,18 @@ function LoginPageContent() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-8 relative z-20 rounded-[24px] border border-white/50 bg-gradient-to-br from-[#fff8e1]/95 via-[#ffecb3]/95 to-[#ffe082]/95 backdrop-blur-sm shadow-[0_10px_25px_rgba(120,72,12,0.10)]">
+        <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
+          Are you an Employer?{" "}
+          <Link
+            className="font-bold text-[#8C4A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
+            href="/login-employer"
+            aria-label="Log in here to the Employer portal"
+          >
+            Log in here!
+          </Link>
+        </p>
       </div>
     </main>
   );

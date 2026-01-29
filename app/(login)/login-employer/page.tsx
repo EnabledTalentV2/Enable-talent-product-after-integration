@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
@@ -82,7 +82,7 @@ function EmployerLoginPageContent() {
           console.warn("[Employer Login] Logout failed:", logoutError);
         }
         setRoleWarning(
-          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one.",
         );
         return;
       }
@@ -121,8 +121,21 @@ function EmployerLoginPageContent() {
   return (
     <main
       id="main-content"
-      className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen w-full bg-[#C5D8F5] relative overflow-hidden flex flex-col items-center md:justify-center"
     >
+      <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
+        <a
+          href="https://enabled-talent-landing-v2.vercel.app/"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-[#C04622] bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/60 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+            aria-hidden="true"
+          />
+          Back to Homepage
+          <span className="sr-only">(opens external site)</span>
+        </a>
+      </div>
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -140,15 +153,20 @@ function EmployerLoginPageContent() {
             <div className="relative mb-8 flex items-center justify-center">
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-orange-400/50 blur-3xl" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4">
+              <a
+                href="https://enabled-talent-landing-v2.vercel.app/"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#C5D8F5]"
+                aria-label="Enabled Talent Logo - Back to Homepage"
+              >
                 <Image
                   src={logo}
-                  alt="Enabled Talent Logo"
+                  alt=""
                   width={60}
                   height={60}
                   className="h-12 w-12 object-contain"
+                  aria-hidden="true"
                 />
-              </div>
+              </a>
             </div>
 
             <h1 className="text-3xl font-semibold text-gray-900 mb-4 leading-tight md:text-4xl">
@@ -319,19 +337,22 @@ function EmployerLoginPageContent() {
                   Sign Up
                 </Link>
               </p>
-
-              <p className="text-[13px] text-gray-600">
-                Are you a Candidate?{" "}
-                <Link
-                  href="/login-talent"
-                  className="text-[#C04622] font-semibold hover:underline"
-                >
-                  Log in here
-                </Link>
-              </p>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-8 relative z-20 rounded-[24px] border border-white/50 bg-gradient-to-br from-[#eef6ff]/95 via-[#f5faff]/95 to-[#ffffff]/95 backdrop-blur-sm shadow-[0_10px_25px_rgba(30,58,138,0.10)]">
+        <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
+          Are you a Candidate?{" "}
+          <Link
+            className="font-bold text-[#C04622] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 rounded-sm"
+            href="/login-talent"
+            aria-label="Log in here to the Candidate portal"
+          >
+            Log in here!
+          </Link>
+        </p>
       </div>
     </main>
   );
