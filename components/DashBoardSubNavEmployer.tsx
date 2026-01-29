@@ -93,7 +93,7 @@ export default function DashboardSubNavEmployer() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search candidates by name, email, location..."
+              placeholder="Search candidates by name..."
               aria-label="Search candidates"
               className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />

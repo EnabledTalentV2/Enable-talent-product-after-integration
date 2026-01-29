@@ -47,6 +47,54 @@ const TABS = [
 
 const ITEMS_PER_PAGE = 10;
 
+const DEFAULT_JOB_TYPES = [
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Temporary",
+  "Freelance",
+];
+
+const DEFAULT_WORK_ARRANGEMENTS = [
+  "Remote",
+  "Hybrid",
+  "On-site",
+  "In-person",
+  "Flexible",
+];
+
+const normalizeFilterValue = (value?: string) =>
+  value ? value.toLowerCase().replace(/[\s_-]+/g, "") : "";
+
+const mergeOptions = (
+  defaults: string[],
+  values: Array<string | undefined>
+) => {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (value?: string) => {
+    if (!value) return;
+    const key = normalizeFilterValue(value);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(value);
+  };
+
+  defaults.forEach(add);
+  values.forEach(add);
+
+  return result;
+};
+
+type CandidateFilters = {
+  availability: string[];
+  jobType: string[];
+  workArrangement: string[];
+  verifiedOnly: boolean;
+};
+
 const STATUS_BADGES: Record<
   Application["status"],
   { label: string; className: string }
@@ -136,6 +184,13 @@ export default function CandidatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<CandidateFilters>({
+    availability: [],
+    jobType: [],
+    workArrangement: [],
+    verifiedOnly: false,
+  });
   const [selectedApplicationId, setSelectedApplicationId] = useState<
     number | null
   >(null);
@@ -157,6 +212,33 @@ export default function CandidatesPage() {
     });
     return map;
   }, [candidateProfiles]);
+
+  const availabilityOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.availability);
+    return mergeOptions([], values).sort();
+  }, [candidateProfiles]);
+
+  const jobTypeOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.job_type);
+    return mergeOptions(DEFAULT_JOB_TYPES, values);
+  }, [candidateProfiles]);
+
+  const workArrangementOptions = useMemo(() => {
+    const values = candidateProfiles.map((profile) => profile.work_arrangement);
+    return mergeOptions(DEFAULT_WORK_ARRANGEMENTS, values);
+  }, [candidateProfiles]);
+
+  const hasActiveFilters =
+    filters.verifiedOnly ||
+    filters.availability.length > 0 ||
+    filters.jobType.length > 0 ||
+    filters.workArrangement.length > 0;
+
+  const activeFilterCount =
+    filters.availability.length +
+    filters.jobType.length +
+    filters.workArrangement.length +
+    (filters.verifiedOnly ? 1 : 0);
 
   const {
     isRanking,
@@ -193,9 +275,42 @@ export default function CandidatesPage() {
       const roleMatch =
         profile?.job_type?.toLowerCase().includes(query) ||
         profile?.work_arrangement?.toLowerCase().includes(query);
-      return nameMatch || emailMatch || locationMatch || roleMatch;
+      const matchesQuery =
+        nameMatch || emailMatch || locationMatch || roleMatch;
+
+      if (!matchesQuery) return false;
+
+      if (filters.verifiedOnly && !profile?.is_verified) {
+        return false;
+      }
+
+      if (filters.availability.length > 0) {
+        const availability = normalizeFilterValue(profile?.availability);
+        const matchesAvailability = filters.availability.some(
+          (value) => normalizeFilterValue(value) === availability
+        );
+        if (!matchesAvailability) return false;
+      }
+
+      if (filters.jobType.length > 0) {
+        const jobType = normalizeFilterValue(profile?.job_type);
+        const matchesJobType = filters.jobType.some(
+          (value) => normalizeFilterValue(value) === jobType
+        );
+        if (!matchesJobType) return false;
+      }
+
+      if (filters.workArrangement.length > 0) {
+        const workArrangement = normalizeFilterValue(profile?.work_arrangement);
+        const matchesArrangement = filters.workArrangement.some(
+          (value) => normalizeFilterValue(value) === workArrangement
+        );
+        if (!matchesArrangement) return false;
+      }
+
+      return true;
     });
-  }, [allApplications, activeTab, searchQuery, candidateProfilesBySlug]);
+  }, [allApplications, activeTab, searchQuery, candidateProfilesBySlug, filters]);
 
   const totalItems = filteredApplications.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -330,7 +445,7 @@ export default function CandidatesPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, filters]);
 
   useEffect(() => {
     setSelectedCandidateSlug(null);
@@ -413,6 +528,32 @@ export default function CandidatesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const toggleFilter = useCallback(
+    (key: keyof Omit<CandidateFilters, "verifiedOnly">, value: string) => {
+      setFilters((prev) => {
+        const currentValues = prev[key];
+        const nextValues = currentValues.includes(value)
+          ? currentValues.filter((item) => item !== value)
+          : [...currentValues, value];
+        return { ...prev, [key]: nextValues };
+      });
+    },
+    []
+  );
+
+  const handleVerifiedToggle = useCallback(() => {
+    setFilters((prev) => ({ ...prev, verifiedOnly: !prev.verifiedOnly }));
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setFilters({
+      availability: [],
+      jobType: [],
+      workArrangement: [],
+      verifiedOnly: false,
+    });
+  }, []);
+
   const handleInviteClick = useCallback(() => {
     if (!hasFetched && !isJobsLoading) {
       fetchJobs();
@@ -492,12 +633,151 @@ export default function CandidatesPage() {
                   </div>
                   <button
                     type="button"
+                    onClick={() => setIsFiltersOpen((prev) => !prev)}
+                    aria-expanded={isFiltersOpen}
+                    aria-controls="job-candidate-filters"
                     className="flex items-center gap-2 rounded-xl bg-[#D95F35] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B84D28]"
                   >
                     <SlidersHorizontal className="h-4 w-4" />
-                    Filters
+                    Filters{hasActiveFilters ? ` (${activeFilterCount})` : ""}
                   </button>
                 </form>
+
+                {isFiltersOpen && (
+                  <div
+                    id="job-candidate-filters"
+                    className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-slate-900">
+                        Filters
+                      </h2>
+                      {hasActiveFilters && (
+                        <button
+                          type="button"
+                          onClick={clearFilters}
+                          className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Availability
+                        </legend>
+                        {availabilityOptions.length > 0 ? (
+                          availabilityOptions.map((option) => {
+                            const id = `job-filter-availability-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.availability.includes(option)}
+                                  onChange={() =>
+                                    toggleFilter("availability", option)
+                                  }
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No availability data yet.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Work Arrangement
+                        </legend>
+                        {workArrangementOptions.length > 0 ? (
+                          workArrangementOptions.map((option) => {
+                            const id = `job-filter-work-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.workArrangement.includes(option)}
+                                  onChange={() =>
+                                    toggleFilter("workArrangement", option)
+                                  }
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No work modes listed.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Job Type
+                        </legend>
+                        {jobTypeOptions.length > 0 ? (
+                          jobTypeOptions.map((option) => {
+                            const id = `job-filter-type-${normalizeFilterValue(option)}`;
+                            return (
+                              <label
+                                key={option}
+                                htmlFor={id}
+                                className="flex items-center gap-2 text-sm text-slate-600"
+                              >
+                                <input
+                                  id={id}
+                                  type="checkbox"
+                                  checked={filters.jobType.includes(option)}
+                                  onChange={() => toggleFilter("jobType", option)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                                />
+                                {option}
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-slate-400">
+                            No job types listed.
+                          </p>
+                        )}
+                      </fieldset>
+
+                      <fieldset className="space-y-2">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Verification
+                        </legend>
+                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={filters.verifiedOnly}
+                            onChange={handleVerifiedToggle}
+                            className="h-4 w-4 rounded border-slate-300 text-[#C27803] focus:ring-[#C27803]"
+                          />
+                          Verified candidates only
+                        </label>
+                      </fieldset>
+                    </div>
+                  </div>
+                )}
 
                 {applicationsError ? (
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

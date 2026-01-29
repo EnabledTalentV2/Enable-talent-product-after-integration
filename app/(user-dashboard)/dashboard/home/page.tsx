@@ -3,21 +3,23 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Briefcase,
+  Calendar,
+  ExternalLink,
+  Globe,
+  GraduationCap,
+  Linkedin,
+  MapPin,
+  Award,
+  FolderOpen,
+} from "lucide-react";
 import placeholder from "@/public/Placeholder.png";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { CandidateHomeSkeleton } from "@/components/CandidateDashboardSkeletons";
-import { getNotifications, requestNote } from "@/lib/notifications";
 import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { initialUserData } from "@/lib/userDataDefaults";
-
-type ProfileSection = {
-  id: string;
-  label: string;
-  count?: number;
-  items?: string[];
-};
 
 const isLikelyImageSource = (value?: string) => {
   if (!value) return false;
@@ -31,20 +33,29 @@ const isLikelyImageSource = (value?: string) => {
 };
 
 const toTrimmed = (value?: string) => value?.trim() ?? "";
-const fallbackText = "Data unavailable";
+const fallbackText = "Not specified";
+
+// WCAG AA compliant colors with 4.5:1+ contrast ratio
+const getSkillLevelColor = (level?: string) => {
+  const normalized = level?.toLowerCase() ?? "";
+  if (normalized === "advanced") return "bg-green-50 text-green-800";
+  if (normalized === "intermediate") return "bg-amber-50 text-amber-800";
+  return "bg-slate-100 text-slate-800";
+};
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
 
 export default function HomePageDashboard() {
   const router = useRouter();
   const rawUserData = useUserDataStore((s) => s.userData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAboutExpanded, setIsAboutExpanded] = useState(true);
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({});
-  const notifications = getNotifications();
 
-  // Merge with defaults to ensure all nested objects exist
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -109,7 +120,7 @@ export default function HomePageDashboard() {
         if (active) {
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (active) {
           setError("Unable to load your dashboard right now.");
         }
@@ -132,15 +143,21 @@ export default function HomePageDashboard() {
       .map(toTrimmed)
       .filter(Boolean)
       .join(" ") || fallbackText;
+
   const profileRole =
     toTrimmed(userData.workExperience.entries[0]?.role) ||
     toTrimmed(userData.skills.primaryList?.[0]?.name) ||
-    fallbackText;
+    "Professional";
+
   const profilePhoto = toTrimmed(userData.basicInfo.profilePhoto);
   const profileImage = isLikelyImageSource(profilePhoto)
     ? profilePhoto
     : placeholder;
-  const unreadCount = notifications.filter((notice) => notice.unread).length;
+
+  const location = toTrimmed(userData.basicInfo.location);
+  const linkedinUrl = toTrimmed(userData.basicInfo.linkedinUrl);
+  const portfolioUrl = toTrimmed(userData.basicInfo.portfolioUrl);
+
   const { percent: profilePercent } = useMemo(
     () => computeDashboardProfileCompletion(userData),
     [userData],
@@ -149,10 +166,14 @@ export default function HomePageDashboard() {
   const aboutParagraphs = useMemo(() => {
     const paragraphs: string[] = [];
     const status = toTrimmed(userData.basicInfo.currentStatus);
+
+    // Only use currentStatus as the primary source
     if (status) {
       paragraphs.push(status);
+      return paragraphs;
     }
 
+    // Fallback: work experience description
     const description = toTrimmed(
       userData.workExperience.entries[0]?.description,
     );
@@ -162,174 +183,33 @@ export default function HomePageDashboard() {
         .map((line) => line.replace(/^\s*[-*]\s*/, "").trim())
         .filter(Boolean)
         .join(" ");
-
       if (normalized) {
         paragraphs.push(normalized);
+        return paragraphs;
       }
     }
 
-    if (paragraphs.length === 0) {
-      const fallback = [
-        userData.education.major,
-        userData.education.institution,
-      ]
-        .map(toTrimmed)
-        .filter(Boolean)
-        .join(" - ");
-      if (fallback) {
-        paragraphs.push(fallback);
-      }
-    }
+    // Fallback: education info
+    const fallback = [userData.education.major, userData.education.institution]
+      .map(toTrimmed)
+      .filter(Boolean)
+      .join(" - ");
+    if (fallback) paragraphs.push(fallback);
 
     return paragraphs;
   }, [userData]);
 
-  const profileSections = useMemo<ProfileSection[]>(() => {
-    const educationItems: string[] = [];
-    const educationInstitution = toTrimmed(userData.education.institution);
-    const educationMajor = toTrimmed(userData.education.major);
-    const educationCourse = toTrimmed(userData.education.courseName);
-    const educationDate = toTrimmed(userData.education.graduationDate);
+  const skills = userData.skills.primaryList ?? [];
+  const workEntries = userData.workExperience.entries ?? [];
+  const projectEntries = userData.projects.entries ?? [];
+  const achievementEntries = userData.achievements.entries ?? [];
+  const certificationEntries = userData.certification.noCertification
+    ? []
+    : userData.certification.entries ?? [];
 
-    if (educationInstitution) {
-      educationItems.push(`Institution: ${educationInstitution}`);
-    }
-    if (educationMajor) {
-      educationItems.push(`Major: ${educationMajor}`);
-    }
-    if (educationCourse) {
-      educationItems.push(`Course: ${educationCourse}`);
-    }
-    if (educationDate) {
-      educationItems.push(`Graduation Date: ${educationDate}`);
-    }
-
-    const workItems = userData.workExperience.entries
-      .map((entry) => {
-        const role = toTrimmed(entry.role);
-        const company = toTrimmed(entry.company);
-        if (role && company) return `${role} at ${company}`;
-        return role || company || null;
-      })
-      .filter((item): item is string => Boolean(item));
-
-    const skillItems = (userData.skills.primaryList ?? [])
-      .map((skill) => toTrimmed(skill.name))
-      .filter(Boolean);
-
-    const projectItems = userData.projects.entries
-      .map((entry) => toTrimmed(entry.projectName))
-      .filter(Boolean);
-
-    const achievementItems = userData.achievements.entries
-      .map((entry) => toTrimmed(entry.title))
-      .filter(Boolean);
-
-    const certificationItems = userData.certification.noCertification
-      ? []
-      : userData.certification.entries
-          .map((entry) => {
-            const name = toTrimmed(entry.name);
-            const org = toTrimmed(entry.organization);
-            if (name && org) return `${name} - ${org}`;
-            return name || org || null;
-          })
-          .filter((item): item is string => Boolean(item));
-
-    const companySize = userData.preference.companySize
-      .map(toTrimmed)
-      .filter(Boolean);
-    const jobType = userData.preference.jobType.map(toTrimmed).filter(Boolean);
-    const jobSearch = userData.preference.jobSearch
-      .map(toTrimmed)
-      .filter(Boolean);
-    const preferenceItems: string[] = [];
-
-    if (companySize.length > 0) {
-      preferenceItems.push(`Company Size: ${companySize.join(", ")}`);
-    }
-    if (jobType.length > 0) {
-      preferenceItems.push(`Job Type: ${jobType.join(", ")}`);
-    }
-    if (jobSearch.length > 0) {
-      preferenceItems.push(`Work mode: ${jobSearch.join(", ")}`);
-    }
-
-    const languageItems = userData.otherDetails.languages
-      .map((language) => {
-        const name = toTrimmed(language.language);
-        if (!name) return null;
-        const levels = [language.speaking, language.reading, language.writing]
-          .map(toTrimmed)
-          .filter(Boolean)
-          .join(", ");
-        return levels ? `${name}: ${levels}` : name;
-      })
-      .filter((item): item is string => Boolean(item));
-
-    const otherItems = [...languageItems];
-    const careerStage = toTrimmed(userData.otherDetails.careerStage);
-    const desiredSalary = toTrimmed(userData.otherDetails.desiredSalary);
-    if (careerStage) {
-      otherItems.push(`Career Stage: ${careerStage}`);
-    }
-    if (desiredSalary) {
-      otherItems.push(`Desired Salary: ${desiredSalary}`);
-    }
-
-    return [
-      {
-        id: "education",
-        label: "Education",
-        count: educationItems.length > 0 ? 1 : 0,
-        items: educationItems,
-      },
-      {
-        id: "work-experience",
-        label: "Work Experience",
-        count: userData.workExperience.entries.length,
-        items: workItems,
-      },
-      {
-        id: "skills",
-        label: "Skills",
-        count: skillItems.length,
-        items: skillItems,
-      },
-      {
-        id: "projects",
-        label: "Projects",
-        count: userData.projects.entries.length,
-        items: projectItems,
-      },
-      {
-        id: "achievements",
-        label: "Achievements",
-        count: achievementItems.length,
-        items: achievementItems,
-      },
-      {
-        id: "certifications",
-        label: "Certifications",
-        count: userData.certification.noCertification
-          ? 0
-          : userData.certification.entries.length,
-        items: certificationItems,
-      },
-      {
-        id: "preference",
-        label: "Preference",
-        count: companySize.length + jobType.length + jobSearch.length,
-        items: preferenceItems,
-      },
-      {
-        id: "other-details",
-        label: "Other details",
-        count: languageItems.length,
-        items: otherItems,
-      },
-    ];
-  }, [userData]);
+  const languages = userData.otherDetails.languages ?? [];
+  const careerStage = toTrimmed(userData.otherDetails.careerStage);
+  const desiredSalary = toTrimmed(userData.otherDetails.desiredSalary);
 
   if (loading) {
     return <CandidateHomeSkeleton />;
@@ -337,209 +217,483 @@ export default function HomePageDashboard() {
 
   if (error) {
     return (
-      <div className="py-10 text-base font-medium text-red-600">{error}</div>
+      <div
+        role="alert"
+        aria-live="polite"
+        className="py-10 text-base font-medium text-red-700"
+      >
+        {error}
+      </div>
     );
   }
-
-  const toggleSection = (id: string) => {
-    setExpandedSections((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   return (
     <main id="main-content" aria-labelledby="dashboard-heading">
       <h1 id="dashboard-heading" className="sr-only">
-        Talent Dashboard
+        Talent Dashboard - Portfolio
       </h1>
-      <section className="mx-auto max-w-360 space-y-6 py-10">
+      <section
+        aria-label="Profile Portfolio"
+        className="mx-auto max-w-360 space-y-6 py-10"
+      >
         <DashboardProfilePrompt percent={profilePercent} />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
-          <div className="space-y-6">
-            <div className="flex items-start justify-between rounded-[28px] bg-[#F7D16C] px-6 py-5 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
-                  <Image
-                    src={profileImage}
-                    alt={`${profileName} profile`}
-                    width={56}
-                    height={56}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="text-base font-semibold text-slate-900">
-                    {profileName}
-                  </p>
-                  <p className="text-base font-medium text-slate-700">
-                    {profileRole}
-                  </p>
-                </div>
-              </div>
-              {/* edit button removed */}
-            </div>
 
-            <div className="rounded-[28px] bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-slate-900">
-                  About
-                </h2>
-                <div className="flex items-center gap-2">
-                  {/* edit button removed */}
-                  <button
-                    type="button"
-                    onClick={() => setIsAboutExpanded((prev) => !prev)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:text-slate-700"
-                    aria-label={
-                      isAboutExpanded
-                        ? "Collapse about section"
-                        : "Expand about section"
-                    }
-                    aria-expanded={isAboutExpanded}
-                    aria-controls="about-section"
-                  >
-                    {isAboutExpanded ? (
-                      <ChevronUp size={16} />
-                    ) : (
-                      <ChevronDown size={16} />
-                    )}
-                  </button>
-                </div>
-              </div>
-              {isAboutExpanded ? (
-                <div
-                  id="about-section"
-                  className="mt-4 space-y-4 text-base leading-relaxed text-slate-600"
-                >
-                  {aboutParagraphs.length > 0 ? (
-                    aboutParagraphs.map((paragraph, index) => (
-                      <p key={`${paragraph.slice(0, 24)}-${index}`}>
-                        {paragraph}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="text-slate-400">{fallbackText}.</p>
-                  )}
-                </div>
-              ) : null}
+        {/* Profile Summary Card */}
+        <article
+          aria-labelledby="profile-name"
+          className="rounded-[28px] bg-[#F7D16C] px-6 py-5 shadow-sm"
+        >
+          <div className="flex items-center gap-4">
+            {/* Profile Image */}
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+              <Image
+                src={profileImage}
+                alt=""
+                aria-hidden={profileName !== fallbackText ? "false" : "true"}
+                width={64}
+                height={64}
+                className="h-full w-full object-cover"
+              />
             </div>
-
-            <div className="space-y-3">
-              {profileSections.map((section) => {
-                const isExpanded = Boolean(expandedSections[section.id]);
-                const contentId = `section-${section.id}`;
-                return (
-                  <div
-                    key={section.id}
-                    className="rounded-[28px] bg-white shadow-sm"
-                  >
-                    <div className="flex items-center justify-between px-5 py-4">
-                      <div>
-                        <p className="text-base font-semibold text-slate-900">
-                          {section.label}
-                        </p>
-                        {typeof section.count === "number" ? (
-                          <p className="text-sm text-slate-400">
-                            {section.count} added
-                          </p>
-                        ) : null}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleSection(section.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:text-slate-700"
-                        aria-label={`${isExpanded ? "Collapse" : "Expand"} ${
-                          section.label
-                        }`}
-                        aria-expanded={isExpanded}
-                        aria-controls={contentId}
-                      >
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-                    </div>
-                    {isExpanded ? (
-                      <div
-                        id={contentId}
-                        className="border-t border-slate-100 px-5 pb-4 pt-3 text-base text-slate-600"
-                      >
-                        {section.items && section.items.length > 0 ? (
-                          <ul className="list-disc space-y-1 pl-4">
-                            {section.items.map((item, index) => (
-                              <li key={`${index}-${item}`}>{item}</li>
-                            ))}
-                          </ul>
-                        ) : typeof section.count === "number" &&
-                          section.count > 0 ? (
-                          <p>{section.count} items available.</p>
-                        ) : (
-                          <p>{fallbackText}.</p>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Notifications
+            <div className="flex-1">
+              <h2
+                id="profile-name"
+                className="text-2xl font-bold text-slate-900"
+              >
+                {profileName}
               </h2>
-              <span className="text-base text-slate-500">
-                ({unreadCount} Unread)
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {notifications.length > 0 ? (
-                notifications.map((notice) => (
-                  <div
-                    key={notice.id}
-                    className="rounded-[28px] bg-white p-5 shadow-sm"
-                  >
-                    <div className="space-y-1">
-                      <p className="text-base font-medium text-slate-900">
-                        {notice.message}
-                      </p>
-                      <p className="text-sm text-slate-400">{notice.time}</p>
-                    </div>
-
-                    {notice.type === "request" ? (
-                      <div className="mt-4 space-y-3">
-                        <div className="flex flex-wrap gap-3">
-                          <button
-                            type="button"
-                            className="rounded-lg bg-[#C27803] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                          >
-                            Decline
-                          </button>
-                        </div>
-                        <div className="flex items-start gap-2 rounded-xl bg-[#FDE8E8] px-3 py-2 text-sm text-[#B42318]">
-                          <AlertCircle className="mt-0.5 h-4 w-4" />
-                          <span>{requestNote}</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
-                  No notifications yet.
-                </div>
+              <p className="mt-1 text-base font-medium text-slate-800">
+                {profileRole}
+              </p>
+              {location && (
+                <p className="mt-1 flex items-center gap-1 text-sm text-slate-700">
+                  <MapPin size={14} aria-hidden="true" />
+                  <span className="sr-only">Location: </span>
+                  {location}
+                </p>
+              )}
+              {/* Social Links */}
+              {(linkedinUrl || portfolioUrl) && (
+                <nav aria-label="Social links" className="mt-3 flex items-center gap-3">
+                  {linkedinUrl && (
+                    <a
+                      href={linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm font-medium text-slate-800 underline decoration-transparent underline-offset-2 transition-colors hover:text-slate-900 hover:decoration-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+                    >
+                      <Linkedin size={16} aria-hidden="true" />
+                      LinkedIn
+                      <span className="sr-only"> (opens in new tab)</span>
+                    </a>
+                  )}
+                  {portfolioUrl && (
+                    <a
+                      href={portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm font-medium text-slate-800 underline decoration-transparent underline-offset-2 transition-colors hover:text-slate-900 hover:decoration-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+                    >
+                      <Globe size={16} aria-hidden="true" />
+                      Website
+                      <span className="sr-only"> (opens in new tab)</span>
+                    </a>
+                  )}
+                </nav>
               )}
             </div>
           </div>
+        </article>
+
+        <div className="space-y-6">
+          {/* About Section */}
+          {aboutParagraphs.length > 0 && (
+            <section
+              aria-labelledby="about-heading"
+              className="rounded-[28px] border-l-4 border-[#C27803] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="about-heading"
+                className="text-lg font-semibold text-slate-900"
+              >
+                About
+              </h2>
+              <div className="mt-3 space-y-3 text-base leading-relaxed text-slate-700">
+                {aboutParagraphs.map((paragraph, index) => (
+                  <p key={`about-${index}`}>{paragraph}</p>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Skills Section */}
+          {skills.length > 0 && (
+            <section
+              aria-labelledby="skills-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="skills-heading"
+                className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  aria-hidden="true"
+                >
+                  <Award size={16} />
+                </span>
+                Skills
+              </h2>
+              <ul
+                aria-label="Skills list"
+                className="mt-4 flex flex-wrap gap-2"
+              >
+                {skills.map((skill, index) => (
+                  <li
+                    key={`skill-${index}`}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium ${getSkillLevelColor(skill.level)}`}
+                  >
+                    {skill.name}
+                    {skill.level && (
+                      <span className="ml-1 text-xs">
+                        <span className="sr-only"> - proficiency level: </span>
+                        ({skill.level})
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Work Experience Timeline */}
+          {workEntries.length > 0 && (
+            <section
+              aria-labelledby="work-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="work-heading"
+                className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  aria-hidden="true"
+                >
+                  <Briefcase size={16} />
+                </span>
+                Work Experience
+              </h2>
+              <ol
+                aria-label="Work experience timeline"
+                className="relative mt-6 ml-4 border-l-2 border-orange-200 pl-6"
+              >
+                {workEntries.map((entry, index) => (
+                  <li
+                    key={`work-${index}`}
+                    className="relative pb-6 last:pb-0"
+                  >
+                    {/* Timeline dot - decorative */}
+                    <div
+                      className="absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-[#C27803] bg-white"
+                      aria-hidden="true"
+                    />
+                    <article>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">
+                            {toTrimmed(entry.role) || "Role"}
+                          </h3>
+                          <p className="text-sm text-slate-700">
+                            {toTrimmed(entry.company) || "Company"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {entry.current && (
+                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                              Current
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                            <Calendar size={12} aria-hidden="true" />
+                            <span className="sr-only">Duration: </span>
+                            {formatDate(entry.from)}
+                            {" - "}
+                            {entry.current ? "Present" : formatDate(entry.to)}
+                          </span>
+                        </div>
+                      </div>
+                      {entry.description && (
+                        <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                          {entry.description}
+                        </p>
+                      )}
+                    </article>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {/* Projects Grid */}
+          {projectEntries.length > 0 && (
+            <section
+              aria-labelledby="projects-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="projects-heading"
+                className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  aria-hidden="true"
+                >
+                  <FolderOpen size={16} />
+                </span>
+                Projects
+              </h2>
+              <ul
+                aria-label="Projects list"
+                className="mt-4 grid gap-4 sm:grid-cols-2"
+              >
+                {projectEntries.map((project, index) => (
+                  <li key={`project-${index}`}>
+                    <article className="h-full rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-orange-300 hover:shadow-sm focus-within:ring-2 focus-within:ring-[#C27803]">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-slate-900">
+                          {toTrimmed(project.projectName) || "Project"}
+                        </h3>
+                        {project.current && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                            Ongoing
+                          </span>
+                        )}
+                      </div>
+                      {(project.from || project.to) && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+                          <Calendar size={12} aria-hidden="true" />
+                          <span className="sr-only">Duration: </span>
+                          {formatDate(project.from)}
+                          {project.to && ` - ${formatDate(project.to)}`}
+                        </p>
+                      )}
+                      {project.projectDescription && (
+                        <p className="mt-2 text-sm text-slate-700 line-clamp-2">
+                          {project.projectDescription}
+                        </p>
+                      )}
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Education */}
+          {(userData.education.institution || userData.education.major) && (
+            <section
+              aria-labelledby="education-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="education-heading"
+                className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  aria-hidden="true"
+                >
+                  <GraduationCap size={16} />
+                </span>
+                Education
+              </h2>
+              <article className="mt-4 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-4">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {toTrimmed(userData.education.institution) || "Institution"}
+                </h3>
+                <p className="mt-1 text-slate-700">
+                  {[
+                    toTrimmed(userData.education.courseName),
+                    toTrimmed(userData.education.major),
+                  ]
+                    .filter(Boolean)
+                    .join(" in ") || "Degree"}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {userData.education.graduationDate && (
+                    <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                      <Calendar size={12} aria-hidden="true" />
+                      Graduated: {formatDate(userData.education.graduationDate)}
+                    </span>
+                  )}
+                  {userData.education.grade && (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                      Grade: {userData.education.grade}
+                    </span>
+                  )}
+                </div>
+              </article>
+            </section>
+          )}
+
+          {/* Credentials (Achievements + Certifications) */}
+          {(achievementEntries.length > 0 ||
+            certificationEntries.length > 0) && (
+            <section
+              aria-labelledby="credentials-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="credentials-heading"
+                className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  aria-hidden="true"
+                >
+                  <Award size={16} />
+                </span>
+                Credentials
+              </h2>
+
+              {/* Achievements */}
+              {achievementEntries.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-600">
+                    Achievements
+                  </h3>
+                  <ul aria-label="Achievements list" className="mt-2 flex flex-wrap gap-2">
+                    {achievementEntries.map((achievement, index) => (
+                      <li
+                        key={`achievement-${index}`}
+                        className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+                      >
+                        <p className="font-medium text-slate-900">
+                          {toTrimmed(achievement.title)}
+                        </p>
+                        {achievement.issueDate && (
+                          <p className="text-xs text-slate-600">
+                            <span className="sr-only">Received: </span>
+                            {formatDate(achievement.issueDate)}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Certifications */}
+              {certificationEntries.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-600">
+                    Certifications
+                  </h3>
+                  <ul aria-label="Certifications list" className="mt-2 flex flex-wrap gap-2">
+                    {certificationEntries.map((cert, index) => (
+                      <li
+                        key={`cert-${index}`}
+                        className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2"
+                      >
+                        <div>
+                          <p className="font-medium text-slate-900">
+                            {toTrimmed(cert.name)}
+                          </p>
+                          <p className="text-xs text-slate-600">
+                            <span className="sr-only">Issued by: </span>
+                            {toTrimmed(cert.organization)}
+                          </p>
+                        </div>
+                        {cert.credentialIdUrl && (
+                          <a
+                            href={cert.credentialIdUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded p-1 text-green-700 transition-colors hover:text-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+                            aria-label={`View ${toTrimmed(cert.name)} credential (opens in new tab)`}
+                          >
+                            <ExternalLink size={14} aria-hidden="true" />
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Other Details */}
+          {(languages.length > 0 || careerStage || desiredSalary) && (
+            <section
+              aria-labelledby="additional-heading"
+              className="rounded-[28px] bg-white p-6 shadow-sm"
+            >
+              <h2
+                id="additional-heading"
+                className="text-lg font-semibold text-slate-900"
+              >
+                Additional Info
+              </h2>
+              <div className="mt-4 space-y-4">
+                {/* Languages */}
+                {languages.length > 0 &&
+                  languages.some((l) => toTrimmed(l.language)) && (
+                    <div>
+                      <h3 className="text-sm font-medium text-slate-600">
+                        Languages
+                      </h3>
+                      <ul aria-label="Languages" className="mt-2 flex flex-wrap gap-2">
+                        {languages
+                          .filter((l) => toTrimmed(l.language))
+                          .map((lang, index) => (
+                            <li
+                              key={`lang-${index}`}
+                              className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800"
+                            >
+                              {lang.language}
+                              {(lang.speaking ||
+                                lang.reading ||
+                                lang.writing) && (
+                                <span className="ml-1 text-xs text-slate-600">
+                                  <span className="sr-only">
+                                    {" "}
+                                    - proficiency:{" "}
+                                  </span>
+                                  (
+                                  {[lang.speaking, lang.reading, lang.writing]
+                                    .filter(Boolean)
+                                    .join("/")}
+                                  )
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {/* Career & Salary */}
+                {(careerStage || desiredSalary) && (
+                  <dl className="flex flex-wrap gap-3">
+                    {careerStage && (
+                      <div className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800">
+                        <dt className="inline font-medium">Career Stage:</dt>{" "}
+                        <dd className="inline">{careerStage}</dd>
+                      </div>
+                    )}
+                    {desiredSalary && (
+                      <div className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800">
+                        <dt className="inline font-medium">Expected Salary:</dt>{" "}
+                        <dd className="inline">{desiredSalary}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )}
+              </div>
+            </section>
+          )}
         </div>
       </section>
     </main>
