@@ -95,6 +95,19 @@ type BackendCandidateProfile = {
       fields_extracted?: string[];
     };
   };
+  verified_profile?: unknown;
+  verifiedProfile?: unknown;
+  skills?: unknown;
+  skill_set?: unknown;
+  skillSet?: unknown;
+  work_experience?: unknown;
+  workExperience?: unknown;
+  work_experiences?: unknown;
+  education?: unknown;
+  educations?: unknown;
+  certifications?: unknown;
+  certification?: unknown;
+  certificates?: unknown;
   willing_to_relocate?: boolean;
   employment_type_preferences?: string[];
   work_mode_preferences?: string[];
@@ -139,6 +152,23 @@ function parseSalaryRange(
 
   return {};
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getVerifiedProfile = (backend: any): Record<string, unknown> | null => {
+  if (isRecord(backend?.verified_profile)) return backend.verified_profile;
+  if (isRecord(backend?.verifiedProfile)) return backend.verifiedProfile;
+  return null;
+};
+
+const getEntriesArray = (value: unknown): unknown[] => {
+  if (Array.isArray(value)) return value;
+  if (isRecord(value) && Array.isArray(value.entries)) {
+    return value.entries;
+  }
+  return [];
+};
 
 /**
  * Extract first name from various possible locations in the backend data
@@ -230,48 +260,91 @@ function extractPortfolio(backend: any): string | undefined {
  * Extract skills from various possible locations
  */
 function extractSkills(backend: any): string[] {
-  // Try nested resume_data structure first
-  if (backend.resume_data?.resume_data?.skills?.technical) {
-    return backend.resume_data.resume_data.skills.technical;
-  }
-  // Try flat skills array
-  if (Array.isArray(backend.skills)) {
-    return backend.skills;
-  }
-  return [];
+  const verifiedProfile = getVerifiedProfile(backend);
+  const sources = [
+    verifiedProfile?.skills,
+    backend.skills,
+    backend.skill_set,
+    backend.skillSet,
+  ];
+  const skills: string[] = [];
+  sources.forEach((source) => {
+    if (!Array.isArray(source)) return;
+    source.forEach((entry) => {
+      if (typeof entry === "string") {
+        const trimmed = entry.trim();
+        if (trimmed) skills.push(trimmed);
+        return;
+      }
+      if (isRecord(entry)) {
+        const name =
+          toText(entry.name) ||
+          toText(entry.skill) ||
+          toText(entry.title) ||
+          toText(entry.label);
+        if (name) skills.push(name);
+      }
+    });
+  });
+  return skills;
 }
 
 /**
  * Extract work experience from various possible locations
  */
 function extractWorkExperience(backend: any): any[] | undefined {
-  return (
-    backend.resume_data?.resume_data?.work_experience ||
-    backend.work_experience ||
-    undefined
-  );
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.work_experience,
+    verifiedProfile?.workExperience,
+    verifiedProfile?.work_experiences,
+    backend.work_experience,
+    backend.workExperience,
+    backend.work_experiences,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
 }
 
 /**
  * Extract education from various possible locations
  */
 function extractEducation(backend: any): any[] | undefined {
-  return (
-    backend.resume_data?.resume_data?.education ||
-    backend.education ||
-    undefined
-  );
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.education,
+    verifiedProfile?.educations,
+    backend.education,
+    backend.educations,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
 }
 
 /**
  * Extract certifications from various possible locations
  */
 function extractCertifications(backend: any): any[] | undefined {
-  return (
-    backend.resume_data?.resume_data?.certifications ||
-    backend.certifications ||
-    undefined
-  );
+  const verifiedProfile = getVerifiedProfile(backend);
+  const containers = [
+    verifiedProfile?.certifications,
+    verifiedProfile?.certification,
+    verifiedProfile?.certificates,
+    backend.certifications,
+    backend.certification,
+    backend.certificates,
+  ];
+  for (const container of containers) {
+    const entries = getEntriesArray(container);
+    if (entries.length > 0) return entries;
+  }
+  return undefined;
 }
 
 const toText = (value: unknown): string | undefined => {
@@ -297,12 +370,29 @@ function parseExperienceEntries(
         return { raw_text: toText(exp) };
       }
       return {
-        role: toText(exp.role) || toText(exp.position) || toText(exp.title),
-        company: toText(exp.company),
+        role:
+          toText(exp.role) ||
+          toText(exp.position) ||
+          toText(exp.title) ||
+          toText(exp.job_title) ||
+          toText(exp.jobTitle),
+        company:
+          toText(exp.company) ||
+          toText(exp.employer) ||
+          toText(exp.organization),
         location: toText(exp.location),
-        start_date: toText(exp.start_date) || toText(exp.startDate),
-        end_date: toText(exp.end_date) || toText(exp.endDate),
-        description: toText(exp.description) || toText(exp.summary),
+        start_date:
+          toText(exp.start_date) ||
+          toText(exp.startDate) ||
+          toText(exp.from),
+        end_date:
+          toText(exp.end_date) ||
+          toText(exp.endDate) ||
+          toText(exp.to),
+        description:
+          toText(exp.description) ||
+          toText(exp.summary) ||
+          toText(exp.details),
         raw_text: toText(exp.raw_text) || toText(exp.rawText),
       };
     })
@@ -320,14 +410,33 @@ function parseEducationEntries(
       }
       return {
         degree:
-          toText(edu.degree) || toText(edu.course_name) || toText(edu.title),
+          toText(edu.degree) ||
+          toText(edu.course_name) ||
+          toText(edu.courseName) ||
+          toText(edu.course) ||
+          toText(edu.title),
         field_of_study:
           toText(edu.field_of_study) ||
           toText(edu.field) ||
-          toText(edu.major),
-        institution: toText(edu.institution) || toText(edu.school),
-        start_date: toText(edu.start_date) || toText(edu.startDate),
-        end_date: toText(edu.end_date) || toText(edu.endDate),
+          toText(edu.major) ||
+          toText(edu.fieldOfStudy),
+        institution:
+          toText(edu.institution) || toText(edu.school) || toText(edu.institute),
+        start_date:
+          toText(edu.start_date) ||
+          toText(edu.startDate) ||
+          toText(edu.from) ||
+          toText(edu.start_year) ||
+          toText(edu.startYear),
+        end_date:
+          toText(edu.end_date) ||
+          toText(edu.endDate) ||
+          toText(edu.to) ||
+          toText(edu.graduation_date) ||
+          toText(edu.graduationDate) ||
+          toText(edu.end_year) ||
+          toText(edu.endYear) ||
+          toText(edu.graduation_year),
         grade: toText(edu.grade) || toText(edu.gpa),
         description: toText(edu.description),
         raw_text: toText(edu.raw_text) || toText(edu.rawText),
@@ -349,14 +458,21 @@ function parseCertificationEntries(
         name:
           toText(cert.name) ||
           toText(cert.title) ||
-          toText(cert.certification),
+          toText(cert.certification) ||
+          toText(cert.certification_name) ||
+          toText(cert.certificationName),
         issuer:
           toText(cert.issuer) ||
           toText(cert.organization) ||
+          toText(cert.issuing_organization) ||
+          toText(cert.issuingOrganization) ||
+          toText(cert.issued_by) ||
+          toText(cert.issuedBy) ||
           toText(cert.institution) ||
           toText(cert.authority),
         issued_date:
           toText(cert.issue_date) ||
+          toText(cert.issueDate) ||
           toText(cert.issued_date) ||
           toText(cert.date) ||
           toText(cert.year),
@@ -372,9 +488,9 @@ function parseCertificationEntries(
 function extractBio(backend: any): string | undefined {
   return (
     backend.user?.profile?.current_status ||
-    backend.resume_data?.resume_data?.summary ||
     backend.about ||
     backend.bio ||
+    backend.summary ||
     undefined
   );
 }
@@ -409,8 +525,9 @@ export function transformCandidateProfile(
 
   // Format work experience - each job on its own line
   const experienceStr = workExperience?.map((exp: any) => {
-    const role = exp.role || exp.position || exp.title;
-    const company = exp.company;
+    const role =
+      exp.role || exp.position || exp.title || exp.job_title || exp.jobTitle;
+    const company = exp.company || exp.employer || exp.organization;
     if (role && company) {
       return `${role} at ${company}`;
     }
@@ -419,16 +536,25 @@ export function transformCandidateProfile(
 
   // Format education - each entry on its own line
   const educationStr = education?.map((edu: any) => {
-    const degree = edu.degree || edu.course_name;
-    const field = edu.field_of_study || edu.field || edu.major;
-    const institution = edu.institution;
+    const degree =
+      edu.degree || edu.course_name || edu.courseName || edu.title;
+    const field =
+      edu.field_of_study || edu.field || edu.major || edu.fieldOfStudy;
+    const institution = edu.institution || edu.school;
     const parts = [degree, field, institution].filter(Boolean);
     return parts.join(", ");
   }).filter(Boolean).join("\n");
 
   // Format certifications - each on its own line
   const certificationsStr = certifications?.map((cert: any) => {
-    return cert.name || cert.title || "";
+    return (
+      cert.name ||
+      cert.title ||
+      cert.certification ||
+      cert.certification_name ||
+      cert.certificationName ||
+      ""
+    );
   }).filter(Boolean).join("\n");
 
   const firstName = extractFirstName(backend);

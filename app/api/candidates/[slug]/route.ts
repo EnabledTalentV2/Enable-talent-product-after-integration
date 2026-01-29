@@ -15,7 +15,7 @@ export async function GET(
 
     // Fetch candidate profile from backend
     const backendResponse = await backendFetch(
-      API_ENDPOINTS.candidateProfiles.detail(slug),
+      API_ENDPOINTS.candidateProfiles.full(slug),
       { method: "GET" },
       cookies
     );
