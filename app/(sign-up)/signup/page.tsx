@@ -201,7 +201,7 @@ export default function SignUpPage() {
   return (
     <main
       id="main-content"
-      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex flex-col items-center justify-center"
     >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
@@ -523,16 +523,6 @@ export default function SignUpPage() {
                 </Link>
               </p>
 
-              <p className="text-[13px] text-slate-600">
-                Are you an Employer?{" "}
-                <Link
-                  className="font-semibold text-[#B45309] hover:underline"
-                  href="/signup-employer"
-                >
-                  Sign up here
-                </Link>
-              </p>
-
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
                 <Link
@@ -552,6 +542,18 @@ export default function SignUpPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-8 relative z-20 rounded-[24px] border border-white/50 bg-gradient-to-br from-[#fff8e1]/95 via-[#ffecb3]/95 to-[#ffe082]/95 backdrop-blur-sm shadow-[0_10px_25px_rgba(120,72,12,0.10)]">
+        <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
+          Are you an Employer?{" "}
+          <Link
+            className="font-bold text-[#8C4A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
+            href="/signup-employer"
+            aria-label="Sign up here for an Employer account"
+          >
+            Sign up here!
+          </Link>
+        </p>
       </div>
     </main>
   );

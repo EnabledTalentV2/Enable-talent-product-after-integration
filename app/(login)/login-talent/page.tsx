@@ -86,7 +86,7 @@ function LoginPageContent() {
           console.warn("[Talent Login] Logout failed:", logoutError);
         }
         setRoleWarning(
-          "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one."
+          "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one.",
         );
         return;
       }
@@ -131,7 +131,7 @@ function LoginPageContent() {
   return (
     <main
       id="main-content"
-      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex flex-col items-center justify-center"
     >
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
@@ -326,16 +326,6 @@ function LoginPageContent() {
                 </Link>
               </p>
 
-              <p className="text-[13px] text-slate-600">
-                Are you an Employer?{" "}
-                <Link
-                  className="font-semibold text-[#B45309] hover:underline"
-                  href="/login-employer"
-                >
-                  Log in here
-                </Link>
-              </p>
-
               <p className="text-[11px] text-slate-500">
                 By clicking login, you agree to our{" "}
                 <Link
@@ -355,6 +345,18 @@ function LoginPageContent() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-8 relative z-20 rounded-[24px] border border-white/50 bg-gradient-to-br from-[#fff8e1]/95 via-[#ffecb3]/95 to-[#ffe082]/95 backdrop-blur-sm shadow-[0_10px_25px_rgba(120,72,12,0.10)]">
+        <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
+          Are you an Employer?{" "}
+          <Link
+            className="font-bold text-[#8C4A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
+            href="/login-employer"
+            aria-label="Log in here to the Employer portal"
+          >
+            Log in here!
+          </Link>
+        </p>
       </div>
     </main>
   );
