@@ -2,7 +2,7 @@
 
 A modern, accessible job platform designed to empower talents and connect them with disability-inclusive employers. Enabled Talent provides an intuitive interface for job seekers to build profiles, upload resumes, and discover opportunities, while employers can post jobs and find top talent using AI-powered search and ranking.
 
-## Mission1
+## Mission
 
 To bridge the employment gap for persons with disabilities by providing an accessible, user-friendly platform that connects skilled individuals with disability-inclusive employers and meaningful job opportunities.
 
@@ -47,7 +47,7 @@ Platform & Experience:
 ## Tech Stack
 
 ### Frontend
-- Next.js 16.0.10 (React 19.2.1, App Router)
+- Next.js 16.1.6 (React 19.2.1, App Router)
 - TypeScript 5
 - Tailwind CSS v4 with PostCSS
 - Zustand (state management + localStorage persistence)
@@ -383,4 +383,4 @@ For questions, bug reports, or support requests, please contact the Enabled Tale
 
 Built with care to create inclusive employment opportunities for everyone.
 
-**Last Updated:** January 12, 2026
+**Last Updated:** January 29, 2026
