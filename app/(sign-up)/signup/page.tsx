@@ -14,7 +14,7 @@ import { useUserDataStore } from "@/lib/userDataStore";
 import { useCandidateSignupUser } from "@/lib/hooks/useCandidateSignupUser";
 import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
 import { apiRequest } from "@/lib/api-client";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
@@ -201,8 +201,21 @@ export default function SignUpPage() {
   return (
     <main
       id="main-content"
-      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex flex-col items-center justify-center"
+      className="min-h-screen w-full bg-gradient-to-br from-[#F7D877] via-[#F2BF4A] to-[#E8A426] relative overflow-hidden flex flex-col items-center md:justify-center"
     >
+      <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
+        <a
+          href="https://enabled-talent-landing-v2.vercel.app/"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+            aria-hidden="true"
+          />
+          Back to Homepage
+          <span className="sr-only">(opens external site)</span>
+        </a>
+      </div>
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src={backgroundVectorSvg}
@@ -221,13 +234,18 @@ export default function SignUpPage() {
               {/* Golden aura behind logo */}
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)]">
+              <a
+                href="https://enabled-talent-landing-v2.vercel.app/"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
+                aria-label="Enabled Talent Logo - Back to Homepage"
+              >
                 <Image
                   src={logo}
-                  alt="Enabled Talent Logo"
+                  alt=""
                   className="h-12 w-12 object-contain"
+                  aria-hidden="true"
                 />
-              </div>
+              </a>
             </div>
 
             <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
