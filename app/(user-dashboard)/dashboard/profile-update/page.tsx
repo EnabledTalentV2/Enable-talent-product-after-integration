@@ -2142,17 +2142,23 @@ export default function ProfileUpdatePage() {
         body: formData,
       });
 
-      try {
-        await apiRequest(
-          `/api/candidates/profiles/${candidateSlug}/parsing-status/?include_resume=true`,
-          { method: "GET" }
-        );
-      } catch (err) {
-        console.warn(
-          "[Profile Update] Unable to start resume parsing status check:",
-          err
-        );
-      }
+        try {
+          console.log("[Profile Update] Triggering parse-resume POST");
+          await apiRequest(`/api/candidates/profiles/${candidateSlug}/parse-resume/`, {
+            method: "POST",
+          });
+          console.log("[Profile Update] Parse-resume POST successful");
+
+          await apiRequest(
+            `/api/candidates/profiles/${candidateSlug}/parsing-status/?include_resume=true`,
+            { method: "GET" }
+          );
+        } catch (err) {
+          console.warn(
+            "[Profile Update] Unable to start resume parsing status check:",
+            err
+          );
+        }
 
       setResumeUploadSuccess("Resume uploaded successfully.");
     } catch (err) {
