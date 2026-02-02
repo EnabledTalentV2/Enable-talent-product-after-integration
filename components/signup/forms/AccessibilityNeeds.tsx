@@ -77,13 +77,13 @@ const disclosureOptions = [
 
 const accommodationOptions = [
   { id: "flexible_schedule", label: "Flexible schedule" },
-  { id: "remote_work", label: "Remote work" },
+  { id: "remote_work", label: "Remote work options" },
   { id: "assistive_tech", label: "Assistive technology" },
   { id: "accessible_workspace", label: "Accessible workspace" },
   { id: "flexible_deadlines", label: "Flexible deadlines" },
-  { id: "support_person", label: "Support person" },
+  { id: "support_person", label: "Support person access" },
   { id: "other", label: "Other" },
-  { id: "non_needed", label: "Non needed" },
+  { id: "non_needed", label: "None needed" },
   { id: "prefer_discuss_later", label: "Prefer to discuss later" },
 ];
 
@@ -125,18 +125,25 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
     <div className="space-y-8">
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-slate-900">
-          Accessibility needs
+          Accessibility & accommodation preferences (Optional)
         </h3>
         <p className="text-sm text-slate-500">
-          This information is optional and helps us support your journey.
+          Sharing this information is voluntary and will never affect
+          eligibility.
+        </p>
+        <p className="text-sm text-slate-500">
+          If you choose to share, it helps us support you and communicate your
+          needs when you decide.
         </p>
       </div>
 
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
-          Disability categories
+          Disability categories (Optional)
         </p>
-        <p className="text-sm text-slate-500">Select all that apply.</p>
+        <p className="text-sm text-slate-500">
+          Select all that apply, or choose "Prefer not to disclose."
+        </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {categories.map((category) => {
             const isSelected = selectedCategories.includes(category.id);
@@ -173,7 +180,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
 
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
-          Accommodation needs
+          Do you need accommodations for the application or interview process?
         </p>
         <div className="flex flex-wrap gap-6">
           {accommodationNeedOptions.map((option) => (
@@ -196,7 +203,10 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
 
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
-          Disclosure preference
+          When would you like to discuss your accommodation needs?
+        </p>
+        <p className="text-sm text-slate-500">
+          You control the timing, and we'll respect your preference.
         </p>
         <div className="flex flex-wrap gap-6">
           {disclosureOptions.map((option) => (
@@ -219,9 +229,12 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
 
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
-          Workplace accommodations
+          Workplace accommodations that would help you thrive (Optional)
         </p>
-        <p className="text-sm text-slate-500">Select all that apply.</p>
+        <p className="text-sm text-slate-500">
+          Select all that apply. You can choose "None needed" or
+          "Prefer to discuss later."
+        </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {accommodationOptions.map((option) => {
             const isSelected = selectedAccommodations.includes(option.id);

@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { UploadCloud } from "lucide-react";
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import InputBlock from "./InputBlock";
 import SimpleText from "./SimpleText";
 import type { UserData } from "@/lib/types/user";
@@ -165,16 +166,31 @@ export default function BasicInfo({
         errorMessage={errors?.phone}
       />
 
-      <InputBlock
-        id="basicInfo-location"
-        label="Location"
-        required
-        value={data.location}
-        onChange={(v) => onChange({ location: v })}
-        placeholder="City, Country"
-        error={Boolean(errors?.location)}
-        errorMessage={errors?.location}
-      />
+      <div className="space-y-1.5">
+        <label
+          htmlFor="basicInfo-location"
+          className={`block text-base font-medium ${
+            errors?.location ? "text-red-700" : "text-slate-700"
+          }`}
+        >
+          Location
+          <span aria-hidden="true" className="text-red-600">
+            {" "}
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
+        </label>
+        <LocationAutocomplete
+          label=""
+          inputId="basicInfo-location"
+          inputName="location"
+          value={data.location}
+          onChange={(v) => onChange({ location: v })}
+          error={errors?.location}
+          required
+          placeholder="City, Country"
+        />
+      </div>
 
       <div className="space-y-2">
         <label
@@ -324,7 +340,6 @@ export default function BasicInfo({
       <SimpleText
         id="basicInfo-currentStatus"
         label="About"
-        required
         value={data.currentStatus}
         onChange={(v) => onChange({ currentStatus: v })}
         placeholder="Describe about yourself"

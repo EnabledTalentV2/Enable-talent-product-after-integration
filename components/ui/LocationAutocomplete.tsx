@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { useState, useEffect, useRef, useId, KeyboardEvent, type Ref } from "react";
 import { MapPin, Loader2, AlertCircle } from "lucide-react";
 
 interface LocationAutocompleteProps {
@@ -9,6 +9,13 @@ interface LocationAutocompleteProps {
   onChange: (value: string) => void;
   error?: string;
   disabled?: boolean;
+  inputId?: string;
+  inputName?: string;
+  inputRef?: Ref<HTMLInputElement>;
+  required?: boolean;
+  describedBy?: string;
+  ariaLabel?: string;
+  placeholder?: string;
 }
 
 interface OSMResult {
@@ -29,7 +36,19 @@ export default function LocationAutocomplete({
   onChange,
   error,
   disabled,
+  inputId,
+  inputName,
+  inputRef,
+  required,
+  describedBy,
+  ariaLabel,
+  placeholder,
 }: LocationAutocompleteProps) {
+  const generatedId = useId();
+  const resolvedInputId = inputId ?? `location-${generatedId}`;
+  const listboxId = `${resolvedInputId}-suggestions`;
+  const errorId = error ? `${resolvedInputId}-error` : undefined;
+  const describedByIds = [describedBy, errorId].filter(Boolean).join(" ") || undefined;
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState<OSMResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -164,7 +183,7 @@ export default function LocationAutocomplete({
   return (
     <div className="w-full relative" ref={wrapperRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={resolvedInputId} className="block text-sm font-medium text-gray-700 mb-1">
           {label}
         </label>
       )}
@@ -176,22 +195,32 @@ export default function LocationAutocomplete({
 
       <div className="relative">
         <input
+          id={resolvedInputId}
+          name={inputName}
+          ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => query.length >= 3 && setIsOpen(true)}
           disabled={disabled}
-          placeholder="e.g. Mississauga, Ontario"
+          placeholder={placeholder ?? "e.g. Mississauga, Ontario"}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
             error ? "border-red-500" : "border-gray-200"
           } ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
           aria-expanded={isOpen}
           aria-autocomplete="list"
-          aria-controls="osm-suggestions"
+          aria-controls={listboxId}
           aria-activedescendant={
-            activeIndex >= 0 ? `osm-item-${activeIndex}` : undefined
+            activeIndex >= 0
+              ? `${resolvedInputId}-item-${activeIndex}`
+              : undefined
           }
+          aria-describedby={describedByIds}
+          aria-label={ariaLabel}
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          required={required}
           role="combobox"
           autoComplete="off"
         />
@@ -205,7 +234,7 @@ export default function LocationAutocomplete({
 
       {isOpen && suggestions.length > 0 && (
         <ul
-          id="osm-suggestions"
+          id={listboxId}
           ref={listboxRef}
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto overflow-x-hidden"
@@ -213,7 +242,7 @@ export default function LocationAutocomplete({
           {suggestions.map((place, index) => (
             <li
               key={place.place_id}
-              id={`osm-item-${index}`}
+              id={`${resolvedInputId}-item-${index}`}
               role="option"
               aria-selected={index === activeIndex}
               onClick={() => handleSelect(place)}
@@ -237,6 +266,7 @@ export default function LocationAutocomplete({
 
       {error && (
         <div
+          id={errorId}
           className="flex items-center mt-1 text-red-500 text-sm"
           role="alert"
         >
