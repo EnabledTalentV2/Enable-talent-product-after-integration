@@ -57,6 +57,35 @@ const toYearLabel = (value?: string) => {
   const match = trimmed.match(/\d{4}/);
   return match ? match[0] : "";
 };
+const monthLabels = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const toMonthYearLabel = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{4})-(\d{2})/);
+  if (match) {
+    const year = match[1];
+    const monthIndex = Number(match[2]) - 1;
+    if (monthIndex >= 0 && monthIndex < monthLabels.length) {
+      return `${monthLabels[monthIndex]} ${year}`;
+    }
+    return year;
+  }
+  if (/^\d{4}$/.test(trimmed)) return trimmed;
+  return trimmed;
+};
 
 export default function ProfilePage() {
   const rawUserData = useUserDataStore((s) => s.userData);
@@ -313,10 +342,10 @@ export default function ProfilePage() {
                 {workEntries.map((exp, idx) => {
                   const roleLabel = toTrimmed(exp.role) || fallbackText;
                   const companyLabel = toTrimmed(exp.company) || fallbackText;
-                  const fromLabel = toTrimmed(exp.from) || fallbackText;
+                  const fromLabel = withFallback(toMonthYearLabel(exp.from));
                   const toLabel = exp.current
                     ? "Present"
-                    : toTrimmed(exp.to) || fallbackText;
+                    : withFallback(toMonthYearLabel(exp.to));
                   const descriptionLabel =
                     toTrimmed(exp.description) || fallbackText;
 
@@ -332,7 +361,7 @@ export default function ProfilePage() {
                             {roleLabel}
                           </h3>
                           <span className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                            {fromLabel} - {toLabel}
+                            Duration: {fromLabel} - {toLabel}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-600 font-medium">
