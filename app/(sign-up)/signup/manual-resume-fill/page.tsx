@@ -257,10 +257,6 @@ export default function ManualResumeFill() {
           },
           { field: "gender", message: "Please select Gender" },
           { field: "ethnicity", message: "Please select Ethnicity" },
-          {
-            field: "currentStatus",
-            message: "Please enter your current status and goal",
-          },
         ];
         const missing = requiredBasicFields.filter(
           ({ field }) => !userData.basicInfo[field],

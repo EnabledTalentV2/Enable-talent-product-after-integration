@@ -152,10 +152,13 @@ export default function JobForm({
         </label>
         <LocationAutocomplete
           label=""
+          inputId={`${formId}-location`}
+          inputName="location"
           value={values.location}
           onChange={(newLocation) =>
             setValues((prev) => ({ ...prev, location: newLocation }))
           }
+          required
         />
       </div>
 

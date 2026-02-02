@@ -470,10 +470,6 @@ const validateRequiredFields = (data: UserData): RequiredValidationResult => {
     },
     { field: "gender", message: "Please select Gender" },
     { field: "ethnicity", message: "Please select Ethnicity" },
-    {
-      field: "currentStatus",
-      message: "Please enter your current status and goal",
-    },
   ];
 
   requiredBasicFields.forEach(({ field, message }) => {
