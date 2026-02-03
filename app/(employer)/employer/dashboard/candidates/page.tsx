@@ -7,6 +7,7 @@ import {
   useCandidateProfile,
   useCandidateProfiles,
 } from "@/lib/hooks/useCandidateProfiles";
+import { useCandidateInsight } from "@/lib/hooks/useCandidateInsight";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import Pagination from "@/components/ui/Pagination";
 import CandidateDirectoryCard from "@/components/employer/candidates/CandidateDirectoryCard";
@@ -221,10 +222,17 @@ export default function CandidatesListPage() {
     isFetching: isCandidateFetching,
     error: candidateError,
   } = useCandidateProfile(selectedCandidateSlug);
+  const candidateId = selectedCandidate?.id;
+  const {
+    data: insight,
+    isLoading: isInsightLoading,
+    error: insightError,
+  } = useCandidateInsight(candidateId);
   const isCandidateDetailLoading = isCandidateLoading || isCandidateFetching;
   const isProfileReady =
     Boolean(selectedCandidateProfile) &&
     selectedCandidateProfile?.slug === selectedCandidateSlug;
+  const insightText = insight?.employer_insight?.trim();
   const profileHref = useMemo(() => {
     if (!selectedCandidateSlug) return undefined;
     const params = new URLSearchParams();
@@ -596,6 +604,10 @@ export default function CandidatesListPage() {
                             candidate={selectedCandidateProfile}
                             profileHref={profileHref}
                             onInviteClick={handleInviteClick}
+                            showInsight
+                            insightText={insightText}
+                            isInsightLoading={isInsightLoading}
+                            insightError={insightError}
                           />
                         ) : isCandidateDetailLoading ? (
                           <CandidateDetailSkeleton />
@@ -643,6 +655,10 @@ export default function CandidatesListPage() {
                 candidate={selectedCandidateProfile}
                 profileHref={profileHref}
                 onInviteClick={handleInviteClick}
+                showInsight
+                insightText={insightText}
+                isInsightLoading={isInsightLoading}
+                insightError={insightError}
               />
             </div>
           ) : isCandidateDetailLoading ? (

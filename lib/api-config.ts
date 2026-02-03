@@ -78,6 +78,8 @@ export const API_ENDPOINTS = {
     createInvite: (pk: string) =>
       `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
     selectedCandidates: `${BACKEND_URL}/api/organization/selected-candidates/`,
+    candidateInsight: (candidateId: string | number) =>
+      `${BACKEND_URL}/api/organization/test/candidate-insight/${candidateId}/`,
   },
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,
