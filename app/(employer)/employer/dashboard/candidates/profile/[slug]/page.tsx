@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
+import { useCandidateInsight } from "@/lib/hooks/useCandidateInsight";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
 import { CandidateDetailSkeleton } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
@@ -42,11 +43,17 @@ function DetailSection({
       className="group rounded-2xl bg-white p-4 shadow-sm"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
         <span>{title}</span>
         <span className="flex items-center gap-2 text-xs text-slate-400">
-          {badge && <span>{badge}</span>}
-          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          {badge && <span aria-hidden="true">{badge}</span>}
+          <ChevronDown
+            className="h-4 w-4 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {badge ? `, ${badge}` : ""}, click to {defaultOpen ? "collapse" : "expand"}
+          </span>
         </span>
       </summary>
       <div className="mt-3 text-sm text-slate-600">{children}</div>
@@ -90,6 +97,12 @@ export default function CandidateProfilePage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
+  const candidateId = candidate?.id;
+  const {
+    data: insight,
+    isLoading: isInsightLoading,
+    error: insightError,
+  } = useCandidateInsight(candidateId);
 
   const handleInviteClick = useCallback(() => {
     if (!hasFetchedJobs && !isJobsLoading) {
@@ -213,6 +226,7 @@ export default function CandidateProfilePage() {
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
+  const insightText = insight?.employer_insight?.trim();
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
@@ -559,6 +573,24 @@ export default function CandidateProfilePage() {
             </div>
           ) : (
             <p className="text-slate-500">No links shared yet.</p>
+          )}
+        </DetailSection>
+
+        <DetailSection title="Employer insight" defaultOpen>
+          {isInsightLoading ? (
+            <p className="text-slate-500" role="status" aria-live="polite">
+              Loading insight...
+            </p>
+          ) : insightError ? (
+            <p className="text-slate-500" role="alert">
+              Unable to load employer insight.
+            </p>
+          ) : insightText ? (
+            <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
+              {insightText}
+            </p>
+          ) : (
+            <p className="text-slate-500">No insight available yet.</p>
           )}
         </DetailSection>
 
