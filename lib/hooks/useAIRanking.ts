@@ -157,7 +157,21 @@ export function useAIRanking() {
         console.log("[useAIRanking] First candidate:", response.ranked_candidates?.[0]);
 
         if (response.ranked_candidates) {
-          setRankedCandidates(response.ranked_candidates);
+          const normalizedCandidates = response.ranked_candidates.map((candidate) => {
+            const reasons = Array.isArray(candidate.reasons)
+              ? candidate.reasons.filter(Boolean)
+              : [];
+            const matchReason =
+              candidate.match_reason ||
+              (reasons.length > 0 ? reasons.map((reason) => `• ${reason}`).join("\n") : undefined);
+
+            return {
+              ...candidate,
+              reasons: reasons.length > 0 ? reasons : candidate.reasons,
+              match_reason: matchReason,
+            };
+          });
+          setRankedCandidates(normalizedCandidates);
         }
 
         if (response.ranking_status) {

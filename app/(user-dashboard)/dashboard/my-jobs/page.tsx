@@ -582,7 +582,9 @@ export default function MyJobsPage() {
             {filters.map((filter) => (
               <button
                 key={filter}
+                type="button"
                 onClick={() => setActiveFilter(filter)}
+                aria-pressed={activeFilter === filter}
                 className={`rounded-xl px-6 py-2.5 text-base font-bold transition ${
                   activeFilter === filter
                     ? "bg-[#C27803] text-white"
@@ -781,7 +783,7 @@ export default function MyJobsPage() {
                             className={`rounded-full px-6 py-2 text-base font-bold transition ${
                               respondingToken === activeJob.inviteToken
                                 ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                                : "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                                : "bg-rose-600 text-white hover:bg-rose-700"
                             }`}
                           >
                             {respondingToken === activeJob.inviteToken

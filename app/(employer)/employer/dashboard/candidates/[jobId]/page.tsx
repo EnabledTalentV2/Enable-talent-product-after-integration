@@ -377,6 +377,25 @@ export default function CandidatesPage() {
     currentJobId,
   ]);
 
+  const rankingInsightBase =
+    selectedRankedCandidate?.match_reason ||
+    (Array.isArray(selectedRankedCandidate?.reasons)
+      ? selectedRankedCandidate?.reasons.join("\n")
+      : undefined);
+  const rankingScorePercent =
+    typeof selectedRankedCandidate?.score === "number"
+      ? getRankingScorePercent(selectedRankedCandidate.score)
+      : null;
+  const rankingInsight = rankingInsightBase
+    ? rankingScorePercent !== null
+      ? `Matching score: ${rankingScorePercent}%\n\n${rankingInsightBase}`
+      : rankingInsightBase
+    : rankingScorePercent !== null
+    ? `Matching score: ${rankingScorePercent}%`
+    : undefined;
+  const showRankingInsight =
+    activeTab === "ai_ranking" && Boolean(rankingInsight);
+
   const inviteCandidateId =
     selectedCandidateProfile?.id ??
     selectedRankedCandidate?.candidate_id ??
@@ -1128,16 +1147,6 @@ export default function CandidatesPage() {
                             >
                               {isProfileReady && selectedCandidateProfile ? (
                                 <div className="space-y-4">
-                                  {candidate.match_reason && (
-                                    <div className="rounded-2xl bg-white p-4 shadow-sm">
-                                      <h3 className="text-sm font-semibold text-slate-900">
-                                        Match reason
-                                      </h3>
-                                      <p className="mt-2 text-sm text-slate-600">
-                                        {candidate.match_reason}
-                                      </p>
-                                    </div>
-                                  )}
                                   <CandidateDetailPanel
                                     candidate={selectedCandidateProfile}
                                     profileHref={profileHref}
@@ -1146,6 +1155,10 @@ export default function CandidatesPage() {
                                         ? handleInviteClick
                                         : undefined
                                     }
+                                    showInsight={showRankingInsight}
+                                    insightText={rankingInsight}
+                                    insightTitle="Match reason"
+                                    insightPlacement="top"
                                   />
                                 </div>
                               ) : isCandidateLoading ? (
@@ -1181,18 +1194,6 @@ export default function CandidatesPage() {
                 tabIndex={-1}
                 className="space-y-4"
               >
-                {activeTab === "ai_ranking" &&
-                  selectedRankedCandidate?.match_reason && (
-                    <div className="rounded-2xl bg-white p-4 shadow-sm">
-                      <h3 className="text-sm font-semibold text-slate-900">
-                        Match reason
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {selectedRankedCandidate.match_reason}
-                      </p>
-                    </div>
-                  )}
-
                 {activeTab !== "ai_ranking" &&
                   selectedApplication?.status === "applied" && (
                     <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -1220,6 +1221,10 @@ export default function CandidatesPage() {
                   candidate={selectedCandidateProfile}
                   profileHref={profileHref}
                   onInviteClick={canSendInvites ? handleInviteClick : undefined}
+                  showInsight={showRankingInsight}
+                  insightText={rankingInsight}
+                  insightTitle="Match reason"
+                  insightPlacement="top"
                 />
               </div>
             ) : isCandidateLoading ? (
