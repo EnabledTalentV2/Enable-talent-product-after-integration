@@ -22,7 +22,7 @@ export default function Home() {
         id="main-content"
         className="flex flex-1 flex-col items-center justify-center p-6"
       >
-        https://www.enabledtalent.com/ https://www.enabledtalent.com/
+       
         <div className="w-full max-w-md space-y-8 text-center">
           <a
             href="https://www.enabledtalent.com/"
