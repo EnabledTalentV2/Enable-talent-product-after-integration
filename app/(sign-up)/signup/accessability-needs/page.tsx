@@ -281,6 +281,25 @@ const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
     : prev.reviewAgree,
 });
 
+const fetchGeneratedAbout = async (): Promise<string | null> => {
+  try {
+    const response = await apiRequest<unknown>(
+      "/api/candidates/test/generate-about/",
+      { method: "POST" },
+    );
+    if (
+      isRecord(response) &&
+      typeof response.generated_about === "string" &&
+      response.generated_about.trim()
+    ) {
+      return response.generated_about.trim();
+    }
+  } catch (err) {
+    console.warn("[Accessibility Needs] Failed to generate about:", err);
+  }
+  return null;
+};
+
 type PollResult = {
   success: boolean;
   data: UserDataPatch | null;
@@ -671,7 +690,27 @@ export default function AccessabilityNeedsPage() {
         console.log(
           "[Accessibility Needs] Resume data found, merging into user data",
         );
-        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        const hasAbout =
+          userData.basicInfo.currentStatus &&
+          userData.basicInfo.currentStatus.trim().length > 0;
+        const generatedAbout = hasAbout ? null : await fetchGeneratedAbout();
+        setUserData((prev) => {
+          const merged = mergeUserData(prev, pollResult.data!);
+          if (
+            generatedAbout &&
+            (!merged.basicInfo.currentStatus ||
+              merged.basicInfo.currentStatus.trim().length === 0)
+          ) {
+            return {
+              ...merged,
+              basicInfo: {
+                ...merged.basicInfo,
+                currentStatus: generatedAbout,
+              },
+            };
+          }
+          return merged;
+        });
         router.push("/signup/manual-resume-fill");
         return;
       }
@@ -731,7 +770,27 @@ export default function AccessabilityNeedsPage() {
         console.log(
           "[Accessibility Needs] Retry successful, merging resume data",
         );
-        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        const hasAbout =
+          userData.basicInfo.currentStatus &&
+          userData.basicInfo.currentStatus.trim().length > 0;
+        const generatedAbout = hasAbout ? null : await fetchGeneratedAbout();
+        setUserData((prev) => {
+          const merged = mergeUserData(prev, pollResult.data!);
+          if (
+            generatedAbout &&
+            (!merged.basicInfo.currentStatus ||
+              merged.basicInfo.currentStatus.trim().length === 0)
+          ) {
+            return {
+              ...merged,
+              basicInfo: {
+                ...merged.basicInfo,
+                currentStatus: generatedAbout,
+              },
+            };
+          }
+          return merged;
+        });
         router.push("/signup/manual-resume-fill");
         return;
       }

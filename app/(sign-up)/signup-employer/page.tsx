@@ -193,7 +193,7 @@ export default function SignupEmployerPage() {
     >
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
-          href="https://enabled-talent-landing-v2.vercel.app/"
+          href="https://www.enabledtalent.com/"
           className="group flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-[#C04622] bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/60 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2"
         >
           <ArrowLeft
@@ -223,7 +223,7 @@ export default function SignupEmployerPage() {
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-orange-400/50 blur-3xl" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
               <a
-                href="https://enabled-talent-landing-v2.vercel.app/"
+                href="https://www.enabledtalent.com/"
                 className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#C5D8F5]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >

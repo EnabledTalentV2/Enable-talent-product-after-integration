@@ -203,6 +203,12 @@ export default function ManualResumeFill() {
   const [otherDetailsFirstError, setOtherDetailsFirstError] = useState<
     string | null
   >(null);
+  const [preferenceErrors, setPreferenceErrors] = useState<{
+    hasWorkVisa?: string;
+  }>({});
+  const [preferenceFirstError, setPreferenceFirstError] = useState<
+    string | null
+  >(null);
 
   const activeIndex = stepsState.findIndex((s) => s.isActive);
   const activeStep = stepsState[activeIndex === -1 ? 0 : activeIndex];
@@ -396,6 +402,17 @@ export default function ManualResumeFill() {
         }
         setWorkExpErrors({});
         setWorkExpFirstError(null);
+        return true;
+      case "preference":
+        if (typeof userData.preference.hasWorkVisa !== "boolean") {
+          setPreferenceErrors({
+            hasWorkVisa: "Please select Yes or No for work visa status",
+          });
+          setPreferenceFirstError("preference-hasWorkVisa");
+          return false;
+        }
+        setPreferenceErrors({});
+        setPreferenceFirstError(null);
         return true;
       case "reviewAgree":
         return userData.reviewAgree.agree;
@@ -1844,13 +1861,24 @@ export default function ManualResumeFill() {
         return (
           <Preference
             data={userData.preference}
+            errors={preferenceErrors}
             hideCompanySize
-            onChange={(patch) =>
+            onChange={(patch) => {
               setUserData((prev) => ({
                 ...prev,
                 preference: { ...prev.preference, ...patch },
-              }))
-            }
+              }));
+              if (
+                "hasWorkVisa" in patch &&
+                typeof patch.hasWorkVisa === "boolean"
+              ) {
+                setPreferenceErrors((prev) => {
+                  if (!prev.hasWorkVisa) return prev;
+                  return { ...prev, hasWorkVisa: undefined };
+                });
+                setPreferenceFirstError(null);
+              }
+            }}
           />
         );
       case "otherDetails":
@@ -1999,6 +2027,7 @@ export default function ManualResumeFill() {
     skillErrors,
     projectErrors,
     certErrors,
+    preferenceErrors,
     otherDetailsErrors,
   ]);
 
@@ -2061,6 +2090,16 @@ export default function ManualResumeFill() {
       }
     }
   }, [certFirstError, activeStep.key]);
+
+  useEffect(() => {
+    if (preferenceFirstError && activeStep.key === "preference") {
+      const el = document.getElementById(preferenceFirstError);
+      if (el instanceof HTMLElement) {
+        el.focus({ preventScroll: false });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [preferenceFirstError, activeStep.key]);
 
   useEffect(() => {
     if (otherDetailsFirstError && activeStep.key === "otherDetails") {

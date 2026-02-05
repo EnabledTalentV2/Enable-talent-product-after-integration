@@ -96,6 +96,9 @@ export const API_ENDPOINTS = {
   },
   channels: `${BACKEND_URL}/api/channels/`,
   candidates: `${BACKEND_URL}/api/candidates/`,
+  candidateTests: {
+    generateAbout: `${BACKEND_URL}/api/candidates/test/generate-about/`,
+  },
 } as const;
 
 /**

@@ -135,7 +135,7 @@ function LoginPageContent() {
     >
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
-          href="https://enabled-talent-landing-v2.vercel.app/"
+          href="https://www.enabledtalent.com/"
           className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
         >
           <ArrowLeft
@@ -165,7 +165,7 @@ function LoginPageContent() {
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
               <a
-                href="https://enabled-talent-landing-v2.vercel.app/"
+                href="https://www.enabledtalent.com/"
                 className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >

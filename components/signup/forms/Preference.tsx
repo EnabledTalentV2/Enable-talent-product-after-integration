@@ -174,6 +174,11 @@ export default function Preference({
         </p>
         <div
           id="preference-hasWorkVisa"
+          role="group"
+          tabIndex={-1}
+          aria-describedby={
+            errors?.hasWorkVisa ? "preference-hasWorkVisa-error" : undefined
+          }
           className="flex flex-wrap items-center gap-x-8 gap-y-3"
         >
           <RadioOption
@@ -190,7 +195,12 @@ export default function Preference({
           />
         </div>
         {errors?.hasWorkVisa && (
-          <p className="text-sm text-red-600">{errors.hasWorkVisa}</p>
+          <p
+            id="preference-hasWorkVisa-error"
+            className="text-sm text-red-600"
+          >
+            {errors.hasWorkVisa}
+          </p>
         )}
       </div>
     </div>

@@ -7,10 +7,13 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-[#F0F4F8]">
       <header className="flex w-full items-center p-6">
         <a
-          href="https://enabled-talent-landing-v2.vercel.app/"
+          href="https://www.enabledtalent.com/"
           className="group flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#C05621]"
         >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
+          <ArrowLeft
+            className="h-4 w-4 transition-transform group-hover:-translate-x-1"
+            aria-hidden="true"
+          />
           Back to Homepage
           <span className="sr-only">(opens external site)</span>
         </a>
@@ -19,9 +22,10 @@ export default function Home() {
         id="main-content"
         className="flex flex-1 flex-col items-center justify-center p-6"
       >
+        https://www.enabledtalent.com/ https://www.enabledtalent.com/
         <div className="w-full max-w-md space-y-8 text-center">
           <a
-            href="https://enabled-talent-landing-v2.vercel.app/"
+            href="https://www.enabledtalent.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-center"

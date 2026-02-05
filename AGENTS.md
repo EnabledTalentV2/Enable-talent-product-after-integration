@@ -7,6 +7,7 @@
 ## Mission & Purpose
 
 This application is built specifically for **persons with disabilities** to:
+
 - Showcase their professional skills and experience
 - Find employment opportunities with inclusive employers
 - Access career coaching and support services
@@ -17,6 +18,7 @@ This application is built specifically for **persons with disabilities** to:
 ## Core User Groups
 
 ### 1. Talent (Candidates with Disabilities)
+
 - Professionals with various types of disabilities seeking inclusive employment
 - Users can specify disability categories including:
   - Physical disabilities
@@ -29,6 +31,7 @@ This application is built specifically for **persons with disabilities** to:
   - Option to prefer not to disclose
 
 ### 2. Employers
+
 - Organizations committed to inclusive hiring practices
 - Companies seeking to diversify their workforce
 - Employers who provide accessible workplaces and accommodations
@@ -36,6 +39,7 @@ This application is built specifically for **persons with disabilities** to:
 ## Key Features
 
 ### For Talent
+
 - **Resume upload and AI-powered parsing** - Automated extraction of profile information
 - **Voluntary self-identification** - Confidential disclosure of disability categories
 - **Accommodation preferences** - Specify workplace accommodations needed:
@@ -52,6 +56,7 @@ This application is built specifically for **persons with disabilities** to:
 - **Company discovery** - Browse and learn about inclusive employers
 
 ### For Employers
+
 - **Job posting** - List positions with accessibility features
 - **AI-powered candidate search** - Find talent based on skills and requirements
 - **Candidate management** - Review and manage applications
@@ -65,6 +70,7 @@ This application is built with **WCAG 2.2 Level AA compliance** (the current W3C
 ### WCAG 2.2 Compliance
 
 WCAG 2.2 is the latest W3C accessibility standard, published October 2023 and updated December 2024. It builds upon WCAG 2.1 with 9 new success criteria focused on:
+
 - Mobile/touch accessibility
 - Cognitive accessibility
 - Focus management
@@ -73,6 +79,7 @@ WCAG 2.2 is the latest W3C accessibility standard, published October 2023 and up
 ### Implemented Accessibility Features
 
 #### Core Features (WCAG 2.0/2.1)
+
 - **Keyboard navigation** - All functionality accessible without a mouse
 - **Skip navigation links** - Bypass repetitive content (2.4.1)
 - **Visible focus indicators** - Clear visual feedback for keyboard users (2.4.7)
@@ -84,6 +91,7 @@ WCAG 2.2 is the latest W3C accessibility standard, published October 2023 and up
 - **High contrast mode compatibility** - Windows High Contrast Mode support
 
 #### WCAG 2.2 New Criteria
+
 - **Focus Not Obscured (2.4.11)** - Focused elements never hidden by sticky headers
 - **Dragging Movements (2.5.7)** - Single-pointer alternatives for drag operations
 - **Target Size Minimum (2.5.8)** - 24x24px minimum, 44x44px for touch devices
@@ -94,6 +102,7 @@ WCAG 2.2 is the latest W3C accessibility standard, published October 2023 and up
 ### Accessibility Components
 
 The codebase includes dedicated accessibility components in `components/a11y/`:
+
 - **SkipLink** - Skip to main content link
 - **VisuallyHidden** - Screen reader-only content
 - **LiveRegion** - Announcements for dynamic content
@@ -101,6 +110,7 @@ The codebase includes dedicated accessibility components in `components/a11y/`:
 - **ValidationIcon** - Non-color error/status indicators
 
 ### Supported Assistive Technologies
+
 - Screen readers (NVDA, JAWS, VoiceOver, TalkBack)
 - Screen magnification software
 - Speech recognition software
@@ -110,6 +120,7 @@ The codebase includes dedicated accessibility components in `components/a11y/`:
 ## Technical Architecture
 
 ### Tech Stack
+
 - **Frontend Framework**: Next.js 16 (React 19)
 - **Styling**: Tailwind CSS 4
 - **State Management**: Zustand
@@ -121,6 +132,7 @@ The codebase includes dedicated accessibility components in `components/a11y/`:
 - **Content**: React Markdown
 
 ### File Structure
+
 ```
 app/
 ├── (login)/ - Authentication pages
@@ -155,6 +167,7 @@ app/
 ## Important Principles for Development
 
 ### 1. Accessibility is Non-Negotiable
+
 - Every new feature must meet **WCAG 2.2 AA** standards
 - Test with keyboard navigation before deploying
 - Include ARIA labels and semantic HTML
@@ -165,6 +178,7 @@ app/
 - Don't rely on color alone for information (use icons + text)
 
 ### 2. Respect User Privacy and Dignity
+
 - All disability information is **voluntary self-identification**
 - Keep accessibility needs confidential
 - Never require disclosure of disability information
@@ -172,12 +186,14 @@ app/
 - Emphasize dignity and independence in all messaging
 
 ### 3. Inclusive Language
+
 - Use person-first language ("persons with disabilities" not "disabled persons")
 - Focus on capabilities and talent, not limitations
 - Emphasize "inclusive employers" rather than "employers who hire disabled people"
 - Use empowering language: "exceptional talent," "unique capabilities"
 
 ### 4. Accommodation-Focused
+
 - Always provide multiple ways to accomplish tasks
 - Offer flexibility in deadlines and processes
 - Support assistive technologies
@@ -185,12 +201,14 @@ app/
 - Provide clear, understandable instructions
 
 ### 5. Data Handling
+
 - Resume parsing must handle failures gracefully (30-second timeout, retry options)
 - Always offer manual entry as an alternative
 - Validate and normalize data for backend compatibility
 - Transform backend resume data to frontend schema properly
 
 ### 6. User Experience
+
 - Provide clear feedback for all actions
 - Use loading states during async operations
 - Show error messages with actionable solutions
@@ -200,17 +218,20 @@ app/
 ## API Integration Patterns
 
 ### Candidate Profile Management
+
 - `GET/POST /api/candidates/profiles/` - Create and retrieve profiles
 - `PATCH /api/candidates/profiles/{slug}/` - Update profile data
 - `POST /api/candidates/profiles/{slug}/parse-resume/` - Trigger resume parsing
 - `GET /api/candidates/profiles/{slug}/parsing-status/?include_resume=true` - Poll parsing status
 
 ### Authentication
+
 - `GET /api/user/me` - Check session and get user data
 - Uses JWT tokens with jose library
 - Credential-based auth with cookies
 
 ### Resume Parsing Flow
+
 1. Upload resume file
 2. POST to `/parse-resume/` endpoint
 3. Immediately GET `/parsing-status/` to start processing
@@ -219,9 +240,10 @@ app/
 6. Handle states: "parsing", "parsed", "failed"
 7. Offer retry or manual entry on failure
 
-## Environment Values
+## Environment Valuehttps://www.enabledtalent.com/
 
 The platform emphasizes:
+
 - **Empowering careers through accessibility and opportunity** (tagline)
 - **Connecting exceptional talent with inclusive employers** (mission)
 - Equal access to employment opportunities
@@ -240,11 +262,12 @@ The platform emphasizes:
 
 - **Accessibility Feedback**: accessibility@enabledtalent.com
 - **Response Time**: 5 business days for accessibility concerns
-- **Landing Page**: https://enabled-talent-landing-v2.vercel.app/
+- **Landing Page**: https://www.enabledtalent.com/
 
 ## Development Guidelines
 
 ### When Adding Features
+
 1. **Start with accessibility** - Design with keyboard and screen reader users in mind
 2. **Test early and often** - Use automated tools and manual testing
 3. **Consider cognitive load** - Keep interfaces simple and clear
@@ -255,6 +278,7 @@ The platform emphasizes:
 8. **Loading states** - Always show progress for async operations
 
 ### Before Deploying (WCAG 2.2 AA Checklist)
+
 - [ ] Test with keyboard only (Tab, Enter, Escape, Arrow keys)
 - [ ] Verify focus indicators are visible and not obscured (2.4.7, 2.4.11)
 - [ ] Test with screen reader (NVDA or VoiceOver)
