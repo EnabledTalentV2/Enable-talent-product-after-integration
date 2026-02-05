@@ -1,4 +1,9 @@
-export type CandidateJobInviteStatus = "pending" | "accepted" | "rejected";
+export type CandidateJobInviteStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "declined"
+  | "Declined";
 
 export type CandidateJobInvite = {
   job_id: number;
@@ -9,7 +14,8 @@ export type CandidateJobInvite = {
   token: string;
 };
 
-export type InviteResponseAction = "accept" | "reject";
+// Backend expects "decline" for reject action.
+export type InviteResponseAction = "accept" | "decline";
 
 export type InviteResponsePayload = {
   token: string;
