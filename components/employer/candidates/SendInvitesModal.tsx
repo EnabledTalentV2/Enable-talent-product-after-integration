@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { X, Search, Check } from "lucide-react";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import {
@@ -11,18 +11,21 @@ interface SendInvitesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSendInvites: (selectedJobIds: string[]) => void;
+  restrictToJobId?: string | number;
 }
 
 export default function SendInvitesModal({
   isOpen,
   onClose,
   onSendInvites,
+  restrictToJobId,
 }: SendInvitesModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const jobs = useEmployerJobsStore((state) => state.jobs);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const normalizedRestrictId = restrictToJobId ? String(restrictToJobId) : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -61,7 +64,12 @@ export default function SendInvitesModal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen || !normalizedRestrictId) return;
+    const hasJob = jobs.some((job) => String(job.id) === normalizedRestrictId);
+    setSearchQuery("");
+    setSelectedJobIds(hasJob ? [normalizedRestrictId] : []);
+  }, [isOpen, normalizedRestrictId, jobs]);
 
   const toggleJobSelection = (jobId: string | number) => {
     const normalizedId = String(jobId);
@@ -72,9 +80,18 @@ export default function SendInvitesModal({
     );
   };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobs = useMemo(() => {
+    const baseJobs = normalizedRestrictId
+      ? jobs.filter((job) => String(job.id) === normalizedRestrictId)
+      : jobs;
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return baseJobs;
+    return baseJobs.filter((job) =>
+      job.title.toLowerCase().includes(query)
+    );
+  }, [jobs, normalizedRestrictId, searchQuery]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

@@ -1179,6 +1179,7 @@ export default function CandidatesPage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
+        restrictToJobId={currentJobId || undefined}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}

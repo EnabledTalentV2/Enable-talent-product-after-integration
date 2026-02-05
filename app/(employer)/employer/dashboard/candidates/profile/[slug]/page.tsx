@@ -82,6 +82,7 @@ export default function CandidateProfilePage() {
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const pageParam = searchParams.get("page");
   const searchQuery = searchParams.get("search");
+  const jobIdParam = searchParams.get("jobId");
   const backParams = new URLSearchParams();
   if (searchQuery) backParams.set("search", searchQuery);
   if (pageParam) backParams.set("page", pageParam);
@@ -607,6 +608,7 @@ export default function CandidateProfilePage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
+        restrictToJobId={jobIdParam || undefined}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}
