@@ -20,7 +20,10 @@ import {
   useRespondToInvite,
 } from "@/lib/hooks/useCandidateInvites";
 import { JobApplicationTab } from "@/lib/types/candidate-applications";
-import type { CandidateJobInvite } from "@/lib/types/candidate-invites";
+import type {
+  CandidateJobInvite,
+  InviteResponseAction,
+} from "@/lib/types/candidate-invites";
 import { getApiErrorMessage } from "@/lib/api-client";
 
 type Job = {
@@ -95,6 +98,9 @@ const formatPostedDate = (dateString: string | undefined): string => {
     return dateString;
   }
 };
+
+const isInviteRejected = (status?: CandidateJobInvite["status"]) =>
+  status === "rejected" || status === "declined" || status === "Declined";
 
 export default function MyJobsPage() {
   const { data: jobsData, isLoading: isLoadingJobs } = useCandidateJobs();
@@ -486,7 +492,7 @@ export default function MyJobsPage() {
     activeJob?.applicationStatus === "Invited"
       ? activeJob.inviteStatus === "accepted"
         ? "Accepted"
-        : activeJob.inviteStatus === "rejected"
+        : isInviteRejected(activeJob.inviteStatus)
         ? "Rejected"
         : "Invited"
       : activeJob?.status;
@@ -544,7 +550,7 @@ export default function MyJobsPage() {
     );
   };
 
-  const handleInviteResponse = async (action: "accept" | "reject") => {
+  const handleInviteResponse = async (action: InviteResponseAction) => {
     if (!activeJob?.inviteToken || isRespondingInvite) {
       return;
     }
@@ -620,7 +626,7 @@ export default function MyJobsPage() {
                   const statusLabel = isInvited
                     ? job.inviteStatus === "accepted"
                       ? "Accepted"
-                      : job.inviteStatus === "rejected"
+                      : isInviteRejected(job.inviteStatus)
                       ? "Rejected"
                       : "Invited"
                     : job.status;
@@ -778,7 +784,7 @@ export default function MyJobsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleInviteResponse("reject")}
+                            onClick={() => handleInviteResponse("decline")}
                             disabled={respondingToken === activeJob.inviteToken}
                             className={`rounded-full px-6 py-2 text-base font-bold transition ${
                               respondingToken === activeJob.inviteToken
