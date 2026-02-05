@@ -8,7 +8,10 @@ import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
 import { CandidateDetailSkeleton } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
+import Toast from "@/components/Toast";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { getApiErrorMessage } from "@/lib/api-client";
+import { invitesAPI } from "@/lib/services/invitesAPI";
 import {
   MapPin,
   Briefcase,
@@ -96,6 +99,9 @@ export default function CandidateProfilePage() {
   } = useEmployerJobsStore();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
   const candidateId = candidate?.id;
@@ -112,12 +118,60 @@ export default function CandidateProfilePage() {
     setIsInviteModalOpen(true);
   }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
 
-  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
-    setIsInviteModalOpen(false);
-    if (selectedJobIds.length > 0) {
-      setIsSuccessModalOpen(true);
-    }
-  }, []);
+  const handleSendInvites = useCallback(
+    async (selectedJobIds: string[]) => {
+      if (!candidateId) {
+        setToastMessage("Unable to send invites. Candidate not available.");
+        return;
+      }
+      if (selectedJobIds.length === 0 || isSendingInvites) {
+        return;
+      }
+
+      setToastMessage(null);
+      setInviteMessage(null);
+      setIsSendingInvites(true);
+
+      try {
+        const results = await Promise.allSettled(
+          selectedJobIds.map((jobId) =>
+            invitesAPI.sendJobInvite(jobId, candidateId)
+          )
+        );
+
+        const messages: string[] = [];
+        const errors: string[] = [];
+
+        results.forEach((result, index) => {
+          const jobId = selectedJobIds[index];
+          if (result.status === "fulfilled") {
+            const detail = result.value?.detail || "Invite sent successfully";
+            messages.push(`Job ${jobId}: ${detail}`);
+          } else {
+            errors.push(
+              `Job ${jobId}: ${getApiErrorMessage(
+                result.reason,
+                "Failed to send invite"
+              )}`
+            );
+          }
+        });
+
+        if (messages.length > 0) {
+          setInviteMessage(messages.join("\n"));
+          setIsSuccessModalOpen(true);
+          setIsInviteModalOpen(false);
+        }
+
+        if (errors.length > 0) {
+          setToastMessage(errors.join(" "));
+        }
+      } finally {
+        setIsSendingInvites(false);
+      }
+    },
+    [candidateId, isSendingInvites]
+  );
 
   if (isLoading) {
     return (
@@ -609,11 +663,20 @@ export default function CandidateProfilePage() {
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
         restrictToJobId={jobIdParam || undefined}
+        isSending={isSendingInvites}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
+        message={inviteMessage ?? undefined}
       />
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 }

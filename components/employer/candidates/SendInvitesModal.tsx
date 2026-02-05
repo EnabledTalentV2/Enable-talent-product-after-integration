@@ -12,6 +12,7 @@ interface SendInvitesModalProps {
   onClose: () => void;
   onSendInvites: (selectedJobIds: string[]) => void;
   restrictToJobId?: string | number;
+  isSending?: boolean;
 }
 
 export default function SendInvitesModal({
@@ -19,6 +20,7 @@ export default function SendInvitesModal({
   onClose,
   onSendInvites,
   restrictToJobId,
+  isSending = false,
 }: SendInvitesModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
@@ -261,10 +263,10 @@ export default function SendInvitesModal({
         <div className="border-t border-slate-100 p-6">
           <button
             onClick={() => onSendInvites(selectedJobIds)}
-            disabled={selectedJobIds.length === 0}
+            disabled={selectedJobIds.length === 0 || isSending}
             className="w-full rounded-xl bg-[#C27803] py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#a36502] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Send Invites
+            {isSending ? "Sending..." : "Send Invites"}
           </button>
         </div>
       </div>

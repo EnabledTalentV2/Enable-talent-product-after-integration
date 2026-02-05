@@ -64,10 +64,14 @@ export default function EmployerDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#EEF5FF]">
+    <div className="min-h-screen bg-[#EEF5FF] flex flex-col">
       <DashBoardNavbarEmployer />
       <DashboardSubNavEmployer />
-      <main id="main-content" aria-labelledby="employer-dashboard-heading">
+      <main
+        id="main-content"
+        aria-labelledby="employer-dashboard-heading"
+        className="flex-1 min-h-0"
+      >
         {/* Screen reader only heading for accessibility - WCAG 2.4.1, 2.4.2 */}
         <h1 id="employer-dashboard-heading" className="sr-only">
           Employer Dashboard

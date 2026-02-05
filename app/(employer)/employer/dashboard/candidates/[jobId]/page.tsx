@@ -25,6 +25,7 @@ import {
 } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
+import Toast from "@/components/Toast";
 import Pagination from "@/components/ui/Pagination";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { emptyJobStats, toJobHeaderInfo } from "@/lib/employerJobsUtils";
@@ -33,6 +34,8 @@ import {
   useCandidateProfile,
 } from "@/lib/hooks/useCandidateProfiles";
 import { useAIRanking } from "@/lib/hooks/useAIRanking";
+import { getApiErrorMessage } from "@/lib/api-client";
+import { invitesAPI } from "@/lib/services/invitesAPI";
 import type { CandidateProfile } from "@/lib/types/candidateProfile";
 import type { Application } from "@/components/employer/candidates/ApplicantsList";
 
@@ -202,6 +205,9 @@ export default function CandidatesPage() {
   >(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
   const didMountRef = useRef(false);
 
   const { data: candidateProfiles = [] } = useCandidateProfiles();
@@ -370,6 +376,12 @@ export default function CandidatesPage() {
     activeTab,
     currentJobId,
   ]);
+
+  const inviteCandidateId =
+    selectedCandidateProfile?.id ??
+    selectedRankedCandidate?.candidate_id ??
+    selectedApplication?.candidate.id ??
+    "";
 
   const canSendInvites = useMemo(
     () => activeTab === "ai_ranking" || activeTab === "shortlisted",
@@ -561,16 +573,64 @@ export default function CandidatesPage() {
     setIsInviteModalOpen(true);
   }, [fetchJobs, hasFetched, isJobsLoading]);
 
-  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
-    setIsInviteModalOpen(false);
-    if (selectedJobIds.length > 0) {
-      setIsSuccessModalOpen(true);
-    }
-  }, []);
+  const handleSendInvites = useCallback(
+    async (selectedJobIds: string[]) => {
+      if (!inviteCandidateId) {
+        setToastMessage("Unable to send invites. Candidate not available.");
+        return;
+      }
+      if (selectedJobIds.length === 0 || isSendingInvites) {
+        return;
+      }
+
+      setToastMessage(null);
+      setInviteMessage(null);
+      setIsSendingInvites(true);
+
+      try {
+        const results = await Promise.allSettled(
+          selectedJobIds.map((jobId) =>
+            invitesAPI.sendJobInvite(jobId, inviteCandidateId)
+          )
+        );
+
+        const messages: string[] = [];
+        const errors: string[] = [];
+
+        results.forEach((result, index) => {
+          const jobId = selectedJobIds[index];
+          if (result.status === "fulfilled") {
+            const detail = result.value?.detail || "Invite sent successfully";
+            messages.push(`Job ${jobId}: ${detail}`);
+          } else {
+            errors.push(
+              `Job ${jobId}: ${getApiErrorMessage(
+                result.reason,
+                "Failed to send invite"
+              )}`
+            );
+          }
+        });
+
+        if (messages.length > 0) {
+          setInviteMessage(messages.join("\n"));
+          setIsSuccessModalOpen(true);
+          setIsInviteModalOpen(false);
+        }
+
+        if (errors.length > 0) {
+          setToastMessage(errors.join(" "));
+        }
+      } finally {
+        setIsSendingInvites(false);
+      }
+    },
+    [inviteCandidateId, isSendingInvites]
+  );
 
   if (!currentJobId || !hasFetched) {
     return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-500">
         Loading candidates...
       </div>
     );
@@ -578,7 +638,7 @@ export default function CandidatesPage() {
 
   if (!currentJob) {
     return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-500">
         Redirecting to listed jobs...
       </div>
     );
@@ -590,7 +650,7 @@ export default function CandidatesPage() {
     selectedCandidateProfile?.slug === selectedCandidateSlug;
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-100px)] max-w-360 flex-col gap-6 p-4 sm:p-6 lg:h-[calc(100vh-120px)]">
+    <div className="mx-auto flex h-full min-h-0 max-w-360 flex-col gap-6 p-4 sm:p-6">
       <div className="shrink-0">
         <JobHeader jobInfo={jobHeaderInfo} stats={jobStats} />
       </div>
@@ -1180,11 +1240,20 @@ export default function CandidatesPage() {
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
         restrictToJobId={currentJobId || undefined}
+        isSending={isSendingInvites}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
+        message={inviteMessage ?? undefined}
       />
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 }
