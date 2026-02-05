@@ -50,7 +50,7 @@ export const API_ENDPOINTS = {
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
     resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
   },
-    candidateData: {
+  candidateData: {
       education: `${BACKEND_URL}/api/candidates/education/`,
       educationDetail: (id: string) => `${BACKEND_URL}/api/candidates/education/${id}/`,
       skills: `${BACKEND_URL}/api/candidates/skills/`,
@@ -70,6 +70,10 @@ export const API_ENDPOINTS = {
     certificationsDetail: (id: string) =>
       `${BACKEND_URL}/api/candidates/certifications/${id}/`,
   },
+  candidateInvites: {
+    list: `${BACKEND_URL}/api/candidates/job-invites/`,
+    respond: `${BACKEND_URL}/api/candidates/job-invites/respond/`,
+  },
   // Other APIs
   organizations: {
     list: `${BACKEND_URL}/api/organization/organizations/`,
@@ -80,6 +84,8 @@ export const API_ENDPOINTS = {
     selectedCandidates: `${BACKEND_URL}/api/organization/selected-candidates/`,
     candidateInsight: (candidateId: string | number) =>
       `${BACKEND_URL}/api/organization/test/candidate-insight/${candidateId}/`,
+    jobInvite: (jobId: string | number) =>
+      `${BACKEND_URL}/api/organization/jobs/${jobId}/invite/`,
   },
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,

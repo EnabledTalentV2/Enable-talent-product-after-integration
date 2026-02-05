@@ -1,4 +1,11 @@
-export type ApplicationStatus = "pending" | "shortlisted" | "rejected" | "accepted" | "hired";
+export type ApplicationStatus =
+  | "pending"
+  | "shortlisted"
+  | "rejected"
+  | "accepted"
+  | "hired"
+  | "request_sent"
+  | "invited";
 
 export interface CandidateApplication {
   id: number;
@@ -32,4 +39,9 @@ export interface BrowseJob {
   created_at: string;
 }
 
-export type JobApplicationTab = "All" | "Applied" | "Accepted" | "Rejected";
+export type JobApplicationTab =
+  | "All"
+  | "Applied"
+  | "Accepted"
+  | "Rejected"
+  | "Invites from employer";

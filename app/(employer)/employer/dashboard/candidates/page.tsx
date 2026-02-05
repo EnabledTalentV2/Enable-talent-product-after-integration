@@ -18,6 +18,9 @@ import {
 } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
+import Toast from "@/components/Toast";
+import { getApiErrorMessage } from "@/lib/api-client";
+import { invitesAPI } from "@/lib/services/invitesAPI";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -99,6 +102,9 @@ export default function CandidatesListPage() {
   });
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
   const didMountRef = useRef(false);
   const didInitQueryRef = useRef(false);
   const updatePageParamRef = useRef<(page: number) => void>(() => undefined);
@@ -232,6 +238,8 @@ export default function CandidatesListPage() {
   const isProfileReady =
     Boolean(selectedCandidateProfile) &&
     selectedCandidateProfile?.slug === selectedCandidateSlug;
+  const inviteCandidateId =
+    selectedCandidate?.id ?? selectedCandidateProfile?.id ?? "";
   const insightText = insight?.employer_insight?.trim();
   const profileHref = useMemo(() => {
     if (!selectedCandidateSlug) return undefined;
@@ -332,12 +340,60 @@ export default function CandidatesListPage() {
     setIsInviteModalOpen(true);
   }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
 
-  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
-    setIsInviteModalOpen(false);
-    if (selectedJobIds.length > 0) {
-      setIsSuccessModalOpen(true);
-    }
-  }, []);
+  const handleSendInvites = useCallback(
+    async (selectedJobIds: string[]) => {
+      if (!inviteCandidateId) {
+        setToastMessage("Unable to send invites. Candidate not available.");
+        return;
+      }
+      if (selectedJobIds.length === 0 || isSendingInvites) {
+        return;
+      }
+
+      setToastMessage(null);
+      setInviteMessage(null);
+      setIsSendingInvites(true);
+
+      try {
+        const results = await Promise.allSettled(
+          selectedJobIds.map((jobId) =>
+            invitesAPI.sendJobInvite(jobId, inviteCandidateId)
+          )
+        );
+
+        const messages: string[] = [];
+        const errors: string[] = [];
+
+        results.forEach((result, index) => {
+          const jobId = selectedJobIds[index];
+          if (result.status === "fulfilled") {
+            const detail = result.value?.detail || "Invite sent successfully";
+            messages.push(`Job ${jobId}: ${detail}`);
+          } else {
+            errors.push(
+              `Job ${jobId}: ${getApiErrorMessage(
+                result.reason,
+                "Failed to send invite"
+              )}`
+            );
+          }
+        });
+
+        if (messages.length > 0) {
+          setInviteMessage(messages.join("\n"));
+          setIsSuccessModalOpen(true);
+          setIsInviteModalOpen(false);
+        }
+
+        if (errors.length > 0) {
+          setToastMessage(errors.join(" "));
+        }
+      } finally {
+        setIsSendingInvites(false);
+      }
+    },
+    [inviteCandidateId, isSendingInvites]
+  );
 
   const toggleFilter = useCallback(
     (key: keyof Omit<CandidateFilters, "verifiedOnly">, value: string) => {
@@ -681,11 +737,20 @@ export default function CandidatesListPage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
+        isSending={isSendingInvites}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
+        message={inviteMessage ?? undefined}
       />
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 }

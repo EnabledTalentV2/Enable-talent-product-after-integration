@@ -58,7 +58,7 @@ export default function SuccessModal({
 
         <p
           id="success-modal-description"
-          className="mb-8 text-sm text-slate-600"
+          className="mb-8 whitespace-pre-wrap text-sm text-slate-600"
         >
           {message}
         </p>
