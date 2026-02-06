@@ -5,6 +5,7 @@ import "./globals.css";
 import icon from "@/public/logo/ET Logo-01.webp";
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
 import { SkipLink } from "@/components/a11y";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -26,15 +27,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${plusJakarta.variable}  antialiased`}
-      >
-        <SkipLink />
-        <ReactQueryProvider>
-          {children}
-        </ReactQueryProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${plusJakarta.variable}  antialiased`}
+        >
+          <SkipLink />
+          <ReactQueryProvider>
+            {children}
+          </ReactQueryProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

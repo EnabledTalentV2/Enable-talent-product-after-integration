@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import {
   LogOut,
   Search,
@@ -14,12 +15,12 @@ import {
 } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
-import { apiRequest } from "@/lib/api-client";
 import { useState, useEffect, useRef } from "react";
 
 export default function DashBoardNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const resetUserData = useUserDataStore((s) => s.resetUserData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,10 +72,12 @@ export default function DashBoardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
+      await signOut();
+      resetUserData();
+      router.push("/login-talent");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if Clerk logout fails, clear local data and redirect
       resetUserData();
       router.push("/login-talent");
     }

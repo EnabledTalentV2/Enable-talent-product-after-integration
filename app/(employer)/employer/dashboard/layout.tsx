@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import DashboardSubNavEmployer from "@/components/DashBoardSubNavEmployer";
 import DashBoardNavbarEmployer from "@/components/DashBaordNavbarEmployer";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
@@ -12,6 +13,7 @@ export default function EmployerDashboardLayout({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const [loading, setLoading] = useState(true);
   const fetchJobs = useEmployerJobsStore((state) => state.fetchJobs);
 
@@ -19,15 +21,19 @@ export default function EmployerDashboardLayout({
     let active = true;
 
     const checkAuth = async () => {
+      // Wait for Clerk auth to load
+      if (!isLoaded) return;
+
+      // Redirect if not signed in
+      if (!isSignedIn) {
+        router.replace("/login-employer");
+        return;
+      }
+
       try {
         const response = await fetch("/api/user/me", {
           credentials: "include",
         });
-
-        if (response.status === 401) {
-          router.replace("/login-employer");
-          return;
-        }
 
         if (!response.ok) {
           router.replace("/login-employer");
@@ -53,7 +59,7 @@ export default function EmployerDashboardLayout({
     return () => {
       active = false;
     };
-  }, [fetchJobs, router]);
+  }, [isLoaded, isSignedIn, fetchJobs, router]);
 
   if (loading) {
     return (

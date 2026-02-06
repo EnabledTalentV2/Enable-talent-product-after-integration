@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
 import { useUserDataStore } from "@/lib/userDataStore";
@@ -186,6 +187,7 @@ export default function DashboardLayoutPage({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const patchUserData = useUserDataStore((s) => s.patchUserData);
   const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
@@ -199,14 +201,24 @@ export default function DashboardLayoutPage({
     let active = true;
 
     const checkAuth = async () => {
-      // Wait for Zustand to hydrate from localStorage first
+      // Wait for Clerk auth to load
+      if (!isLoaded) return;
+
+      // Redirect if not signed in
+      if (!isSignedIn) {
+        if (active) setLoading(false);
+        router.replace("/login-talent");
+        return;
+      }
+
+      // Wait for Zustand to hydrate from localStorage
       await waitForHydration();
       try {
         const response = await fetch("/api/user/me", {
           credentials: "include",
         });
 
-        if (response.status === 401 || !response.ok) {
+        if (!response.ok) {
           // Clear loading state before redirect to prevent stuck UI
           if (active) setLoading(false);
           router.replace("/login-talent");
@@ -338,7 +350,7 @@ export default function DashboardLayoutPage({
     return () => {
       active = false;
     };
-  }, [router, setUserData, patchUserData]);
+  }, [isLoaded, isSignedIn, router, setUserData, patchUserData]);
 
   if (loading) {
     return (

@@ -3,6 +3,8 @@
  * Centralizes all backend API endpoints and utilities for connecting to Django backend
  */
 
+import { auth } from "@clerk/nextjs/server";
+
 // Django backend base URL
 export const BACKEND_URL =
   process.env.BACKEND_URL || "https://etbackend-v2-usy9.onrender.com";
@@ -13,15 +15,7 @@ export const BACKEND_URL =
 export const API_ENDPOINTS = {
   // Authentication
   auth: {
-    login: `${BACKEND_URL}/api/auth/token/`,
-    logout: `${BACKEND_URL}/api/auth/logout/`,
-    signup: `${BACKEND_URL}/api/auth/signup/`,
-    verifyEmail: `${BACKEND_URL}/api/auth/verify-email/`,
-    resendVerification: `${BACKEND_URL}/api/auth/resend-verification/`,
-    changePassword: `${BACKEND_URL}/api/auth/change-password/`,
-    csrf: `${BACKEND_URL}/api/auth/csrf/`,
-    token: `${BACKEND_URL}/api/auth/token/`,
-    tokenRefresh: `${BACKEND_URL}/api/auth/token/refresh/`,
+    clerkSync: `${BACKEND_URL}/api/auth/clerk-sync/`,
     addFeedback: `${BACKEND_URL}/api/auth/add-feedback/`,
   },
   // User management
@@ -109,34 +103,14 @@ export const API_ENDPOINTS = {
 
 /**
  * Default fetch options for API calls
- * - credentials: 'include' ensures cookies are sent cross-origin (required for HttpOnly JWT)
  */
 export const defaultFetchOptions: RequestInit = {
   credentials: "include",
 };
 
-const CSRF_COOKIE_NAME = "csrftoken";
-const ACCESS_TOKEN_COOKIE_NAME = "access_token";
-
-const getCookieValue = (cookieHeader: string, name: string): string | null => {
-  if (!cookieHeader) return null;
-  const entries = cookieHeader.split(";").map((entry) => entry.trim());
-  for (const entry of entries) {
-    if (!entry) continue;
-    const [key, ...rest] = entry.split("=");
-    if (key === name) {
-      return rest.join("=") ? decodeURIComponent(rest.join("=")) : "";
-    }
-  }
-  return null;
-};
-
-const isWriteMethod = (method?: string) =>
-  ["POST", "PUT", "PATCH", "DELETE"].includes((method || "GET").toUpperCase());
-
 /**
  * Helper function to make API requests to the Django backend
- * Handles CSRF token injection and cookie forwarding
+ * Verifies Clerk session and sends X-Clerk-User-Id header to Django
  */
 export async function backendFetch(
   endpoint: string,
@@ -153,30 +127,20 @@ export async function backendFetch(
     headers.set("Content-Type", "application/json");
   }
 
-  // Forward cookies from incoming request to backend
-  if (incomingCookies) {
-    headers.set("Cookie", incomingCookies);
-  }
+  // Verify Clerk session and send auth headers to Django
+  try {
+    const { userId, getToken } = await auth();
+    if (userId) {
+      headers.set("X-Clerk-User-Id", userId);
 
-  // Add Authorization header from HttpOnly JWT cookie when available
-  if (!headers.has("Authorization") && incomingCookies) {
-    const accessToken = getCookieValue(
-      incomingCookies,
-      ACCESS_TOKEN_COOKIE_NAME,
-    );
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+      // Send session JWT for Django to independently verify
+      const token = await getToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
     }
-  }
-
-  // Add CSRF token for write requests if available
-  if (isWriteMethod(options.method) && !headers.has("X-CSRFToken")) {
-    const csrfToken = incomingCookies
-      ? getCookieValue(incomingCookies, CSRF_COOKIE_NAME)
-      : null;
-    if (csrfToken) {
-      headers.set("X-CSRFToken", csrfToken);
-    }
+  } catch {
+    // auth() may fail in non-request contexts; continue without user ID
   }
 
   const response = await fetch(endpoint, {
