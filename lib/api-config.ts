@@ -200,6 +200,13 @@ export async function backendFetch(
     // auth() may fail in non-request contexts; continue without user ID
   }
 
+  // Generate a request ID for correlating frontend and backend logs.
+  const requestId =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  headers.set("X-Request-Id", requestId);
+
   const response = await fetch(endpoint, {
     ...defaultFetchOptions,
     ...options,
@@ -219,12 +226,14 @@ export async function backendFetch(
       .filter(Boolean);
 
     console.log("[backendFetch]", {
+      requestId,
       endpoint,
       method: options.method || "GET",
       status: response.status,
       clerkUserId,
       clerkTokenTemplate,
       hasClerkToken: Boolean(clerkToken),
+      clerkTokenLength: clerkToken ? clerkToken.length : 0,
       clerkTokenPreview: clerkToken ? safeTokenPreview(clerkToken) : null,
       clerkTokenClaims: clerkToken ? safeJwtClaims(clerkToken) : null,
       forwardedCookies: [...new Set(forwardedCookieNames)],

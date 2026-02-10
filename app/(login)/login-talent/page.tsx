@@ -642,7 +642,7 @@ function LoginPageContent() {
 
               <div className="flex justify-end text-[13px]">
                 <Link
-                  href="/forgot-password"
+                  href="/forgot-password?from=talent"
                   title="Forgot Password"
                   className="font-medium text-[#B45309] hover:underline"
                 >

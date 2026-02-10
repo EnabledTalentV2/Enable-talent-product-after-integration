@@ -603,7 +603,7 @@ function EmployerLoginPageContent() {
 
               <div className="flex justify-end text-[13px]">
                 <Link
-                  href="/forgot-password"
+                  href="/forgot-password?from=employer"
                   title="Forgot Password"
                   className="text-[#C04622] font-medium hover:underline"
                 >
