@@ -25,6 +25,7 @@ const isAuthRoute = createRouteMatcher([
 ]);
 
 type UserRole = "employer" | "job_seeker";
+type BackendRoleLookup = { role: UserRole | null; status: number | null };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -120,7 +121,7 @@ function deriveUserRoleFromUserData(data: unknown): UserRole | null {
 
 async function fetchUserRoleFromApi(
   request: NextRequest
-): Promise<UserRole | null> {
+): Promise<BackendRoleLookup> {
   try {
     const response = await fetch(new URL("/api/user/me", request.url), {
       method: "GET",
@@ -130,12 +131,14 @@ async function fetchUserRoleFromApi(
       cache: "no-store",
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return { role: null, status: response.status };
+    }
     const data = await response.json().catch(() => null);
-    return deriveUserRoleFromUserData(data);
+    return { role: deriveUserRoleFromUserData(data), status: response.status };
   } catch (error) {
     console.error("[Proxy] Failed to resolve role from API:", error);
-    return null;
+    return { role: null, status: null };
   }
 }
 
@@ -146,6 +149,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   // Fetch user role from Django API for role-based routing
   let userRole: UserRole | null = null;
+  let backendRoleStatus: number | null = null;
   const needsRoleLookup =
     isAuthenticated &&
     (pathname.startsWith("/employer") ||
@@ -155,7 +159,9 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       pathname === "/signup-employer");
 
   if (needsRoleLookup) {
-    userRole = await fetchUserRoleFromApi(request);
+    const lookup = await fetchUserRoleFromApi(request);
+    userRole = lookup.role;
+    backendRoleStatus = lookup.status;
   }
 
   // Debug logging - remove in production
@@ -163,6 +169,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     pathname,
     isAuthenticated,
     userRole,
+    backendRoleStatus,
   });
 
   // Check if route types
@@ -182,6 +189,18 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return NextResponse.redirect(new URL("/login-talent", request.url));
   }
 
+  // If authenticated in Clerk but missing in backend, block protected routes
+  // to avoid redirect loops and let the user complete backend sync.
+  if (isProtectedRoute(request) && isAuthenticated && backendRoleStatus === 401) {
+    const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const next = encodeURIComponent(requestedPath);
+    const reason = "backend_user_missing";
+    const redirectPath = isEmployerRoute
+      ? `/login-employer?next=${next}&reason=${reason}`
+      : `/login-talent?next=${next}&reason=${reason}`;
+    return NextResponse.redirect(new URL(redirectPath, request.url));
+  }
+
   // Role-based access control - ALWAYS enforce if authenticated
   if (isAuthenticated && userRole) {
     // Prevent job seekers from accessing employer routes
@@ -195,7 +214,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   // If authenticated user tries to access login pages, redirect to dashboard
-  if (isAuthenticated && isAuthRoute(request)) {
+  if (isAuthenticated && userRole && isAuthRoute(request)) {
     if (userRole === "employer") {
       return NextResponse.redirect(new URL("/employer/dashboard", request.url));
     }

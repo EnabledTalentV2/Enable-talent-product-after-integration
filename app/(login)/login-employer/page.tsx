@@ -8,9 +8,9 @@ import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn, useAuth, useUser } from "@clerk/nextjs";
 import { OAuthStrategy } from "@clerk/types";
-import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage, isSessionExpiredError, isApiError } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
 import { deriveUserRoleFromUserData } from "@/lib/roleUtils";
 
@@ -22,6 +22,8 @@ function EmployerLoginPageContent() {
   const searchParams = useSearchParams();
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
   const { signIn, setActive } = useSignIn();
+  const { userId, signOut } = useAuth();
+  const { user } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,10 +32,66 @@ function EmployerLoginPageContent() {
   const [isBootstrapping, setIsBootstrapping] = useState(false);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const warningSummaryRef = useRef<HTMLDivElement | null>(null);
+  const backendCheckedRef = useRef(false);
   const [roleWarning, setRoleWarning] = useState<string | null>(null);
+  const [needsSync, setNeedsSync] = useState(false);
+  const [clerkUserId, setClerkUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [syncRetryCount, setSyncRetryCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
-  const isSubmitting = isLoading || isBootstrapping;
+  const isSubmitting = isLoading || isBootstrapping || isSyncing;
+  const syncReason = searchParams.get("reason");
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const emailFromClerk =
+      user?.primaryEmailAddress?.emailAddress ||
+      user?.emailAddresses?.[0]?.emailAddress ||
+      null;
+
+    if (!clerkUserId) {
+      setClerkUserId(userId);
+    }
+
+    if (emailFromClerk && !userEmail) {
+      setUserEmail(emailFromClerk);
+    }
+
+    if (!email && emailFromClerk) {
+      setEmail(emailFromClerk);
+    }
+  }, [userId, user, clerkUserId, userEmail, email]);
+
+  useEffect(() => {
+    if (!userId) return;
+    if (backendCheckedRef.current) return;
+    backendCheckedRef.current = true;
+
+    void apiRequest<unknown>("/api/user/me", { method: "GET" }).catch((err) => {
+      if (isApiError(err) && err.status === 401) {
+        setNeedsSync(true);
+        setError(
+          (prev) =>
+            prev ??
+            "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
+        );
+      }
+    });
+  }, [userId]);
+
+  useEffect(() => {
+    if (syncReason !== "backend_user_missing") return;
+    if (!userId) return;
+    setNeedsSync(true);
+    setError(
+      (prev) =>
+        prev ??
+        "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
+    );
+  }, [syncReason, userId]);
 
   const handleOAuthSignIn = async (strategy: OAuthStrategy) => {
     if (!signIn) return;
@@ -48,6 +106,124 @@ function EmployerLoginPageContent() {
       setError(
         err.errors?.[0]?.message || "OAuth login failed. Please try again."
       );
+    }
+  };
+
+  const handleSyncAccount = async () => {
+    if (!clerkUserId || !userEmail) {
+      setError("Missing user information. Please try logging in again.");
+      return;
+    }
+
+    const attemptNumber = syncRetryCount + 1;
+    if (attemptNumber > 2) {
+      setError(
+        "Maximum sync attempts reached. Please try again later or contact support."
+      );
+      setNeedsSync(false);
+      try {
+        await signOut();
+      } catch (err) {
+        console.error("[login-employer] signOut failed after max attempts:", err);
+      }
+      return;
+    }
+
+    setIsSyncing(true);
+    setError(null);
+    setSyncRetryCount(attemptNumber);
+
+    try {
+      // Call clerk-sync to create Django user
+      await apiRequest("/api/auth/clerk-sync", {
+        method: "POST",
+        body: JSON.stringify({
+          clerk_user_id: clerkUserId,
+          email: userEmail,
+        }),
+      });
+
+      // Sync succeeded - now get user data and continue login
+      const userData = await apiRequest<unknown>("/api/user/me", {
+        method: "GET",
+      });
+      const derivedRole = deriveUserRoleFromUserData(userData);
+
+      if (derivedRole === "candidate") {
+        setRoleWarning(
+          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+        );
+        setNeedsSync(false);
+        setIsSyncing(false);
+        return;
+      }
+
+      // Load organization data
+      const organizations = await apiRequest<unknown>("/api/organizations", {
+        method: "GET",
+      });
+      const organizationInfo = toEmployerOrganizationInfo(organizations);
+      if (organizationInfo) {
+        setEmployerData((prev) => ({
+          ...prev,
+          organizationInfo: {
+            ...prev.organizationInfo,
+            ...organizationInfo,
+          },
+        }));
+      }
+
+      // Redirect to dashboard
+      const nextPath =
+        searchParams.get("next") ?? searchParams.get("returnUrl");
+      const redirectTarget =
+        nextPath && nextPath.startsWith("/employer")
+          ? nextPath
+          : "/employer/dashboard";
+      router.push(redirectTarget);
+    } catch (error: any) {
+      console.error("[login-employer] Sync failed:", error);
+      const attemptsRemaining = 2 - attemptNumber;
+
+      if (attemptsRemaining > 0) {
+        setError(
+          `Account sync failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
+        );
+      } else {
+        setError(
+          "Account sync failed twice. You're being signed out. Please try again later."
+        );
+        setNeedsSync(false);
+        try {
+          await signOut();
+        } catch (err) {
+          console.error("[login-employer] signOut failed after sync failures:", err);
+        } finally {
+          setClerkUserId(null);
+          setUserEmail(null);
+          setSyncRetryCount(0);
+          backendCheckedRef.current = false;
+        }
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setError(null);
+    setRoleWarning(null);
+    setNeedsSync(false);
+    setClerkUserId(null);
+    setUserEmail(null);
+    setSyncRetryCount(0);
+    backendCheckedRef.current = false;
+
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("[login-employer] signOut failed:", err);
+      setError("Unable to sign out. Please refresh and try again.");
     }
   };
 
@@ -99,17 +275,45 @@ function EmployerLoginPageContent() {
       // Step 2: Set the active session
       await setActive({ session: clerkSignInResult.createdSessionId });
 
-      // Step 3: Get user data from Django to check role
-      const userData = await apiRequest<unknown>("/api/user/me", {
-        method: "GET",
-      });
-      const derivedRole = deriveUserRoleFromUserData(userData);
+      // Store Clerk user info for potential sync
+      // Clerk types don't expose createdUserId on SignInResource; rely on useAuth().userId instead.
+      setClerkUserId(userId ?? null);
+      setUserEmail(trimmedEmail);
 
-      if (derivedRole === "candidate") {
-        setRoleWarning(
-          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
-        );
-        return;
+      // Step 3: Get user data from Django to check role
+      try {
+        const userData = await apiRequest<unknown>("/api/user/me", {
+          method: "GET",
+        });
+        const derivedRole = deriveUserRoleFromUserData(userData);
+
+        if (derivedRole === "candidate") {
+          setRoleWarning(
+            "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+          );
+          return;
+        }
+      } catch (userMeError: any) {
+        // If it's a session expired error, re-throw it (authentication issue)
+        if (isSessionExpiredError(userMeError)) {
+          throw userMeError;
+        }
+
+        // Check if it's a 401 ApiError (user not in Django)
+        // This happens when user exists in Clerk but not in backend
+        const is401 = isApiError(userMeError) && userMeError.status === 401;
+
+        console.log("[login-employer] 401 check:", {is401, isApiError: isApiError(userMeError), status: userMeError?.status});
+        console.log("[login-employer] About to check if (is401), value:", is401, typeof is401);
+
+        if (is401) {
+          console.log("[login-employer] INSIDE IF BLOCK - User exists in Clerk but not in Django", userMeError);
+          setNeedsSync(true);
+          setError("Looks like your account data is missing. Please click 'Sync Account' to complete your login.");
+          return;
+        }
+        // Re-throw other errors
+        throw userMeError;
       }
 
       // Step 4: Load organization data
@@ -297,7 +501,29 @@ function EmployerLoginPageContent() {
                   tabIndex={-1}
                   className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
                 >
-                  {error}
+                  <p>{error}</p>
+                  {needsSync && syncRetryCount < 2 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleSyncAccount}
+                        disabled={isSyncing}
+                        className="mt-3 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-2 px-4 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isSyncing
+                          ? `Syncing... (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? '' : 's'} left)`
+                          : `Sync Account (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? '' : 's'} left)`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSignOut}
+                        disabled={isSyncing}
+                        className="mt-2 w-full rounded-lg border border-gray-200 bg-white py-2 px-4 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Sign out
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : null}
 

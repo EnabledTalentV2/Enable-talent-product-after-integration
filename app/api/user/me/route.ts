@@ -14,7 +14,28 @@ export async function GET(request: NextRequest) {
       cookies
     );
 
-    const data = await backendResponse.json();
+    const responseText = await backendResponse.text();
+    let data: unknown = {};
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      data = {
+        error: "Backend returned non-JSON response",
+        details: responseText.slice(0, 500),
+      };
+    }
+
+    if (backendResponse.status === 401) {
+      const cookieNames = cookies
+        .split(";")
+        .map((entry) => entry.trim().split("=")[0])
+        .filter(Boolean);
+      console.error("[api/user/me] Backend returned 401", {
+        cookieNames: [...new Set(cookieNames)],
+        bodyPreview:
+          typeof responseText === "string" ? responseText.slice(0, 1000) : null,
+      });
+    }
 
     return NextResponse.json(data, {
       status: backendResponse.status,

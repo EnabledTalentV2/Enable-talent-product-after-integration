@@ -4,6 +4,7 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
+import { decodeJwt } from "jose";
 
 // Django backend base URL
 export const BACKEND_URL =
@@ -108,6 +109,50 @@ export const defaultFetchOptions: RequestInit = {
   credentials: "include",
 };
 
+const BACKEND_COOKIE_ALLOWLIST = new Set([
+  "access_token",
+  "refresh_token",
+  "csrftoken",
+  "sessionid",
+  "jwt",
+  "token",
+]);
+
+function filterCookiesForBackend(cookieHeader: string): string {
+  if (!cookieHeader) return "";
+  const parts = cookieHeader.split(";").map((part) => part.trim()).filter(Boolean);
+  const kept: string[] = [];
+  for (const part of parts) {
+    const eq = part.indexOf("=");
+    if (eq <= 0) continue;
+    const name = part.slice(0, eq).trim();
+    if (BACKEND_COOKIE_ALLOWLIST.has(name)) kept.push(part);
+  }
+  return kept.join("; ");
+}
+
+function safeTokenPreview(token: string): string {
+  if (!token) return "";
+  if (token.length <= 32) return token;
+  return `${token.slice(0, 16)}...${token.slice(-10)}`;
+}
+
+function safeJwtClaims(token: string): Record<string, unknown> | null {
+  try {
+    const payload = decodeJwt(token) as Record<string, unknown>;
+    return {
+      iss: payload.iss,
+      azp: payload.azp,
+      aud: payload.aud,
+      sub: payload.sub,
+      exp: payload.exp,
+      iat: payload.iat,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Helper function to make API requests to the Django backend
  * Verifies Clerk session and sends X-Clerk-User-Id header to Django
@@ -127,16 +172,28 @@ export async function backendFetch(
     headers.set("Content-Type", "application/json");
   }
 
+  // Forward only backend cookies (never forward Clerk cookies to Django).
+  if (incomingCookies && !headers.has("Cookie")) {
+    const filteredCookies = filterCookiesForBackend(incomingCookies);
+    if (filteredCookies) headers.set("Cookie", filteredCookies);
+  }
+
   // Verify Clerk session and send auth headers to Django
+  let clerkUserId: string | null = null;
+  let clerkToken: string | null = null;
+  let clerkTokenTemplate = "default";
   try {
     const { userId, getToken } = await auth();
+    clerkUserId = userId;
     if (userId) {
       headers.set("X-Clerk-User-Id", userId);
 
       // Send session JWT for Django to independently verify
-      const token = await getToken();
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
+      const template = process.env.CLERK_JWT_TEMPLATE || "";
+      if (template) clerkTokenTemplate = template;
+      clerkToken = template ? await getToken({ template }) : await getToken();
+      if (clerkToken) {
+        headers.set("Authorization", `Bearer ${clerkToken}`);
       }
     }
   } catch {
@@ -148,6 +205,31 @@ export async function backendFetch(
     ...options,
     headers,
   });
+
+  const shouldDebug =
+    process.env.NODE_ENV !== "production" &&
+    (process.env.DEBUG_BACKEND_FETCH === "true" ||
+      (endpoint.includes("/api/auth/users/me/") && response.status === 401));
+
+  if (shouldDebug) {
+    const forwardedCookie = headers.get("Cookie") || "";
+    const forwardedCookieNames = forwardedCookie
+      .split(";")
+      .map((entry) => entry.trim().split("=")[0])
+      .filter(Boolean);
+
+    console.log("[backendFetch]", {
+      endpoint,
+      method: options.method || "GET",
+      status: response.status,
+      clerkUserId,
+      clerkTokenTemplate,
+      hasClerkToken: Boolean(clerkToken),
+      clerkTokenPreview: clerkToken ? safeTokenPreview(clerkToken) : null,
+      clerkTokenClaims: clerkToken ? safeJwtClaims(clerkToken) : null,
+      forwardedCookies: [...new Set(forwardedCookieNames)],
+    });
+  }
 
   return response;
 }

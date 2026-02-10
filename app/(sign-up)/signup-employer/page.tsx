@@ -11,7 +11,7 @@ import {
   type RefObject,
 } from "react";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
 import { useSignUp } from "@clerk/nextjs";
 import { OAuthStrategy } from "@clerk/types";
@@ -36,6 +36,7 @@ type FieldErrors = Partial<{
 
 export default function SignupEmployerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp, setActive } = useSignUp();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -46,8 +47,21 @@ export default function SignupEmployerPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams?.get("error") === "account_incomplete"
+      ? "Your account setup was incomplete. Please sign up again to complete registration."
+      : null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [syncFailed, setSyncFailed] = useState(false);
+  const [clerkUserId, setClerkUserId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const employerNameRef = useRef<HTMLInputElement | null>(null);
@@ -72,6 +86,110 @@ export default function SignupEmployerPage() {
     },
   ];
 
+  const handleVerification = async () => {
+    if (!signUp || !verificationCode.trim()) return;
+    setIsVerifying(true);
+    setError(null);
+    setSyncFailed(false);
+    setRetryCount(0); // Reset retry count on new verification attempt
+
+    try {
+      const result = await signUp.attemptEmailAddressVerification({
+        code: verificationCode,
+      });
+
+      if (result.status === "complete" && result.createdUserId) {
+        // Store verification result in case sync fails and we need to retry
+        setClerkUserId(result.createdUserId);
+        setSessionId(result.createdSessionId);
+
+        try {
+          // Sync user to Django backend
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: result.createdUserId,
+              email: email.trim(),
+            }),
+          });
+
+          // Only set session if BOTH verification AND sync succeeded
+          await setActive({ session: result.createdSessionId });
+
+          router.push("/signup-employer/organisation-info");
+        } catch (syncError: any) {
+          // Django sync failed - show retry option
+          console.error("[signup-employer] Backend sync failed:", syncError);
+          setSyncFailed(true);
+          setError(
+            "Account created but backend sync failed. Please click 'Retry Signup' to complete your registration."
+          );
+        }
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("[signup-employer] Verification error:", err);
+      const errorMessage =
+        err.errors?.[0]?.message ||
+        err.message ||
+        "Failed to complete signup. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleRetrySync = async () => {
+    if (!clerkUserId || !sessionId) return;
+
+    // Check if retry limit reached
+    if (retryCount >= 5) {
+      setError(
+        "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
+      );
+      return;
+    }
+
+    setIsRetrying(true);
+    setError(null);
+    setRetryCount(prev => prev + 1);
+
+    try {
+      // Retry Django backend sync
+      await apiRequest("/api/auth/clerk-sync", {
+        method: "POST",
+        body: JSON.stringify({
+          clerk_user_id: clerkUserId,
+          email: email.trim(),
+        }),
+      });
+
+      // Sync succeeded - set session and continue
+      if (!setActive) {
+        throw new Error("Session activation not available");
+      }
+      await setActive({ session: sessionId });
+
+      router.push("/signup-employer/organisation-info");
+    } catch (error: any) {
+      console.error("[signup-employer] Retry sync failed:", error);
+      const attemptsRemaining = 5 - retryCount;
+      if (attemptsRemaining > 0) {
+        setError(
+          `Signup retry failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
+        );
+      } else {
+        setError(
+          "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
+        );
+        setSyncFailed(false); // Hide retry button
+      }
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   const handleOAuthSignUp = async (strategy: OAuthStrategy) => {
     if (!signUp) return;
     try {
@@ -87,6 +205,12 @@ export default function SignupEmployerPage() {
       );
     }
   };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (hasErrors) {
@@ -167,42 +291,15 @@ export default function SignupEmployerPage() {
         return;
       }
 
-      const clerkSignupResult = await signUp.create({
+      await signUp.create({
         emailAddress: trimmedEmail,
         password: password,
       });
 
-      if (!clerkSignupResult.createdUserId) {
-        setError("Failed to create account. Please try again.");
-        return;
-      }
-
-      const clerkUserId = clerkSignupResult.createdUserId;
-
-      // Step 2: Sync user to Django backend
-      try {
-        await apiRequest("/api/auth/clerk-sync", {
-          method: "POST",
-          body: JSON.stringify({
-            clerk_user_id: clerkUserId,
-            email: trimmedEmail,
-          }),
-        });
-      } catch (syncError) {
-        console.error("[signup-employer] Failed to sync with backend:", syncError);
-        setError(
-          "Account created, but couldn't sync with server. Please contact support."
-        );
-        return;
-      }
-
-      // Step 3: Set the active session
-      if (clerkSignupResult.status === "complete") {
-        await setActive({ session: clerkSignupResult.createdSessionId });
-      }
-
-      // Step 4: Redirect to email verification
-      router.push("/signup-employer/email-verification");
+      // Step 2: Send email verification OTP
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setPendingVerification(true);
+      setResendCooldown(30);
     } catch (err: any) {
       console.error("Signup error:", err);
       const errorMessage =
@@ -277,384 +374,475 @@ export default function SignupEmployerPage() {
 
           {/* Right Side - Form */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
-            <div className="text-center mb-7">
-              <h2
-                id="employer-signup-heading"
-                className="text-[26px] font-semibold text-gray-900 mb-2"
-              >
-                Sign Up
-              </h2>
-              <p className="text-sm text-gray-500">
-                Create an employer account to start hiring
-              </p>
-            </div>
-
-            {/* OAuth Sign Up Buttons */}
-            <div className="space-y-3 mb-6">
-              <button
-                type="button"
-                onClick={() => handleOAuthSignUp("oauth_google")}
-                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Continue with Google
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOAuthSignUp("oauth_github")}
-                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
-                </svg>
-                Continue with GitHub
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-400">or sign up with email</span>
-              </div>
-            </div>
-
-            <form
-              className="space-y-4"
-              aria-labelledby="employer-signup-heading"
-              noValidate
-              onSubmit={handleSubmit}
-            >
-              {hasErrors ? (
-                <div
-                  ref={errorSummaryRef}
-                  role="alert"
-                  tabIndex={-1}
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                >
-                  <p className="font-semibold">Please fix the following:</p>
-                  <ul className="mt-2 space-y-1">
-                    {fieldMeta.map(({ key, label, ref }) => {
-                      const message = fieldErrors[key];
-                      if (!message) return null;
-                      return (
-                        <li key={key}>
-                          <button
-                            type="button"
-                            onClick={() => ref.current?.focus()}
-                            className="text-left underline"
-                          >
-                            {label}: {message}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+            {pendingVerification ? (
+              /* OTP Verification View */
+              <>
+                <div className="text-center mb-7">
+                  <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+                    Verify your email
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    We sent a verification code to <strong>{email}</strong>
+                  </p>
                 </div>
-              ) : null}
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                >
-                  <p className="font-semibold">Error</p>
-                  <p className="mt-1 whitespace-pre-wrap">{error}</p>
+
+                {error && (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  >
+                    <p className="font-semibold">Error</p>
+                    <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-verificationCode"
+                    >
+                      Verification code
+                    </label>
+                    <input
+                      className={inputClasses(false)}
+                      id="employer-verificationCode"
+                      name="verificationCode"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="Enter 6-digit code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {syncFailed && retryCount < 5 ? (
+                    <button
+                      type="button"
+                      onClick={handleRetrySync}
+                      disabled={isRetrying}
+                      className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isRetrying ? "Retrying..." : `Retry Signup (${5 - retryCount} attempt${5 - retryCount === 1 ? '' : 's'} left)`}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleVerification}
+                      disabled={isVerifying || !verificationCode.trim()}
+                      className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isVerifying ? "Verifying..." : "Verify email"}
+                    </button>
+                  )}
+
+                  <p className="text-center text-xs text-gray-500">
+                    Didn&apos;t receive the code?{" "}
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0}
+                      onClick={async () => {
+                        if (!signUp) return;
+                        try {
+                          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+                          setError(null);
+                          setResendCooldown(30);
+                        } catch {
+                          setError("Failed to resend code. Please try again.");
+                        }
+                      }}
+                      className={`font-semibold ${resendCooldown > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#C04622] hover:underline"}`}
+                    >
+                      {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Resend code"}
+                    </button>
+                  </p>
                 </div>
-              )}
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-gray-900"
-                  htmlFor="employer-fullname"
-                >
-                  Full name
-                  <span aria-hidden="true" className="text-gray-500">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter full name"
-                  className={inputClasses(Boolean(fieldErrors.fullName))}
-                  id="employer-fullname"
-                  name="fullName"
-                  autoComplete="name"
-                  value={fullName}
-                  aria-invalid={Boolean(fieldErrors.fullName)}
-                  aria-describedby={
-                    fieldErrors.fullName ? "employer-fullname-error" : undefined
-                  }
-                  aria-required="true"
-                  onChange={(e) => {
-                    setFullName(e.target.value);
-                    clearFieldError("fullName");
-                  }}
-                  ref={fullNameRef}
-                />
-                {fieldErrors.fullName && (
-                  <p
-                    id="employer-fullname-error"
-                    className="mt-1 text-sm text-red-600"
+              </>
+            ) : (
+              /* Signup Form View */
+              <>
+                <div className="text-center mb-7">
+                  <h2
+                    id="employer-signup-heading"
+                    className="text-[26px] font-semibold text-gray-900 mb-2"
                   >
-                    {fieldErrors.fullName}
+                    Sign Up
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Create an employer account to start hiring
                   </p>
-                )}
-              </div>
+                </div>
 
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-gray-900"
-                  htmlFor="employer-name"
-                >
-                  Employer name
-                  <span aria-hidden="true" className="text-gray-500">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter employer name"
-                  className={inputClasses(Boolean(fieldErrors.employerName))}
-                  id="employer-name"
-                  name="employerName"
-                  autoComplete="organization"
-                  value={employerName}
-                  aria-invalid={Boolean(fieldErrors.employerName)}
-                  aria-describedby={
-                    fieldErrors.employerName ? "employer-name-error" : undefined
-                  }
-                  aria-required="true"
-                  onChange={(e) => {
-                    setEmployerName(e.target.value);
-                    clearFieldError("employerName");
-                  }}
-                  ref={employerNameRef}
-                />
-                {fieldErrors.employerName && (
-                  <p
-                    id="employer-name-error"
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {fieldErrors.employerName}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-gray-900"
-                  htmlFor="employer-email"
-                >
-                  Email
-                  <span aria-hidden="true" className="text-gray-500">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="Enter email"
-                  className={inputClasses(Boolean(fieldErrors.email))}
-                  id="employer-email"
-                  name="email"
-                  autoComplete="email"
-                  value={email}
-                  aria-invalid={Boolean(fieldErrors.email)}
-                  aria-describedby={
-                    fieldErrors.email ? "employer-email-error" : undefined
-                  }
-                  aria-required="true"
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    clearFieldError("email");
-                  }}
-                  ref={emailRef}
-                />
-                {fieldErrors.email && (
-                  <p
-                    id="employer-email-error"
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {fieldErrors.email}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-gray-900"
-                  htmlFor="employer-password"
-                >
-                  Password
-                  <span aria-hidden="true" className="text-gray-500">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
-                    className={`${inputClasses(
-                      Boolean(fieldErrors.password),
-                    )} pr-14`}
-                    id="employer-password"
-                    name="password"
-                    autoComplete="new-password"
-                    value={password}
-                    aria-invalid={Boolean(fieldErrors.password)}
-                    aria-describedby={
-                      fieldErrors.password
-                        ? "employer-password-error"
-                        : undefined
-                    }
-                    aria-required="true"
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      clearFieldError("password");
-                    }}
-                    ref={passwordRef}
-                  />
+                {/* OAuth Sign Up Buttons */}
+                <div className="space-y-3 mb-6">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    aria-pressed={showPassword}
-                    aria-controls="employer-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                    onClick={() => handleOAuthSignUp("oauth_google")}
+                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Continue with Google
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOAuthSignUp("oauth_github")}
+                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg>
+                    Continue with GitHub
                   </button>
                 </div>
-                {fieldErrors.password && (
-                  <p
-                    id="employer-password-error"
-                    className="mt-1 text-sm text-red-600"
-                  >
-                    {fieldErrors.password}
-                  </p>
-                )}
-                <PasswordStrengthIndicator password={password} show={true} />
-              </div>
 
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-gray-900"
-                  htmlFor="employer-confirm-password"
+                {/* Divider */}
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-3 text-gray-400">or sign up with email</span>
+                  </div>
+                </div>
+
+                <form
+                  className="space-y-4"
+                  aria-labelledby="employer-signup-heading"
+                  noValidate
+                  onSubmit={handleSubmit}
                 >
-                  Confirm Password
-                  <span aria-hidden="true" className="text-gray-500">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm password"
-                    className={`${inputClasses(
-                      Boolean(fieldErrors.confirmPassword),
-                    )} pr-14`}
-                    id="employer-confirm-password"
-                    name="confirmPassword"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
-                    aria-describedby={
-                      fieldErrors.confirmPassword
-                        ? "employer-confirm-password-error"
-                        : undefined
-                    }
-                    aria-required="true"
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      clearFieldError("confirmPassword");
-                    }}
-                    ref={confirmPasswordRef}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
-                    aria-pressed={showConfirmPassword}
-                    aria-controls="employer-confirm-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
+                  {hasErrors ? (
+                    <div
+                      ref={errorSummaryRef}
+                      role="alert"
+                      tabIndex={-1}
+                      className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                      <p className="font-semibold">Please fix the following:</p>
+                      <ul className="mt-2 space-y-1">
+                        {fieldMeta.map(({ key, label, ref }) => {
+                          const message = fieldErrors[key];
+                          if (!message) return null;
+                          return (
+                            <li key={key}>
+                              <button
+                                type="button"
+                                onClick={() => ref.current?.focus()}
+                                className="text-left underline"
+                              >
+                                {label}: {message}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {error && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                      <p className="font-semibold">Error</p>
+                      <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-fullname"
+                    >
+                      Full name
+                      <span aria-hidden="true" className="text-gray-500">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter full name"
+                      className={inputClasses(Boolean(fieldErrors.fullName))}
+                      id="employer-fullname"
+                      name="fullName"
+                      autoComplete="name"
+                      value={fullName}
+                      aria-invalid={Boolean(fieldErrors.fullName)}
+                      aria-describedby={
+                        fieldErrors.fullName ? "employer-fullname-error" : undefined
+                      }
+                      aria-required="true"
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        clearFieldError("fullName");
+                      }}
+                      ref={fullNameRef}
+                    />
+                    {fieldErrors.fullName && (
+                      <p
+                        id="employer-fullname-error"
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {fieldErrors.fullName}
+                      </p>
                     )}
-                  </button>
-                </div>
-                {fieldErrors.confirmPassword && (
-                  <p
-                    id="employer-confirm-password-error"
-                    className="mt-1 text-sm text-red-600"
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-name"
+                    >
+                      Employer name
+                      <span aria-hidden="true" className="text-gray-500">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter employer name"
+                      className={inputClasses(Boolean(fieldErrors.employerName))}
+                      id="employer-name"
+                      name="employerName"
+                      autoComplete="organization"
+                      value={employerName}
+                      aria-invalid={Boolean(fieldErrors.employerName)}
+                      aria-describedby={
+                        fieldErrors.employerName ? "employer-name-error" : undefined
+                      }
+                      aria-required="true"
+                      onChange={(e) => {
+                        setEmployerName(e.target.value);
+                        clearFieldError("employerName");
+                      }}
+                      ref={employerNameRef}
+                    />
+                    {fieldErrors.employerName && (
+                      <p
+                        id="employer-name-error"
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {fieldErrors.employerName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-email"
+                    >
+                      Email
+                      <span aria-hidden="true" className="text-gray-500">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Enter email"
+                      className={inputClasses(Boolean(fieldErrors.email))}
+                      id="employer-email"
+                      name="email"
+                      autoComplete="email"
+                      value={email}
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={
+                        fieldErrors.email ? "employer-email-error" : undefined
+                      }
+                      aria-required="true"
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        clearFieldError("email");
+                      }}
+                      ref={emailRef}
+                    />
+                    {fieldErrors.email && (
+                      <p
+                        id="employer-email-error"
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {fieldErrors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-password"
+                    >
+                      Password
+                      <span aria-hidden="true" className="text-gray-500">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter password"
+                        className={`${inputClasses(
+                          Boolean(fieldErrors.password),
+                        )} pr-14`}
+                        id="employer-password"
+                        name="password"
+                        autoComplete="new-password"
+                        value={password}
+                        aria-invalid={Boolean(fieldErrors.password)}
+                        aria-describedby={
+                          fieldErrors.password
+                            ? "employer-password-error"
+                            : undefined
+                        }
+                        aria-required="true"
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          clearFieldError("password");
+                        }}
+                        ref={passwordRef}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                        aria-controls="employer-password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                    {fieldErrors.password && (
+                      <p
+                        id="employer-password-error"
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {fieldErrors.password}
+                      </p>
+                    )}
+                    <PasswordStrengthIndicator password={password} show={true} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-confirm-password"
+                    >
+                      Confirm Password
+                      <span aria-hidden="true" className="text-gray-500">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm password"
+                        className={`${inputClasses(
+                          Boolean(fieldErrors.confirmPassword),
+                        )} pr-14`}
+                        id="employer-confirm-password"
+                        name="confirmPassword"
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                        aria-describedby={
+                          fieldErrors.confirmPassword
+                            ? "employer-confirm-password-error"
+                            : undefined
+                        }
+                        aria-required="true"
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          clearFieldError("confirmPassword");
+                        }}
+                        ref={confirmPasswordRef}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={
+                          showConfirmPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showConfirmPassword}
+                        aria-controls="employer-confirm-password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
+                    {fieldErrors.confirmPassword && (
+                      <p
+                        id="employer-confirm-password-error"
+                        className="mt-1 text-sm text-red-600"
+                      >
+                        {fieldErrors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {fieldErrors.confirmPassword}
+                    {isSubmitting ? "Creating account..." : "Create account"}
+                  </button>
+
+                  <p className="mt-2 text-center text-[11px] text-gray-500">
+                    Takes less than 2 minutes
                   </p>
-                )}
-              </div>
+                </form>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isSubmitting ? "Creating account..." : "Create account"}
-              </button>
+                <div className="mt-6 text-center space-y-4">
+                  <p className="text-[13px] text-gray-600">
+                    Already have an account?{" "}
+                    <Link
+                      href="/login-employer"
+                      className="text-[#C04622] font-semibold hover:underline"
+                    >
+                      Login
+                    </Link>
+                  </p>
+                </div>
 
-              <p className="mt-2 text-center text-[11px] text-gray-500">
-                Takes less than 2 minutes
-              </p>
-            </form>
-
-            <div className="mt-6 text-center space-y-4">
-              <p className="text-[13px] text-gray-600">
-                Already have an account?{" "}
-                <Link
-                  href="/login-employer"
-                  className="text-[#C04622] font-semibold hover:underline"
-                >
-                  Login
-                </Link>
-              </p>
-            </div>
-
-            <div className="mt-6 text-center text-[11px] text-gray-500">
-              By clicking login, you agree to our{" "}
-              <Link
-                href="/terms"
-                className="underline text-gray-600 hover:text-gray-700"
-              >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="underline text-gray-600 hover:text-gray-700"
-              >
-                Privacy Policy
-              </Link>
-            </div>
+                <div className="mt-6 text-center text-[11px] text-gray-500">
+                  By clicking login, you agree to our{" "}
+                  <Link
+                    href="/terms"
+                    className="underline text-gray-600 hover:text-gray-700"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/privacy"
+                    className="underline text-gray-600 hover:text-gray-700"
+                  >
+                    Privacy Policy
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { AlertCircle } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
@@ -66,6 +67,8 @@ const getCompanyInitial = (company: string) =>
   getBrandKey(company).slice(0, 1).toUpperCase();
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { signOut } = useAuth();
   const rawUserData = useUserDataStore((s) => s.userData);
   const [activeMetric, setActiveMetric] =
     useState<keyof typeof engagementSeries>("views");
@@ -74,6 +77,28 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const notifications = getNotifications({ limit: 3 });
+
+  // Verify user exists in Django backend
+  useEffect(() => {
+    const verifyBackendSync = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (response.status === 401) {
+          // User exists in Clerk but not in Django - sign out and redirect
+          console.error("[dashboard] User not synced to backend, signing out");
+          await signOut();
+          router.push("/signup?error=account_incomplete");
+        }
+      } catch (error) {
+        console.error("[dashboard] Failed to verify backend sync:", error);
+      }
+    };
+
+    verifyBackendSync();
+  }, [signOut, router]);
 
   // Merge with defaults to ensure all nested objects exist
   const userData = useMemo(
