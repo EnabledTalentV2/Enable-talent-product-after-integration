@@ -237,7 +237,7 @@ function SignUpPageContent() {
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/signup/resume-upload",
+        redirectUrlComplete: "/signup/oauth-complete",
       });
     } catch (error: any) {
       console.error("[signup] OAuth error:", error);
