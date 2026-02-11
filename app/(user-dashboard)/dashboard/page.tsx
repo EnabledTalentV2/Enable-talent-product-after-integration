@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { AlertCircle } from "lucide-react";
@@ -66,7 +66,7 @@ const getBrandStyle = (company: string) =>
 const getCompanyInitial = (company: string) =>
   getBrandKey(company).slice(0, 1).toUpperCase();
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const router = useRouter();
   const { signOut } = useAuth();
   const rawUserData = useUserDataStore((s) => s.userData);
@@ -457,5 +457,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

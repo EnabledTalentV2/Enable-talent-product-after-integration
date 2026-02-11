@@ -137,6 +137,14 @@ function safeTokenPreview(token: string): string {
   return `${token.slice(0, 16)}...${token.slice(-10)}`;
 }
 
+function safeTokenHeadTail(token: string): { head: string; tail: string } | null {
+  if (!token) return null;
+  return {
+    head: token.slice(0, 16),
+    tail: token.length > 16 ? token.slice(-16) : token,
+  };
+}
+
 function safeJwtClaims(token: string): Record<string, unknown> | null {
   try {
     const payload = decodeJwt(token) as Record<string, unknown>;
@@ -189,11 +197,22 @@ export async function backendFetch(
       headers.set("X-Clerk-User-Id", userId);
 
       // Send session JWT for Django to independently verify
-      const template = process.env.CLERK_JWT_TEMPLATE || "";
-      if (template) clerkTokenTemplate = template;
-      clerkToken = template ? await getToken({ template }) : await getToken();
-      if (clerkToken) {
-        headers.set("Authorization", `Bearer ${clerkToken}`);
+      // Backend expects a JWT Template token (includes aud, etc).
+      // Configure the template in the Clerk dashboard and set CLERK_JWT_TEMPLATE=api.
+      const template = (process.env.CLERK_JWT_TEMPLATE || "api").trim() || "api";
+      clerkTokenTemplate = template;
+
+      // Prefer the template token, but fall back to the default session token
+      // so existing dev flows don't completely break if the template isn't configured yet.
+      let token = await getToken({ template });
+      if (!token) {
+        clerkTokenTemplate = "default";
+        token = await getToken();
+      }
+      clerkToken = token || null;
+
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
       }
     }
   } catch {
@@ -225,6 +244,11 @@ export async function backendFetch(
       .map((entry) => entry.trim().split("=")[0])
       .filter(Boolean);
 
+    const headTail = clerkToken ? safeTokenHeadTail(clerkToken) : null;
+    const claims = clerkToken ? safeJwtClaims(clerkToken) : null;
+
+    // TEMP DEBUG (remove/disable in production):
+    // Helps confirm the Clerk JWT we forward to Django is fresh and what its expiry is.
     console.log("[backendFetch]", {
       requestId,
       endpoint,
@@ -234,8 +258,11 @@ export async function backendFetch(
       clerkTokenTemplate,
       hasClerkToken: Boolean(clerkToken),
       clerkTokenLength: clerkToken ? clerkToken.length : 0,
+      clerkTokenHead: headTail?.head ?? null,
+      clerkTokenTail: headTail?.tail ?? null,
       clerkTokenPreview: clerkToken ? safeTokenPreview(clerkToken) : null,
-      clerkTokenClaims: clerkToken ? safeJwtClaims(clerkToken) : null,
+      clerkTokenExp: typeof claims?.exp === "number" ? claims.exp : null,
+      clerkTokenClaims: claims,
       forwardedCookies: [...new Set(forwardedCookieNames)],
     });
   }

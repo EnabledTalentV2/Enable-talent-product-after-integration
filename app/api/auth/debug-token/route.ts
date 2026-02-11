@@ -19,10 +19,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const template = new URL(request.url).searchParams.get("template");
-  const token = template
-    ? await getToken({ template })
-    : await getToken();
+  const url = new URL(request.url);
+  const templateFromQuery = url.searchParams.get("template");
+  const templateFromEnv = (process.env.CLERK_JWT_TEMPLATE || "").trim();
+  const template = (templateFromQuery || templateFromEnv || "api").trim() || "api";
+
+  const token = await getToken({ template });
 
   if (!token) {
     return NextResponse.json(
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     console.log("[auth/debug-token] Issued Clerk JWT", {
       userId,
-      template: template || "default",
+      template,
       token,
     });
     console.log("[auth/debug-token] Decoded Clerk JWT (TEMP DEBUG)", {
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
     {
       userId,
       tokenType: "Bearer",
-      template: template || "default",
+      template,
       token,
     },
     {

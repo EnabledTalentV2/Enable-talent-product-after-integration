@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
 import { useCandidateInsight } from "@/lib/hooks/useCandidateInsight";
@@ -79,7 +79,7 @@ const formatDateRange = (start?: string, end?: string) => {
   return startLabel ? `${startLabel} - Present` : endLabel || "";
 };
 
-export default function CandidateProfilePage() {
+function CandidateProfilePageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
@@ -678,5 +678,13 @@ export default function CandidateProfilePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function CandidateProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <CandidateProfilePageContent />
+    </Suspense>
   );
 }

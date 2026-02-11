@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
@@ -102,7 +102,7 @@ const formatPostedDate = (dateString: string | undefined): string => {
 const isInviteRejected = (status?: CandidateJobInvite["status"]) =>
   status === "rejected" || status === "declined" || status === "Declined";
 
-export default function MyJobsPage() {
+function MyJobsPageContent() {
   const { data: jobsData, isLoading: isLoadingJobs } = useCandidateJobs();
   const {
     data: applications = [],
@@ -893,5 +893,13 @@ export default function MyJobsPage() {
         />
       )}
     </section>
+  );
+}
+
+export default function MyJobsPage() {
+  return (
+    <Suspense fallback={null}>
+      <MyJobsPageContent />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import {
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -34,7 +35,7 @@ type FieldErrors = Partial<{
   confirmPassword: string;
 }>;
 
-export default function SignupEmployerPage() {
+function SignupEmployerPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signUp, setActive } = useSignUp();
@@ -860,5 +861,13 @@ export default function SignupEmployerPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignupEmployerPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupEmployerPageContent />
+    </Suspense>
   );
 }

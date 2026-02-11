@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -34,7 +35,7 @@ type FieldErrors = Partial<{
   confirmPassword: string;
 }>;
 
-export default function SignUpPage() {
+function SignUpPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
@@ -866,5 +867,13 @@ export default function SignUpPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignUpPageContent />
+    </Suspense>
   );
 }
