@@ -207,7 +207,7 @@ function SignupEmployerPageContent() {
       await signUp.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/employer/dashboard",
+        redirectUrlComplete: "/signup-employer/oauth-complete",
       });
     } catch (err: any) {
       console.error("[signup-employer] OAuth error:", err);
