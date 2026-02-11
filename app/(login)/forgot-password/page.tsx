@@ -153,7 +153,7 @@ function ForgotPasswordContent() {
           if (derivedRole === "employer") {
             router.push("/employer/dashboard");
           } else {
-            router.push("/dashboard");
+            router.push("/dashboard/home");
           }
           return;
         } catch (userMeError: unknown) {

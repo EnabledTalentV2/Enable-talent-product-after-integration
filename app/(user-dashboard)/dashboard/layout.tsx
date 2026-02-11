@@ -354,8 +354,33 @@ export default function DashboardLayoutPage({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F0F4F8]">
-        <div className="text-slate-500">Verifying session...</div>
+      <div
+        className="min-h-screen bg-[#F0F4F8] animate-pulse"
+        aria-label="Loading dashboard"
+      >
+        <div className="h-16 border-b border-slate-200 bg-white px-6 md:px-12">
+          <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
+            <div className="h-8 w-40 rounded-md bg-slate-200" />
+            <div className="h-8 w-28 rounded-md bg-slate-200" />
+          </div>
+        </div>
+        <div className="h-12 border-b border-slate-200 bg-white px-6 md:px-12">
+          <div className="mx-auto flex h-full max-w-7xl items-center gap-4">
+            <div className="h-6 w-20 rounded bg-slate-200" />
+            <div className="h-6 w-24 rounded bg-slate-200" />
+            <div className="h-6 w-20 rounded bg-slate-200" />
+            <div className="h-6 w-28 rounded bg-slate-200" />
+          </div>
+        </div>
+        <div className="px-6 py-8 md:px-12">
+          <div className="mx-auto grid max-w-7xl gap-6">
+            <div className="h-28 rounded-2xl bg-white shadow-sm" />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="h-80 rounded-2xl bg-white shadow-sm" />
+              <div className="h-80 rounded-2xl bg-white shadow-sm" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

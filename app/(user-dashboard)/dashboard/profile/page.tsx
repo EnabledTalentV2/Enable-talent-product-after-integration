@@ -161,7 +161,7 @@ export default function ProfilePage() {
       .map(toTrimmed)
       .filter(Boolean)
       .join(" ") || fallbackText;
-  const careerStageLabel = withFallback(otherDetails.careerStage);
+  const careerStageLabel = toTrimmed(otherDetails.careerStage);
   const emailLabel = withFallback(basicInfo.email);
   const phoneLabel = withFallback(basicInfo.phone);
   const locationLabel = withFallback(basicInfo.location);
@@ -326,9 +326,11 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-bold text-slate-900">
                   {displayName}
                 </h1>
-                <p className="text-lg text-slate-500 font-medium">
-                  {careerStageLabel}
-                </p>
+                {careerStageLabel ? (
+                  <p className="text-lg text-slate-500 font-medium">
+                    {careerStageLabel}
+                  </p>
+                ) : null}
               </div>
               <Link
                 href="/dashboard/profile-update

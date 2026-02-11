@@ -110,7 +110,7 @@ function LoginPageContent() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: "/dashboard/home",
       });
     } catch (err: any) {
       console.error("[login-talent] OAuth error:", err);
@@ -200,7 +200,7 @@ function LoginPageContent() {
       const nextPath =
         searchParams.get("next") ?? searchParams.get("returnUrl");
       const redirectTarget =
-        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
+        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard/home";
       router.push(redirectTarget);
     } catch (error: any) {
       console.error("[login-talent] Sync failed:", error);
@@ -381,7 +381,7 @@ function LoginPageContent() {
       const nextPath =
         searchParams.get("next") ?? searchParams.get("returnUrl");
       const redirectTarget =
-        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard";
+        nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard/home";
       router.push(redirectTarget);
     } catch (err: any) {
       console.error(err);

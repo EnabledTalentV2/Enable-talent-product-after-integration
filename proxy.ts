@@ -205,7 +205,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   if (isAuthenticated && userRole) {
     // Prevent job seekers from accessing employer routes
     if (isEmployerRoute && userRole !== "employer") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/dashboard/home", request.url));
     }
     // Prevent employers from accessing job seeker routes
     if (isJobSeekerRoute && userRole === "employer") {
@@ -218,7 +218,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     if (userRole === "employer") {
       return NextResponse.redirect(new URL("/employer/dashboard", request.url));
     }
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/dashboard/home", request.url));
   }
 
   return NextResponse.next();
