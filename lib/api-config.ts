@@ -200,31 +200,39 @@ export async function backendFetch(
       // Backend expects a JWT Template token (includes aud, etc).
       // Configure the template in the Clerk dashboard and set CLERK_JWT_TEMPLATE=api.
       const template = (process.env.CLERK_JWT_TEMPLATE || "api").trim() || "api";
-      clerkTokenTemplate = template;
+      const token = await getToken({ template });
 
-      // Prefer the template token, but fall back to the default session token
-      // so existing dev flows don't completely break if the template isn't configured yet.
-      let token = await getToken({ template });
       if (!token) {
-        clerkTokenTemplate = "default";
-        token = await getToken();
+        console.error(
+          `[backendFetch] Failed to obtain Clerk template token (template=${template})`,
+        );
+        throw new Error("Missing Clerk template JWT");
       }
-      clerkToken = token || null;
 
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
+      clerkToken = token;
+      clerkTokenTemplate = template;
+      headers.set("Authorization", `Bearer ${token}`);
     }
-  } catch {
-    // auth() may fail in non-request contexts; continue without user ID
+  } catch (error) {
+    console.error("[backendFetch] Clerk auth/getToken failed", {
+      endpoint,
+      method: options.method || "GET",
+      error,
+    });
+    throw error;
   }
 
   // Generate a request ID for correlating frontend and backend logs.
-  const requestId =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  headers.set("X-Request-Id", requestId);
+  const incomingRequestId = headers.get("X-Request-Id")?.trim();
+  // const requestId =
+  //   incomingRequestId ||
+  //   (typeof crypto !== "undefined" && crypto.randomUUID
+  //     ? crypto.randomUUID()
+  //     : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const requestId = "XYZ"
+  if (!incomingRequestId) {
+    headers.set("X-Request-Id", requestId);
+  }
 
   const response = await fetch(endpoint, {
     ...defaultFetchOptions,
@@ -265,6 +273,12 @@ export async function backendFetch(
       clerkTokenClaims: claims,
       forwardedCookies: [...new Set(forwardedCookieNames)],
     });
+
+    // TEMP DEBUG (remove/disable in production):
+    // Full token print for backend comparison/copy-paste testing.
+    // if (clerkToken) {
+    //   console.log("[backendFetch] clerkTokenFull", clerkToken);
+    // }
   }
 
   return response;
