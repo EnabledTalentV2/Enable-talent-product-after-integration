@@ -1,65 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ;
+import { BACKEND_URL, backendFetch } from "@/lib/api-config";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id: jobId } = await params;
-
-    // Get cookies for authentication
-    const cookies = request.cookies;
-    const accessToken = cookies.get("access_token")?.value;
-
-    if (!accessToken) {
-      console.error("No access token found in cookies");
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
+    const cookies = request.headers.get("cookie") || "";
     const backendUrl = `${BACKEND_URL}/api/channels/jobs/${jobId}/applications/`;
-    console.log("Fetching applications from:", backendUrl);
 
-    // Fetch applications from backend
-    const response = await fetch(backendUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    console.log("[jobs/applications] GET ->", backendUrl);
+
+    const backendResponse = await backendFetch(
+      backendUrl,
+      {
+        method: "GET",
       },
-    });
+      cookies,
+    );
 
-    console.log("Backend response status:", response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Backend error response:", errorText);
-
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { detail: errorText };
-      }
-
-      return NextResponse.json(
-        { error: errorData.detail || "Failed to fetch applications" },
-        { status: response.status }
-      );
+    const responseText = await backendResponse.text();
+    let data: unknown = {};
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      data = {
+        error: "Backend returned non-JSON response",
+        details: responseText.slice(0, 500),
+      };
     }
 
-    const data = await response.json();
-    console.log("Successfully fetched applications:", data.length || 0, "items");
-    return NextResponse.json(data);
+    if (!backendResponse.ok) {
+      console.error("[jobs/applications] Backend error", {
+        status: backendResponse.status,
+        bodyPreview:
+          typeof responseText === "string" ? responseText.slice(0, 1000) : null,
+      });
+    }
+
+    return NextResponse.json(data, { status: backendResponse.status });
   } catch (error) {
-    console.error("Error fetching applications:", error);
+    console.error("[jobs/applications] GET error:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }

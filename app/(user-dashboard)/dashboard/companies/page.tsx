@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Calendar, Globe, MapPin, Users } from "lucide-react";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
@@ -91,7 +91,7 @@ const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
   };
 };
 
-export default function CompaniesPage() {
+function CompaniesPageContent() {
   const { data: jobsData, isLoading, error } = useCandidateJobs();
   const { mutate: applyToJob, isPending: isApplying } = useApplyToJob();
   const allJobs = useMemo(
@@ -583,5 +583,13 @@ export default function CompaniesPage() {
       </div>
       )}
     </section>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={null}>
+      <CompaniesPageContent />
+    </Suspense>
   );
 }

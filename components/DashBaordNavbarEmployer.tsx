@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import {
   LogOut,
   User,
@@ -14,22 +15,25 @@ import {
 import Link from "next/link";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import { apiRequest } from "@/lib/api-client";
 import { useState } from "react";
 
 export default function DashBoardNavbarEmployer() {
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const resetEmployerData = useEmployerDataStore((s) => s.resetEmployerData);
   const resetJobs = useEmployerJobsStore((s) => s.resetJobs);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await apiRequest("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
+      await signOut();
+      resetEmployerData();
+      resetJobs();
+      router.push("/login-employer");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if Clerk logout fails, clear local data and redirect
       resetEmployerData();
       resetJobs();
       router.push("/login-employer");

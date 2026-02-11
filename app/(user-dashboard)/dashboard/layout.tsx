@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
 import { useUserDataStore } from "@/lib/userDataStore";
@@ -186,6 +187,7 @@ export default function DashboardLayoutPage({
   children: ReactNode;
 }) {
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const patchUserData = useUserDataStore((s) => s.patchUserData);
   const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
@@ -199,14 +201,24 @@ export default function DashboardLayoutPage({
     let active = true;
 
     const checkAuth = async () => {
-      // Wait for Zustand to hydrate from localStorage first
+      // Wait for Clerk auth to load
+      if (!isLoaded) return;
+
+      // Redirect if not signed in
+      if (!isSignedIn) {
+        if (active) setLoading(false);
+        router.replace("/login-talent");
+        return;
+      }
+
+      // Wait for Zustand to hydrate from localStorage
       await waitForHydration();
       try {
         const response = await fetch("/api/user/me", {
           credentials: "include",
         });
 
-        if (response.status === 401 || !response.ok) {
+        if (!response.ok) {
           // Clear loading state before redirect to prevent stuck UI
           if (active) setLoading(false);
           router.replace("/login-talent");
@@ -338,12 +350,37 @@ export default function DashboardLayoutPage({
     return () => {
       active = false;
     };
-  }, [router, setUserData, patchUserData]);
+  }, [isLoaded, isSignedIn, router, setUserData, patchUserData]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F0F4F8]">
-        <div className="text-slate-500">Verifying session...</div>
+      <div
+        className="min-h-screen bg-[#F0F4F8] animate-pulse"
+        aria-label="Loading dashboard"
+      >
+        <div className="h-16 border-b border-slate-200 bg-white px-6 md:px-12">
+          <div className="mx-auto flex h-full max-w-7xl items-center justify-between">
+            <div className="h-8 w-40 rounded-md bg-slate-200" />
+            <div className="h-8 w-28 rounded-md bg-slate-200" />
+          </div>
+        </div>
+        <div className="h-12 border-b border-slate-200 bg-white px-6 md:px-12">
+          <div className="mx-auto flex h-full max-w-7xl items-center gap-4">
+            <div className="h-6 w-20 rounded bg-slate-200" />
+            <div className="h-6 w-24 rounded bg-slate-200" />
+            <div className="h-6 w-20 rounded bg-slate-200" />
+            <div className="h-6 w-28 rounded bg-slate-200" />
+          </div>
+        </div>
+        <div className="px-6 py-8 md:px-12">
+          <div className="mx-auto grid max-w-7xl gap-6">
+            <div className="h-28 rounded-2xl bg-white shadow-sm" />
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="h-80 rounded-2xl bg-white shadow-sm" />
+              <div className="h-80 rounded-2xl bg-white shadow-sm" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

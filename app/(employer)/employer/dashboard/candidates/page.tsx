@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { Suspense, useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import {
@@ -72,7 +72,7 @@ type CandidateFilters = {
   verifiedOnly: boolean;
 };
 
-export default function CandidatesListPage() {
+function CandidatesListPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsString = searchParams.toString();
@@ -752,5 +752,13 @@ export default function CandidatesListPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function CandidatesListPage() {
+  return (
+    <Suspense fallback={null}>
+      <CandidatesListPageContent />
+    </Suspense>
   );
 }

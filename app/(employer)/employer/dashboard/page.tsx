@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import EngagementTrendChart from "@/components/EngagementTrendChart";
 import RecentJobCard from "@/components/employer/dashboard/RecentJobCard";
 import CandidateCard from "@/components/employer/dashboard/CandidateCard";
@@ -75,6 +77,8 @@ const getBrandStyle = (company: string) =>
   brandStyles[getBrandKey(company)] ?? "bg-slate-100 text-slate-700";
 
 export default function EmployerDashboardPage() {
+  const router = useRouter();
+  const { signOut } = useAuth();
   const jobs = useEmployerJobsStore((state) => state.jobs);
   const {
     candidates: selectedCandidates,
@@ -86,6 +90,33 @@ export default function EmployerDashboardPage() {
 
   const [activeRange, setActiveRange] =
     useState<(typeof timeRanges)[number]>("1Y");
+
+  // Verify user exists in Django backend
+  useEffect(() => {
+    const verifyBackendSync = async () => {
+      try {
+        const response = await fetch("/api/user/me", {
+          credentials: "include",
+        });
+
+        if (response.status === 401) {
+          // User exists in Clerk but not in Django - sign out and redirect
+          console.error(
+            "[employer-dashboard] User not synced to backend, signing out"
+          );
+          await signOut();
+          router.push("/signup-employer?error=account_incomplete");
+        }
+      } catch (error) {
+        console.error(
+          "[employer-dashboard] Failed to verify backend sync:",
+          error
+        );
+      }
+    };
+
+    verifyBackendSync();
+  }, [signOut, router]);
 
   // Fetch selected candidates on mount
   useEffect(() => {
