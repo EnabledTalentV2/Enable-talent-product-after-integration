@@ -205,16 +205,29 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   if (isAuthenticated && userRole) {
     // Prevent job seekers from accessing employer routes
     if (isEmployerRoute && userRole !== "employer") {
-      return NextResponse.redirect(new URL("/dashboard/home", request.url));
+      const wrongRoleUrl = new URL("/login-employer", request.url);
+      wrongRoleUrl.searchParams.set("error", "wrong_role");
+      return NextResponse.redirect(wrongRoleUrl);
     }
     // Prevent employers from accessing job seeker routes
     if (isJobSeekerRoute && userRole === "employer") {
-      return NextResponse.redirect(new URL("/employer/dashboard", request.url));
+      const wrongRoleUrl = new URL("/login-talent", request.url);
+      wrongRoleUrl.searchParams.set("error", "wrong_role");
+      return NextResponse.redirect(wrongRoleUrl);
     }
   }
 
   // If authenticated user tries to access login pages, redirect to dashboard
   if (isAuthenticated && userRole && isAuthRoute(request)) {
+    // Allow candidates to remain on employer login to show explicit wrong-role guidance.
+    if (pathname.startsWith("/login-employer") && userRole !== "employer") {
+      return NextResponse.next();
+    }
+    // Allow employers to remain on talent login to show explicit wrong-role guidance.
+    if (pathname.startsWith("/login-talent") && userRole === "employer") {
+      return NextResponse.next();
+    }
+
     if (userRole === "employer") {
       return NextResponse.redirect(new URL("/employer/dashboard", request.url));
     }

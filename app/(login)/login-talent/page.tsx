@@ -51,6 +51,7 @@ function LoginPageContent() {
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const syncReason = searchParams.get("reason");
+  const authError = searchParams.get("error");
 
   // If user is already signed in (common after OAuth redirect) but missing in Django,
   // preload Clerk identity so the "Sync Account" action can run.
@@ -100,9 +101,18 @@ function LoginPageContent() {
     setError(
       (prev) =>
         prev ??
-        "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
+      "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
     );
   }, [syncReason, userId]);
+
+  useEffect(() => {
+    if (authError !== "wrong_role") return;
+    setNeedsSync(false);
+    setError(null);
+    setRoleWarning(
+      "This is an Employer account. Please log in from the Employer section. If you're a talent, use your talent account or create one."
+    );
+  }, [authError]);
 
   const handleOAuthSignIn = async (strategy: OAuthStrategy) => {
     if (!signIn) return;

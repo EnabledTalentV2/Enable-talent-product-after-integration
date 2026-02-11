@@ -43,6 +43,7 @@ function EmployerLoginPageContent() {
   const hasWarning = Boolean(roleWarning);
   const isSubmitting = isLoading || isBootstrapping || isSyncing;
   const syncReason = searchParams.get("reason");
+  const authError = searchParams.get("error");
 
   useEffect(() => {
     if (!userId) return;
@@ -89,9 +90,18 @@ function EmployerLoginPageContent() {
     setError(
       (prev) =>
         prev ??
-        "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
+      "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
     );
   }, [syncReason, userId]);
+
+  useEffect(() => {
+    if (authError !== "wrong_role") return;
+    setNeedsSync(false);
+    setError(null);
+    setRoleWarning(
+      "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+    );
+  }, [authError]);
 
   const handleOAuthSignIn = async (strategy: OAuthStrategy) => {
     if (!signIn) return;
