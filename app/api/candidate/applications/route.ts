@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/api-config";
+import { BACKEND_URL, backendFetch } from "@/lib/api-config";
 
 /**
  * GET /api/candidate/applications/
@@ -8,29 +8,19 @@ import { BACKEND_URL } from "@/lib/api-config";
  */
 export async function GET(request: Request) {
   try {
-    // Get auth token from cookies
     const cookies = request.headers.get("cookie") || "";
-    const tokenMatch = cookies.match(/access_token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
 
     // Build backend URL
     const backendEndpoint = `${BACKEND_URL}/api/channels/candidate/applications/`;
 
     // Make request to backend
-    const response = await fetch(backendEndpoint, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const response = await backendFetch(
+      backendEndpoint,
+      {
+        method: "GET",
       },
-    });
+      cookies
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

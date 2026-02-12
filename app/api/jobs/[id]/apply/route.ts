@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/api-config";
+import { BACKEND_URL, backendFetch } from "@/lib/api-config";
 
 /**
  * POST /api/jobs/[id]/apply
@@ -12,31 +12,20 @@ export async function POST(
 ) {
   try {
     const { id: jobId } = await params;
+    const cookies = request.headers.get("cookie") || "";
 
     // Build backend URL
     const backendEndpoint = `${BACKEND_URL}/api/channels/jobs/${jobId}/apply/`;
 
-    // Get auth token from cookies
-    const cookies = request.headers.get("cookie") || "";
-    const tokenMatch = cookies.match(/access_token=([^;]+)/);
-    const token = tokenMatch ? tokenMatch[1] : null;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
     // Make request to backend
-    const response = await fetch(backendEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const response = await backendFetch(
+      backendEndpoint,
+      {
+        method: "POST",
+        body: JSON.stringify({}), // Empty payload as per API spec
       },
-      body: JSON.stringify({}), // Empty payload as per API spec
-    });
+      cookies
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
