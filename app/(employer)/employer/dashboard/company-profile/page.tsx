@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
 
 export default function EmployerCompanyProfilePage() {
+  const currentYear = new Date().getFullYear();
   const employerData = useEmployerDataStore((s) => s.employerData);
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
   const organizationInfo = employerData?.organizationInfo ?? {
@@ -206,7 +207,7 @@ export default function EmployerCompanyProfilePage() {
       {/* Footer */}
       <div className="mt-12 text-center text-sm text-slate-500">
         <p>
-          Copyright 2025 Enabled Talent. All rights reserved. You may print or
+          Copyright {currentYear} Enabled Talent. All rights reserved. You may print or
           download extracts for personal, non-commercial use only, and must
           acknowledge the website as the source.
         </p>

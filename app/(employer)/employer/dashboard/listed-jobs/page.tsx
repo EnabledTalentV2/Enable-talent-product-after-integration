@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback, FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useCallback, FormEvent } from "react";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -17,7 +17,7 @@ import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJob
 import type { JobStats } from "@/lib/employerJobsUtils";
 import type { Application } from "@/components/employer/candidates/ApplicantsList";
 
-export default function ListedJobsPage() {
+function ListedJobsPageContent() {
   // Use React Query hook - automatic fetching, caching, and error handling
   const { data: jobs = [], isLoading, error } = useJobs();
   const { deleteJob } = useEmployerJobsStore();
@@ -365,5 +365,13 @@ export default function ListedJobsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ListedJobsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ListedJobsPageContent />
+    </Suspense>
   );
 }

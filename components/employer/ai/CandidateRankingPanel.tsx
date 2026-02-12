@@ -189,7 +189,10 @@ export default function CandidateRankingPanel({
                     </div>
                     <p className="text-sm text-gray-700 mb-2">
                       <span className="font-medium">Match Reason:</span>{" "}
-                      {candidate.match_reason}
+                      {candidate.match_reason ||
+                        (candidate.reasons?.length
+                          ? candidate.reasons.join(" ")
+                          : "Not available")}
                     </p>
                   </div>
                   <div className="flex flex-col items-end ml-4">

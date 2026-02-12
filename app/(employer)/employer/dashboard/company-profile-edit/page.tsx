@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowLeft, Save, ChevronDown } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 
 const COMPANY_SIZE_OPTIONS = [
   { label: "1 - 10", value: "1-10", id: 1 },
@@ -425,13 +426,15 @@ export default function CompanyProfileEditPage() {
           >
             Location
           </label>
-          <input
-            type="text"
-            id="location"
-            name="location"
+          <LocationAutocomplete
+            label=""
+            inputId="location"
+            inputName="location"
             value={formData.location}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            onChange={(newLocation) =>
+              setFormData((prev) => ({ ...prev, location: newLocation }))
+            }
+            required
             placeholder="Enter location"
           />
         </div>

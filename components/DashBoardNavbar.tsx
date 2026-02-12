@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import {
   LogOut,
   Search,
@@ -14,12 +15,12 @@ import {
 } from "lucide-react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import Link from "next/link";
-import { apiRequest } from "@/lib/api-client";
 import { useState, useEffect, useRef } from "react";
 
 export default function DashBoardNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const resetUserData = useUserDataStore((s) => s.resetUserData);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,10 +72,12 @@ export default function DashBoardNavbar() {
 
   const handleLogout = async () => {
     try {
-      await apiRequest("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
+      await signOut();
+      resetUserData();
+      router.push("/login-talent");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if Clerk logout fails, clear local data and redirect
       resetUserData();
       router.push("/login-talent");
     }
@@ -110,7 +113,7 @@ export default function DashBoardNavbar() {
       <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
-            href="https://enabled-talent-landing-v2.vercel.app/"
+            href="https://www.enabledtalent.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3"
@@ -131,7 +134,9 @@ export default function DashBoardNavbar() {
           <div className="hidden items-center gap-7 md:flex">
             <Link
               href="/dashboard/profile"
-              aria-current={pathname === "/dashboard/profile" ? "page" : undefined}
+              aria-current={
+                pathname === "/dashboard/profile" ? "page" : undefined
+              }
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               <User size={18} aria-hidden="true" />
@@ -148,7 +153,11 @@ export default function DashBoardNavbar() {
             </button>
             <Link
               href="/dashboard/career-coach/start"
-              aria-current={pathname.startsWith("/dashboard/career-coach") ? "page" : undefined}
+              aria-current={
+                pathname.startsWith("/dashboard/career-coach")
+                  ? "page"
+                  : undefined
+              }
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
             >
               <Search size={18} strokeWidth={3} aria-hidden="true" />
@@ -191,7 +200,9 @@ export default function DashBoardNavbar() {
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <span className="text-lg font-semibold text-slate-900">Menu</span>
+                <span className="text-lg font-semibold text-slate-900">
+                  Menu
+                </span>
                 <button
                   type="button"
                   onClick={toggleMenu}

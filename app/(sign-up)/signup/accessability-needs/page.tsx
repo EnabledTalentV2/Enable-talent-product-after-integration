@@ -65,13 +65,13 @@ const categories = [
 
 const accommodationOptions = [
   { id: "flexible_schedule", label: "Flexible schedule" },
-  { id: "remote_work", label: "Remote work" },
+  { id: "remote_work", label: "Remote work options" },
   { id: "assistive_tech", label: "Assistive technology" },
   { id: "accessible_workspace", label: "Accessible workspace" },
   { id: "flexible_deadlines", label: "Flexible deadlines" },
-  { id: "support_person", label: "Support person" },
+  { id: "support_person", label: "Support person access" },
   { id: "other", label: "Other" },
-  { id: "non_needed", label: "Non needed" },
+  { id: "non_needed", label: "None needed" },
   { id: "prefer_discuss_later", label: "Prefer to discuss later" },
 ];
 
@@ -280,6 +280,25 @@ const mergeUserData = (prev: UserData, patch: UserDataPatch): UserData => ({
     ? { ...prev.reviewAgree, ...patch.reviewAgree }
     : prev.reviewAgree,
 });
+
+const fetchGeneratedAbout = async (): Promise<string | null> => {
+  try {
+    const response = await apiRequest<unknown>(
+      "/api/candidates/test/generate-about/",
+      { method: "POST" },
+    );
+    if (
+      isRecord(response) &&
+      typeof response.generated_about === "string" &&
+      response.generated_about.trim()
+    ) {
+      return response.generated_about.trim();
+    }
+  } catch (err) {
+    console.warn("[Accessibility Needs] Failed to generate about:", err);
+  }
+  return null;
+};
 
 type PollResult = {
   success: boolean;
@@ -506,11 +525,12 @@ export default function AccessabilityNeedsPage() {
 
     // Announce step to screen readers
     const stepMessages: Record<typeof step, string> = {
-      intro: "Step 1 of 4: Introduction to voluntary self-identification",
-      categories: "Step 2 of 4: Select disability categories that apply",
+      intro:
+        "Step 1 of 4: Accessibility and accommodation preferences (optional)",
+      categories: "Step 2 of 4: Disability categories (optional)",
       preferences:
         "Step 3 of 4: Accommodation needs and disclosure preferences",
-      accommodations: "Step 4 of 4: Select workplace accommodations",
+      accommodations: "Step 4 of 4: Workplace accommodations (optional)",
     };
 
     if (liveRegionRef.current) {
@@ -670,7 +690,27 @@ export default function AccessabilityNeedsPage() {
         console.log(
           "[Accessibility Needs] Resume data found, merging into user data",
         );
-        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        const hasAbout =
+          userData.basicInfo.currentStatus &&
+          userData.basicInfo.currentStatus.trim().length > 0;
+        const generatedAbout = hasAbout ? null : await fetchGeneratedAbout();
+        setUserData((prev) => {
+          const merged = mergeUserData(prev, pollResult.data!);
+          if (
+            generatedAbout &&
+            (!merged.basicInfo.currentStatus ||
+              merged.basicInfo.currentStatus.trim().length === 0)
+          ) {
+            return {
+              ...merged,
+              basicInfo: {
+                ...merged.basicInfo,
+                currentStatus: generatedAbout,
+              },
+            };
+          }
+          return merged;
+        });
         router.push("/signup/manual-resume-fill");
         return;
       }
@@ -730,7 +770,27 @@ export default function AccessabilityNeedsPage() {
         console.log(
           "[Accessibility Needs] Retry successful, merging resume data",
         );
-        setUserData((prev) => mergeUserData(prev, pollResult.data!));
+        const hasAbout =
+          userData.basicInfo.currentStatus &&
+          userData.basicInfo.currentStatus.trim().length > 0;
+        const generatedAbout = hasAbout ? null : await fetchGeneratedAbout();
+        setUserData((prev) => {
+          const merged = mergeUserData(prev, pollResult.data!);
+          if (
+            generatedAbout &&
+            (!merged.basicInfo.currentStatus ||
+              merged.basicInfo.currentStatus.trim().length === 0)
+          ) {
+            return {
+              ...merged,
+              basicInfo: {
+                ...merged.basicInfo,
+                currentStatus: generatedAbout,
+              },
+            };
+          }
+          return merged;
+        });
         router.push("/signup/manual-resume-fill");
         return;
       }
@@ -790,24 +850,28 @@ export default function AccessabilityNeedsPage() {
               tabIndex={-1}
               className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl focus:outline-none"
             >
-              Voluntary Self-Identification
+              Accessibility & Accommodation Preferences (Optional)
             </h1>
 
-            <p className="mt-3 text-lg text-slate-500">
-              This information helps employers support diversity and inclusion
-              initiatives
+            <p className="mt-3 text-lg text-slate-600">
+              Sharing this information is entirely voluntary and will never
+              affect eligibility.
+            </p>
+            <p className="mt-3 text-lg text-slate-600">
+              If you choose to share, it helps us support you and communicate
+              your needs when you decide.
             </p>
 
-            <p className="mt-16 text-lg font-bold text-slate-900" role="note">
-              All information provided will be kept confidential
+            <p className="mt-12 text-base text-slate-600" role="note">
+              You can update these preferences anytime in your profile.
             </p>
 
             <button
               onClick={() => setStep("categories")}
               className="mt-8 rounded-xl bg-[#C78539] px-12 py-3 text-lg font-semibold text-white transition-colors hover:bg-[#b07430] focus:outline-none focus:ring-2 focus:ring-[#C78539] focus:ring-offset-2"
-              aria-label="Begin voluntary self-identification form"
+              aria-label="Continue to disability categories"
             >
-              Create Now
+              Continue
             </button>
           </div>
         </main>
@@ -843,15 +907,14 @@ export default function AccessabilityNeedsPage() {
               tabIndex={-1}
               className="mb-2 text-2xl font-bold text-slate-900 md:text-3xl focus:outline-none"
             >
-              Please select any categories that apply to you:
+              Disability categories (Optional)
             </h1>
 
             <p
               id="categories-description"
               className="mb-8 text-sm font-medium text-slate-700"
             >
-              Important Note: You may select multiple categories that apply to
-              you.
+              Select all that apply, or choose "Prefer not to disclose."
             </p>
 
             <form
@@ -984,8 +1047,8 @@ export default function AccessabilityNeedsPage() {
                     id="accommodation-needs-desc"
                     className="mt-2 text-base text-slate-600"
                   >
-                    Do you require any accommodations for the application or
-                    interview process?
+                    Do you need accommodations for the application or interview
+                    process?
                   </p>
 
                   <div
@@ -1011,19 +1074,15 @@ export default function AccessabilityNeedsPage() {
                           className="sr-only"
                         />
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded transition-colors ${
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                             accommodationNeed === option.id
-                              ? "bg-[#C78539]"
-                              : "border border-slate-300 bg-white"
+                              ? "border-[#C78539] bg-[#C78539]"
+                              : "border-slate-300 bg-white"
                           }`}
                           aria-hidden="true"
                         >
                           {accommodationNeed === option.id && (
-                            <Check
-                              size={16}
-                              className="text-white"
-                              strokeWidth={3}
-                            />
+                            <span className="h-2.5 w-2.5 rounded-full bg-white" />
                           )}
                         </div>
                         <span className="text-slate-700">{option.label}</span>
@@ -1047,8 +1106,8 @@ export default function AccessabilityNeedsPage() {
                     id="disclosure-pref-desc"
                     className="mt-2 text-base text-slate-600"
                   >
-                    When would you prefer to discuss your specific accommodation
-                    needs?
+                    When would you like to discuss your accommodation needs?
+                    You control the timing, and we'll respect your preference.
                   </p>
 
                   <div
@@ -1076,19 +1135,15 @@ export default function AccessabilityNeedsPage() {
                           className="sr-only"
                         />
                         <div
-                          className={`flex h-6 w-6 items-center justify-center rounded transition-colors ${
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                             disclosurePreference === option.id
-                              ? "bg-[#C78539]"
-                              : "border border-slate-300 bg-white"
+                              ? "border-[#C78539] bg-[#C78539]"
+                              : "border-slate-300 bg-white"
                           }`}
                           aria-hidden="true"
                         >
                           {disclosurePreference === option.id && (
-                            <Check
-                              size={16}
-                              className="text-white"
-                              strokeWidth={3}
-                            />
+                            <span className="h-2.5 w-2.5 rounded-full bg-white" />
                           )}
                         </div>
                         <span className="text-slate-700 font-medium">
@@ -1154,16 +1209,15 @@ export default function AccessabilityNeedsPage() {
             tabIndex={-1}
             className="mb-2 text-xl font-bold text-slate-900 md:text-2xl focus:outline-none"
           >
-            Which of the following workplace accommodations would help you
-            perform at your best?
+            Workplace accommodations (Optional)
           </h1>
 
           <p
             id="accommodations-description"
             className="mb-8 text-base text-slate-600"
           >
-            Select all that apply. You can select multiple options or indicate
-            if none are needed.
+            Select all that apply. You can choose "None needed" or
+            "Prefer to discuss later."
           </p>
 
           <form

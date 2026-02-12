@@ -3,6 +3,9 @@
  * Centralizes all backend API endpoints and utilities for connecting to Django backend
  */
 
+import { auth } from "@clerk/nextjs/server";
+import { decodeJwt } from "jose";
+
 // Django backend base URL
 export const BACKEND_URL =
   process.env.BACKEND_URL || "https://etbackend-v2-usy9.onrender.com";
@@ -13,15 +16,7 @@ export const BACKEND_URL =
 export const API_ENDPOINTS = {
   // Authentication
   auth: {
-    login: `${BACKEND_URL}/api/auth/token/`,
-    logout: `${BACKEND_URL}/api/auth/logout/`,
-    signup: `${BACKEND_URL}/api/auth/signup/`,
-    verifyEmail: `${BACKEND_URL}/api/auth/verify-email/`,
-    resendVerification: `${BACKEND_URL}/api/auth/resend-verification/`,
-    changePassword: `${BACKEND_URL}/api/auth/change-password/`,
-    csrf: `${BACKEND_URL}/api/auth/csrf/`,
-    token: `${BACKEND_URL}/api/auth/token/`,
-    tokenRefresh: `${BACKEND_URL}/api/auth/token/refresh/`,
+    clerkSync: `${BACKEND_URL}/api/auth/clerk-sync/`,
     addFeedback: `${BACKEND_URL}/api/auth/add-feedback/`,
   },
   // User management
@@ -50,7 +45,7 @@ export const API_ENDPOINTS = {
     careerCoach: `${BACKEND_URL}/api/candidates/career-coach/`,
     resumePrompt: `${BACKEND_URL}/api/candidates/prompt/`,
   },
-    candidateData: {
+  candidateData: {
       education: `${BACKEND_URL}/api/candidates/education/`,
       educationDetail: (id: string) => `${BACKEND_URL}/api/candidates/education/${id}/`,
       skills: `${BACKEND_URL}/api/candidates/skills/`,
@@ -70,6 +65,10 @@ export const API_ENDPOINTS = {
     certificationsDetail: (id: string) =>
       `${BACKEND_URL}/api/candidates/certifications/${id}/`,
   },
+  candidateInvites: {
+    list: `${BACKEND_URL}/api/candidates/job-invites/`,
+    respond: `${BACKEND_URL}/api/candidates/job-invites/respond/`,
+  },
   // Other APIs
   organizations: {
     list: `${BACKEND_URL}/api/organization/organizations/`,
@@ -78,6 +77,10 @@ export const API_ENDPOINTS = {
     createInvite: (pk: string) =>
       `${BACKEND_URL}/api/organization/organizations/${pk}/create-invite/`,
     selectedCandidates: `${BACKEND_URL}/api/organization/selected-candidates/`,
+    candidateInsight: (candidateId: string | number) =>
+      `${BACKEND_URL}/api/organization/test/candidate-insight/${candidateId}/`,
+    jobInvite: (jobId: string | number) =>
+      `${BACKEND_URL}/api/organization/jobs/${jobId}/invite/`,
   },
   jobs: {
     list: `${BACKEND_URL}/api/channels/jobs/`,
@@ -94,38 +97,73 @@ export const API_ENDPOINTS = {
   },
   channels: `${BACKEND_URL}/api/channels/`,
   candidates: `${BACKEND_URL}/api/candidates/`,
+  candidateTests: {
+    generateAbout: `${BACKEND_URL}/api/candidates/test/generate-about/`,
+  },
 } as const;
 
 /**
  * Default fetch options for API calls
- * - credentials: 'include' ensures cookies are sent cross-origin (required for HttpOnly JWT)
  */
 export const defaultFetchOptions: RequestInit = {
   credentials: "include",
 };
 
-const CSRF_COOKIE_NAME = "csrftoken";
-const ACCESS_TOKEN_COOKIE_NAME = "access_token";
+const BACKEND_COOKIE_ALLOWLIST = new Set([
+  "access_token",
+  "refresh_token",
+  "csrftoken",
+  "sessionid",
+  "jwt",
+  "token",
+]);
 
-const getCookieValue = (cookieHeader: string, name: string): string | null => {
-  if (!cookieHeader) return null;
-  const entries = cookieHeader.split(";").map((entry) => entry.trim());
-  for (const entry of entries) {
-    if (!entry) continue;
-    const [key, ...rest] = entry.split("=");
-    if (key === name) {
-      return rest.join("=") ? decodeURIComponent(rest.join("=")) : "";
-    }
+function filterCookiesForBackend(cookieHeader: string): string {
+  if (!cookieHeader) return "";
+  const parts = cookieHeader.split(";").map((part) => part.trim()).filter(Boolean);
+  const kept: string[] = [];
+  for (const part of parts) {
+    const eq = part.indexOf("=");
+    if (eq <= 0) continue;
+    const name = part.slice(0, eq).trim();
+    if (BACKEND_COOKIE_ALLOWLIST.has(name)) kept.push(part);
   }
-  return null;
-};
+  return kept.join("; ");
+}
 
-const isWriteMethod = (method?: string) =>
-  ["POST", "PUT", "PATCH", "DELETE"].includes((method || "GET").toUpperCase());
+function safeTokenPreview(token: string): string {
+  if (!token) return "";
+  if (token.length <= 32) return token;
+  return `${token.slice(0, 16)}...${token.slice(-10)}`;
+}
+
+function safeTokenHeadTail(token: string): { head: string; tail: string } | null {
+  if (!token) return null;
+  return {
+    head: token.slice(0, 16),
+    tail: token.length > 16 ? token.slice(-16) : token,
+  };
+}
+
+function safeJwtClaims(token: string): Record<string, unknown> | null {
+  try {
+    const payload = decodeJwt(token) as Record<string, unknown>;
+    return {
+      iss: payload.iss,
+      azp: payload.azp,
+      aud: payload.aud,
+      sub: payload.sub,
+      exp: payload.exp,
+      iat: payload.iat,
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Helper function to make API requests to the Django backend
- * Handles CSRF token injection and cookie forwarding
+ * Verifies Clerk session and sends X-Clerk-User-Id header to Django
  */
 export async function backendFetch(
   endpoint: string,
@@ -142,30 +180,58 @@ export async function backendFetch(
     headers.set("Content-Type", "application/json");
   }
 
-  // Forward cookies from incoming request to backend
-  if (incomingCookies) {
-    headers.set("Cookie", incomingCookies);
+  // Forward only backend cookies (never forward Clerk cookies to Django).
+  if (incomingCookies && !headers.has("Cookie")) {
+    const filteredCookies = filterCookiesForBackend(incomingCookies);
+    if (filteredCookies) headers.set("Cookie", filteredCookies);
   }
 
-  // Add Authorization header from HttpOnly JWT cookie when available
-  if (!headers.has("Authorization") && incomingCookies) {
-    const accessToken = getCookieValue(
-      incomingCookies,
-      ACCESS_TOKEN_COOKIE_NAME,
-    );
-    if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+  // Verify Clerk session and send auth headers to Django
+  let clerkUserId: string | null = null;
+  let clerkToken: string | null = null;
+  let clerkTokenTemplate = "default";
+  try {
+    const { userId, getToken } = await auth();
+    clerkUserId = userId;
+    if (userId) {
+      headers.set("X-Clerk-User-Id", userId);
+
+      // Send session JWT for Django to independently verify
+      // Backend expects a JWT Template token (includes aud, etc).
+      // Configure the template in the Clerk dashboard and set CLERK_JWT_TEMPLATE=api.
+      const template = (process.env.CLERK_JWT_TEMPLATE || "api").trim() || "api";
+      const token = await getToken({ template });
+
+      if (!token) {
+        console.error(
+          `[backendFetch] Failed to obtain Clerk template token (template=${template})`,
+        );
+        throw new Error("Missing Clerk template JWT");
+      }
+
+      clerkToken = token;
+      clerkTokenTemplate = template;
+      headers.set("Authorization", `Bearer ${token}`);
     }
+  } catch (error) {
+    console.error("[backendFetch] Clerk auth/getToken failed", {
+      endpoint,
+      method: options.method || "GET",
+      error,
+    });
+    throw error;
   }
 
-  // Add CSRF token for write requests if available
-  if (isWriteMethod(options.method) && !headers.has("X-CSRFToken")) {
-    const csrfToken = incomingCookies
-      ? getCookieValue(incomingCookies, CSRF_COOKIE_NAME)
-      : null;
-    if (csrfToken) {
-      headers.set("X-CSRFToken", csrfToken);
-    }
+  // Generate a request ID for correlating frontend and backend logs.
+  const incomingRequestId = headers.get("X-Request-Id")?.trim();
+  // const requestId =
+  //   incomingRequestId ||
+  //   (typeof crypto !== "undefined" && crypto.randomUUID
+  //     ? crypto.randomUUID()
+  //     : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  const requestId = "XYZ"
+  if (!incomingRequestId) {
+    headers.set("X-Request-Id", requestId);
   }
 
   const response = await fetch(endpoint, {
@@ -173,6 +239,47 @@ export async function backendFetch(
     ...options,
     headers,
   });
+
+  const shouldDebug =
+    process.env.NODE_ENV !== "production" &&
+    (process.env.DEBUG_BACKEND_FETCH === "true" ||
+      (endpoint.includes("/api/auth/users/me/") && response.status === 401));
+
+  if (shouldDebug) {
+    const forwardedCookie = headers.get("Cookie") || "";
+    const forwardedCookieNames = forwardedCookie
+      .split(";")
+      .map((entry) => entry.trim().split("=")[0])
+      .filter(Boolean);
+
+    const headTail = clerkToken ? safeTokenHeadTail(clerkToken) : null;
+    const claims = clerkToken ? safeJwtClaims(clerkToken) : null;
+
+    // TEMP DEBUG (remove/disable in production):
+    // Helps confirm the Clerk JWT we forward to Django is fresh and what its expiry is.
+    console.log("[backendFetch]", {
+      requestId,
+      endpoint,
+      method: options.method || "GET",
+      status: response.status,
+      clerkUserId,
+      clerkTokenTemplate,
+      hasClerkToken: Boolean(clerkToken),
+      clerkTokenLength: clerkToken ? clerkToken.length : 0,
+      clerkTokenHead: headTail?.head ?? null,
+      clerkTokenTail: headTail?.tail ?? null,
+      clerkTokenPreview: clerkToken ? safeTokenPreview(clerkToken) : null,
+      clerkTokenExp: typeof claims?.exp === "number" ? claims.exp : null,
+      clerkTokenClaims: claims,
+      forwardedCookies: [...new Set(forwardedCookieNames)],
+    });
+
+    // TEMP DEBUG (remove/disable in production):
+    // Full token print for backend comparison/copy-paste testing.
+    // if (clerkToken) {
+    //   console.log("[backendFetch] clerkTokenFull", clerkToken);
+    // }
+  }
 
   return response;
 }

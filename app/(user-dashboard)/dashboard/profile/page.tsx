@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { initialUserData } from "@/lib/userDataDefaults";
 import { CandidateProfileSkeleton } from "@/components/CandidateDashboardSkeletons";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
+import LiveRegion from "@/components/a11y/LiveRegion";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import Link from "next/link";
 import {
   Mail,
@@ -57,11 +60,49 @@ const toYearLabel = (value?: string) => {
   const match = trimmed.match(/\d{4}/);
   return match ? match[0] : "";
 };
+const monthLabels = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const toMonthYearLabel = (value?: string) => {
+  const trimmed = toTrimmed(value);
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{4})-(\d{2})/);
+  if (match) {
+    const year = match[1];
+    const monthIndex = Number(match[2]) - 1;
+    if (monthIndex >= 0 && monthIndex < monthLabels.length) {
+      return `${monthLabels[monthIndex]} ${year}`;
+    }
+    return year;
+  }
+  if (/^\d{4}$/.test(trimmed)) return trimmed;
+  return trimmed;
+};
 
 export default function ProfilePage() {
   const rawUserData = useUserDataStore((s) => s.userData);
+  const resetUserData = useUserDataStore((s) => s.resetUserData);
   const isProfileLoading = useCandidateProfileStore((s) => s.isLoading);
   const candidateProfile = useCandidateProfileStore((s) => s.profile);
+  const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
+  const [isDeleteAccountDialogOpen, setIsDeleteAccountDialogOpen] =
+    useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
+  const [deleteAccountSuccess, setDeleteAccountSuccess] = useState<string | null>(
+    null
+  );
   const userData = useMemo(
     () => ({
       ...initialUserData,
@@ -120,7 +161,7 @@ export default function ProfilePage() {
       .map(toTrimmed)
       .filter(Boolean)
       .join(" ") || fallbackText;
-  const careerStageLabel = withFallback(otherDetails.careerStage);
+  const careerStageLabel = toTrimmed(otherDetails.careerStage);
   const emailLabel = withFallback(basicInfo.email);
   const phoneLabel = withFallback(basicInfo.phone);
   const locationLabel = withFallback(basicInfo.location);
@@ -220,6 +261,45 @@ export default function ProfilePage() {
     );
   }, [candidateProfile, education]);
 
+  const deleteAccountStatusMessage = deleteAccountError || deleteAccountSuccess;
+  const isDeleteAccountDisabled = isDeletingAccount;
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    setDeleteAccountError(null);
+    setDeleteAccountSuccess(null);
+    setIsDeleteAccountDialogOpen(false);
+
+    try {
+      await apiRequest("/api/user/me", {
+        method: "DELETE",
+      });
+      resetCandidateProfile();
+      resetUserData();
+      setDeleteAccountSuccess(
+        "Your account has been deleted. You can sign up again anytime."
+      );
+    } catch (error) {
+      setDeleteAccountError(
+        getApiErrorMessage(
+          error,
+          "Failed to delete your account. Please try again."
+        )
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  const openDeleteAccountDialog = () => {
+    setDeleteAccountError(null);
+    setIsDeleteAccountDialogOpen(true);
+  };
+
+  const closeDeleteAccountDialog = () => {
+    setIsDeleteAccountDialogOpen(false);
+  };
+
   if (isProfileLoading) {
     return <CandidateProfileSkeleton />;
   }
@@ -246,9 +326,11 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-bold text-slate-900">
                   {displayName}
                 </h1>
-                <p className="text-lg text-slate-500 font-medium">
-                  {careerStageLabel}
-                </p>
+                {careerStageLabel ? (
+                  <p className="text-lg text-slate-500 font-medium">
+                    {careerStageLabel}
+                  </p>
+                ) : null}
               </div>
               <Link
                 href="/dashboard/profile-update
@@ -313,10 +395,10 @@ export default function ProfilePage() {
                 {workEntries.map((exp, idx) => {
                   const roleLabel = toTrimmed(exp.role) || fallbackText;
                   const companyLabel = toTrimmed(exp.company) || fallbackText;
-                  const fromLabel = toTrimmed(exp.from) || fallbackText;
+                  const fromLabel = withFallback(toMonthYearLabel(exp.from));
                   const toLabel = exp.current
                     ? "Present"
-                    : toTrimmed(exp.to) || fallbackText;
+                    : withFallback(toMonthYearLabel(exp.to));
                   const descriptionLabel =
                     toTrimmed(exp.description) || fallbackText;
 
@@ -332,7 +414,7 @@ export default function ProfilePage() {
                             {roleLabel}
                           </h3>
                           <span className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                            {fromLabel} - {toLabel}
+                            Duration: {fromLabel} - {toLabel}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-600 font-medium">
@@ -597,8 +679,54 @@ export default function ProfilePage() {
             </div>
           </div>
           </section>
+
+          {/* Account Actions */}
+          <section className="bg-white rounded-3xl p-8 shadow-sm border border-red-200">
+            <div className="flex items-center gap-3 mb-4">
+              <User className="text-red-600" />
+              <h2 className="text-xl font-bold text-slate-900">
+                Delete Account
+              </h2>
+            </div>
+            <p className="text-sm text-slate-600">
+              Deleting your account removes your login and access to Enabled
+              Talent. This action cannot be undone.
+            </p>
+            {deleteAccountStatusMessage ? (
+              <LiveRegion
+                politeness={deleteAccountError ? "assertive" : "polite"}
+                visible
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                  deleteAccountError
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {deleteAccountStatusMessage}
+              </LiveRegion>
+            ) : null}
+            <button
+              type="button"
+              onClick={openDeleteAccountDialog}
+              disabled={isDeleteAccountDisabled}
+              className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeletingAccount ? "Deleting..." : "Delete Account"}
+            </button>
+          </section>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteAccountDialogOpen}
+        title="Delete your account?"
+        message="This permanently deletes your account and ends access to Enabled Talent. You can sign up again, but this action cannot be undone."
+        confirmLabel="Delete account"
+        cancelLabel="Keep account"
+        variant="danger"
+        onConfirm={handleDeleteAccount}
+        onCancel={closeDeleteAccountDialog}
+      />
     </div>
   );
 }

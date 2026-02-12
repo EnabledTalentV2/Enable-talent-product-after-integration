@@ -16,6 +16,7 @@ import type {
 
 const POLLING_INTERVAL_MS = 2000; // Poll every 2 seconds
 const MAX_POLLING_ATTEMPTS = 30; // 60 seconds total
+const MAX_NOT_STARTED_POLLS = 5; // Stop early after repeated 404/not_started responses
 
 export function useAIRanking() {
   const [isRanking, setIsRanking] = useState(false);
@@ -83,6 +84,7 @@ export function useAIRanking() {
   const pollRankingCompletion = useCallback(
     async (jobId: string, taskId: string) => {
       let attempts = 0;
+      let notStartedPolls = 0;
 
       const poll = async () => {
         if (attempts >= MAX_POLLING_ATTEMPTS) {
@@ -104,12 +106,15 @@ export function useAIRanking() {
 
         try {
           const result = await fetchRankingData(jobId);
+          const hasRankedCandidates =
+            Array.isArray(result.data?.ranked_candidates) &&
+            result.data.ranked_candidates.length > 0;
+          const isNotStarted = result.data?.ranking_status === "not_started";
 
           // Check if ranking is complete
           if (
             result.data?.ranking_status === "completed" ||
-            (result.data?.ranked_candidates &&
-              result.data.ranked_candidates.length > 0)
+            hasRankedCandidates
           ) {
             console.log("[useAIRanking] Ranking completed successfully");
             setIsRanking(false);
@@ -123,6 +128,25 @@ export function useAIRanking() {
             setRankingStatus("failed");
             setError("Ranking failed. Please try again.");
             return;
+          }
+
+          // Stop early when ranking endpoint keeps returning "not_started"
+          // (common mapping for repeated backend 404 responses).
+          if (isNotStarted && !hasRankedCandidates) {
+            notStartedPolls += 1;
+            if (notStartedPolls >= MAX_NOT_STARTED_POLLS) {
+              console.warn(
+                `[useAIRanking] Stopping polling after ${MAX_NOT_STARTED_POLLS} not_started responses`,
+              );
+              setIsRanking(false);
+              setRankingStatus("not_started");
+              setError(
+                "Ranking data is not available yet. Please trigger ranking again later.",
+              );
+              return;
+            }
+          } else {
+            notStartedPolls = 0;
           }
 
           // Continue polling
@@ -157,7 +181,21 @@ export function useAIRanking() {
         console.log("[useAIRanking] First candidate:", response.ranked_candidates?.[0]);
 
         if (response.ranked_candidates) {
-          setRankedCandidates(response.ranked_candidates);
+          const normalizedCandidates = response.ranked_candidates.map((candidate) => {
+            const reasons = Array.isArray(candidate.reasons)
+              ? candidate.reasons.filter(Boolean)
+              : [];
+            const matchReason =
+              candidate.match_reason ||
+              (reasons.length > 0 ? reasons.map((reason) => `• ${reason}`).join("\n") : undefined);
+
+            return {
+              ...candidate,
+              reasons: reasons.length > 0 ? reasons : candidate.reasons,
+              match_reason: matchReason,
+            };
+          });
+          setRankedCandidates(normalizedCandidates);
         }
 
         if (response.ranking_status) {

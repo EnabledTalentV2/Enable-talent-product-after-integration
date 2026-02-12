@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCandidateProfile } from "@/lib/hooks/useCandidateProfiles";
+import { useCandidateInsight } from "@/lib/hooks/useCandidateInsight";
 import ResumeChatPanel from "@/components/employer/ai/ResumeChatPanel";
 import { CandidateDetailSkeleton } from "@/components/employer/candidates/CandidateLoadingSkeleton";
 import SendInvitesModal from "@/components/employer/candidates/SendInvitesModal";
 import SuccessModal from "@/components/employer/candidates/SuccessModal";
+import Toast from "@/components/Toast";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
+import { getApiErrorMessage } from "@/lib/api-client";
+import { invitesAPI } from "@/lib/services/invitesAPI";
 import {
   MapPin,
   Briefcase,
@@ -42,11 +46,17 @@ function DetailSection({
       className="group rounded-2xl bg-white p-4 shadow-sm"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
         <span>{title}</span>
         <span className="flex items-center gap-2 text-xs text-slate-400">
-          {badge && <span>{badge}</span>}
-          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          {badge && <span aria-hidden="true">{badge}</span>}
+          <ChevronDown
+            className="h-4 w-4 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+          <span className="sr-only">
+            {badge ? `, ${badge}` : ""}, click to {defaultOpen ? "collapse" : "expand"}
+          </span>
         </span>
       </summary>
       <div className="mt-3 text-sm text-slate-600">{children}</div>
@@ -69,12 +79,13 @@ const formatDateRange = (start?: string, end?: string) => {
   return startLabel ? `${startLabel} - Present` : endLabel || "";
 };
 
-export default function CandidateProfilePage() {
+function CandidateProfilePageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const pageParam = searchParams.get("page");
   const searchQuery = searchParams.get("search");
+  const jobIdParam = searchParams.get("jobId");
   const backParams = new URLSearchParams();
   if (searchQuery) backParams.set("search", searchQuery);
   if (pageParam) backParams.set("page", pageParam);
@@ -88,8 +99,17 @@ export default function CandidateProfilePage() {
   } = useEmployerJobsStore();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSendingInvites, setIsSendingInvites] = useState(false);
 
   const { data: candidate, isLoading, error } = useCandidateProfile(slug || "");
+  const candidateId = candidate?.id;
+  const {
+    data: insight,
+    isLoading: isInsightLoading,
+    error: insightError,
+  } = useCandidateInsight(candidateId);
 
   const handleInviteClick = useCallback(() => {
     if (!hasFetchedJobs && !isJobsLoading) {
@@ -98,12 +118,60 @@ export default function CandidateProfilePage() {
     setIsInviteModalOpen(true);
   }, [fetchJobs, hasFetchedJobs, isJobsLoading]);
 
-  const handleSendInvites = useCallback((selectedJobIds: string[]) => {
-    setIsInviteModalOpen(false);
-    if (selectedJobIds.length > 0) {
-      setIsSuccessModalOpen(true);
-    }
-  }, []);
+  const handleSendInvites = useCallback(
+    async (selectedJobIds: string[]) => {
+      if (!candidateId) {
+        setToastMessage("Unable to send invites. Candidate not available.");
+        return;
+      }
+      if (selectedJobIds.length === 0 || isSendingInvites) {
+        return;
+      }
+
+      setToastMessage(null);
+      setInviteMessage(null);
+      setIsSendingInvites(true);
+
+      try {
+        const results = await Promise.allSettled(
+          selectedJobIds.map((jobId) =>
+            invitesAPI.sendJobInvite(jobId, candidateId)
+          )
+        );
+
+        const messages: string[] = [];
+        const errors: string[] = [];
+
+        results.forEach((result, index) => {
+          const jobId = selectedJobIds[index];
+          if (result.status === "fulfilled") {
+            const detail = result.value?.detail || "Invite sent successfully";
+            messages.push(`Job ${jobId}: ${detail}`);
+          } else {
+            errors.push(
+              `Job ${jobId}: ${getApiErrorMessage(
+                result.reason,
+                "Failed to send invite"
+              )}`
+            );
+          }
+        });
+
+        if (messages.length > 0) {
+          setInviteMessage(messages.join("\n"));
+          setIsSuccessModalOpen(true);
+          setIsInviteModalOpen(false);
+        }
+
+        if (errors.length > 0) {
+          setToastMessage(errors.join(" "));
+        }
+      } finally {
+        setIsSendingInvites(false);
+      }
+    },
+    [candidateId, isSendingInvites]
+  );
 
   if (isLoading) {
     return (
@@ -213,6 +281,7 @@ export default function CandidateProfilePage() {
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
+  const insightText = insight?.employer_insight?.trim();
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto">
@@ -562,6 +631,24 @@ export default function CandidateProfilePage() {
           )}
         </DetailSection>
 
+        <DetailSection title="Employer insight" defaultOpen>
+          {isInsightLoading ? (
+            <p className="text-slate-500" role="status" aria-live="polite">
+              Loading insight...
+            </p>
+          ) : insightError ? (
+            <p className="text-slate-500" role="alert">
+              Unable to load employer insight.
+            </p>
+          ) : insightText ? (
+            <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
+              {insightText}
+            </p>
+          ) : (
+            <p className="text-slate-500">No insight available yet.</p>
+          )}
+        </DetailSection>
+
         {/* AI Resume Chat */}
         <div className="rounded-2xl bg-white shadow-sm overflow-hidden" style={{ height: "500px" }}>
           <ResumeChatPanel
@@ -575,11 +662,29 @@ export default function CandidateProfilePage() {
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         onSendInvites={handleSendInvites}
+        restrictToJobId={jobIdParam || undefined}
+        isSending={isSendingInvites}
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
+        message={inviteMessage ?? undefined}
       />
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
+  );
+}
+
+export default function CandidateProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <CandidateProfilePageContent />
+    </Suspense>
   );
 }

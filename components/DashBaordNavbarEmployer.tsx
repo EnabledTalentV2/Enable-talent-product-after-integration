@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import {
   LogOut,
   User,
@@ -14,22 +15,25 @@ import {
 import Link from "next/link";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import { apiRequest } from "@/lib/api-client";
 import { useState } from "react";
 
 export default function DashBoardNavbarEmployer() {
   const router = useRouter();
   const pathname = usePathname();
+  const { signOut } = useClerk();
   const resetEmployerData = useEmployerDataStore((s) => s.resetEmployerData);
   const resetJobs = useEmployerJobsStore((s) => s.resetJobs);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await apiRequest("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
+      await signOut();
+      resetEmployerData();
+      resetJobs();
+      router.push("/login-employer");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if Clerk logout fails, clear local data and redirect
       resetEmployerData();
       resetJobs();
       router.push("/login-employer");
@@ -75,7 +79,7 @@ export default function DashBoardNavbarEmployer() {
       <nav className="flex h-20 items-center justify-center bg-[#EEF5FF] px-6 md:px-12">
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
-            href="https://enabled-talent-landing-v2.vercel.app/"
+            href="https://www.enabledtalent.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3"
@@ -96,7 +100,11 @@ export default function DashBoardNavbarEmployer() {
           <div className="hidden items-center gap-7 md:flex">
             <Link
               href="/employer/dashboard/company-profile"
-              aria-current={pathname.startsWith("/employer/dashboard/company-profile") ? "page" : undefined}
+              aria-current={
+                pathname.startsWith("/employer/dashboard/company-profile")
+                  ? "page"
+                  : undefined
+              }
               className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
               <User size={18} aria-hidden="true" />
@@ -113,7 +121,11 @@ export default function DashBoardNavbarEmployer() {
             </button>
             <Link
               href="/employer/dashboard/post-jobs"
-              aria-current={pathname === "/employer/dashboard/post-jobs" ? "page" : undefined}
+              aria-current={
+                pathname === "/employer/dashboard/post-jobs"
+                  ? "page"
+                  : undefined
+              }
               className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
             >
               <span>Post a Job</span>
@@ -125,11 +137,17 @@ export default function DashBoardNavbarEmployer() {
             type="button"
             onClick={toggleMenu}
             className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation-menu-employer"
           >
-            {isMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
+            {isMenuOpen ? (
+              <X size={24} aria-hidden="true" />
+            ) : (
+              <Menu size={24} aria-hidden="true" />
+            )}
           </button>
         </div>
       </nav>
@@ -183,7 +201,10 @@ export default function DashBoardNavbarEmployer() {
                 })}
 
                 {/* Divider */}
-                <div className="border-t border-slate-200 my-2" role="separator" />
+                <div
+                  className="border-t border-slate-200 my-2"
+                  role="separator"
+                />
 
                 {/* Post a Job */}
                 <Link
@@ -196,7 +217,10 @@ export default function DashBoardNavbarEmployer() {
                 </Link>
 
                 {/* Divider */}
-                <div className="border-t border-slate-200 my-2" role="separator" />
+                <div
+                  className="border-t border-slate-200 my-2"
+                  role="separator"
+                />
 
                 {/* Log Out */}
                 <button

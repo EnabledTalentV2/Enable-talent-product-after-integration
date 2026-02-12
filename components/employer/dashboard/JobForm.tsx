@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
 
 type JobFormProps = {
@@ -53,7 +61,7 @@ export default function JobForm({
     event:
       | ChangeEvent<HTMLInputElement>
       | ChangeEvent<HTMLTextAreaElement>
-      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -98,7 +106,11 @@ export default function JobForm({
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit} aria-label="Job posting form">
+    <form
+      className="space-y-6"
+      onSubmit={handleSubmit}
+      aria-label="Job posting form"
+    >
       {/* Job Title */}
       <div>
         <label
@@ -106,7 +118,10 @@ export default function JobForm({
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Title
-          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span aria-hidden="true" className="text-red-500">
+            {" "}
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <input
@@ -116,6 +131,7 @@ export default function JobForm({
           value={values.title}
           onChange={handleChange}
           placeholder="e.g. Senior UX Designer"
+          autoComplete="on"
           required
           aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
@@ -129,19 +145,21 @@ export default function JobForm({
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Location
-          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span aria-hidden="true" className="text-red-500">
+            {" "}
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
-        <input
-          id={`${formId}-location`}
-          type="text"
-          name="location"
+        <LocationAutocomplete
+          label=""
+          inputId={`${formId}-location`}
+          inputName="location"
           value={values.location}
-          onChange={handleChange}
-          placeholder="e.g. Toronto, ON"
+          onChange={(newLocation) =>
+            setValues((prev) => ({ ...prev, location: newLocation }))
+          }
           required
-          aria-required="true"
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
         />
       </div>
 
@@ -175,7 +193,10 @@ export default function JobForm({
               ))}
             </div>
           </div>
-          <div role="group" aria-labelledby={`${formId}-work-arrangement-label`}>
+          <div
+            role="group"
+            aria-labelledby={`${formId}-work-arrangement-label`}
+          >
             <p
               id={`${formId}-work-arrangement-label`}
               className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3"
@@ -209,7 +230,10 @@ export default function JobForm({
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Job Description
-          <span aria-hidden="true" className="text-red-500"> *</span>
+          <span aria-hidden="true" className="text-red-500">
+            {" "}
+            *
+          </span>
           <span className="sr-only">(required)</span>
         </label>
         <textarea

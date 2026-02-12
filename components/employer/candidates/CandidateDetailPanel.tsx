@@ -19,6 +19,12 @@ interface CandidateDetailPanelProps {
   candidate: CandidateProfile;
   profileHref?: string;
   onInviteClick?: () => void;
+  showInsight?: boolean;
+  insightText?: string;
+  insightTitle?: string;
+  insightPlacement?: "top" | "bottom";
+  isInsightLoading?: boolean;
+  insightError?: unknown;
 }
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -103,6 +109,12 @@ export default function CandidateDetailPanel({
   candidate,
   profileHref,
   onInviteClick,
+  showInsight = false,
+  insightText,
+  insightTitle = "Employer insight",
+  insightPlacement = "bottom",
+  isInsightLoading = false,
+  insightError,
 }: CandidateDetailPanelProps) {
   const salaryRange = formatSalaryRange(
     candidate.salary_min,
@@ -173,6 +185,26 @@ export default function CandidateDetailPanel({
   ].filter((item) => item.value);
 
   const summary = candidate.bio || candidate.resume_parsed?.summary;
+  const cleanedInsight = insightText?.trim();
+  const insightSection = showInsight ? (
+    <DetailSection title={insightTitle} defaultOpen>
+      {isInsightLoading ? (
+        <p className="text-slate-500" role="status" aria-live="polite">
+          Loading insight...
+        </p>
+      ) : insightError ? (
+        <p className="text-slate-500" role="alert">
+          Unable to load insight.
+        </p>
+      ) : cleanedInsight ? (
+        <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
+          {cleanedInsight}
+        </p>
+      ) : (
+        <p className="text-slate-500">No insight available yet.</p>
+      )}
+    </DetailSection>
+  ) : null;
 
   return (
     <div className="space-y-4">
@@ -260,6 +292,8 @@ export default function CandidateDetailPanel({
           )}
         </div>
       </div>
+
+      {insightPlacement === "top" && insightSection}
 
       <DetailSection title="About" defaultOpen>
         {summary ? (
@@ -507,6 +541,8 @@ export default function CandidateDetailPanel({
           <p className="text-slate-500">No links shared yet.</p>
         )}
       </DetailSection>
+
+      {insightPlacement !== "top" && insightSection}
 
     </div>
   );

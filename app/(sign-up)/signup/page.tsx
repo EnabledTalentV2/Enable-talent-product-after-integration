@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -9,10 +10,10 @@ import {
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { useCandidateSignupUser } from "@/lib/hooks/useCandidateSignupUser";
-import { useCandidateLoginUser } from "@/lib/hooks/useCandidateLoginUser";
+import { useSignUp } from "@clerk/nextjs";
+import { OAuthStrategy } from "@clerk/types";
 import { apiRequest } from "@/lib/api-client";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
@@ -34,9 +35,11 @@ type FieldErrors = Partial<{
   confirmPassword: string;
 }>;
 
-export default function SignUpPage() {
+function SignUpPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
+  const { signUp, setActive } = useSignUp();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,13 +47,24 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [serverError, setServerError] = useState<string | null>(
+    searchParams?.get("error") === "account_incomplete"
+      ? "Your account setup was incomplete. Please sign up again to complete registration."
+      : null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    signupCandidate,
-    error: serverError,
-    setError: setServerError,
-  } = useCandidateSignupUser();
-  const { loginCandidate } = useCandidateLoginUser();
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [syncFailed, setSyncFailed] = useState(false);
+  const [clerkUserId, setClerkUserId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
+    "google" | "github" | null
+  >(null);
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
@@ -71,6 +85,174 @@ export default function SignUpPage() {
       ref: confirmPasswordRef,
     },
   ];
+
+  const handleVerification = async () => {
+    if (!signUp || !verificationCode.trim()) return;
+    setIsVerifying(true);
+    setServerError(null);
+    setSyncFailed(false);
+    setRetryCount(0); // Reset retry count on new verification attempt
+
+    try {
+      const result = await signUp.attemptEmailAddressVerification({
+        code: verificationCode,
+      });
+
+      if (result.status === "complete" && result.createdUserId) {
+        // Store verification result in case sync fails and we need to retry
+        setClerkUserId(result.createdUserId);
+        setSessionId(result.createdSessionId);
+
+        try {
+          // Sync user to Django backend
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: result.createdUserId,
+              email: email.trim(),
+            }),
+          });
+
+          // Only set session if BOTH verification AND sync succeeded
+          await setActive({ session: result.createdSessionId });
+
+          // Update user profile with name
+          const [firstName, ...rest] = fullName.trim().split(/\s+/);
+          const lastName = rest.join(" ");
+          if (firstName || lastName) {
+            try {
+              await apiRequest("/api/users/profile/", {
+                method: "PATCH",
+                body: JSON.stringify({
+                  first_name: firstName,
+                  last_name: lastName,
+                }),
+              });
+            } catch (err) {
+              console.error("[signup] Failed to update user profile:", err);
+            }
+          }
+
+          router.push("/signup/resume-upload");
+        } catch (syncError: any) {
+          // Django sync failed - show retry option
+          console.error("[signup] Backend sync failed:", syncError);
+          setSyncFailed(true);
+          setServerError(
+            "Account created but backend sync failed. Please click 'Retry Signup' to complete your registration."
+          );
+        }
+      } else {
+        setServerError("Verification failed. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("[signup] Verification error:", error);
+      const errorMessage =
+        error.errors?.[0]?.message ||
+        error.message ||
+        "Failed to complete signup. Please try again.";
+      setServerError(errorMessage);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleRetrySync = async () => {
+    if (!clerkUserId || !sessionId) return;
+
+    // Check if retry limit reached
+    if (retryCount >= 5) {
+      setServerError(
+        "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
+      );
+      return;
+    }
+
+    setIsRetrying(true);
+    setServerError(null);
+    setRetryCount(prev => prev + 1);
+
+    try {
+      // Retry Django backend sync
+      await apiRequest("/api/auth/clerk-sync", {
+        method: "POST",
+        body: JSON.stringify({
+          clerk_user_id: clerkUserId,
+          email: email.trim(),
+        }),
+      });
+
+      // Sync succeeded - set session and continue
+      if (!setActive) {
+        throw new Error("Session activation not available");
+      }
+      await setActive({ session: sessionId });
+
+      // Update user profile with name
+      const [firstName, ...rest] = fullName.trim().split(/\s+/);
+      const lastName = rest.join(" ");
+      if (firstName || lastName) {
+        try {
+          await apiRequest("/api/users/profile/", {
+            method: "PATCH",
+            body: JSON.stringify({
+              first_name: firstName,
+              last_name: lastName,
+            }),
+          });
+        } catch (err) {
+          console.error("[signup] Failed to update user profile:", err);
+        }
+      }
+
+      router.push("/signup/resume-upload");
+    } catch (error: any) {
+      console.error("[signup] Retry sync failed:", error);
+      const attemptsRemaining = 5 - retryCount;
+      if (attemptsRemaining > 0) {
+        setServerError(
+          `Signup retry failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
+        );
+      } else {
+        setServerError(
+          "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
+        );
+        setSyncFailed(false); // Hide retry button
+      }
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleOAuthSignUp = async (strategy: OAuthStrategy) => {
+    if (!signUp) return;
+    const provider =
+      strategy === "oauth_google"
+        ? "google"
+        : strategy === "oauth_github"
+        ? "github"
+        : null;
+    setOauthLoadingProvider(provider);
+    try {
+      await signUp.authenticateWithRedirect({
+        strategy,
+        redirectUrl: "/sso-callback",
+        redirectUrlComplete: "/signup/oauth-complete",
+      });
+    } catch (error: any) {
+      console.error("[signup] OAuth error:", error);
+      setServerError(
+        error.errors?.[0]?.message || "OAuth sign up failed. Please try again."
+      );
+      setOauthLoadingProvider(null);
+    }
+  };
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (hasErrors) {
@@ -139,60 +321,28 @@ export default function SignUpPage() {
         },
       }));
 
-      const signupResult = await signupCandidate({
-        email: trimmedEmail,
-        password,
-        confirm_password: password,
-      });
-
-      if (!signupResult.data) {
+      // Step 1: Create account with Clerk
+      if (!signUp) {
+        setServerError("Signup not initialized. Please refresh the page.");
         return;
       }
 
-      let hasSession = true;
-      try {
-        await apiRequest<unknown>("/api/user/me", { method: "GET" });
-      } catch {
-        hasSession = false;
-      }
+      await signUp.create({
+        emailAddress: trimmedEmail,
+        password: password,
+      });
 
-      if (!hasSession) {
-        const loginResult = await loginCandidate({
-          email: trimmedEmail,
-          password,
-        });
-
-        if (!loginResult.data) {
-          const message =
-            loginResult.error ||
-            "Account created, but we couldn't sign you in. Please log in.";
-          setServerError(message);
-          return;
-        }
-      }
-
-      if (firstName || lastName) {
-        try {
-          await apiRequest("/api/users/profile/", {
-            method: "PATCH",
-            body: JSON.stringify({
-              first_name: firstName,
-              last_name: lastName,
-            }),
-          });
-        } catch (err) {
-          console.error("[signup] Failed to update user profile:", err);
-          setServerError(
-            "Account created, but we couldn't save your name. Please try again.",
-          );
-          return;
-        }
-      }
-
-      router.push("/signup/resume-upload");
-    } catch (error) {
+      // Step 2: Send email verification OTP
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setPendingVerification(true);
+      setResendCooldown(30);
+    } catch (error: any) {
       console.error("[signup] Error:", error);
-      setServerError("An unexpected error occurred. Please try again.");
+      const errorMessage =
+        error.errors?.[0]?.message ||
+        error.message ||
+        "An unexpected error occurred. Please try again.";
+      setServerError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -205,7 +355,7 @@ export default function SignUpPage() {
     >
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
-          href="https://enabled-talent-landing-v2.vercel.app/"
+          href="https://www.enabledtalent.com/"
           className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
         >
           <ArrowLeft
@@ -235,7 +385,7 @@ export default function SignUpPage() {
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
               <a
-                href="https://enabled-talent-landing-v2.vercel.app/"
+                href="https://www.enabledtalent.com/"
                 className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >
@@ -258,306 +408,485 @@ export default function SignUpPage() {
 
           {/* Right Side Card */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
-            <div className="text-center mb-7">
-              <h2
-                id="talent-signup-heading"
-                className="text-[26px] font-semibold text-slate-900 mb-2"
-              >
-                Sign Up
-              </h2>
-              <p className="text-sm text-slate-500">
-                Create a Talent account to start applying
-              </p>
-            </div>
-
-            <form
-              className="space-y-4"
-              aria-labelledby="talent-signup-heading"
-              noValidate
-              onSubmit={handleSubmit}
-            >
-              {hasErrors ? (
-                <div
-                  ref={errorSummaryRef}
-                  role="alert"
-                  tabIndex={-1}
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                >
-                  <p className="font-semibold">Please fix the following:</p>
-                  <ul className="mt-2 space-y-1">
-                    {fieldMeta.map(({ key, label, ref }) => {
-                      const message = fieldErrors[key];
-                      if (!message) return null;
-                      return (
-                        <li key={key}>
-                          <button
-                            type="button"
-                            onClick={() => ref.current?.focus()}
-                            className="text-left underline"
-                          >
-                            {label}: {message}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ) : null}
-              {serverError ? (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                >
-                  <p className="font-semibold">Error</p>
-                  <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
-                </div>
-              ) : null}
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-slate-700"
-                  htmlFor="fullname"
-                >
-                  Full name
-                  <span aria-hidden="true" className="text-slate-400">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <input
-                  className={inputClasses(Boolean(fieldErrors.fullName))}
-                  id="fullname"
-                  name="fullname"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Enter full name"
-                  value={fullName}
-                  ref={fullNameRef}
-                  aria-invalid={Boolean(fieldErrors.fullName)}
-                  aria-describedby={
-                    fieldErrors.fullName ? "fullname-error" : undefined
-                  }
-                  aria-required="true"
-                  onChange={(event) => {
-                    setFullName(event.target.value);
-                    clearFieldError("fullName");
-                  }}
-                  required
-                />
-                {fieldErrors.fullName ? (
-                  <p id="fullname-error" className="text-sm text-red-600">
-                    {fieldErrors.fullName}
+            {pendingVerification ? (
+              /* OTP Verification View */
+              <>
+                <div className="text-center mb-7">
+                  <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+                    Verify your email
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    We sent a verification code to <strong>{email}</strong>
                   </p>
-                ) : null}
-              </div>
+                </div>
 
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-slate-700"
-                  htmlFor="email"
-                >
-                  Email
-                  <span aria-hidden="true" className="text-slate-400">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <input
-                  className={inputClasses(Boolean(fieldErrors.email))}
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="Enter email"
-                  value={email}
-                  ref={emailRef}
-                  aria-invalid={Boolean(fieldErrors.email)}
-                  aria-describedby={
-                    fieldErrors.email ? "email-error" : undefined
-                  }
-                  aria-required="true"
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    clearFieldError("email");
-                  }}
-                  required
-                />
-                {fieldErrors.email ? (
-                  <p id="email-error" className="text-sm text-red-600">
-                    {fieldErrors.email}
+                {serverError ? (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  >
+                    <p className="font-semibold">Error</p>
+                    <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
+                  </div>
+                ) : null}
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-slate-700"
+                      htmlFor="verificationCode"
+                    >
+                      Verification code
+                    </label>
+                    <input
+                      className={inputClasses(false)}
+                      id="verificationCode"
+                      name="verificationCode"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="Enter 6-digit code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {syncFailed && retryCount < 5 ? (
+                    <button
+                      type="button"
+                      onClick={handleRetrySync}
+                      disabled={isRetrying}
+                      className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isRetrying ? (
+                        <span className="inline-flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Retrying...
+                        </span>
+                      ) : (
+                        `Retry Signup (${5 - retryCount} attempt${5 - retryCount === 1 ? '' : 's'} left)`
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleVerification}
+                      disabled={isVerifying || !verificationCode.trim()}
+                      className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {isVerifying ? (
+                        <span className="inline-flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Verifying...
+                        </span>
+                      ) : (
+                        "Verify email"
+                      )}
+                    </button>
+                  )}
+
+                  <p className="text-center text-xs text-slate-500">
+                    Didn&apos;t receive the code?{" "}
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0}
+                      onClick={async () => {
+                        if (!signUp) return;
+                        try {
+                          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+                          setServerError(null);
+                          setResendCooldown(30);
+                        } catch {
+                          setServerError("Failed to resend code. Please try again.");
+                        }
+                      }}
+                      className={`font-semibold ${resendCooldown > 0 ? "text-slate-400 cursor-not-allowed" : "text-[#B45309] hover:underline"}`}
+                    >
+                      {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Resend code"}
+                    </button>
                   </p>
-                ) : null}
-              </div>
+                </div>
+              </>
+            ) : (
+              /* Signup Form View */
+              <>
+                <div className="text-center mb-7">
+                  <h2
+                    id="talent-signup-heading"
+                    className="text-[26px] font-semibold text-slate-900 mb-2"
+                  >
+                    Sign Up
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Create a Talent account to start applying
+                  </p>
+                </div>
 
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-slate-700"
-                  htmlFor="password"
-                >
-                  Password
-                  <span aria-hidden="true" className="text-slate-400">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <div className="relative">
-                  <input
-                    className={`${inputClasses(
-                      Boolean(fieldErrors.password),
-                    )} pr-14`}
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="Enter password"
-                    value={password}
-                    ref={passwordRef}
-                    aria-invalid={Boolean(fieldErrors.password)}
-                    aria-describedby={
-                      fieldErrors.password ? "password-error" : undefined
-                    }
-                    aria-required="true"
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      clearFieldError("password");
-                    }}
-                    required
-                  />
+                {/* OAuth Sign Up Buttons */}
+                <div className="space-y-3 mb-6" aria-busy={oauthLoadingProvider !== null}>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    aria-pressed={showPassword}
-                    aria-controls="password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+                    disabled={oauthLoadingProvider !== null}
+                    onClick={() => handleOAuthSignUp("oauth_google")}
+                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {fieldErrors.password ? (
-                  <p id="password-error" className="text-sm text-red-600">
-                    {fieldErrors.password}
-                  </p>
-                ) : null}
-                <PasswordStrengthIndicator password={password} show={true} />
-              </div>
-
-              <div className="space-y-1">
-                <label
-                  className="block text-[16px] font-semibold text-slate-700"
-                  htmlFor="confirmPassword"
-                >
-                  Confirm password
-                  <span aria-hidden="true" className="text-slate-400">
-                    {" "}
-                    *
-                  </span>
-                  <span className="sr-only">required</span>
-                </label>
-                <div className="relative">
-                  <input
-                    className={`${inputClasses(
-                      Boolean(fieldErrors.confirmPassword),
-                    )} pr-14`}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="Re-enter password"
-                    value={confirmPassword}
-                    ref={confirmPasswordRef}
-                    aria-invalid={Boolean(fieldErrors.confirmPassword)}
-                    aria-describedby={
-                      fieldErrors.confirmPassword
-                        ? "confirmPassword-error"
-                        : undefined
-                    }
-                    aria-required="true"
-                    onChange={(event) => {
-                      setConfirmPassword(event.target.value);
-                      clearFieldError("confirmPassword");
-                    }}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
-                    aria-pressed={showConfirmPassword}
-                    aria-controls="confirmPassword"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={18} />
+                    {oauthLoadingProvider === "google" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        Redirecting to Google...
+                      </>
                     ) : (
-                      <Eye size={18} />
+                      <>
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                            fill="#4285F4"
+                          />
+                          <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853"
+                          />
+                          <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05"
+                          />
+                          <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335"
+                          />
+                        </svg>
+                        Continue with Google
+                      </>
                     )}
                   </button>
-                </div>
-                {fieldErrors.confirmPassword ? (
-                  <p
-                    id="confirmPassword-error"
-                    className="text-sm text-red-600"
+                  <button
+                    type="button"
+                    disabled={oauthLoadingProvider !== null}
+                    onClick={() => handleOAuthSignUp("oauth_github")}
+                    className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {fieldErrors.confirmPassword}
+                    {oauthLoadingProvider === "github" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        Redirecting to GitHub...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
+                        </svg>
+                        Continue with GitHub
+                      </>
+                    )}
+                  </button>
+                  {oauthLoadingProvider ? (
+                    <p role="status" aria-live="polite" className="text-center text-xs text-slate-500">
+                      Connecting to {oauthLoadingProvider === "google" ? "Google" : "GitHub"}...
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Divider */}
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-white px-3 text-slate-400">or sign up with email</span>
+                  </div>
+                </div>
+
+                <form
+                  className="space-y-4"
+                  aria-labelledby="talent-signup-heading"
+                  noValidate
+                  onSubmit={handleSubmit}
+                >
+                  {hasErrors ? (
+                    <div
+                      ref={errorSummaryRef}
+                      role="alert"
+                      tabIndex={-1}
+                      className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                      <p className="font-semibold">Please fix the following:</p>
+                      <ul className="mt-2 space-y-1">
+                        {fieldMeta.map(({ key, label, ref }) => {
+                          const message = fieldErrors[key];
+                          if (!message) return null;
+                          return (
+                            <li key={key}>
+                              <button
+                                type="button"
+                                onClick={() => ref.current?.focus()}
+                                className="text-left underline"
+                              >
+                                {label}: {message}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {serverError ? (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                    >
+                      <p className="font-semibold">Error</p>
+                      <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
+                    </div>
+                  ) : null}
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-slate-700"
+                      htmlFor="fullname"
+                    >
+                      Full name
+                      <span aria-hidden="true" className="text-slate-400">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <input
+                      className={inputClasses(Boolean(fieldErrors.fullName))}
+                      id="fullname"
+                      name="fullname"
+                      type="text"
+                      autoComplete="name"
+                      placeholder="Enter full name"
+                      value={fullName}
+                      ref={fullNameRef}
+                      aria-invalid={Boolean(fieldErrors.fullName)}
+                      aria-describedby={
+                        fieldErrors.fullName ? "fullname-error" : undefined
+                      }
+                      aria-required="true"
+                      onChange={(event) => {
+                        setFullName(event.target.value);
+                        clearFieldError("fullName");
+                      }}
+                      required
+                    />
+                    {fieldErrors.fullName ? (
+                      <p id="fullname-error" className="text-sm text-red-600">
+                        {fieldErrors.fullName}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-slate-700"
+                      htmlFor="email"
+                    >
+                      Email
+                      <span aria-hidden="true" className="text-slate-400">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <input
+                      className={inputClasses(Boolean(fieldErrors.email))}
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="Enter email"
+                      value={email}
+                      ref={emailRef}
+                      aria-invalid={Boolean(fieldErrors.email)}
+                      aria-describedby={
+                        fieldErrors.email ? "email-error" : undefined
+                      }
+                      aria-required="true"
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        clearFieldError("email");
+                      }}
+                      required
+                    />
+                    {fieldErrors.email ? (
+                      <p id="email-error" className="text-sm text-red-600">
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-slate-700"
+                      htmlFor="password"
+                    >
+                      Password
+                      <span aria-hidden="true" className="text-slate-400">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        className={`${inputClasses(
+                          Boolean(fieldErrors.password),
+                        )} pr-14`}
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="Enter password"
+                        value={password}
+                        ref={passwordRef}
+                        aria-invalid={Boolean(fieldErrors.password)}
+                        aria-describedby={
+                          fieldErrors.password ? "password-error" : undefined
+                        }
+                        aria-required="true"
+                        onChange={(event) => {
+                          setPassword(event.target.value);
+                          clearFieldError("password");
+                        }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showPassword}
+                        aria-controls="password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {fieldErrors.password ? (
+                      <p id="password-error" className="text-sm text-red-600">
+                        {fieldErrors.password}
+                      </p>
+                    ) : null}
+                    <PasswordStrengthIndicator password={password} show={true} />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-slate-700"
+                      htmlFor="confirmPassword"
+                    >
+                      Confirm password
+                      <span aria-hidden="true" className="text-slate-400">
+                        {" "}
+                        *
+                      </span>
+                      <span className="sr-only">required</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        className={`${inputClasses(
+                          Boolean(fieldErrors.confirmPassword),
+                        )} pr-14`}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="Re-enter password"
+                        value={confirmPassword}
+                        ref={confirmPasswordRef}
+                        aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                        aria-describedby={
+                          fieldErrors.confirmPassword
+                            ? "confirmPassword-error"
+                            : undefined
+                        }
+                        aria-required="true"
+                        onChange={(event) => {
+                          setConfirmPassword(event.target.value);
+                          clearFieldError("confirmPassword");
+                        }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={
+                          showConfirmPassword ? "Hide password" : "Show password"
+                        }
+                        aria-pressed={showConfirmPassword}
+                        aria-controls="confirmPassword"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
+                    {fieldErrors.confirmPassword ? (
+                      <p
+                        id="confirmPassword-error"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldErrors.confirmPassword}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating account...
+                      </span>
+                    ) : (
+                      "Create account"
+                    )}
+                  </button>
+
+                  <p className="text-[11px] text-center text-slate-500 mt-2">
+                    Takes less than 2 minutes
                   </p>
-                ) : null}
-              </div>
+                </form>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {isSubmitting ? (
-                  <span className="inline-flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating account...
-                  </span>
-                ) : (
-                  "Create account"
-                )}
-              </button>
+                <div className="mt-6 text-center space-y-4">
+                  <p className="text-[13px] text-slate-600">
+                    Already have an account?{" "}
+                    <Link
+                      className="font-semibold text-[#B45309] hover:underline"
+                      href="/login-talent"
+                    >
+                      Login
+                    </Link>
+                  </p>
 
-              <p className="text-[11px] text-center text-slate-500 mt-2">
-                Takes less than 2 minutes
-              </p>
-            </form>
-
-            <div className="mt-6 text-center space-y-4">
-              <p className="text-[13px] text-slate-600">
-                Already have an account?{" "}
-                <Link
-                  className="font-semibold text-[#B45309] hover:underline"
-                  href="/login-talent"
-                >
-                  Login
-                </Link>
-              </p>
-
-              <p className="text-[11px] text-slate-500">
-                By clicking login, you agree to our{" "}
-                <Link
-                  href="/terms"
-                  className="underline text-slate-600 hover:text-slate-700"
-                >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/privacy"
-                  className="underline text-slate-600 hover:text-slate-700"
-                >
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
+                  <p className="text-[11px] text-slate-500">
+                    By clicking login, you agree to our{" "}
+                    <Link
+                      href="/terms"
+                      className="underline text-slate-600 hover:text-slate-700"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="underline text-slate-600 hover:text-slate-700"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -574,5 +903,13 @@ export default function SignUpPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignUpPageContent />
+    </Suspense>
   );
 }

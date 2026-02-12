@@ -1,6 +1,7 @@
 "use client";
 
 import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import defaultImage from "@/public/Placeholder.png";
 import Image from "next/image";
@@ -477,31 +478,19 @@ export default function OrganisationInfoPage() {
                 >
                   Location
                 </label>
-                <input
-                  ref={locationRef}
-                  id="organization-location"
-                  type="text"
+                <LocationAutocomplete
+                  label=""
+                  inputId="organization-location"
+                  inputName="location"
+                  inputRef={locationRef}
                   value={organizationInfo.location}
-                  aria-invalid={Boolean(fieldErrors.location)}
-                  aria-describedby={
-                    fieldErrors.location
-                      ? "organization-location-error"
-                      : undefined
-                  }
-                  onChange={(event) => {
+                  error={fieldErrors.location}
+                  required
+                  onChange={(newLocation) => {
                     clearFieldError("location");
-                    patchOrganizationInfo({ location: event.target.value });
+                    patchOrganizationInfo({ location: newLocation });
                   }}
-                  className={inputClasses(!!fieldErrors.location)}
                 />
-                {fieldErrors.location ? (
-                  <p
-                    id="organization-location-error"
-                    className="text-sm text-red-500"
-                  >
-                    {fieldErrors.location}
-                  </p>
-                ) : null}
               </div>
 
               {/* Website */}
