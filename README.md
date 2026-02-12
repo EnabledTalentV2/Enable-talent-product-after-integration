@@ -13,13 +13,13 @@ To bridge the employment gap for persons with disabilities by providing an acces
 - **Smart Resume Parsing**: Automated resume parsing with manual entry fallback for flexible profile creation
 - **Career Coaching**: AI-driven career guidance to help job seekers navigate their professional journey
 - **Modern Tech Stack**: Built with Next.js 16, React 19, TypeScript, and TanStack Query for optimal performance
-- **Seamless Integration**: Django backend integration with robust authentication and CSRF protection
+- **Seamless Integration**: Clerk authentication + Django backend integration via Bearer tokens
 
 ## Key Features
 
 For Talents:
 
-- User authentication with email verification and CSRF-protected sessions
+- Authentication via Clerk (email/password, OTP, OAuth)
 - Multi-step profile builder covering basic info, education, work experience, skills, projects, certifications, and preferences
 - Resume upload and parsing pipeline (Supabase storage + backend parsing) with manual resume entry fallback
 - Job discovery, browsing, and application tracking with status updates
@@ -29,7 +29,7 @@ For Talents:
 
 For Employers:
 
-- Employer authentication with email verification and organization info step
+- Employer authentication via Clerk (email/password, OTP, OAuth) with organization info step
 - Job posting, editing, and listing management stored per employer
 - AI-powered candidate search and intelligent ranking based on job requirements
 - Application management with accept/reject decision workflow
@@ -40,7 +40,7 @@ For Employers:
 Platform & Experience:
 
 - Role-based routing and auth-aware redirects (`proxy.ts`)
-- Next.js route handlers that proxy to the Django backend (cookie + CSRF forwarding)
+- Next.js route handlers proxy to the Django backend and attach `Authorization: Bearer <Clerk JWT template token>`
 - Glassmorphism UI with vector backgrounds on auth flows
 - Responsive, accessible layout with semantic HTML and ARIA labels
 
@@ -52,11 +52,12 @@ Platform & Experience:
 - Tailwind CSS v4 with PostCSS
 - Zustand (state management + localStorage persistence)
 - TanStack Query (React Query) for data fetching and caching
+- Clerk (`@clerk/nextjs`) for authentication + session management
 - Chart.js and react-chartjs-2 for analytics visualization
 - React Markdown for rich text rendering
 - Lucide React icons
 - Zod for schema validation
-- Jose (JWT decoding)
+- Jose (JWT decoding; used for safe local/debug inspection of Clerk JWT claims)
 
 ### Development
 - ESLint 9 with Next.js config
@@ -86,14 +87,19 @@ npm install
 
 3. Configure environment variables:
 
-Copy `.env.example` to `.env.local` and set:
+Create `.env.local` and set:
 
 - `BACKEND_URL` (Django backend base URL)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (Clerk publishable key)
+- `CLERK_SECRET_KEY` (Clerk secret key)
+- `CLERK_JWT_TEMPLATE` (JWT template name used for backend calls; commonly `api`)
 - `NEXT_PUBLIC_SUPABASE_URL` (optional; resume uploads)
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_RESUME_BUCKET` (default: `resumes`)
 
 If Supabase is not configured, resume upload will warn and users can continue with manual entry.
+
+Note: The backend expects a **Clerk JWT template token** (so claims like `aud` are present). Configure the matching JWT template in the Clerk dashboard (commonly named `api`) and set `CLERK_JWT_TEMPLATE=api`.
 
 4. Run the development server:
 
@@ -167,14 +173,9 @@ app/                                    # Next.js App Router
 
   api/
     auth/                               # Auth proxy routes
-      login/route.ts
-      logout/route.ts
-      signup/route.ts
-      verify-email/route.ts
-      resend-verification/route.ts
-      change-password/route.ts
-      csrf/route.ts
-      token/refresh/route.ts
+      clerk-sync/route.ts               # Sync Clerk user -> Django user (required before onboarding continues)
+      debug-token/route.ts              # Dev-only: issue a Clerk JWT for manual backend testing
+      users/me/route.ts                 # Proxy to backend `/api/auth/users/me/`
       add-feedback/route.ts
 
     candidates/                         # Candidate endpoints
@@ -320,8 +321,8 @@ Additional documentation is available in the project:
 ### Backend Integration
 
 - Django backend integration via `BACKEND_URL` in `lib/api-config.ts`
-- Next.js route handlers in `app/api/*` proxy requests and forward cookies/CSRF
-- CSRF handling in `lib/api-client.ts` for client-side requests
+- Next.js route handlers in `app/api/*` proxy requests to Django and attach a Clerk-issued JWT as a Bearer token
+- Server-side code reads the logged-in user via `auth()` from `@clerk/nextjs/server` and issues backend tokens via `getToken({ template })`
 - TanStack Query for efficient data fetching, caching, and synchronization
 
 ### State Management
@@ -333,7 +334,7 @@ Additional documentation is available in the project:
 ### Application Workflow
 
 #### For Talents
-1. Sign up with email verification
+1. Sign up via Clerk (email/OTP or OAuth)
 2. Complete multi-step profile or upload resume for parsing
 3. Browse jobs and companies
 4. Apply to positions with one click
@@ -341,7 +342,7 @@ Additional documentation is available in the project:
 6. Get AI-powered career coaching
 
 #### For Employers
-1. Sign up with organization details
+1. Sign up via Clerk (email/OTP or OAuth) + organization details
 2. Create and manage job postings
 3. Use AI search to find candidates
 4. Review applications with smart ranking
@@ -383,4 +384,4 @@ For questions, bug reports, or support requests, please contact the Enabled Tale
 
 Built with care to create inclusive employment opportunities for everyone.
 
-**Last Updated:** January 29, 2026
+**Last Updated:** February 12, 2026

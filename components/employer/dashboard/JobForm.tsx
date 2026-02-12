@@ -131,6 +131,7 @@ export default function JobForm({
           value={values.title}
           onChange={handleChange}
           placeholder="e.g. Senior UX Designer"
+          autoComplete="on"
           required
           aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"

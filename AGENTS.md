@@ -127,7 +127,7 @@ The codebase includes dedicated accessibility components in `components/a11y/`:
 - **Data Fetching**: TanStack Query (React Query)
 - **Form Validation**: Zod
 - **Icons**: Lucide React
-- **Authentication**: JWT (jose library)
+- **Authentication**: Clerk (`@clerk/nextjs`) + JWT (Clerk-issued template tokens; `jose` used for decoding/debugging)
 - **Charts**: Chart.js with react-chartjs-2
 - **Content**: React Markdown
 
@@ -226,9 +226,18 @@ app/
 
 ### Authentication
 
-- `GET /api/user/me` - Check session and get user data
-- Uses JWT tokens with jose library
-- Credential-based auth with cookies
+- **Clerk is the source of truth for user authentication** (email/password, OTP, OAuth, session management).
+- **Frontend session** is maintained by Clerk cookies. Server-side code uses `auth()` from `@clerk/nextjs/server` to read the logged-in user.
+- **Backend API authentication** is done by sending a Clerk-issued JWT in `Authorization: Bearer <token>` when proxying requests to Django.
+  - Tokens are issued via `getToken({ template })` using a Clerk JWT template (commonly `template="api"` so `aud` is set).
+  - `sub` is the Clerk user id (`user_...`) and is what the backend uses to identify the user.
+  - The template name is controlled by `CLERK_JWT_TEMPLATE` (environment variable) in this codebase.
+- `GET /api/user/me` is the frontend "who am I" call: it checks that a Clerk session exists, then calls the backend `/api/auth/users/me/` with the Bearer token to fetch Django user + role data.
+
+#### Debugging (local/dev only)
+
+- `GET /api/auth/debug-token` can be used to manually fetch a Clerk JWT for the currently logged-in user/session for backend testing.
+- Never log or expose full JWTs in production logs.
 
 ### Resume Parsing Flow
 
