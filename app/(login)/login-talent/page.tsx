@@ -82,16 +82,28 @@ function LoginPageContent() {
     backendCheckedRef.current = true;
 
     // If user isn't in Django yet, prompt for sync.
-    void apiRequest<unknown>("/api/user/me", { method: "GET" }).catch((err) => {
-      if (isApiError(err) && err.status === 401) {
-        setNeedsSync(true);
-        setError(
-          (prev) =>
-            prev ??
-            "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
-        );
-      }
-    });
+    // If this session belongs to an employer, show wrong-portal guidance.
+    void apiRequest<unknown>("/api/user/me", { method: "GET" })
+      .then((userData) => {
+        const derivedRole = deriveUserRoleFromUserData(userData);
+        if (derivedRole === "employer") {
+          setNeedsSync(false);
+          setError(null);
+          setRoleWarning(
+            "You are currently signed in as an Employer. Please continue from the Employer login."
+          );
+        }
+      })
+      .catch((err) => {
+        if (isApiError(err) && err.status === 401) {
+          setNeedsSync(true);
+          setError(
+            (prev) =>
+              prev ??
+              "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
+          );
+        }
+      });
   }, [userId]);
 
   useEffect(() => {
@@ -271,6 +283,13 @@ function LoginPageContent() {
     event.preventDefault();
 
     if (isLoading) {
+      return;
+    }
+
+    if (userId && roleWarning) {
+      setError(
+        "This browser already has an Employer session. Use Employer Login or sign out first."
+      );
       return;
     }
 

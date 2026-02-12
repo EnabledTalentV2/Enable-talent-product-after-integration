@@ -1,0 +1,1058 @@
+{
+  "totalFields": 101,
+  "withAutoComplete": 21,
+  "withoutAutoComplete": 80,
+  "filesMissing": [
+    [
+      "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      7
+    ],
+    [
+      "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      7
+    ],
+    [
+      "components\\signup\\forms\\OtherDetails.tsx",
+      7
+    ],
+    [
+      "components\\employer\\dashboard\\JobForm.tsx",
+      6
+    ],
+    [
+      "components\\signup\\forms\\WorkExperience.tsx",
+      6
+    ],
+    [
+      "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      5
+    ],
+    [
+      "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      5
+    ],
+    [
+      "components\\signup\\forms\\Projects.tsx",
+      5
+    ],
+    [
+      "components\\signup\\forms\\AccessibilityNeeds.tsx",
+      4
+    ],
+    [
+      "components\\signup\\forms\\BasicInfo.tsx",
+      4
+    ],
+    [
+      "components\\signup\\forms\\ReviewAndAgree.tsx",
+      3
+    ],
+    [
+      "app\\(sign-up)\\signup\\accessability-needs\\page.tsx",
+      2
+    ],
+    [
+      "components\\signup\\forms\\Certification.tsx",
+      2
+    ],
+    [
+      "components\\signup\\forms\\Education.tsx",
+      2
+    ],
+    [
+      "components\\signup\\forms\\Preference.tsx",
+      2
+    ],
+    [
+      "components\\signup\\forms\\Skills.tsx",
+      2
+    ],
+    [
+      "app\\(employer)\\employer\\dashboard\\listed-jobs\\page.tsx",
+      1
+    ],
+    [
+      "app\\(sign-up)\\signup\\resume-upload\\page.tsx",
+      1
+    ],
+    [
+      "app\\(user-dashboard)\\dashboard\\career-coach\\start\\page.tsx",
+      1
+    ],
+    [
+      "app\\(user-dashboard)\\dashboard\\profile-update\\page.tsx",
+      1
+    ],
+    [
+      "components\\DashboardSubnav.tsx",
+      1
+    ],
+    [
+      "components\\DashBoardSubNavEmployer.tsx",
+      1
+    ],
+    [
+      "components\\employer\\ai\\AIAgentSearchPanel.tsx",
+      1
+    ],
+    [
+      "components\\employer\\ai\\ResumeChatPanel.tsx",
+      1
+    ],
+    [
+      "components\\employer\\candidates\\CandidateList.tsx",
+      1
+    ],
+    [
+      "components\\employer\\candidates\\SendInvitesModal.tsx",
+      1
+    ],
+    [
+      "components\\signup\\forms\\SimpleText.tsx",
+      1
+    ]
+  ],
+  "filesWith": [
+    [
+      "app\\(sign-up)\\signup-employer\\page.tsx",
+      6
+    ],
+    [
+      "app\\(sign-up)\\signup\\page.tsx",
+      5
+    ],
+    [
+      "app\\(login)\\forgot-password\\page.tsx",
+      4
+    ],
+    [
+      "app\\(login)\\login-employer\\page.tsx",
+      2
+    ],
+    [
+      "app\\(login)\\login-talent\\page.tsx",
+      2
+    ],
+    [
+      "components\\signup\\forms\\InputBlock.tsx",
+      1
+    ],
+    [
+      "components\\ui\\LocationAutocomplete.tsx",
+      1
+    ]
+  ],
+  "missing": [
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      "line": 494,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      "line": 548,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      "line": 577,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      "line": 606,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\page.tsx",
+      "line": 627,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      "line": 703,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      "line": 759,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      "line": 792,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      "line": 825,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\candidates\\[jobId]\\page.tsx",
+      "line": 848,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 364,
+      "tag": "input",
+      "id": "avatar-upload-edit",
+      "name": null,
+      "type": "file",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 391,
+      "tag": "input",
+      "id": "organizationName",
+      "name": "organizationName",
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 450,
+      "tag": "input",
+      "id": "website",
+      "name": "website",
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 469,
+      "tag": "input",
+      "id": "linkedinUrl",
+      "name": "linkedinUrl",
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 491,
+      "tag": "input",
+      "id": null,
+      "name": "companySize",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 410,
+      "tag": "textarea",
+      "id": "aboutOrganization",
+      "name": "aboutOrganization",
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\company-profile-edit\\page.tsx",
+      "line": 525,
+      "tag": "select",
+      "id": "industry",
+      "name": "industry",
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(employer)\\employer\\dashboard\\listed-jobs\\page.tsx",
+      "line": 299,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\accessability-needs\\page.tsx",
+      "line": 1068,
+      "tag": "input",
+      "id": null,
+      "name": "accommodation-need",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\accessability-needs\\page.tsx",
+      "line": 1129,
+      "tag": "input",
+      "id": null,
+      "name": "disclosure-preference",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\resume-upload\\page.tsx",
+      "line": 685,
+      "tag": "input",
+      "id": "resume-upload-input",
+      "name": null,
+      "type": "file",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 357,
+      "tag": "input",
+      "id": "avatar-upload",
+      "name": null,
+      "type": "file",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 403,
+      "tag": "input",
+      "id": "organization-name",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 504,
+      "tag": "input",
+      "id": "organization-website",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 540,
+      "tag": "input",
+      "id": "organization-linkedin",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 579,
+      "tag": "input",
+      "id": null,
+      "name": "companySize",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 441,
+      "tag": "textarea",
+      "id": "organization-about",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\organisation-info\\page.tsx",
+      "line": 623,
+      "tag": "select",
+      "id": "organization-industry",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(user-dashboard)\\dashboard\\career-coach\\start\\page.tsx",
+      "line": 401,
+      "tag": "input",
+      "id": "chat-input",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "app\\(user-dashboard)\\dashboard\\profile-update\\page.tsx",
+      "line": 2694,
+      "tag": "input",
+      "id": "profile-resume-input",
+      "name": null,
+      "type": "file",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\DashboardSubnav.tsx",
+      "line": 95,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "search",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\DashBoardSubNavEmployer.tsx",
+      "line": 92,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "search",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\ai\\AIAgentSearchPanel.tsx",
+      "line": 66,
+      "tag": "textarea",
+      "id": null,
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\ai\\ResumeChatPanel.tsx",
+      "line": 235,
+      "tag": "textarea",
+      "id": null,
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\candidates\\CandidateList.tsx",
+      "line": 21,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\candidates\\SendInvitesModal.tsx",
+      "line": 135,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 127,
+      "tag": "input",
+      "id": "{expr}",
+      "name": "title",
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 181,
+      "tag": "input",
+      "id": "{expr}",
+      "name": "employmentType",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 208,
+      "tag": "input",
+      "id": "{expr}",
+      "name": "workArrangement",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 261,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 331,
+      "tag": "input",
+      "id": "{expr}",
+      "name": "salary",
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\employer\\dashboard\\JobForm.tsx",
+      "line": 238,
+      "tag": "textarea",
+      "id": "{expr}",
+      "name": "description",
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\AccessibilityNeeds.tsx",
+      "line": 155,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\AccessibilityNeeds.tsx",
+      "line": 191,
+      "tag": "input",
+      "id": null,
+      "name": "accessibility-accommodation-need",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\AccessibilityNeeds.tsx",
+      "line": 217,
+      "tag": "input",
+      "id": null,
+      "name": "accessibility-disclosure-preference",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\AccessibilityNeeds.tsx",
+      "line": 246,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\BasicInfo.tsx",
+      "line": 96,
+      "tag": "input",
+      "id": "basicInfo-profilePhoto",
+      "name": null,
+      "type": "file",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\BasicInfo.tsx",
+      "line": 209,
+      "tag": "select",
+      "id": "basicInfo-citizenshipStatus",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\BasicInfo.tsx",
+      "line": 254,
+      "tag": "select",
+      "id": "basicInfo-gender",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\BasicInfo.tsx",
+      "line": 298,
+      "tag": "select",
+      "id": "basicInfo-ethnicity",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Certification.tsx",
+      "line": 86,
+      "tag": "input",
+      "id": "cert-noCertification",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Certification.tsx",
+      "line": 195,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Education.tsx",
+      "line": 56,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Education.tsx",
+      "line": 100,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "number",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 124,
+      "tag": "select",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 159,
+      "tag": "select",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 194,
+      "tag": "select",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 241,
+      "tag": "select",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 290,
+      "tag": "select",
+      "id": "otherDetails-careerStage",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 326,
+      "tag": "select",
+      "id": "otherDetails-availability",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\OtherDetails.tsx",
+      "line": 368,
+      "tag": "select",
+      "id": "otherDetails-desiredSalary",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Preference.tsx",
+      "line": 45,
+      "tag": "input",
+      "id": null,
+      "name": "{expr}",
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Preference.tsx",
+      "line": 79,
+      "tag": "input",
+      "id": null,
+      "name": "{expr}",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Projects.tsx",
+      "line": 60,
+      "tag": "input",
+      "id": "noProjects",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Projects.tsx",
+      "line": 137,
+      "tag": "input",
+      "id": null,
+      "name": "{expr}",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Projects.tsx",
+      "line": 149,
+      "tag": "input",
+      "id": null,
+      "name": "{expr}",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Projects.tsx",
+      "line": 171,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "date",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Projects.tsx",
+      "line": 197,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "date",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\ReviewAndAgree.tsx",
+      "line": 105,
+      "tag": "input",
+      "id": null,
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\ReviewAndAgree.tsx",
+      "line": 56,
+      "tag": "textarea",
+      "id": "reviewAgree-comments",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\ReviewAndAgree.tsx",
+      "line": 34,
+      "tag": "select",
+      "id": "reviewAgree-discover",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\SimpleText.tsx",
+      "line": 47,
+      "tag": "textarea",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Skills.tsx",
+      "line": 94,
+      "tag": "input",
+      "id": "skills-input",
+      "name": null,
+      "type": "text",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\Skills.tsx",
+      "line": 120,
+      "tag": "input",
+      "id": null,
+      "name": "skill-level",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 45,
+      "tag": "input",
+      "id": null,
+      "name": "experienceType",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 55,
+      "tag": "input",
+      "id": null,
+      "name": "experienceType",
+      "type": "radio",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 139,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "date",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 176,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "date",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 198,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "checkbox",
+      "autoComplete": null
+    },
+    {
+      "file": "components\\signup\\forms\\WorkExperience.tsx",
+      "line": 222,
+      "tag": "textarea",
+      "id": "{expr}",
+      "name": null,
+      "type": null,
+      "autoComplete": null
+    }
+  ],
+  "withs": [
+    {
+      "file": "app\\(login)\\forgot-password\\page.tsx",
+      "line": 222,
+      "tag": "input",
+      "id": "reset-email",
+      "name": "email",
+      "type": "email",
+      "autoComplete": "email"
+    },
+    {
+      "file": "app\\(login)\\forgot-password\\page.tsx",
+      "line": 299,
+      "tag": "input",
+      "id": "reset-code",
+      "name": "code",
+      "type": "text",
+      "autoComplete": "one-time-code"
+    },
+    {
+      "file": "app\\(login)\\forgot-password\\page.tsx",
+      "line": 405,
+      "tag": "input",
+      "id": "new-password",
+      "name": "password",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "app\\(login)\\forgot-password\\page.tsx",
+      "line": 449,
+      "tag": "input",
+      "id": "confirm-new-password",
+      "name": "confirmPassword",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "app\\(login)\\login-employer\\page.tsx",
+      "line": 552,
+      "tag": "input",
+      "id": "employer-email",
+      "name": "email",
+      "type": "email",
+      "autoComplete": "email"
+    },
+    {
+      "file": "app\\(login)\\login-employer\\page.tsx",
+      "line": 583,
+      "tag": "input",
+      "id": "employer-password",
+      "name": "password",
+      "type": "{expr}",
+      "autoComplete": "current-password"
+    },
+    {
+      "file": "app\\(login)\\login-talent\\page.tsx",
+      "line": 612,
+      "tag": "input",
+      "id": "email",
+      "name": "email",
+      "type": "email",
+      "autoComplete": "email"
+    },
+    {
+      "file": "app\\(login)\\login-talent\\page.tsx",
+      "line": 641,
+      "tag": "input",
+      "id": "password",
+      "name": "password",
+      "type": "{expr}",
+      "autoComplete": "current-password"
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\page.tsx",
+      "line": 441,
+      "tag": "input",
+      "id": "verificationCode",
+      "name": "verificationCode",
+      "type": "text",
+      "autoComplete": "one-time-code"
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\page.tsx",
+      "line": 654,
+      "tag": "input",
+      "id": "fullname",
+      "name": "fullname",
+      "type": "text",
+      "autoComplete": "name"
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\page.tsx",
+      "line": 693,
+      "tag": "input",
+      "id": "email",
+      "name": "email",
+      "type": "email",
+      "autoComplete": "email"
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\page.tsx",
+      "line": 733,
+      "tag": "input",
+      "id": "password",
+      "name": "password",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "app\\(sign-up)\\signup\\page.tsx",
+      "line": 789,
+      "tag": "input",
+      "id": "confirmPassword",
+      "name": "confirmPassword",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 419,
+      "tag": "input",
+      "id": "employer-verificationCode",
+      "name": "verificationCode",
+      "type": "text",
+      "autoComplete": "one-time-code"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 606,
+      "tag": "input",
+      "id": "employer-fullname",
+      "name": "fullName",
+      "type": "text",
+      "autoComplete": "name"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 647,
+      "tag": "input",
+      "id": "employer-name",
+      "name": "employerName",
+      "type": "text",
+      "autoComplete": "organization"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 688,
+      "tag": "input",
+      "id": "employer-email",
+      "name": "email",
+      "type": "email",
+      "autoComplete": "email"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 730,
+      "tag": "input",
+      "id": "employer-password",
+      "name": "password",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "app\\(sign-up)\\signup-employer\\page.tsx",
+      "line": 790,
+      "tag": "input",
+      "id": "employer-confirm-password",
+      "name": "confirmPassword",
+      "type": "{expr}",
+      "autoComplete": "new-password"
+    },
+    {
+      "file": "components\\signup\\forms\\InputBlock.tsx",
+      "line": 65,
+      "tag": "input",
+      "id": "{expr}",
+      "name": null,
+      "type": "{expr}",
+      "autoComplete": "{expr}"
+    },
+    {
+      "file": "components\\ui\\LocationAutocomplete.tsx",
+      "line": 197,
+      "tag": "input",
+      "id": "{expr}",
+      "name": "{expr}",
+      "type": "text",
+      "autoComplete": "off"
+    }
+  ]
+}

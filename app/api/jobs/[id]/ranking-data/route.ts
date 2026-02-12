@@ -5,13 +5,25 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+const isDebugEnabled = () =>
+  process.env.NODE_ENV !== "production" &&
+  process.env.DEBUG_RANKING_DATA_API === "true";
+
+const debugLog = (...args: unknown[]) => {
+  if (isDebugEnabled()) console.log(...args);
+};
+
+const debugError = (...args: unknown[]) => {
+  if (isDebugEnabled()) console.error(...args);
+};
+
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const cookies = request.headers.get("cookie") || "";
     const { id } = await context.params;
 
-    console.log("[Ranking Data API] Request for job ID:", id);
-    console.log(
+    debugLog("[Ranking Data API] Request for job ID:", id);
+    debugLog(
       "[Ranking Data API] Backend URL:",
       API_ENDPOINTS.jobs.rankingData(id)
     );
@@ -24,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       cookies
     );
 
-    console.log(
+    debugLog(
       "[Ranking Data API] Backend response status:",
       backendResponse.status
     );
@@ -32,7 +44,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     // If backend returns an error status, try to get text for debugging
     if (!backendResponse.ok) {
       const text = await backendResponse.text();
-      console.error("[Ranking Data API] Backend error response (full):", text);
+      debugError("[Ranking Data API] Backend error response (full):", text);
 
       return NextResponse.json(
         {
@@ -51,9 +63,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
       };
     });
 
-    console.log("[Ranking Data API] Backend response data:", data);
-    console.log("[Ranking Data API] First candidate from backend:", data.ranked_candidates?.[0]);
-    console.log("[Ranking Data API] Has application_id?:", data.ranked_candidates?.[0]?.hasOwnProperty('application_id'));
+    debugLog("[Ranking Data API] Backend response data:", data);
+    debugLog(
+      "[Ranking Data API] First candidate from backend:",
+      data.ranked_candidates?.[0]
+    );
+    debugLog(
+      "[Ranking Data API] Has application_id?:",
+      data.ranked_candidates?.[0]?.hasOwnProperty("application_id")
+    );
 
     return NextResponse.json(data, {
       status: backendResponse.status,
