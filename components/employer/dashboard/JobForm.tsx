@@ -245,8 +245,56 @@ export default function JobForm({
           required
           aria-required="true"
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
-          placeholder={`Briefly describe the role and responsibilities.\n- Own the end-to-end design process\n- Collaborate with product and engineering\n- Deliver high-quality UI flows`}
+          placeholder={`## About the Role\nWe're looking for a **Senior Engineer** to join our team.\n\nResponsibilities:\n- Own the end-to-end design process\n- Collaborate with product and engineering\n\nApply: [Application Form](https://yourcompany.com/apply)`}
         />
+        <div className="mt-2 text-xs text-gray-600 space-y-2">
+          <p className="font-medium text-gray-700">Markdown formatting supported:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5">
+            <div>
+              <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">**Bold text**</code> → <strong>Bold text</strong>
+            </div>
+            <div>
+              <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">[Apply here](url)</code> → clickable link
+            </div>
+            <div>
+              <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">- List item</code> → bullet point
+            </div>
+            <div>
+              <code className="px-1 py-0.5 bg-gray-100 rounded text-gray-700">## Heading</code> → section heading
+            </div>
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-orange-600 hover:text-orange-700 font-medium">
+              Show full example
+            </summary>
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+              <div className="text-gray-500 text-xs mb-2">Input:</div>
+              <pre className="text-xs bg-white p-2 rounded border border-gray-200 overflow-x-auto whitespace-pre-wrap">
+{`## About the Role
+We're hiring a **Senior Developer**.
+
+Responsibilities:
+- Lead technical projects
+- Mentor junior developers
+
+[Apply Now](https://company.com/apply)`}
+              </pre>
+              <div className="text-gray-500 text-xs mb-2">How candidates see it:</div>
+              <div className="text-sm bg-white p-3 rounded border border-gray-200">
+                <h2 className="text-base font-bold mb-2">About the Role</h2>
+                <p className="mb-2">We're hiring a <strong>Senior Developer</strong>.</p>
+                <p className="mb-1">Responsibilities:</p>
+                <ul className="list-disc list-inside mb-2">
+                  <li>Lead technical projects</li>
+                  <li>Mentor junior developers</li>
+                </ul>
+                <a href="https://company.com/apply" target="_blank" rel="noopener noreferrer" className="text-orange-600 underline hover:text-orange-700">
+                  Apply Now
+                </a>
+              </div>
+            </div>
+          </details>
+        </div>
       </div>
 
       {/* Skills */}

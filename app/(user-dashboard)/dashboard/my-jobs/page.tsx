@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { CandidateMyJobsSkeleton } from "@/components/CandidateDashboardSkeletons";
 import Toast from "@/components/Toast";
@@ -846,9 +848,25 @@ function MyJobsPageContent() {
                       <h4 className="text-xl font-bold text-slate-900">
                         Job Description
                       </h4>
-                      <p className="text-slate-600 whitespace-pre-wrap break-words">
-                        {activeJob.description}
-                      </p>
+                      <div className="text-slate-600 prose prose-slate max-w-none">
+                        <ReactMarkdown
+                          rehypePlugins={[rehypeSanitize]}
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-orange-600 underline hover:text-orange-700"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {activeJob.description}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
 

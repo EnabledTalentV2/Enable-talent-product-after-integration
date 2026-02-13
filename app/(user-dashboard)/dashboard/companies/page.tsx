@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Calendar, Globe, MapPin, Users } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
@@ -461,9 +463,25 @@ function CompaniesPageContent() {
                       Job description
                     </h4>
                     {hasDescription ? (
-                      <p className="text-slate-600 whitespace-pre-wrap break-words leading-relaxed">
-                        {visibleDescriptionText}
-                      </p>
+                      <div className="text-slate-600 prose prose-slate max-w-none">
+                        <ReactMarkdown
+                          rehypePlugins={[rehypeSanitize]}
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-orange-600 underline hover:text-orange-700"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {visibleDescriptionText}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       <p className="text-slate-600">
                         Details will be shared after you apply.
