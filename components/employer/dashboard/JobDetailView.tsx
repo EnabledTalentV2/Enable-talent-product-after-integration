@@ -3,6 +3,8 @@
 import { ArrowRight, Briefcase, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 
 interface JobDetail {
   id: string | number;
@@ -162,9 +164,25 @@ export default function JobDetailView({
       {/* About */}
       <div className="mb-8">
         <h3 className="font-bold text-slate-900 mb-3">About the job</h3>
-        <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap break-words">
-          {job.about}
-        </p>
+        <div className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none">
+          <ReactMarkdown
+            rehypePlugins={[rehypeSanitize]}
+            components={{
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-orange-600 underline hover:text-orange-700"
+                >
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {job.about}
+          </ReactMarkdown>
+        </div>
       </div>
 
     </div>

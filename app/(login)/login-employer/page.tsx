@@ -41,6 +41,7 @@ function EmployerLoginPageContent() {
   const [syncRetryCount, setSyncRetryCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const isSubmitting = isLoading || isBootstrapping || isSyncing;
@@ -340,6 +341,7 @@ function EmployerLoginPageContent() {
 
     setError(null);
     setRoleWarning(null);
+    setNeedsPasswordReset(false);
 
     const trimmedEmail = email.trim();
 
@@ -365,6 +367,18 @@ function EmployerLoginPageContent() {
           password: password,
         });
       } catch (signInErr: any) {
+        const signInCode = signInErr?.errors?.[0]?.code;
+        if (signInCode === "strategy_for_user_invalid") {
+          // The user likely signed up with OAuth and has no password factor yet.
+          // Employer OAuth may be disabled in this app, so guide them to set a password via reset.
+          setNeedsSync(false);
+          setNeedsPasswordReset(true);
+          setError(
+            "This account doesn't have a password set yet. Please use 'Forgot password?' to set a password, then try again."
+          );
+          return;
+        }
+
         const msg = String(
           signInErr?.errors?.[0]?.message || signInErr?.message || ""
         ).toLowerCase();
@@ -689,6 +703,14 @@ function EmployerLoginPageContent() {
                   className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
                 >
                   <p>{error}</p>
+                  {needsPasswordReset ? (
+                    <Link
+                      href="/forgot-password?from=employer"
+                      className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500"
+                    >
+                      Set a password (Reset)
+                    </Link>
+                  ) : null}
                   {needsSync && syncRetryCount < 2 && (
                     <>
                       <button
