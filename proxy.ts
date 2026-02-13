@@ -201,6 +201,23 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 
+  // If the backend is failing (5xx) or role lookup errored, redirect authenticated users away
+  // from protected routes to avoid loops and show a stable "try again" page.
+  if (
+    isProtectedRoute(request) &&
+    isAuthenticated &&
+    (backendRoleStatus === null || backendRoleStatus >= 500)
+  ) {
+    const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const next = encodeURIComponent(requestedPath);
+    const status =
+      backendRoleStatus === null ? "unknown" : String(backendRoleStatus);
+    const redirectPath = `/backend-error?next=${next}&status=${encodeURIComponent(
+      status
+    )}`;
+    return NextResponse.redirect(new URL(redirectPath, request.url));
+  }
+
   // Role-based access control - ALWAYS enforce if authenticated
   if (isAuthenticated && userRole) {
     // Prevent job seekers from accessing employer routes
