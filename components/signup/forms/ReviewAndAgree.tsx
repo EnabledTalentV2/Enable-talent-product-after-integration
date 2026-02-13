@@ -8,61 +8,8 @@ type Props = {
 };
 
 export default function ReviewAndAgree({ data, onChange }: Props) {
-  const selectClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
-  const inputClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500";
-
-  const discoverOptions = [
-    "LinkedIn",
-    "Referral",
-    "Job board",
-    "University/College",
-    "Career fair",
-    "Other",
-  ];
-
   return (
     <div className="space-y-6 text-slate-800">
-      <div className="space-y-2">
-        <label
-          htmlFor="reviewAgree-discover"
-          className="block text-base font-semibold text-slate-800"
-        >
-          How did you discover the Enabled Talent platform?
-        </label>
-        <select
-          id="reviewAgree-discover"
-          value={data.discover}
-          onChange={(e) => onChange({ discover: e.target.value })}
-          className={`${selectClass} pr-10`}
-        >
-          <option value="">Select an option</option>
-          {discoverOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <label
-          htmlFor="reviewAgree-comments"
-          className="block text-base font-semibold text-slate-800"
-        >
-          Comments
-        </label>
-        <textarea
-          id="reviewAgree-comments"
-          rows={3}
-          value={data.comments}
-          onChange={(e) => onChange({ comments: e.target.value })}
-          placeholder="Please leave any additional comments or feedback"
-          className={inputClass}
-        />
-      </div>
-
       <div className="space-y-3">
         <p className="text-base font-semibold text-slate-800">
           Terms And Conditions

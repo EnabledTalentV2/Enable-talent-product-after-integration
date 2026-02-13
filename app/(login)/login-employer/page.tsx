@@ -52,6 +52,9 @@ function EmployerLoginPageContent() {
       ? nextPath
       : "/employer/dashboard";
   const hasExistingSession = Boolean(userId) || sessionAlreadyExists;
+  const signupCompletePath = `/signup-employer/oauth-complete${
+    nextPath && nextPath.startsWith("/") ? `?next=${encodeURIComponent(nextPath)}` : ""
+  }`;
 
   useEffect(() => {
     if (!userId) return;
@@ -107,27 +110,21 @@ function EmployerLoginPageContent() {
       })
       .catch((err) => {
         setIsCheckingSession(false);
-        if (isApiError(err) && err.status === 401) {
-          setNeedsSync(true);
-          setError(
-            (prev) =>
-              prev ??
-              "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
-          );
+        if (isApiError(err) && (err.status === 401 || err.status === 403)) {
+          // Backend user missing/deleted: send them through the normal signup-complete flow
+          // which runs clerk-sync and continues onboarding.
+          router.replace(signupCompletePath);
+          return;
         }
       });
-  }, [userId, router, continuePath]);
+  }, [userId, router, continuePath, signupCompletePath]);
 
   useEffect(() => {
     if (syncReason !== "backend_user_missing") return;
     if (!userId) return;
-    setNeedsSync(true);
-    setError(
-      (prev) =>
-        prev ??
-      "Looks like your account data is missing. Please click 'Sync Account' to complete your login."
-    );
-  }, [syncReason, userId]);
+    // Legacy query param: route the user to the signup-complete sync page.
+    router.replace(signupCompletePath);
+  }, [syncReason, userId, router, signupCompletePath]);
 
   useEffect(() => {
     if (authError !== "wrong_role") return;
@@ -436,17 +433,28 @@ function EmployerLoginPageContent() {
           throw userMeError;
         }
 
-        // Check if it's a 401 ApiError (user not in Django)
+        // Check if it's a 401/403 ApiError (user not in Django)
         // This happens when user exists in Clerk but not in backend
-        const is401 = isApiError(userMeError) && userMeError.status === 401;
+        const isBackendUserMissing =
+          isApiError(userMeError) &&
+          (userMeError.status === 401 || userMeError.status === 403);
 
-        console.log("[login-employer] 401 check:", {is401, isApiError: isApiError(userMeError), status: userMeError?.status});
-        console.log("[login-employer] About to check if (is401), value:", is401, typeof is401);
+        console.log("[login-employer] backend user missing check:", {
+          isBackendUserMissing,
+          isApiError: isApiError(userMeError),
+          status: userMeError?.status,
+        });
+        console.log(
+          "[login-employer] About to check if (isBackendUserMissing), value:",
+          isBackendUserMissing,
+          typeof isBackendUserMissing
+        );
 
-        if (is401) {
-          console.log("[login-employer] INSIDE IF BLOCK - User exists in Clerk but not in Django", userMeError);
-          setNeedsSync(true);
-          setError("Looks like your account data is missing. Please click 'Sync Account' to complete your login.");
+        if (isBackendUserMissing) {
+          console.log(
+            "[login-employer] Backend user missing/deleted - redirecting to signup complete flow"
+          );
+          router.replace(signupCompletePath);
           return;
         }
         // Re-throw other errors

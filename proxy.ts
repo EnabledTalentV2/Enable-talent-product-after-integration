@@ -190,14 +190,36 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   // If authenticated in Clerk but missing in backend, block protected routes
-  // to avoid redirect loops and let the user complete backend sync.
-  if (isProtectedRoute(request) && isAuthenticated && backendRoleStatus === 401) {
+  // to avoid redirect loops and send the user through the normal "complete signup"
+  // flow that runs /api/auth/clerk-sync and continues onboarding.
+  // Backend may respond 401 or 403 depending on the "user not found" behavior.
+  if (
+    isProtectedRoute(request) &&
+    isAuthenticated &&
+    (backendRoleStatus === 401 || backendRoleStatus === 403)
+  ) {
     const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     const next = encodeURIComponent(requestedPath);
-    const reason = "backend_user_missing";
     const redirectPath = isEmployerRoute
-      ? `/login-employer?next=${next}&reason=${reason}`
-      : `/login-talent?next=${next}&reason=${reason}`;
+      ? `/signup-employer/oauth-complete?next=${next}`
+      : `/signup/oauth-complete?next=${next}`;
+    return NextResponse.redirect(new URL(redirectPath, request.url));
+  }
+
+  // If the backend is failing (5xx) or role lookup errored, redirect authenticated users away
+  // from protected routes to avoid loops and show a stable "try again" page.
+  if (
+    isProtectedRoute(request) &&
+    isAuthenticated &&
+    (backendRoleStatus === null || backendRoleStatus >= 500)
+  ) {
+    const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const next = encodeURIComponent(requestedPath);
+    const status =
+      backendRoleStatus === null ? "unknown" : String(backendRoleStatus);
+    const redirectPath = `/backend-error?next=${next}&status=${encodeURIComponent(
+      status
+    )}`;
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 

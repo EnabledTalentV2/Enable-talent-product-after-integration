@@ -32,11 +32,12 @@ export default function Certification({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const entries = data.entries;
   const isNone = data.noCertification;
-  const showDeleteWarning = !suppressDeleteWarning && isNone && entries.length > 0;
+  const showDeleteWarning =
+    !suppressDeleteWarning && isNone && entries.length > 0;
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
-        0
+        0,
       )
     : 0;
 
@@ -77,10 +78,18 @@ export default function Certification({
         <h3 className="text-lg font-semibold text-slate-900">Certifications</h3>
         {errorCount > 0 && !isNone ? (
           <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-            {String(errorCount).padStart(2, "0")} error
+            {String(errorCount).padStart(2, "0")}{" "}
+            {errorCount === 1 ? "field required" : "fields required"}
           </span>
         ) : null}
       </div>
+
+      {errorCount > 0 && !isNone && entries.length === 0 ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Please add at least one certification or check "No certification"
+          below to continue.
+        </div>
+      ) : null}
 
       <label className="flex items-center gap-2 text-base font-medium text-slate-700">
         <input
