@@ -512,7 +512,7 @@ function EmployerLoginPageContent() {
             </div>
 
             {/* OAuth Login Buttons */}
-            <div className="space-y-3 mb-6">
+            {/* <div className="space-y-3 mb-6">
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn("oauth_google")}
@@ -538,17 +538,17 @@ function EmployerLoginPageContent() {
                 </svg>
                 Continue with GitHub
               </button>
-            </div>
+            </div> */}
 
             {/* Divider */}
-            <div className="relative mb-6">
+            {/* <div className="relative mb-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-white px-3 text-gray-400">or login with email</span>
               </div>
-            </div>
+            </div> */}
 
             <form
               className="space-y-4"
