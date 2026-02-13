@@ -52,8 +52,10 @@ function EmployerLoginPageContent() {
       ? nextPath
       : "/employer/dashboard";
   const hasExistingSession = Boolean(userId) || sessionAlreadyExists;
-  const signupCompletePath = `/signup-employer/oauth-complete${
-    nextPath && nextPath.startsWith("/") ? `?next=${encodeURIComponent(nextPath)}` : ""
+  const setupRequiredPath = `/account/setup-required?portal=employer${
+    nextPath && nextPath.startsWith("/")
+      ? `&next=${encodeURIComponent(nextPath)}`
+      : ""
   }`;
 
   useEffect(() => {
@@ -111,20 +113,19 @@ function EmployerLoginPageContent() {
       .catch((err) => {
         setIsCheckingSession(false);
         if (isApiError(err) && (err.status === 401 || err.status === 403)) {
-          // Backend user missing/deleted: send them through the normal signup-complete flow
-          // which runs clerk-sync and continues onboarding.
-          router.replace(signupCompletePath);
+          // Backend user missing/deleted: show a clear CTA so the user can continue setup.
+          router.replace(setupRequiredPath);
           return;
         }
       });
-  }, [userId, router, continuePath, signupCompletePath]);
+  }, [userId, router, continuePath, setupRequiredPath]);
 
   useEffect(() => {
     if (syncReason !== "backend_user_missing") return;
     if (!userId) return;
-    // Legacy query param: route the user to the signup-complete sync page.
-    router.replace(signupCompletePath);
-  }, [syncReason, userId, router, signupCompletePath]);
+    // Legacy query param: show the setup-required page instead of auto-syncing.
+    router.replace(setupRequiredPath);
+  }, [syncReason, userId, router, setupRequiredPath]);
 
   useEffect(() => {
     if (authError !== "wrong_role") return;
@@ -452,9 +453,9 @@ function EmployerLoginPageContent() {
 
         if (isBackendUserMissing) {
           console.log(
-            "[login-employer] Backend user missing/deleted - redirecting to signup complete flow"
+            "[login-employer] Backend user missing/deleted - redirecting to setup required"
           );
-          router.replace(signupCompletePath);
+          router.replace(setupRequiredPath);
           return;
         }
         // Re-throw other errors

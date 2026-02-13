@@ -200,9 +200,8 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   ) {
     const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
     const next = encodeURIComponent(requestedPath);
-    const redirectPath = isEmployerRoute
-      ? `/signup-employer/oauth-complete?next=${next}`
-      : `/signup/oauth-complete?next=${next}`;
+    const portal = isEmployerRoute ? "employer" : "talent";
+    const redirectPath = `/account/setup-required?portal=${portal}&next=${next}`;
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 
