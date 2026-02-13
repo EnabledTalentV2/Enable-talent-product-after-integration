@@ -488,7 +488,7 @@ function SignupEmployerPageContent() {
                 </div>
 
                 {/* OAuth Sign Up Buttons */}
-                <div className="space-y-3 mb-6" aria-busy={oauthLoadingProvider !== null}>
+                {/* <div className="space-y-3 mb-6" aria-busy={oauthLoadingProvider !== null}>
                   <button
                     type="button"
                     disabled={oauthLoadingProvider !== null}
@@ -537,17 +537,17 @@ function SignupEmployerPageContent() {
                       Connecting to {oauthLoadingProvider === "google" ? "Google" : "GitHub"}...
                     </p>
                   ) : null}
-                </div>
+                </div> */}
 
                 {/* Divider */}
-                <div className="relative mb-6">
+                {/* <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs">
                     <span className="bg-white px-3 text-gray-400">or sign up with email</span>
                   </div>
-                </div>
+                </div> */}
 
                 <form
                   className="space-y-4"

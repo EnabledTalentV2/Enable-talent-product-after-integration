@@ -32,13 +32,14 @@ function LoginPageContent() {
   const setCandidateError = useCandidateProfileStore((s) => s.setError);
   const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const { signIn, setActive } = useSignIn();
-  const { userId, signOut } = useAuth();
+  const { userId, signOut, isLoaded } = useAuth();
   const { user } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionAlreadyExists, setSessionAlreadyExists] = useState(false);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
   const warningSummaryRef = useRef<HTMLDivElement | null>(null);
   const backendCheckedRef = useRef(false);
@@ -48,10 +49,15 @@ function LoginPageContent() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [syncRetryCount, setSyncRetryCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const syncReason = searchParams.get("reason");
   const authError = searchParams.get("error");
+  const nextPath = searchParams.get("next") ?? searchParams.get("returnUrl");
+  const continuePath =
+    nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard/home";
+  const hasExistingSession = Boolean(userId) || sessionAlreadyExists;
 
   // If user is already signed in (common after OAuth redirect) but missing in Django,
   // preload Clerk identity so the "Sync Account" action can run.
@@ -79,22 +85,37 @@ function LoginPageContent() {
   useEffect(() => {
     if (!userId) return;
     if (backendCheckedRef.current) return;
+    // Don't run this during an active login — handleSubmit handles its own redirect
+    if (isLoading) return;
     backendCheckedRef.current = true;
 
     // If user isn't in Django yet, prompt for sync.
     // If this session belongs to an employer, show wrong-portal guidance.
+    setIsCheckingSession(true);
     void apiRequest<unknown>("/api/user/me", { method: "GET" })
       .then((userData) => {
         const derivedRole = deriveUserRoleFromUserData(userData);
         if (derivedRole === "employer") {
+          setIsCheckingSession(false);
           setNeedsSync(false);
           setError(null);
           setRoleWarning(
             "You are currently signed in as an Employer. Please continue from the Employer login."
           );
+          return;
         }
+
+        if (derivedRole === "candidate") {
+          // Keep isCheckingSession true — we're redirecting away
+          router.replace(continuePath);
+          return;
+        }
+
+        // Unknown role — stop checking so the user can act
+        setIsCheckingSession(false);
       })
       .catch((err) => {
+        setIsCheckingSession(false);
         if (isApiError(err) && err.status === 401) {
           setNeedsSync(true);
           setError(
@@ -104,7 +125,7 @@ function LoginPageContent() {
           );
         }
       });
-  }, [userId]);
+  }, [userId, router, continuePath]);
 
   useEffect(() => {
     if (syncReason !== "backend_user_missing") return;
@@ -127,7 +148,33 @@ function LoginPageContent() {
   }, [authError]);
 
   const handleOAuthSignIn = async (strategy: OAuthStrategy) => {
-    if (!signIn) return;
+    if (!signIn) {
+      setError("Login not initialized yet. Please refresh the page and try again.");
+      return;
+    }
+
+    // Prevent Clerk throwing "You're already signed in." if the user clicks quickly.
+    if (!isLoaded) {
+      setError("Loading authentication state... please wait a moment and try again.");
+      return;
+    }
+
+    if (hasExistingSession) {
+      setSessionAlreadyExists(true);
+      if (needsSync) {
+        setError(
+          "You're already signed in, but your account isn't synced yet. Please click 'Sync Account' below."
+        );
+      } else if (roleWarning) {
+        setError(
+          "This browser already has an Employer session. Use Employer Login or sign out first."
+        );
+      } else {
+        // Show the "already signed in" banner instead of an error.
+        setError(null);
+      }
+      return;
+    }
     try {
       await signIn.authenticateWithRedirect({
         strategy,
@@ -135,10 +182,19 @@ function LoginPageContent() {
         redirectUrlComplete: "/dashboard/home",
       });
     } catch (err: any) {
+      const message = err?.errors?.[0]?.message || err?.message || "";
+      const normalized = String(message).toLowerCase();
+      if (
+        normalized.includes("already signed in") ||
+        normalized.includes("session already exists")
+      ) {
+        setSessionAlreadyExists(true);
+        setError(null);
+        return;
+      }
+
       console.error("[login-talent] OAuth error:", err);
-      setError(
-        err.errors?.[0]?.message || "OAuth login failed. Please try again."
-      );
+      setError(message || "OAuth login failed. Please try again.");
     }
   };
 
@@ -286,10 +342,23 @@ function LoginPageContent() {
       return;
     }
 
-    if (userId && roleWarning) {
-      setError(
-        "This browser already has an Employer session. Use Employer Login or sign out first."
-      );
+    if (!isLoaded) {
+      setError("Loading authentication state... please wait a moment and try again.");
+      return;
+    }
+
+    if (hasExistingSession) {
+      if (needsSync) {
+        setError(
+          "You're already signed in, but your account isn't synced yet. Please click 'Sync Account' below."
+        );
+      } else if (roleWarning) {
+        setError(
+          "This browser already has an Employer session. Use Employer Login or sign out first."
+        );
+      } else {
+        setError("You're already signed in. Please wait while we redirect you.");
+      }
       return;
     }
 
@@ -312,10 +381,46 @@ function LoginPageContent() {
         return;
       }
 
-      const clerkSignInResult = await signIn.create({
-        identifier: trimmedEmail,
-        password: password,
-      });
+      let clerkSignInResult;
+      try {
+        clerkSignInResult = await signIn.create({
+          identifier: trimmedEmail,
+          password: password,
+        });
+      } catch (signInErr: any) {
+        const msg = String(
+          signInErr?.errors?.[0]?.message || signInErr?.message || ""
+        ).toLowerCase();
+
+        if (msg.includes("already signed in") || msg.includes("session already exists")) {
+          // Session exists from another tab — skip Clerk sign-in, go straight to redirect
+          setSessionAlreadyExists(true);
+          setIsCheckingSession(true);
+          setError(null);
+
+          try {
+            const userData = await apiRequest<unknown>("/api/user/me", { method: "GET" });
+            const derivedRole = deriveUserRoleFromUserData(userData);
+            if (derivedRole === "candidate") {
+              router.replace(continuePath);
+              return;
+            }
+            if (derivedRole === "employer") {
+              setIsCheckingSession(false);
+              setRoleWarning(
+                "This is an Employer account. Please log in from the Employer section."
+              );
+              return;
+            }
+            setIsCheckingSession(false);
+          } catch {
+            setIsCheckingSession(false);
+          }
+          return;
+        }
+        // Not a session error — rethrow to outer catch
+        throw signInErr;
+      }
 
       if (clerkSignInResult.status !== "complete") {
         setError("Login failed. Please try again.");
@@ -325,6 +430,9 @@ function LoginPageContent() {
 
       // Step 2: Set the active session
       await setActive({ session: clerkSignInResult.createdSessionId });
+
+      // Give Clerk a moment to propagate the session cookie to the server
+      await new Promise((r) => setTimeout(r, 500));
 
       // Store Clerk user info for potential sync
       // Clerk types don't expose createdUserId on SignInResource; rely on useAuth().userId instead.
@@ -418,6 +526,7 @@ function LoginPageContent() {
         err.errors?.[0]?.message ||
         err.message ||
         "Something went wrong. Please try again.";
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -501,7 +610,8 @@ function LoginPageContent() {
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn("oauth_google")}
-                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2"
+                disabled={!isLoaded || hasExistingSession}
+                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -514,7 +624,8 @@ function LoginPageContent() {
               <button
                 type="button"
                 onClick={() => handleOAuthSignIn("oauth_github")}
-                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2"
+                disabled={!isLoaded || hasExistingSession}
+                className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
@@ -564,6 +675,45 @@ function LoginPageContent() {
                   </div>
                 </div>
               ) : null}
+
+              {hasExistingSession && !needsSync && !roleWarning && !isLoading && isCheckingSession ? (
+                <div
+                  id="talent-login-redirecting"
+                  role="status"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
+                >
+                  <p>You're already signed in. Redirecting to your dashboard...</p>
+                </div>
+              ) : null}
+
+              {hasExistingSession && !needsSync && !roleWarning && !isLoading && !isCheckingSession ? (
+                <div
+                  id="talent-login-already-signed-in"
+                  role="status"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
+                >
+                  <p>
+                    You're already signed in in this browser. Continue to your
+                    dashboard or sign out to use a different account.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Link
+                      href={continuePath}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
+                    >
+                      Continue
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               {error ? (
                 <div
                   ref={errorSummaryRef}
@@ -681,7 +831,7 @@ function LoginPageContent() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isLoaded || hasExistingSession}
                 className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoading ? "Signing in..." : "Login"}

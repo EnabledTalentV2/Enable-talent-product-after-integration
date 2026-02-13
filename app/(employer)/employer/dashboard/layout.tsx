@@ -24,33 +24,51 @@ export default function EmployerDashboardLayout({
       // Wait for Clerk auth to load
       if (!isLoaded) return;
 
-      // Redirect if not signed in
-      if (!isSignedIn) {
-        router.replace("/login-employer");
-        return;
-      }
+      // After setActive() on the login page, Clerk's client-side
+      // isSignedIn may briefly be false before it syncs. Don't redirect
+      // based on isSignedIn alone — try the API call first so we don't
+      // create a redirect loop (dashboard → login → dashboard).
+      const maxRetries = 4;
+      const delayMs = [0, 1500, 2500, 3500];
 
-      try {
-        const response = await fetch("/api/user/me", {
-          credentials: "include",
-        });
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        if (!active) return;
 
-        if (!response.ok) {
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, delayMs[attempt]));
+          if (!active) return;
+        }
+
+        try {
+          const response = await fetch("/api/user/me", {
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            if (active) {
+              fetchJobs()
+                .catch(() => {})
+                .finally(() => {
+                  if (active) setLoading(false);
+                });
+            }
+            return;
+          }
+
+          // Retryable server errors (401 = no session yet, 500 = token not ready)
+          if ((response.status === 401 || response.status === 500) && attempt < maxRetries - 1) {
+            continue;
+          }
+
+          // Final attempt failed — redirect to login
+          router.replace("/login-employer");
+          return;
+        } catch (error) {
+          console.error("Auth check failed:", error);
+          if (attempt < maxRetries - 1) continue;
           router.replace("/login-employer");
           return;
         }
-
-        if (active) {
-          // Fetch jobs after auth is confirmed
-          fetchJobs()
-            .catch(() => {})
-            .finally(() => {
-              if (active) setLoading(false);
-            });
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        router.replace("/login-employer");
       }
     };
 
@@ -59,6 +77,7 @@ export default function EmployerDashboardLayout({
     return () => {
       active = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- isSignedIn kept for array size stability; auth is verified via API call
   }, [isLoaded, isSignedIn, fetchJobs, router]);
 
   if (loading) {
