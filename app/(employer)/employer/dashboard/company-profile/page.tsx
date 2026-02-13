@@ -260,9 +260,8 @@ export default function EmployerCompanyProfilePage() {
           <h2 className="text-xl font-bold text-slate-900">Delete Account</h2>
         </div>
         <p className="text-sm text-slate-600">
-          This permanently deletes your organization and user account from the
-          backend. Your login provider account will remain intact. This action
-          cannot be undone.
+          Deleting your account will permanently remove your organization,
+          job postings, and all associated data. This action cannot be undone.
         </p>
         {deleteStatusMessage ? (
           <LiveRegion
@@ -302,7 +301,7 @@ export default function EmployerCompanyProfilePage() {
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         title="Delete your account?"
-        message="This permanently deletes your organization, all associated jobs, and your user account from the backend. This action cannot be undone."
+        message="This will permanently delete your organization, job postings, and account. You will need to sign up again to use Enabled Talent. This cannot be undone."
         confirmLabel="Delete account"
         cancelLabel="Keep account"
         variant="danger"
