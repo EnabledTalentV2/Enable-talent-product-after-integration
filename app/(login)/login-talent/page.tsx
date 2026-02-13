@@ -388,6 +388,14 @@ function LoginPageContent() {
           password: password,
         });
       } catch (signInErr: any) {
+        const signInCode = signInErr?.errors?.[0]?.code;
+        if (signInCode === "strategy_for_user_invalid") {
+          setError(
+            "This account doesn't have a password yet. Please sign in with Google/GitHub, or use 'Forgot password' to set one."
+          );
+          return;
+        }
+
         const msg = String(
           signInErr?.errors?.[0]?.message || signInErr?.message || ""
         ).toLowerCase();
