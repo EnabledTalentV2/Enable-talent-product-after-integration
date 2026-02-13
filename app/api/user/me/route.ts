@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,6 +112,9 @@ export async function DELETE(request: NextRequest) {
   try {
     const cookies = request.headers.get("cookie") || "";
 
+    // Capture Clerk userId upfront before any backend calls
+    const { userId: clerkUserId } = await auth();
+
     const meResponse = await backendFetch(
       API_ENDPOINTS.users.me,
       { method: "GET" },
@@ -143,8 +147,29 @@ export async function DELETE(request: NextRequest) {
       cookies
     );
 
-    if (backendResponse.status === 204) {
-      return new NextResponse(null, { status: 204 });
+    const djangoDeleteSuccess =
+      backendResponse.status === 200 || backendResponse.status === 204;
+
+    if (djangoDeleteSuccess) {
+      // Django user deleted — now delete the Clerk user
+      if (clerkUserId) {
+        try {
+          const clerk = await clerkClient();
+          await clerk.users.deleteUser(clerkUserId);
+        } catch (clerkError) {
+          // Log but don't fail — Django user is already gone
+          console.error(
+            "[api/user/me DELETE] Failed to delete Clerk user:",
+            clerkError
+          );
+        }
+      } else {
+        console.warn(
+          "[api/user/me DELETE] No Clerk userId found in session; skipping Clerk deletion"
+        );
+      }
+
+      return new NextResponse(null, { status: backendResponse.status });
     }
 
     const data = await backendResponse.json().catch(() => ({}));
