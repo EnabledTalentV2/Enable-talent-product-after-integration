@@ -40,6 +40,7 @@ function EmployerLoginPageContent() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [syncRetryCount, setSyncRetryCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const isSubmitting = isLoading || isBootstrapping || isSyncing;
@@ -76,12 +77,17 @@ function EmployerLoginPageContent() {
   useEffect(() => {
     if (!userId) return;
     if (backendCheckedRef.current) return;
+    // Don't run this during an active login — handleSubmit handles its own redirect
+    if (isLoading || isBootstrapping) return;
     backendCheckedRef.current = true;
 
+    // Auto-redirect: if employer is already logged in, send them to dashboard immediately
+    setIsCheckingSession(true);
     void apiRequest<unknown>("/api/user/me", { method: "GET" })
       .then((userData) => {
         const derivedRole = deriveUserRoleFromUserData(userData);
         if (derivedRole === "candidate") {
+          setIsCheckingSession(false);
           setNeedsSync(false);
           setError(null);
           setRoleWarning(
@@ -91,10 +97,16 @@ function EmployerLoginPageContent() {
         }
 
         if (derivedRole === "employer") {
+          // Keep isCheckingSession true — we're redirecting away
           router.replace(continuePath);
+          return;
         }
+
+        // Unknown role — stop checking so the user can act
+        setIsCheckingSession(false);
       })
       .catch((err) => {
+        setIsCheckingSession(false);
         if (isApiError(err) && err.status === 401) {
           setNeedsSync(true);
           setError(
@@ -348,10 +360,46 @@ function EmployerLoginPageContent() {
         return;
       }
 
-      const clerkSignInResult = await signIn.create({
-        identifier: trimmedEmail,
-        password: password,
-      });
+      let clerkSignInResult;
+      try {
+        clerkSignInResult = await signIn.create({
+          identifier: trimmedEmail,
+          password: password,
+        });
+      } catch (signInErr: any) {
+        const msg = String(
+          signInErr?.errors?.[0]?.message || signInErr?.message || ""
+        ).toLowerCase();
+
+        if (msg.includes("already signed in") || msg.includes("session already exists")) {
+          // Session exists from another tab — skip Clerk sign-in, go straight to redirect
+          setSessionAlreadyExists(true);
+          setIsCheckingSession(true);
+          setError(null);
+
+          try {
+            const userData = await apiRequest<unknown>("/api/user/me", { method: "GET" });
+            const derivedRole = deriveUserRoleFromUserData(userData);
+            if (derivedRole === "employer") {
+              router.replace(continuePath);
+              return;
+            }
+            if (derivedRole === "candidate") {
+              setIsCheckingSession(false);
+              setRoleWarning(
+                "This is a Talent account. Please log in from the Talent section."
+              );
+              return;
+            }
+            setIsCheckingSession(false);
+          } catch {
+            setIsCheckingSession(false);
+          }
+          return;
+        }
+        // Not a session error — rethrow to outer catch
+        throw signInErr;
+      }
 
       if (clerkSignInResult.status !== "complete") {
         setError("Login failed. Please try again.");
@@ -360,6 +408,9 @@ function EmployerLoginPageContent() {
 
       // Step 2: Set the active session
       await setActive({ session: clerkSignInResult.createdSessionId });
+
+      // Give Clerk a moment to propagate the session cookie to the server
+      await new Promise((r) => setTimeout(r, 500));
 
       // Store Clerk user info for potential sync
       // Clerk types don't expose createdUserId on SignInResource; rely on useAuth().userId instead.
@@ -582,7 +633,17 @@ function EmployerLoginPageContent() {
                 </div>
               ) : null}
 
-              {hasExistingSession && !needsSync && !roleWarning ? (
+              {hasExistingSession && !needsSync && !roleWarning && !isSubmitting && isCheckingSession ? (
+                <div
+                  id="employer-login-redirecting"
+                  role="status"
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
+                >
+                  <p>You're already signed in. Redirecting to your dashboard...</p>
+                </div>
+              ) : null}
+
+              {hasExistingSession && !needsSync && !roleWarning && !isSubmitting && !isCheckingSession ? (
                 <div
                   id="employer-login-already-signed-in"
                   role="status"

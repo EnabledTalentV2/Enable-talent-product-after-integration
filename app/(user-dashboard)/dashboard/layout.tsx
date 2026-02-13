@@ -204,28 +204,56 @@ export default function DashboardLayoutPage({
       // Wait for Clerk auth to load
       if (!isLoaded) return;
 
-      // Redirect if not signed in
-      if (!isSignedIn) {
-        if (active) setLoading(false);
-        router.replace("/login-talent");
-        return;
-      }
-
       // Wait for Zustand to hydrate from localStorage
       await waitForHydration();
-      try {
-        const response = await fetch("/api/user/me", {
-          credentials: "include",
-        });
 
-        if (!response.ok) {
-          // Clear loading state before redirect to prevent stuck UI
+      // After setActive() on the login page, Clerk's client-side
+      // isSignedIn may briefly be false before it syncs. Don't redirect
+      // based on isSignedIn alone — try the API call first so we don't
+      // create a redirect loop (dashboard → login → dashboard).
+      const maxRetries = 4;
+      const delayMs = [0, 1500, 2500, 3500];
+      let rawData: Record<string, unknown> | null = null;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        if (!active) return;
+
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, delayMs[attempt]));
+          if (!active) return;
+        }
+
+        try {
+          const response = await fetch("/api/user/me", {
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            rawData = await response.json();
+            break;
+          }
+
+          // Retryable errors (401 = no session yet, 500 = token not ready)
+          if ((response.status === 401 || response.status === 500) && attempt < maxRetries - 1) {
+            continue;
+          }
+
+          // Final attempt failed — redirect to login
+          if (active) setLoading(false);
+          router.replace("/login-talent");
+          return;
+        } catch (error) {
+          console.error("Auth check failed:", error);
+          if (attempt < maxRetries - 1) continue;
           if (active) setLoading(false);
           router.replace("/login-talent");
           return;
         }
+      }
 
-        const rawData = await response.json();
+      if (!rawData || !active) return;
+
+      try {
 
         const refreshCandidateProfile = async (userData: unknown) => {
           const candidateFlag =
@@ -350,6 +378,7 @@ export default function DashboardLayoutPage({
     return () => {
       active = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- isSignedIn kept for array size stability; auth is verified via API call
   }, [isLoaded, isSignedIn, router, setUserData, patchUserData]);
 
   if (loading) {

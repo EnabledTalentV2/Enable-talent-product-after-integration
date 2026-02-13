@@ -49,6 +49,7 @@ function LoginPageContent() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [syncRetryCount, setSyncRetryCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const syncReason = searchParams.get("reason");
@@ -84,14 +85,18 @@ function LoginPageContent() {
   useEffect(() => {
     if (!userId) return;
     if (backendCheckedRef.current) return;
+    // Don't run this during an active login — handleSubmit handles its own redirect
+    if (isLoading) return;
     backendCheckedRef.current = true;
 
     // If user isn't in Django yet, prompt for sync.
     // If this session belongs to an employer, show wrong-portal guidance.
+    setIsCheckingSession(true);
     void apiRequest<unknown>("/api/user/me", { method: "GET" })
       .then((userData) => {
         const derivedRole = deriveUserRoleFromUserData(userData);
         if (derivedRole === "employer") {
+          setIsCheckingSession(false);
           setNeedsSync(false);
           setError(null);
           setRoleWarning(
@@ -101,10 +106,16 @@ function LoginPageContent() {
         }
 
         if (derivedRole === "candidate") {
+          // Keep isCheckingSession true — we're redirecting away
           router.replace(continuePath);
+          return;
         }
+
+        // Unknown role — stop checking so the user can act
+        setIsCheckingSession(false);
       })
       .catch((err) => {
+        setIsCheckingSession(false);
         if (isApiError(err) && err.status === 401) {
           setNeedsSync(true);
           setError(
@@ -370,10 +381,46 @@ function LoginPageContent() {
         return;
       }
 
-      const clerkSignInResult = await signIn.create({
-        identifier: trimmedEmail,
-        password: password,
-      });
+      let clerkSignInResult;
+      try {
+        clerkSignInResult = await signIn.create({
+          identifier: trimmedEmail,
+          password: password,
+        });
+      } catch (signInErr: any) {
+        const msg = String(
+          signInErr?.errors?.[0]?.message || signInErr?.message || ""
+        ).toLowerCase();
+
+        if (msg.includes("already signed in") || msg.includes("session already exists")) {
+          // Session exists from another tab — skip Clerk sign-in, go straight to redirect
+          setSessionAlreadyExists(true);
+          setIsCheckingSession(true);
+          setError(null);
+
+          try {
+            const userData = await apiRequest<unknown>("/api/user/me", { method: "GET" });
+            const derivedRole = deriveUserRoleFromUserData(userData);
+            if (derivedRole === "candidate") {
+              router.replace(continuePath);
+              return;
+            }
+            if (derivedRole === "employer") {
+              setIsCheckingSession(false);
+              setRoleWarning(
+                "This is an Employer account. Please log in from the Employer section."
+              );
+              return;
+            }
+            setIsCheckingSession(false);
+          } catch {
+            setIsCheckingSession(false);
+          }
+          return;
+        }
+        // Not a session error — rethrow to outer catch
+        throw signInErr;
+      }
 
       if (clerkSignInResult.status !== "complete") {
         setError("Login failed. Please try again.");
@@ -383,6 +430,9 @@ function LoginPageContent() {
 
       // Step 2: Set the active session
       await setActive({ session: clerkSignInResult.createdSessionId });
+
+      // Give Clerk a moment to propagate the session cookie to the server
+      await new Promise((r) => setTimeout(r, 500));
 
       // Store Clerk user info for potential sync
       // Clerk types don't expose createdUserId on SignInResource; rely on useAuth().userId instead.
@@ -476,6 +526,7 @@ function LoginPageContent() {
         err.errors?.[0]?.message ||
         err.message ||
         "Something went wrong. Please try again.";
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -625,7 +676,17 @@ function LoginPageContent() {
                 </div>
               ) : null}
 
-              {hasExistingSession && !needsSync && !roleWarning ? (
+              {hasExistingSession && !needsSync && !roleWarning && !isLoading && isCheckingSession ? (
+                <div
+                  id="talent-login-redirecting"
+                  role="status"
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
+                >
+                  <p>You're already signed in. Redirecting to your dashboard...</p>
+                </div>
+              ) : null}
+
+              {hasExistingSession && !needsSync && !roleWarning && !isLoading && !isCheckingSession ? (
                 <div
                   id="talent-login-already-signed-in"
                   role="status"
