@@ -82,3 +82,44 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const cookies = request.headers.get("cookie") || "";
+    const { id: organizationId } = await params;
+
+    console.log(
+      "[Organizations API] DELETE ->",
+      `${API_ENDPOINTS.organizations.list}${organizationId}/`
+    );
+
+    const backendResponse = await backendFetch(
+      `${API_ENDPOINTS.organizations.list}${organizationId}/`,
+      {
+        method: "DELETE",
+      },
+      cookies
+    );
+
+    console.log("[Organizations API] DELETE <-", backendResponse.status);
+
+    if (backendResponse.status === 204) {
+      return new NextResponse(null, { status: 204 });
+    }
+
+    const data = await backendResponse.json().catch(() => ({}));
+
+    return NextResponse.json(data, {
+      status: backendResponse.status,
+    });
+  } catch (error) {
+    console.error("Delete organization error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete organization" },
+      { status: 500 }
+    );
+  }
+}

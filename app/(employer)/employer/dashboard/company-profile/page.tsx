@@ -2,16 +2,27 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect } from "react";
-import { ArrowRight, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import { toEmployerOrganizationInfo } from "@/lib/organizationUtils";
+import { useAuth } from "@clerk/nextjs";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
+import LiveRegion from "@/components/a11y/LiveRegion";
 
 export default function EmployerCompanyProfilePage() {
+  const router = useRouter();
+  const { signOut } = useAuth();
   const currentYear = new Date().getFullYear();
   const employerData = useEmployerDataStore((s) => s.employerData);
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
+  const resetEmployerData = useEmployerDataStore((s) => s.resetEmployerData);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<string | null>(null);
   const organizationInfo = employerData?.organizationInfo ?? {
     organizationName: "",
     aboutOrganization: "",
@@ -74,6 +85,44 @@ export default function EmployerCompanyProfilePage() {
   const hasWebsite = Boolean(displayData.website.trim());
   const hasLinkedin = Boolean(displayData.linkedin.trim());
   const hasAvatar = Boolean(displayData.avatarUrl.trim());
+
+  const deleteStatusMessage = deleteError || deleteSuccess;
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    setDeleteSuccess(null);
+    setIsDeleteDialogOpen(false);
+
+    try {
+      // Step 1: Delete the organization from Django
+      const orgId = organizationInfo.organizationId;
+      if (orgId) {
+        await apiRequest(`/api/organizations/${orgId}`, {
+          method: "DELETE",
+        });
+      }
+
+      // Step 2: Delete the Django user
+      await apiRequest("/api/user/me", {
+        method: "DELETE",
+      });
+
+      // Step 3: Clear local stores, sign out, and redirect
+      resetEmployerData();
+      await signOut();
+      router.replace("/login-employer");
+    } catch (error) {
+      setDeleteError(
+        getApiErrorMessage(
+          error,
+          "Failed to delete your account. Please try again."
+        )
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-[1200px] space-y-6 py-8 px-6 ">
@@ -204,6 +253,43 @@ export default function EmployerCompanyProfilePage() {
         </div>
       </div>
 
+      {/* Delete Account */}
+      <div className="rounded-[32px] bg-white p-8 shadow-sm border border-red-200">
+        <div className="flex items-center gap-3 mb-4">
+          <Trash2 className="h-5 w-5 text-red-600" />
+          <h2 className="text-xl font-bold text-slate-900">Delete Account</h2>
+        </div>
+        <p className="text-sm text-slate-600">
+          This permanently deletes your organization and user account from the
+          backend. Your login provider account will remain intact. This action
+          cannot be undone.
+        </p>
+        {deleteStatusMessage ? (
+          <LiveRegion
+            politeness={deleteError ? "assertive" : "polite"}
+            visible
+            className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+              deleteError
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+            }`}
+          >
+            {deleteStatusMessage}
+          </LiveRegion>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteError(null);
+            setIsDeleteDialogOpen(true);
+          }}
+          disabled={isDeleting}
+          className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isDeleting ? "Deleting..." : "Delete Account"}
+        </button>
+      </div>
+
       {/* Footer */}
       <div className="mt-12 text-center text-sm text-slate-500">
         <p>
@@ -212,6 +298,17 @@ export default function EmployerCompanyProfilePage() {
           acknowledge the website as the source.
         </p>
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Delete your account?"
+        message="This permanently deletes your organization, all associated jobs, and your user account from the backend. This action cannot be undone."
+        confirmLabel="Delete account"
+        cancelLabel="Keep account"
+        variant="danger"
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+      />
     </section>
   );
 }
