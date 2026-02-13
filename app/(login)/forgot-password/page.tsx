@@ -159,12 +159,12 @@ function ForgotPasswordContent() {
         } catch (userMeError: unknown) {
           // User exists in Clerk but not Django - redirect to login page
           // which has the sync account flow
-          if (isApiError(userMeError) && userMeError.status === 401) {
-            const loginPath =
-              fromPage === "employer"
-                ? "/login-employer?reason=backend_user_missing"
-                : "/login-talent";
-            router.push(loginPath);
+          if (
+            isApiError(userMeError) &&
+            (userMeError.status === 401 || userMeError.status === 403)
+          ) {
+            const portal = fromPage === "employer" ? "employer" : "talent";
+            router.push(`/account/setup-required?portal=${portal}`);
             return;
           }
           // Other errors - still show success, let user login manually
