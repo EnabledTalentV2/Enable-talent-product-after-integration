@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { useCandidateProfileStore } from "@/lib/candidateProfileStore";
 import { initialUserData } from "@/lib/userDataDefaults";
@@ -91,6 +93,8 @@ const toMonthYearLabel = (value?: string) => {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { signOut } = useAuth();
   const rawUserData = useUserDataStore((s) => s.userData);
   const resetUserData = useUserDataStore((s) => s.resetUserData);
   const isProfileLoading = useCandidateProfileStore((s) => s.isLoading);
@@ -276,9 +280,8 @@ export default function ProfilePage() {
       });
       resetCandidateProfile();
       resetUserData();
-      setDeleteAccountSuccess(
-        "Your account has been deleted. You can sign up again anytime."
-      );
+      await signOut();
+      router.replace("/login-talent");
     } catch (error) {
       setDeleteAccountError(
         getApiErrorMessage(

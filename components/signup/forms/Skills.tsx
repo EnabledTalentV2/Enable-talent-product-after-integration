@@ -28,7 +28,8 @@ const levelColors: Record<SkillLevel, string> = {
 
 export default function Skills({ data, errors, onChange }: Props) {
   const skillList: SkillEntry[] = data.primaryList || [];
-  const [selectedLevel, setSelectedLevel] = useState<SkillLevel>("intermediate");
+  const [selectedLevel, setSelectedLevel] =
+    useState<SkillLevel>("intermediate");
   const errorCount = errors?.skills ? 1 : 0;
 
   const splitSkills = (value: string) =>
@@ -76,7 +77,7 @@ export default function Skills({ data, errors, onChange }: Props) {
             htmlFor="skills-input"
             className="block text-base font-medium text-slate-700"
           >
-            Skill Name
+            Add Your Skills
             <span aria-hidden="true" className="text-red-600">
               {" "}
               *
@@ -84,23 +85,45 @@ export default function Skills({ data, errors, onChange }: Props) {
             <span className="sr-only"> (required)</span>
           </label>
           <p className="text-sm text-slate-500">
-            Example: Python, React, Data Analysis, Project Management
+            Type a skill name and press{" "}
+            <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-slate-100 border border-slate-300 rounded">
+              Enter
+            </kbd>{" "}
+            or click the "Add" button. You can add multiple skills one at a
+            time.
           </p>
-          <div
-            className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 shadow-sm ${
-              errors?.skills ? "border-red-400" : "border-gray-200"
-            }`}
-          >
-            <input
-              id="skills-input"
-              type="text"
-              value={data.skills}
-              onChange={(e) => onChange({ skills: e.target.value })}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a skill name"
-              aria-required="true"
-              className="w-full bg-transparent text-base text-slate-800 outline-none"
-            />
+          <p className="text-sm text-slate-500 italic">
+            Examples: Python, Communication, Microsoft Excel, Time Management,
+            SQL, Leadership
+          </p>
+          <div className="flex gap-2">
+            <div
+              className={`flex-1 flex items-center gap-2 rounded-lg border px-3 py-2.5 shadow-sm ${
+                errors?.skills ? "border-red-400" : "border-gray-200"
+              }`}
+            >
+              <input
+                id="skills-input"
+                type="text"
+                value={data.skills}
+                onChange={(e) => onChange({ skills: e.target.value })}
+                onKeyDown={handleKeyDown}
+                placeholder="e.g., JavaScript"
+                aria-required="true"
+                aria-describedby="skills-help"
+                className="w-full bg-transparent text-base text-slate-800 outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={addSkill}
+              disabled={!data.skills.trim()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#C27528] px-6 py-2.5 text-base font-semibold text-white hover:bg-[#A86321] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              aria-label="Add skill to your list"
+            >
+              <Plus size={18} />
+              Add
+            </button>
           </div>
           {errors?.skills ? (
             <p className="text-sm text-red-600">{errors.skills}</p>
@@ -132,18 +155,6 @@ export default function Skills({ data, errors, onChange }: Props) {
               </label>
             ))}
           </div>
-        </div>
-
-        <div>
-          <button
-            type="button"
-            onClick={addSkill}
-            disabled={!data.skills.trim()}
-            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-[#C27528] px-4 py-2 text-base font-semibold text-[#C27528] hover:bg-orange-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus size={16} />
-            {skillList.length === 0 ? "Add Skill" : "Add another skill"}
-          </button>
         </div>
       </div>
 

@@ -31,14 +31,14 @@ export default function Projects({
   const errorCount = errors?.entries
     ? Object.values(errors.entries).reduce(
         (acc, val) => acc + (val ? Object.keys(val).length : 0),
-        0
+        0,
       )
     : 0;
 
   const handleNoProjectsChange = (checked: boolean) => {
     if (checked && entries.length > 0) {
       const confirmed = window.confirm(
-        "Choosing 'no projects' will remove your existing project entries when you save. Continue?"
+        "Choosing 'no projects' will remove your existing project entries when you save. Continue?",
       );
       if (!confirmed) return;
     }
@@ -51,10 +51,18 @@ export default function Projects({
         <h3 className="text-lg font-semibold text-slate-900">Projects</h3>
         {errorCount > 0 && !noProjects ? (
           <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-            {String(errorCount).padStart(2, "0")} error
+            {String(errorCount).padStart(2, "0")}{" "}
+            {errorCount === 1 ? "field required" : "fields required"}
           </span>
         ) : null}
       </div>
+
+      {errorCount > 0 && !noProjects && entries.length === 0 ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Please add at least one project or check "I don&apos;t have any
+          projects to list" below to continue.
+        </div>
+      ) : null}
 
       <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-slate-50 p-4">
         <input
