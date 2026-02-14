@@ -23,6 +23,17 @@ import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
 const SYNC_RETRY_WINDOW_MS = 30_000;
 const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
 
+const toFriendlySyncError = (err: unknown) => {
+  if (err instanceof Error && err.name === "AbortError") {
+    return "This request timed out.";
+  }
+  const message = getApiErrorMessage(err, "Account sync failed.");
+  if (/failed to fetch/i.test(message)) {
+    return "We couldn't reach the server.";
+  }
+  return message;
+};
+
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -160,10 +171,7 @@ function SignupEmployerPageContent() {
           const remainingSec = Math.ceil(remainingMs / 1000);
           console.error("[signup-employer] Backend sync attempt failed:", err);
           setError(
-            `${getApiErrorMessage(
-              err,
-              "Account sync failed.",
-            )} Retrying automatically for up to ${remainingSec}s...`,
+            `${toFriendlySyncError(err)} Retrying automatically for up to ${remainingSec}s...`,
           );
           if (remainingMs <= 0) break;
           await sleep(Math.min(delayMs, remainingMs));
@@ -210,16 +218,8 @@ function SignupEmployerPageContent() {
 
         if (!syncOk) {
           setError(
-            "Account created, but setup couldn't be completed right now. Please try again later. You have been signed out.",
+            "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
           );
-          try {
-            await signOut();
-          } catch (err) {
-            console.error(
-              "[signup-employer] signOut failed after sync timeout:",
-              err,
-            );
-          }
           return;
         }
 
@@ -438,48 +438,66 @@ function SignupEmployerPageContent() {
                   <>
                     <div className="text-center mb-7">
                       <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
-                        Completing signup
+                        {isRetrying ? "Completing signup" : "Almost there"}
                       </h2>
                       <p className="text-sm text-gray-500">
-                        We&apos;re syncing your account so you can continue. This can take up to 30 seconds.
+                        {isRetrying
+                          ? "We're connecting your account. This can take up to 30 seconds."
+                          : "Your account was created. We just need to finish connecting it to our system."}
                       </p>
                     </div>
 
                     {error ? (
                       <div
                         role="alert"
-                        className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                        className={`mb-4 rounded-lg border p-3 text-sm ${
+                          isRetrying
+                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        }`}
                       >
-                        <p className="font-semibold">Status</p>
+                        <p className="font-semibold">{isRetrying ? "Syncing..." : "Setup incomplete"}</p>
                         <p className="mt-1 whitespace-pre-wrap">{error}</p>
                       </div>
                     ) : null}
 
                     <div className="space-y-3">
-                      <button
-                        type="button"
-                        disabled
-                        className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
-                      >
-                        {isRetrying ? (
-                          <span className="inline-flex items-center justify-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Syncing with backend{retryCount ? ` (attempt ${retryCount})` : ""}...
-                          </span>
-                        ) : (
-                          "Setup incomplete"
-                        )}
-                      </button>
-
-                      {!isRetrying ? (
+                      {isRetrying ? (
                         <button
                           type="button"
-                          onClick={handleGoToLogin}
-                          className="w-full rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                          disabled
+                          className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
                         >
-                          Go to login
+                          <span className="inline-flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Connecting account{retryCount ? ` (attempt ${retryCount})` : ""}...
+                          </span>
                         </button>
-                      ) : null}
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (signUp?.createdUserId) {
+                                void syncBackendWithRetry(signUp.createdUserId, email.trim());
+                              }
+                            }}
+                            className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                          >
+                            Try again
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleGoToLogin}
+                            className="w-full rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                          >
+                            Go to login instead
+                          </button>
+                          <p className="text-center text-xs text-gray-500">
+                            Don&apos;t worry — your account is safe. You can log in anytime to complete setup.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </>
                 ) : (

@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 
 const SYNC_RETRY_WINDOW_MS = 30_000;
 const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
+
+const toFriendlySyncError = (err: unknown) => {
+  if (err instanceof Error && err.name === "AbortError") {
+    return "This request timed out.";
+  }
+  const message = getApiErrorMessage(err, "Account sync failed.");
+  if (/failed to fetch/i.test(message)) {
+    return "We couldn't reach the server.";
+  }
+  return message;
+};
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -46,7 +57,7 @@ export default function OAuthSignupCompletePage() {
     if (!userId || !email) {
       setIsSyncing(false);
       setError(
-        "Unable to complete OAuth signup because your account email is missing.",
+        "Unable to complete signup because your account email is missing.",
       );
       return;
     }
@@ -112,10 +123,7 @@ export default function OAuthSignupCompletePage() {
         const remainingSec = Math.ceil(remainingMs / 1000);
         console.error("[signup/oauth-complete] Account sync failed:", syncError);
         setError(
-          `${getApiErrorMessage(
-            syncError,
-            "Account sync failed.",
-          )} Retrying automatically for up to ${remainingSec}s...`,
+          `${toFriendlySyncError(syncError)} Retrying automatically for up to ${remainingSec}s...`,
         );
         if (remainingMs <= 0) break;
         await sleep(Math.min(delayMs, remainingMs));
@@ -126,7 +134,7 @@ export default function OAuthSignupCompletePage() {
     if (runId === syncRunIdRef.current) {
       setIsSyncing(false);
       setError(
-        "Account sync is taking longer than expected. Please try again in a few minutes.",
+        "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
       );
     }
   };
@@ -167,79 +175,83 @@ export default function OAuthSignupCompletePage() {
       aria-busy={isSyncing}
     >
       <div className="mx-auto w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">
-          Completing OAuth Signup
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">
-          We&apos;re syncing your account so you can continue to resume upload.
-        </p>
+        <div className="text-center mb-7">
+          <h1 className="text-2xl font-semibold text-slate-900">
+            {isSyncing ? "Completing signup" : successMessage ? "Completing signup" : "Almost there"}
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            {isSyncing
+              ? "We're connecting your account. This can take up to 30 seconds."
+              : successMessage
+                ? "We're syncing your account so you can continue to resume upload."
+                : "Your account was created. We just need to finish connecting it to our system."}
+          </p>
+        </div>
 
-        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        {error ? (
+          <div
+            role="alert"
+            className={`mb-4 rounded-lg border p-3 text-sm ${
+              isSyncing
+                ? "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-amber-200 bg-amber-50 text-amber-800"
+            }`}
+          >
+            <p className="font-semibold">{isSyncing ? "Syncing..." : "Setup incomplete"}</p>
+            <p className="mt-1 whitespace-pre-wrap">{error}</p>
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div className="flex items-center justify-center gap-3 text-emerald-700">
+            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            <span>{successMessage}</span>
+          </div>
+        ) : null}
+
+        <div className="space-y-3">
           {isSyncing ? (
-            <div className="text-slate-700">
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                <span>
-                  Syncing account with backend
-                  {attemptCount ? ` (attempt ${attemptCount})` : ""}...
+            <>
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
+              >
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting account{attemptCount ? ` (attempt ${attemptCount})` : ""}...
                 </span>
-              </div>
-              {error ? (
-                <p className="mt-2 text-sm text-slate-600">{error}</p>
-              ) : null}
+              </button>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
               >
                 Cancel and sign out
               </button>
-            </div>
-          ) : successMessage ? (
-            <div className="flex items-center gap-3 text-emerald-700">
-              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-              <span>{successMessage}</span>
-            </div>
-          ) : (
-            <div className="flex items-start gap-3 text-red-700" role="alert">
-              <AlertCircle className="mt-0.5 h-5 w-5" aria-hidden="true" />
-              <div>
-                <p className="font-semibold">Account sync failed</p>
-                <p className="mt-1 text-sm text-red-700">
-                  {error || "Please try again."}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {!isSyncing && !successMessage ? (
-          <div className="mt-6 space-y-3">
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-2.5 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Try syncing again
-            </button>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="w-full rounded-lg border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
-            >
-              Sign out and try again
-            </button>
-            <p className="text-center text-xs text-slate-500">
-              Already have an account?{" "}
-              <Link
-                href="/login-talent"
-                className="font-semibold text-[#B45309] hover:underline"
+            </>
+          ) : !successMessage ? (
+            <>
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
               >
-                Go to Talent Login
-              </Link>
-            </p>
-          </div>
-        ) : null}
+                Try again
+              </button>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              >
+                Go to login instead
+              </button>
+              <p className="text-center text-xs text-slate-500">
+                Don&apos;t worry — your account is safe. You can log in anytime to complete setup.
+              </p>
+            </>
+          ) : null}
+        </div>
       </div>
     </main>
   );
