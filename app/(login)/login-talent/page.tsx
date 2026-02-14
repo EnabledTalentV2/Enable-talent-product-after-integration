@@ -32,7 +32,7 @@ function LoginPageContent() {
   const setCandidateError = useCandidateProfileStore((s) => s.setError);
   const resetCandidateProfile = useCandidateProfileStore((s) => s.reset);
   const { signIn, setActive } = useSignIn();
-  const { userId, signOut, isLoaded } = useAuth();
+  const { userId, signOut, isLoaded, getToken } = useAuth();
   const { user } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -217,11 +217,16 @@ function LoginPageContent() {
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         setSyncRetryCount(attempt);
         try {
+          // Get a fresh token on every attempt (skipCache avoids stale JWTs)
+          const freshToken = await getToken({ template: "api", skipCache: true });
+          if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+
           await apiRequest("/api/auth/clerk-sync", {
             method: "POST",
             body: JSON.stringify({
               clerk_user_id: clerkUserId,
               email: userEmail,
+              token: freshToken,
             }),
           });
           syncSucceeded = true;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import {
   BACKEND_URL,
-  backendFetch,
+  backendFetchWithToken,
   forwardCookiesToResponse,
 } from "@/lib/api-config";
 
@@ -15,7 +15,8 @@ import {
  * Request body:
  * {
  *   clerk_user_id: string,  // Clerk user ID (e.g., "user_2abc123...")
- *   email: string            // User's email address
+ *   email: string,          // User's email address
+ *   token: string           // Fresh Clerk JWT from client (getToken({ template:'api', skipCache:true }))
  * }
  *
  * Response:
@@ -45,10 +46,19 @@ export async function POST(request: NextRequest) {
       typeof body.clerk_user_id === "string" ? body.clerk_user_id.trim() : "";
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const clientToken =
+      typeof body.token === "string" ? body.token.trim() : "";
 
     if (!clerkUserId || !email) {
       return NextResponse.json(
         { error: "clerk_user_id and email are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!clientToken) {
+      return NextResponse.json(
+        { error: "token is required – call getToken({ template:'api', skipCache:true }) on the client" },
         { status: 400 }
       );
     }
@@ -72,31 +82,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // DEBUG: Log incoming request headers for troubleshooting
-    const incomingHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      // Mask sensitive values but confirm they exist
-      if (key.toLowerCase() === "authorization") {
-        incomingHeaders[key] = value
-          ? `Bearer ${value.replace(/^Bearer\s+/i, "").slice(0, 16)}...`
-          : "(empty)";
-      } else if (key.toLowerCase() === "cookie") {
-        const cookieNames = value.split(";").map((c) => c.trim().split("=")[0]).filter(Boolean);
-        incomingHeaders[key] = `[${cookieNames.join(", ")}]`;
-      } else {
-        incomingHeaders[key] = value;
-      }
-    });
+    // DEBUG: Log request summary for troubleshooting
     console.log("[clerk-sync] Incoming request", {
       sessionUserId: userId,
       bodyClerkUserId: clerkUserId,
       bodyEmail: email,
-      headers: incomingHeaders,
+      hasClientToken: Boolean(clientToken),
+      clientTokenPreview: `${clientToken.slice(0, 16)}...`,
     });
 
-    // 5. Forward only the expected fields to Django backend
-    const backendResponse = await backendFetch(
+    // 5. Forward only the expected fields to Django backend.
+    //    Use the client-provided token directly (fresh, skipCache:true)
+    //    instead of server-side getToken which may serve a cached/stale JWT.
+    const backendResponse = await backendFetchWithToken(
       `${BACKEND_URL}/api/auth/clerk-sync/`,
+      clientToken,
       {
         method: "POST",
         body: JSON.stringify({ clerk_user_id: clerkUserId, email }),

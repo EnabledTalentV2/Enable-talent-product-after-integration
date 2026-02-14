@@ -59,7 +59,7 @@ function SignUpPageContent() {
   const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const { signUp, setActive } = useSignUp();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -144,6 +144,10 @@ function SignUpPageContent() {
         setRetryCount(attempt);
 
         try {
+          // Get a fresh token on every attempt (skipCache avoids stale JWTs)
+          const freshToken = await getToken({ template: "api", skipCache: true });
+          if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+
           const controller = new AbortController();
           const timeoutId = setTimeout(
             () => controller.abort(),
@@ -155,6 +159,7 @@ function SignUpPageContent() {
             body: JSON.stringify({
               clerk_user_id: createdUserId,
               email: emailAddress,
+              token: freshToken,
             }),
               signal: controller.signal,
           });
@@ -925,6 +930,8 @@ function SignUpPageContent() {
                       </p>
                     ) : null}
                   </div>
+
+                  <div id="clerk-captcha" className="mt-4" />
 
                   <button
                     type="submit"

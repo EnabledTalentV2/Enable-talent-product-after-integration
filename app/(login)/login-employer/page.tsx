@@ -22,7 +22,7 @@ function EmployerLoginPageContent() {
   const searchParams = useSearchParams();
   const setEmployerData = useEmployerDataStore((s) => s.setEmployerData);
   const { signIn, setActive } = useSignIn();
-  const { userId, signOut, isLoaded } = useAuth();
+  const { userId, signOut, isLoaded, getToken } = useAuth();
   const { user } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -209,11 +209,16 @@ function EmployerLoginPageContent() {
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         setSyncRetryCount(attempt);
         try {
+          // Get a fresh token on every attempt (skipCache avoids stale JWTs)
+          const freshToken = await getToken({ template: "api", skipCache: true });
+          if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+
           await apiRequest("/api/auth/clerk-sync", {
             method: "POST",
             body: JSON.stringify({
               clerk_user_id: clerkUserId,
               email: userEmail,
+              token: freshToken,
             }),
           });
           syncSucceeded = true;

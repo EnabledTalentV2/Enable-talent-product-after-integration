@@ -200,6 +200,7 @@ export async function backendFetch(
       // Backend expects a JWT Template token (includes aud, etc).
       // Configure the template in the Clerk dashboard and set CLERK_JWT_TEMPLATE=api.
       const template = (process.env.CLERK_JWT_TEMPLATE || "api").trim() || "api";
+
       const token = await getToken({ template });
 
       if (!token) {
@@ -287,6 +288,62 @@ export async function backendFetch(
   }
 
   return response;
+}
+
+/**
+ * Like backendFetch, but uses a client-provided JWT token directly
+ * instead of minting one via server-side auth().getToken().
+ * Used for clerk-sync where the client passes a fresh token
+ * obtained via useAuth().getToken({ template:'api', skipCache:true }).
+ */
+export async function backendFetchWithToken(
+  endpoint: string,
+  clientToken: string,
+  options: RequestInit = {},
+  incomingCookies?: string,
+): Promise<Response> {
+  const headers = new Headers(options.headers);
+  const hasBody = options.body !== undefined && options.body !== null;
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  if (hasBody && !isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (incomingCookies && !headers.has("Cookie")) {
+    const filteredCookies = filterCookiesForBackend(incomingCookies);
+    if (filteredCookies) headers.set("Cookie", filteredCookies);
+  }
+
+  // Use the client-provided token directly
+  headers.set("Authorization", `Bearer ${clientToken}`);
+
+  // Still get the userId from auth() for the X-Clerk-User-Id header
+  try {
+    const { userId } = await auth();
+    if (userId) {
+      headers.set("X-Clerk-User-Id", userId);
+    }
+  } catch {
+    // Non-fatal: X-Clerk-User-Id is supplementary, Authorization is what matters
+  }
+
+  const incomingRequestId = headers.get("X-Request-Id")?.trim();
+  const requestId =
+    incomingRequestId ||
+    (typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  if (!incomingRequestId) {
+    headers.set("X-Request-Id", requestId);
+  }
+
+  return fetch(endpoint, {
+    ...defaultFetchOptions,
+    ...options,
+    headers,
+  });
 }
 
 /**
