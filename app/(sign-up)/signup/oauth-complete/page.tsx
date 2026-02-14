@@ -50,6 +50,8 @@ export default function OAuthSignupCompletePage() {
     return () => {
       // Cancel any in-flight sync loop so it won't set state after unmount.
       syncRunIdRef.current += 1;
+      // Allow sync to restart on remount (React 18 strict mode double-mounts).
+      hasStartedInitialSync.current = false;
     };
   }, []);
 

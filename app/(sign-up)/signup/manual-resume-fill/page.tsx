@@ -1323,7 +1323,7 @@ export default function ManualResumeFill() {
 
       setUserData((prev) => finalizedData as typeof prev);
       markSignupComplete();
-      router.push("/dashboard");
+      router.push("/dashboard/home");
     } catch (err) {
       if (isApiError(err) && err.status === 401) {
         resetUserData();
