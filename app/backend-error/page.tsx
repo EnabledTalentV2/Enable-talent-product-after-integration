@@ -9,13 +9,14 @@ function resolveSafeNext(value: unknown) {
   return value;
 }
 
-export default function BackendErrorPage({
+export default async function BackendErrorPage({
   searchParams,
 }: {
-  searchParams?: SearchParams;
+  searchParams?: Promise<SearchParams>;
 }) {
-  const next = resolveSafeNext(searchParams?.next);
-  const statusRaw = searchParams?.status;
+  const params = (await searchParams) ?? {};
+  const next = resolveSafeNext(params.next);
+  const statusRaw = params.status;
   const status = typeof statusRaw === "string" ? statusRaw : null;
 
   return (

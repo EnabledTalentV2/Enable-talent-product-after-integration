@@ -59,7 +59,7 @@ function SignUpPageContent() {
   const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const { signUp, setActive } = useSignUp();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -144,6 +144,10 @@ function SignUpPageContent() {
         setRetryCount(attempt);
 
         try {
+          // Get a fresh token on every attempt (skipCache avoids stale JWTs)
+          const freshToken = await getToken({ template: "api", skipCache: true });
+          if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+
           const controller = new AbortController();
           const timeoutId = setTimeout(
             () => controller.abort(),
@@ -155,6 +159,7 @@ function SignUpPageContent() {
             body: JSON.stringify({
               clerk_user_id: createdUserId,
               email: emailAddress,
+              token: freshToken,
             }),
               signal: controller.signal,
           });
@@ -205,6 +210,9 @@ function SignUpPageContent() {
         // Activate the Clerk session immediately so server-side proxy routes
         // can mint a Clerk template JWT for authenticated backend calls.
         await setActive({ session: result.createdSessionId });
+
+        // Give Clerk a moment to propagate the session cookie to the server
+        await sleep(1000);
 
         setIsVerifying(false);
         const syncOk = await syncBackendWithRetry(
@@ -646,7 +654,7 @@ function SignUpPageContent() {
                       </>
                     )}
                   </button>
-                  <button
+                  {/* <button
                     type="button"
                     disabled={oauthLoadingProvider !== null}
                     onClick={() => handleOAuthSignUp("oauth_github")}
@@ -665,7 +673,7 @@ function SignUpPageContent() {
                         Continue with GitHub
                       </>
                     )}
-                  </button>
+                  </button> */}
                   {oauthLoadingProvider ? (
                     <p role="status" aria-live="polite" className="text-center text-xs text-slate-500">
                       Connecting to {oauthLoadingProvider === "google" ? "Google" : "GitHub"}...
@@ -922,6 +930,8 @@ function SignUpPageContent() {
                       </p>
                     ) : null}
                   </div>
+
+                  <div id="clerk-captcha" className="mt-4" />
 
                   <button
                     type="submit"

@@ -28,7 +28,7 @@ const sleep = (ms: number) =>
 
 export default function EmployerOAuthCompletePage() {
   const router = useRouter();
-  const { isLoaded, isSignedIn, userId, signOut } = useAuth();
+  const { isLoaded, isSignedIn, userId, signOut, getToken } = useAuth();
   const { user } = useUser();
 
   const [isSyncing, setIsSyncing] = useState(true);
@@ -80,6 +80,10 @@ export default function EmployerOAuthCompletePage() {
       setAttemptCount(attempt);
 
       try {
+        // Get a fresh token on every attempt (skipCache avoids stale JWTs)
+        const freshToken = await getToken({ template: "api", skipCache: true });
+        if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
@@ -91,6 +95,7 @@ export default function EmployerOAuthCompletePage() {
           body: JSON.stringify({
             clerk_user_id: userId,
             email,
+            token: freshToken,
           }),
             signal: controller.signal,
         });
