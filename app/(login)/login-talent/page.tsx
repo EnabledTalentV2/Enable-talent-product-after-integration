@@ -180,7 +180,7 @@ function LoginPageContent() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard/home",
+        redirectUrlComplete: "/login-talent",
       });
     } catch (err: any) {
       const message = err?.errors?.[0]?.message || err?.message || "";

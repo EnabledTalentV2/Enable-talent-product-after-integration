@@ -172,7 +172,7 @@ function EmployerLoginPageContent() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/employer/dashboard",
+        redirectUrlComplete: "/login-employer",
       });
     } catch (err: any) {
       const message = err?.errors?.[0]?.message || err?.message || "";
