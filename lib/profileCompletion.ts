@@ -100,8 +100,7 @@ const isOtherDetailsComplete = (data: UserData) =>
     data.otherDetails.desiredSalary,
   ]);
 
-const isReviewAgreeComplete = (data: UserData) =>
-  Boolean(data.reviewAgree.agree) && isNonEmpty(data.reviewAgree.discover);
+const isReviewAgreeComplete = (data: UserData) => Boolean(data.reviewAgree.agree);
 
 const computeStepCompletion = (data: UserData) => ({
   accessibilityNeeds: isAccessibilityComplete(data),

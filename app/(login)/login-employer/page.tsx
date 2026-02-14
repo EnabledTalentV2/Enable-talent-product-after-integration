@@ -42,6 +42,9 @@ function EmployerLoginPageContent() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const hasError = Boolean(error);
   const hasWarning = Boolean(roleWarning);
   const isSubmitting = isLoading || isBootstrapping || isSyncing;
@@ -169,7 +172,7 @@ function EmployerLoginPageContent() {
       await signIn.authenticateWithRedirect({
         strategy,
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/employer/dashboard",
+        redirectUrlComplete: "/login-employer",
       });
     } catch (err: any) {
       const message = err?.errors?.[0]?.message || err?.message || "";
@@ -314,6 +317,121 @@ function EmployerLoginPageContent() {
     }
   }, [hasError, hasWarning]);
 
+  const completeLoginAfterClerk = async (sessionId: string | null, loginEmail: string) => {
+    if (!sessionId) {
+      setError("Session could not be created. Please try again.");
+      return;
+    }
+    await setActive?.({ session: sessionId });
+
+    // Give Clerk a moment to propagate the session cookie to the server
+    await new Promise((r) => setTimeout(r, 500));
+
+    // Store Clerk user info for potential sync
+    setClerkUserId(userId ?? null);
+    setUserEmail(loginEmail);
+
+    // Get user data from Django to check role
+    try {
+      const userData = await apiRequest<unknown>("/api/user/me", {
+        method: "GET",
+      });
+      const derivedRole = deriveUserRoleFromUserData(userData);
+
+      if (derivedRole === "candidate") {
+        setRoleWarning(
+          "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
+        );
+        return;
+      }
+    } catch (userMeError: any) {
+      if (isSessionExpiredError(userMeError)) {
+        throw userMeError;
+      }
+
+      const isBackendUserMissing =
+        isApiError(userMeError) &&
+        (userMeError.status === 401 || userMeError.status === 403);
+
+      console.log("[login-employer] backend user missing check:", {
+        isBackendUserMissing,
+        isApiError: isApiError(userMeError),
+        status: userMeError?.status,
+      });
+
+      if (isBackendUserMissing) {
+        console.log(
+          "[login-employer] Backend user missing/deleted - redirecting to setup required"
+        );
+        router.replace(setupRequiredPath);
+        return;
+      }
+      throw userMeError;
+    }
+
+    // Load organization data
+    const organizations = await apiRequest<unknown>("/api/organizations", {
+      method: "GET",
+    });
+    const organizationInfo = toEmployerOrganizationInfo(organizations);
+    if (organizationInfo) {
+      setEmployerData((prev) => ({
+        ...prev,
+        organizationInfo: {
+          ...prev.organizationInfo,
+          ...organizationInfo,
+        },
+      }));
+    }
+
+    // Redirect to dashboard
+    const next = searchParams.get("next") ?? searchParams.get("returnUrl");
+    const redirectTarget =
+      next && next.startsWith("/employer") ? next : "/employer/dashboard";
+    router.push(redirectTarget);
+  };
+
+  const handleVerification = async () => {
+    if (!signIn || !verificationCode.trim()) return;
+    setIsVerifying(true);
+    setError(null);
+
+    try {
+      let result;
+      // Try second factor first, fall back to first factor
+      try {
+        result = await signIn.attemptSecondFactor({
+          strategy: "email_code" as any,
+          code: verificationCode,
+        });
+      } catch {
+        // If second factor fails, try first factor
+        result = await signIn.attemptFirstFactor({
+          strategy: "email_code",
+          code: verificationCode,
+        });
+      }
+
+      if (result.status === "complete") {
+        setPendingVerification(false);
+        setIsBootstrapping(true);
+        await completeLoginAfterClerk(result.createdSessionId, email.trim());
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("[login-employer] Verification error:", err);
+      const errorMessage =
+        err.errors?.[0]?.message ||
+        err.message ||
+        "Invalid verification code. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsVerifying(false);
+      setIsBootstrapping(false);
+    }
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -413,92 +531,52 @@ function EmployerLoginPageContent() {
         throw signInErr;
       }
 
+      // Handle email verification if needed
+      if (
+        clerkSignInResult.status === "needs_first_factor" ||
+        clerkSignInResult.status === "needs_second_factor"
+      ) {
+        // Prepare email code verification
+        const isSecondFactor = clerkSignInResult.status === "needs_second_factor";
+        try {
+          if (isSecondFactor) {
+            await signIn!.prepareSecondFactor({
+              strategy: "email_code" as any,
+            });
+          } else {
+            // Find the email_code factor
+            const emailFactor = (clerkSignInResult.supportedFirstFactors ?? []).find(
+              (f: any) => f.strategy === "email_code"
+            ) as any;
+            if (emailFactor) {
+              await signIn!.prepareFirstFactor({
+                strategy: "email_code",
+                emailAddressId: emailFactor.emailAddressId,
+              });
+            } else {
+              setError("Email verification is required but not available. Please contact support.");
+              return;
+            }
+          }
+        } catch (prepErr: any) {
+          console.error("[login-employer] Failed to prepare verification:", prepErr);
+          setError("Failed to send verification code. Please try again.");
+          return;
+        }
+
+        setPendingVerification(true);
+        setVerificationCode("");
+        setError(null);
+        return;
+      }
+
       if (clerkSignInResult.status !== "complete") {
         setError("Login failed. Please try again.");
         return;
       }
 
-      // Step 2: Set the active session
-      await setActive({ session: clerkSignInResult.createdSessionId });
-
-      // Give Clerk a moment to propagate the session cookie to the server
-      await new Promise((r) => setTimeout(r, 500));
-
-      // Store Clerk user info for potential sync
-      // Clerk types don't expose createdUserId on SignInResource; rely on useAuth().userId instead.
-      setClerkUserId(userId ?? null);
-      setUserEmail(trimmedEmail);
-
-      // Step 3: Get user data from Django to check role
-      try {
-        const userData = await apiRequest<unknown>("/api/user/me", {
-          method: "GET",
-        });
-        const derivedRole = deriveUserRoleFromUserData(userData);
-
-        if (derivedRole === "candidate") {
-          setRoleWarning(
-            "This is a Talent account. Please log in from the Talent section. If you're an employer, use your employer account or create one."
-          );
-          return;
-        }
-      } catch (userMeError: any) {
-        // If it's a session expired error, re-throw it (authentication issue)
-        if (isSessionExpiredError(userMeError)) {
-          throw userMeError;
-        }
-
-        // Check if it's a 401/403 ApiError (user not in Django)
-        // This happens when user exists in Clerk but not in backend
-        const isBackendUserMissing =
-          isApiError(userMeError) &&
-          (userMeError.status === 401 || userMeError.status === 403);
-
-        console.log("[login-employer] backend user missing check:", {
-          isBackendUserMissing,
-          isApiError: isApiError(userMeError),
-          status: userMeError?.status,
-        });
-        console.log(
-          "[login-employer] About to check if (isBackendUserMissing), value:",
-          isBackendUserMissing,
-          typeof isBackendUserMissing
-        );
-
-        if (isBackendUserMissing) {
-          console.log(
-            "[login-employer] Backend user missing/deleted - redirecting to setup required"
-          );
-          router.replace(setupRequiredPath);
-          return;
-        }
-        // Re-throw other errors
-        throw userMeError;
-      }
-
-      // Step 4: Load organization data
-      const organizations = await apiRequest<unknown>("/api/organizations", {
-        method: "GET",
-      });
-      const organizationInfo = toEmployerOrganizationInfo(organizations);
-      if (organizationInfo) {
-        setEmployerData((prev) => ({
-          ...prev,
-          organizationInfo: {
-            ...prev.organizationInfo,
-            ...organizationInfo,
-          },
-        }));
-      }
-
-      // Step 5: Redirect to dashboard
-      const nextPath =
-        searchParams.get("next") ?? searchParams.get("returnUrl");
-      const redirectTarget =
-        nextPath && nextPath.startsWith("/employer")
-          ? nextPath
-          : "/employer/dashboard";
-      router.push(redirectTarget);
+      // Step 2: Set the active session and complete login
+      await completeLoginAfterClerk(clerkSignInResult.createdSessionId, trimmedEmail);
     } catch (err: any) {
       console.error(err);
       const errorMessage =
@@ -573,6 +651,73 @@ function EmployerLoginPageContent() {
 
           {/* Right Side - Form */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
+            {pendingVerification ? (
+              /* Email Verification View */
+              <>
+                <div className="text-center mb-7">
+                  <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+                    Verify your email
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    We sent a verification code to <strong>{email}</strong>
+                  </p>
+                </div>
+
+                {error && (
+                  <div
+                    role="alert"
+                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  >
+                    <p>{error}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label
+                      className="block text-[16px] font-semibold text-gray-900"
+                      htmlFor="employer-verificationCode"
+                    >
+                      Verification code
+                    </label>
+                    <input
+                      className={inputClasses}
+                      id="employer-verificationCode"
+                      name="verificationCode"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="Enter 6-digit code"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleVerification}
+                    disabled={isVerifying || !verificationCode.trim()}
+                    className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isVerifying ? "Verifying..." : "Verify email"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingVerification(false);
+                      setVerificationCode("");
+                      setError(null);
+                    }}
+                    className="w-full rounded-lg border border-gray-200 bg-white py-2 px-4 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    Back to login
+                  </button>
+                </div>
+              </>
+            ) : (
+            <>
             <div className="text-center mb-7">
               <h2
                 id="employer-login-heading"
@@ -840,6 +985,8 @@ function EmployerLoginPageContent() {
                 </Link>
               </p>
             </div>
+            </>
+            )}
           </div>
         </div>
       </div>
