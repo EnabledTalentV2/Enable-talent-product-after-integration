@@ -12,14 +12,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserDataStore } from "@/lib/userDataStore";
-import { useSignUp } from "@clerk/nextjs";
+import { useAuth, useSignUp } from "@clerk/nextjs";
 import { OAuthStrategy } from "@clerk/types";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
+
+const SYNC_RETRY_WINDOW_MS = 30_000;
+const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
@@ -40,6 +48,7 @@ function SignUpPageContent() {
   const searchParams = useSearchParams();
   const setUserData = useUserDataStore((s) => s.setUserData);
   const { signUp, setActive } = useSignUp();
+  const { signOut } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,9 +66,7 @@ function SignUpPageContent() {
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [syncFailed, setSyncFailed] = useState(false);
-  const [clerkUserId, setClerkUserId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [verificationComplete, setVerificationComplete] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
@@ -70,6 +77,7 @@ function SignUpPageContent() {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const syncRunIdRef = useRef(0);
   const hasErrors = Object.keys(fieldErrors).length > 0;
   const fieldMeta: Array<{
     key: keyof FieldErrors;
@@ -86,12 +94,93 @@ function SignUpPageContent() {
     },
   ];
 
+  useEffect(() => {
+    return () => {
+      // Cancel any in-flight sync loop so it won't set state after unmount.
+      syncRunIdRef.current += 1;
+    };
+  }, []);
+
+  const handleGoToLogin = async () => {
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("[signup] signOut failed:", err);
+    } finally {
+      router.replace("/login-talent");
+    }
+  };
+
+  const syncBackendWithRetry = async (
+    createdUserId: string,
+    emailAddress: string,
+  ): Promise<boolean> => {
+    const runId = (syncRunIdRef.current += 1);
+    const deadline = Date.now() + SYNC_RETRY_WINDOW_MS;
+    let delayMs = 900;
+    let attempt = 0;
+
+    setIsRetrying(true);
+    setRetryCount(0);
+    setServerError(
+      "Account created. Finishing setup by syncing with our backend. This can take up to 30 seconds...",
+    );
+
+    try {
+      while (Date.now() < deadline) {
+        if (runId !== syncRunIdRef.current) return false;
+        attempt += 1;
+        setRetryCount(attempt);
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            SYNC_ATTEMPT_TIMEOUT_MS,
+          );
+          try {
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: createdUserId,
+              email: emailAddress,
+            }),
+              signal: controller.signal,
+          });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+          return true;
+        } catch (err) {
+          const remainingMs = Math.max(0, deadline - Date.now());
+          const remainingSec = Math.ceil(remainingMs / 1000);
+          console.error("[signup] Backend sync attempt failed:", err);
+          setServerError(
+            `${getApiErrorMessage(
+              err,
+              "Account sync failed.",
+            )} Retrying automatically for up to ${remainingSec}s...`,
+          );
+          if (remainingMs <= 0) break;
+          await sleep(Math.min(delayMs, remainingMs));
+          delayMs = Math.min(Math.round(delayMs * 1.7), 5_000);
+        }
+      }
+
+      return false;
+    } finally {
+      if (runId === syncRunIdRef.current) {
+        setIsRetrying(false);
+      }
+    }
+  };
+
   const handleVerification = async () => {
     if (!signUp || !verificationCode.trim()) return;
     setIsVerifying(true);
     setServerError(null);
-    setSyncFailed(false);
-    setRetryCount(0); // Reset retry count on new verification attempt
+    setVerificationComplete(false);
+    setRetryCount(0);
 
     try {
       const result = await signUp.attemptEmailAddressVerification({
@@ -99,49 +188,52 @@ function SignUpPageContent() {
       });
 
       if (result.status === "complete" && result.createdUserId) {
-        // Store verification result in case sync fails and we need to retry
-        setClerkUserId(result.createdUserId);
-        setSessionId(result.createdSessionId);
+        setVerificationComplete(true);
 
-        try {
-          // Sync user to Django backend
-          await apiRequest("/api/auth/clerk-sync", {
-            method: "POST",
-            body: JSON.stringify({
-              clerk_user_id: result.createdUserId,
-              email: email.trim(),
-            }),
-          });
-
-          // Only set session if BOTH verification AND sync succeeded
-          await setActive({ session: result.createdSessionId });
-
-          // Update user profile with name
-          const [firstName, ...rest] = fullName.trim().split(/\s+/);
-          const lastName = rest.join(" ");
-          if (firstName || lastName) {
-            try {
-              await apiRequest("/api/users/profile/", {
-                method: "PATCH",
-                body: JSON.stringify({
-                  first_name: firstName,
-                  last_name: lastName,
-                }),
-              });
-            } catch (err) {
-              console.error("[signup] Failed to update user profile:", err);
-            }
-          }
-
-          router.push("/signup/resume-upload");
-        } catch (syncError: any) {
-          // Django sync failed - show retry option
-          console.error("[signup] Backend sync failed:", syncError);
-          setSyncFailed(true);
-          setServerError(
-            "Account created but backend sync failed. Please click 'Retry Signup' to complete your registration."
-          );
+        if (!result.createdSessionId) {
+          throw new Error("Session could not be created. Please try again.");
         }
+
+        // Activate the Clerk session immediately so server-side proxy routes
+        // can mint a Clerk template JWT for authenticated backend calls.
+        await setActive({ session: result.createdSessionId });
+
+        setIsVerifying(false);
+        const syncOk = await syncBackendWithRetry(
+          result.createdUserId,
+          email.trim(),
+        );
+
+        if (!syncOk) {
+          setServerError(
+            "Account created, but setup couldn't be completed right now. Please try again later. You have been signed out.",
+          );
+          try {
+            await signOut();
+          } catch (err) {
+            console.error("[signup] signOut failed after sync timeout:", err);
+          }
+          return;
+        }
+
+        // Update user profile with name
+        const [firstName, ...rest] = fullName.trim().split(/\s+/);
+        const lastName = rest.join(" ");
+        if (firstName || lastName) {
+          try {
+            await apiRequest("/api/users/profile/", {
+              method: "PATCH",
+              body: JSON.stringify({
+                first_name: firstName,
+                last_name: lastName,
+              }),
+            });
+          } catch (err) {
+            console.error("[signup] Failed to update user profile:", err);
+          }
+        }
+
+        router.push("/signup/resume-upload");
       } else {
         setServerError("Verification failed. Please try again.");
       }
@@ -154,73 +246,6 @@ function SignUpPageContent() {
       setServerError(errorMessage);
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleRetrySync = async () => {
-    if (!clerkUserId || !sessionId) return;
-
-    // Check if retry limit reached
-    if (retryCount >= 5) {
-      setServerError(
-        "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
-      );
-      return;
-    }
-
-    setIsRetrying(true);
-    setServerError(null);
-    setRetryCount(prev => prev + 1);
-
-    try {
-      // Retry Django backend sync
-      await apiRequest("/api/auth/clerk-sync", {
-        method: "POST",
-        body: JSON.stringify({
-          clerk_user_id: clerkUserId,
-          email: email.trim(),
-        }),
-      });
-
-      // Sync succeeded - set session and continue
-      if (!setActive) {
-        throw new Error("Session activation not available");
-      }
-      await setActive({ session: sessionId });
-
-      // Update user profile with name
-      const [firstName, ...rest] = fullName.trim().split(/\s+/);
-      const lastName = rest.join(" ");
-      if (firstName || lastName) {
-        try {
-          await apiRequest("/api/users/profile/", {
-            method: "PATCH",
-            body: JSON.stringify({
-              first_name: firstName,
-              last_name: lastName,
-            }),
-          });
-        } catch (err) {
-          console.error("[signup] Failed to update user profile:", err);
-        }
-      }
-
-      router.push("/signup/resume-upload");
-    } catch (error: any) {
-      console.error("[signup] Retry sync failed:", error);
-      const attemptsRemaining = 5 - retryCount;
-      if (attemptsRemaining > 0) {
-        setServerError(
-          `Signup retry failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
-        );
-      } else {
-        setServerError(
-          "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
-        );
-        setSyncFailed(false); // Hide retry button
-      }
-    } finally {
-      setIsRetrying(false);
     }
   };
 
@@ -411,102 +436,142 @@ function SignUpPageContent() {
             {pendingVerification ? (
               /* OTP Verification View */
               <>
-                <div className="text-center mb-7">
-                  <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
-                    Verify your email
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    We sent a verification code to <strong>{email}</strong>
-                  </p>
-                </div>
+                {verificationComplete ? (
+                  <>
+                    <div className="text-center mb-7">
+                      <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+                        Completing signup
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        We&apos;re syncing your account so you can continue. This can take up to 30 seconds.
+                      </p>
+                    </div>
 
-                {serverError ? (
-                  <div
-                    role="alert"
-                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                  >
-                    <p className="font-semibold">Error</p>
-                    <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
-                  </div>
-                ) : null}
+                    {serverError ? (
+                      <div
+                        role="alert"
+                        className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                      >
+                        <p className="font-semibold">Status</p>
+                        <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
+                      </div>
+                    ) : null}
 
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label
-                      className="block text-[16px] font-semibold text-slate-700"
-                      htmlFor="verificationCode"
-                    >
-                      Verification code
-                    </label>
-                    <input
-                      className={inputClasses(false)}
-                      id="verificationCode"
-                      name="verificationCode"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="Enter 6-digit code"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] opacity-80"
+                      >
+                        {isRetrying ? (
+                          <span className="inline-flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Syncing with backend{retryCount ? ` (attempt ${retryCount})` : ""}...
+                          </span>
+                        ) : (
+                          "Setup incomplete"
+                        )}
+                      </button>
 
-                  {syncFailed && retryCount < 5 ? (
-                    <button
-                      type="button"
-                      onClick={handleRetrySync}
-                      disabled={isRetrying}
-                      className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isRetrying ? (
-                        <span className="inline-flex items-center justify-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Retrying...
-                        </span>
-                      ) : (
-                        `Retry Signup (${5 - retryCount} attempt${5 - retryCount === 1 ? '' : 's'} left)`
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleVerification}
-                      disabled={isVerifying || !verificationCode.trim()}
-                      className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isVerifying ? (
-                        <span className="inline-flex items-center justify-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Verifying...
-                        </span>
-                      ) : (
-                        "Verify email"
-                      )}
-                    </button>
-                  )}
+                      {!isRetrying ? (
+                        <button
+                          type="button"
+                          onClick={handleGoToLogin}
+                          className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white"
+                        >
+                          Go to login
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center mb-7">
+                      <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+                        Verify your email
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        We sent a verification code to <strong>{email}</strong>
+                      </p>
+                    </div>
 
-                  <p className="text-center text-xs text-slate-500">
-                    Didn&apos;t receive the code?{" "}
-                    <button
-                      type="button"
-                      disabled={resendCooldown > 0}
-                      onClick={async () => {
-                        if (!signUp) return;
-                        try {
-                          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-                          setServerError(null);
-                          setResendCooldown(30);
-                        } catch {
-                          setServerError("Failed to resend code. Please try again.");
-                        }
-                      }}
-                      className={`font-semibold ${resendCooldown > 0 ? "text-slate-400 cursor-not-allowed" : "text-[#B45309] hover:underline"}`}
-                    >
-                      {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Resend code"}
-                    </button>
-                  </p>
-                </div>
+                    {serverError ? (
+                      <div
+                        role="alert"
+                        className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                      >
+                        <p className="font-semibold">Error</p>
+                        <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
+                      </div>
+                    ) : null}
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label
+                          className="block text-[16px] font-semibold text-slate-700"
+                          htmlFor="verificationCode"
+                        >
+                          Verification code
+                        </label>
+                        <input
+                          className={inputClasses(false)}
+                          id="verificationCode"
+                          name="verificationCode"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          placeholder="Enter 6-digit code"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleVerification}
+                        disabled={isVerifying || !verificationCode.trim()}
+                        className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isVerifying ? (
+                          <span className="inline-flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Verifying...
+                          </span>
+                        ) : (
+                          "Verify email"
+                        )}
+                      </button>
+
+                      <p className="text-center text-xs text-slate-500">
+                        Didn&apos;t receive the code?{" "}
+                        <button
+                          type="button"
+                          disabled={resendCooldown > 0}
+                          onClick={async () => {
+                            if (!signUp) return;
+                            try {
+                              await signUp.prepareEmailAddressVerification({
+                                strategy: "email_code",
+                              });
+                              setServerError(null);
+                              setResendCooldown(30);
+                            } catch {
+                              setServerError(
+                                "Failed to resend code. Please try again.",
+                              );
+                            }
+                          }}
+                          className={`font-semibold ${resendCooldown > 0 ? "text-slate-400 cursor-not-allowed" : "text-[#B45309] hover:underline"}`}
+                        >
+                          {resendCooldown > 0
+                            ? `Resend code (${resendCooldown}s)`
+                            : "Resend code"}
+                        </button>
+                      </p>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               /* Signup Form View */

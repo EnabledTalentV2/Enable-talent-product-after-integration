@@ -7,7 +7,13 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 
-const MAX_SYNC_ATTEMPTS = 5;
+const SYNC_RETRY_WINDOW_MS = 30_000;
+const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 export default function EmployerOAuthCompletePage() {
   const router = useRouter();
@@ -19,46 +25,92 @@ export default function EmployerOAuthCompletePage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const hasStartedInitialSync = useRef(false);
+  const syncRunIdRef = useRef(0);
 
   const email = useMemo(
     () =>
       user?.primaryEmailAddress?.emailAddress ||
       user?.emailAddresses?.[0]?.emailAddress ||
       "",
-    [user]
+    [user],
   );
 
-  const syncAccount = async () => {
+  useEffect(() => {
+    return () => {
+      // Cancel any in-flight sync loop so it won't set state after unmount.
+      syncRunIdRef.current += 1;
+    };
+  }, []);
+
+  const syncAccountWithRetry = async () => {
     if (!userId || !email) {
       setIsSyncing(false);
       setError(
-        "Unable to complete OAuth signup because your account email is missing."
+        "Unable to complete OAuth signup because your account email is missing.",
       );
       return;
     }
 
+    const runId = (syncRunIdRef.current += 1);
+    const deadline = Date.now() + SYNC_RETRY_WINDOW_MS;
+    let delayMs = 900;
+    let attempt = 0;
+
     setIsSyncing(true);
+    setAttemptCount(0);
     setError(null);
     setSuccessMessage(null);
 
-    try {
-      await apiRequest("/api/auth/clerk-sync", {
-        method: "POST",
-        body: JSON.stringify({
-          clerk_user_id: userId,
-          email,
-        }),
-      });
+    while (Date.now() < deadline) {
+      if (runId !== syncRunIdRef.current) return;
+      attempt += 1;
+      setAttemptCount(attempt);
 
-      setSuccessMessage("Account synced. Redirecting...");
-      router.replace("/signup-employer/organisation-info");
-    } catch (syncError) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          SYNC_ATTEMPT_TIMEOUT_MS,
+        );
+        try {
+        await apiRequest("/api/auth/clerk-sync", {
+          method: "POST",
+          body: JSON.stringify({
+            clerk_user_id: userId,
+            email,
+          }),
+            signal: controller.signal,
+        });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        setSuccessMessage("Account synced. Redirecting...");
+        router.replace("/signup-employer/organisation-info");
+        return;
+      } catch (syncError) {
+        const remainingMs = Math.max(0, deadline - Date.now());
+        const remainingSec = Math.ceil(remainingMs / 1000);
+        console.error(
+          "[signup-employer/oauth-complete] Account sync failed:",
+          syncError,
+        );
+        setError(
+          `${getApiErrorMessage(
+            syncError,
+            "Account sync failed.",
+          )} Retrying automatically for up to ${remainingSec}s...`,
+        );
+        if (remainingMs <= 0) break;
+        await sleep(Math.min(delayMs, remainingMs));
+        delayMs = Math.min(Math.round(delayMs * 1.7), 5_000);
+      }
+    }
+
+    if (runId === syncRunIdRef.current) {
       setIsSyncing(false);
       setError(
-        getApiErrorMessage(
-          syncError,
-          "Account sync failed. Please try again."
-        )
+        "Account sync is taking longer than expected. Please try again in a few minutes.",
       );
     }
   };
@@ -73,25 +125,22 @@ export default function EmployerOAuthCompletePage() {
 
     if (hasStartedInitialSync.current) return;
     hasStartedInitialSync.current = true;
-    void syncAccount();
+    void syncAccountWithRetry();
   }, [isLoaded, isSignedIn, userId, router, email]);
 
-  const attemptsRemaining = Math.max(0, MAX_SYNC_ATTEMPTS - attemptCount);
-  const canRetry = !isSyncing && attemptsRemaining > 0;
-
   const handleRetry = async () => {
-    if (!canRetry) return;
-    setAttemptCount((prev) => prev + 1);
-    await syncAccount();
+    await syncAccountWithRetry();
   };
 
   const handleSignOut = async () => {
+    // Cancel any in-flight retry loop before signing out.
+    syncRunIdRef.current += 1;
     try {
       await signOut();
     } catch (signOutError) {
       console.error(
         "[signup-employer/oauth-complete] Sign out failed:",
-        signOutError
+        signOutError,
       );
     } finally {
       router.replace("/signup-employer");
@@ -114,9 +163,24 @@ export default function EmployerOAuthCompletePage() {
 
         <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
           {isSyncing ? (
-            <div className="flex items-center gap-3 text-slate-700">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              <span>Syncing account with backend...</span>
+            <div className="text-slate-700">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                <span>
+                  Syncing account with backend
+                  {attemptCount ? ` (attempt ${attemptCount})` : ""}...
+                </span>
+              </div>
+              {error ? (
+                <p className="mt-2 text-sm text-slate-600">{error}</p>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              >
+                Cancel and sign out
+              </button>
             </div>
           ) : successMessage ? (
             <div className="flex items-center gap-3 text-emerald-700">
@@ -141,14 +205,9 @@ export default function EmployerOAuthCompletePage() {
             <button
               type="button"
               onClick={handleRetry}
-              disabled={!canRetry}
               className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-2.5 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {canRetry
-                ? `Retry Sync (${attemptsRemaining} attempt${
-                    attemptsRemaining === 1 ? "" : "s"
-                  } left)`
-                : "No retries left"}
+              Try syncing again
             </button>
             <button
               type="button"
@@ -172,4 +231,3 @@ export default function EmployerOAuthCompletePage() {
     </main>
   );
 }
-

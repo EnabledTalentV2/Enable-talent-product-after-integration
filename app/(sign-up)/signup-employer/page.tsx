@@ -14,11 +14,19 @@ import {
 import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import logo from "@/public/logo/ET Logo-01.webp";
-import { useSignUp } from "@clerk/nextjs";
+import { useAuth, useSignUp } from "@clerk/nextjs";
 import { OAuthStrategy } from "@clerk/types";
-import { apiRequest } from "@/lib/api-client";
+import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
+
+const SYNC_RETRY_WINDOW_MS = 30_000;
+const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
@@ -39,6 +47,7 @@ function SignupEmployerPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signUp, setActive } = useSignUp();
+  const { signOut } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -58,9 +67,7 @@ function SignupEmployerPageContent() {
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [syncFailed, setSyncFailed] = useState(false);
-  const [clerkUserId, setClerkUserId] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [verificationComplete, setVerificationComplete] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
@@ -73,6 +80,7 @@ function SignupEmployerPageContent() {
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const confirmPasswordRef = useRef<HTMLInputElement | null>(null);
   const errorSummaryRef = useRef<HTMLDivElement | null>(null);
+  const syncRunIdRef = useRef(0);
   const hasErrors = Object.keys(fieldErrors).length > 0;
   const fieldMeta: Array<{
     key: keyof FieldErrors;
@@ -90,12 +98,93 @@ function SignupEmployerPageContent() {
     },
   ];
 
+  useEffect(() => {
+    return () => {
+      // Cancel any in-flight sync loop so it won't set state after unmount.
+      syncRunIdRef.current += 1;
+    };
+  }, []);
+
+  const handleGoToLogin = async () => {
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("[signup-employer] signOut failed:", err);
+    } finally {
+      router.replace("/login-employer");
+    }
+  };
+
+  const syncBackendWithRetry = async (
+    createdUserId: string,
+    emailAddress: string,
+  ): Promise<boolean> => {
+    const runId = (syncRunIdRef.current += 1);
+    const deadline = Date.now() + SYNC_RETRY_WINDOW_MS;
+    let delayMs = 900;
+    let attempt = 0;
+
+    setIsRetrying(true);
+    setRetryCount(0);
+    setError(
+      "Account created. Finishing setup by syncing with our backend. This can take up to 30 seconds...",
+    );
+
+    try {
+      while (Date.now() < deadline) {
+        if (runId !== syncRunIdRef.current) return false;
+        attempt += 1;
+        setRetryCount(attempt);
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            SYNC_ATTEMPT_TIMEOUT_MS,
+          );
+          try {
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: createdUserId,
+              email: emailAddress,
+            }),
+              signal: controller.signal,
+          });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+          return true;
+        } catch (err) {
+          const remainingMs = Math.max(0, deadline - Date.now());
+          const remainingSec = Math.ceil(remainingMs / 1000);
+          console.error("[signup-employer] Backend sync attempt failed:", err);
+          setError(
+            `${getApiErrorMessage(
+              err,
+              "Account sync failed.",
+            )} Retrying automatically for up to ${remainingSec}s...`,
+          );
+          if (remainingMs <= 0) break;
+          await sleep(Math.min(delayMs, remainingMs));
+          delayMs = Math.min(Math.round(delayMs * 1.7), 5_000);
+        }
+      }
+
+      return false;
+    } finally {
+      if (runId === syncRunIdRef.current) {
+        setIsRetrying(false);
+      }
+    }
+  };
+
   const handleVerification = async () => {
     if (!signUp || !verificationCode.trim()) return;
     setIsVerifying(true);
     setError(null);
-    setSyncFailed(false);
-    setRetryCount(0); // Reset retry count on new verification attempt
+    setVerificationComplete(false);
+    setRetryCount(0);
 
     try {
       const result = await signUp.attemptEmailAddressVerification({
@@ -103,32 +192,38 @@ function SignupEmployerPageContent() {
       });
 
       if (result.status === "complete" && result.createdUserId) {
-        // Store verification result in case sync fails and we need to retry
-        setClerkUserId(result.createdUserId);
-        setSessionId(result.createdSessionId);
+        setVerificationComplete(true);
 
-        try {
-          // Sync user to Django backend
-          await apiRequest("/api/auth/clerk-sync", {
-            method: "POST",
-            body: JSON.stringify({
-              clerk_user_id: result.createdUserId,
-              email: email.trim(),
-            }),
-          });
-
-          // Only set session if BOTH verification AND sync succeeded
-          await setActive({ session: result.createdSessionId });
-
-          router.push("/signup-employer/organisation-info");
-        } catch (syncError: any) {
-          // Django sync failed - show retry option
-          console.error("[signup-employer] Backend sync failed:", syncError);
-          setSyncFailed(true);
-          setError(
-            "Account created but backend sync failed. Please click 'Retry Signup' to complete your registration."
-          );
+        if (!result.createdSessionId) {
+          throw new Error("Session could not be created. Please try again.");
         }
+
+        // Activate the Clerk session immediately so server-side proxy routes
+        // can mint a Clerk template JWT for authenticated backend calls.
+        await setActive({ session: result.createdSessionId });
+
+        setIsVerifying(false);
+        const syncOk = await syncBackendWithRetry(
+          result.createdUserId,
+          email.trim(),
+        );
+
+        if (!syncOk) {
+          setError(
+            "Account created, but setup couldn't be completed right now. Please try again later. You have been signed out.",
+          );
+          try {
+            await signOut();
+          } catch (err) {
+            console.error(
+              "[signup-employer] signOut failed after sync timeout:",
+              err,
+            );
+          }
+          return;
+        }
+
+        router.push("/signup-employer/organisation-info");
       } else {
         setError("Verification failed. Please try again.");
       }
@@ -141,56 +236,6 @@ function SignupEmployerPageContent() {
       setError(errorMessage);
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleRetrySync = async () => {
-    if (!clerkUserId || !sessionId) return;
-
-    // Check if retry limit reached
-    if (retryCount >= 5) {
-      setError(
-        "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
-      );
-      return;
-    }
-
-    setIsRetrying(true);
-    setError(null);
-    setRetryCount(prev => prev + 1);
-
-    try {
-      // Retry Django backend sync
-      await apiRequest("/api/auth/clerk-sync", {
-        method: "POST",
-        body: JSON.stringify({
-          clerk_user_id: clerkUserId,
-          email: email.trim(),
-        }),
-      });
-
-      // Sync succeeded - set session and continue
-      if (!setActive) {
-        throw new Error("Session activation not available");
-      }
-      await setActive({ session: sessionId });
-
-      router.push("/signup-employer/organisation-info");
-    } catch (error: any) {
-      console.error("[signup-employer] Retry sync failed:", error);
-      const attemptsRemaining = 5 - retryCount;
-      if (attemptsRemaining > 0) {
-        setError(
-          `Signup retry failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
-        );
-      } else {
-        setError(
-          "Maximum retry attempts reached. Please try again after some time or contact support if the issue persists."
-        );
-        setSyncFailed(false); // Hide retry button
-      }
-    } finally {
-      setIsRetrying(false);
     }
   };
 
@@ -389,88 +434,133 @@ function SignupEmployerPageContent() {
             {pendingVerification ? (
               /* OTP Verification View */
               <>
-                <div className="text-center mb-7">
-                  <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
-                    Verify your email
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    We sent a verification code to <strong>{email}</strong>
-                  </p>
-                </div>
+                {verificationComplete ? (
+                  <>
+                    <div className="text-center mb-7">
+                      <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+                        Completing signup
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        We&apos;re syncing your account so you can continue. This can take up to 30 seconds.
+                      </p>
+                    </div>
 
-                {error && (
-                  <div
-                    role="alert"
-                    className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-                  >
-                    <p className="font-semibold">Error</p>
-                    <p className="mt-1 whitespace-pre-wrap">{error}</p>
-                  </div>
+                    {error ? (
+                      <div
+                        role="alert"
+                        className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                      >
+                        <p className="font-semibold">Status</p>
+                        <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                      </div>
+                    ) : null}
+
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
+                      >
+                        {isRetrying ? (
+                          <span className="inline-flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Syncing with backend{retryCount ? ` (attempt ${retryCount})` : ""}...
+                          </span>
+                        ) : (
+                          "Setup incomplete"
+                        )}
+                      </button>
+
+                      {!isRetrying ? (
+                        <button
+                          type="button"
+                          onClick={handleGoToLogin}
+                          className="w-full rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                        >
+                          Go to login
+                        </button>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-center mb-7">
+                      <h2 className="text-[26px] font-semibold text-gray-900 mb-2">
+                        Verify your email
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        We sent a verification code to <strong>{email}</strong>
+                      </p>
+                    </div>
+
+                    {error && (
+                      <div
+                        role="alert"
+                        className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                      >
+                        <p className="font-semibold">Error</p>
+                        <p className="mt-1 whitespace-pre-wrap">{error}</p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label
+                          className="block text-[16px] font-semibold text-gray-900"
+                          htmlFor="employer-verificationCode"
+                        >
+                          Verification code
+                        </label>
+                        <input
+                          className={inputClasses(false)}
+                          id="employer-verificationCode"
+                          name="verificationCode"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          placeholder="Enter 6-digit code"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleVerification}
+                        disabled={isVerifying || !verificationCode.trim()}
+                        className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isVerifying ? "Verifying..." : "Verify email"}
+                      </button>
+
+                      <p className="text-center text-xs text-gray-500">
+                        Didn&apos;t receive the code?{" "}
+                        <button
+                          type="button"
+                          disabled={resendCooldown > 0}
+                          onClick={async () => {
+                            if (!signUp) return;
+                            try {
+                              await signUp.prepareEmailAddressVerification({
+                                strategy: "email_code",
+                              });
+                              setError(null);
+                              setResendCooldown(30);
+                            } catch {
+                              setError("Failed to resend code. Please try again.");
+                            }
+                          }}
+                          className={`font-semibold ${resendCooldown > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#C04622] hover:underline"}`}
+                        >
+                          {resendCooldown > 0
+                            ? `Resend code (${resendCooldown}s)`
+                            : "Resend code"}
+                        </button>
+                      </p>
+                    </div>
+                  </>
                 )}
-
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label
-                      className="block text-[16px] font-semibold text-gray-900"
-                      htmlFor="employer-verificationCode"
-                    >
-                      Verification code
-                    </label>
-                    <input
-                      className={inputClasses(false)}
-                      id="employer-verificationCode"
-                      name="verificationCode"
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="Enter 6-digit code"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      autoFocus
-                    />
-                  </div>
-
-                  {syncFailed && retryCount < 5 ? (
-                    <button
-                      type="button"
-                      onClick={handleRetrySync}
-                      disabled={isRetrying}
-                      className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isRetrying ? "Retrying..." : `Retry Signup (${5 - retryCount} attempt${5 - retryCount === 1 ? '' : 's'} left)`}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleVerification}
-                      disabled={isVerifying || !verificationCode.trim()}
-                      className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {isVerifying ? "Verifying..." : "Verify email"}
-                    </button>
-                  )}
-
-                  <p className="text-center text-xs text-gray-500">
-                    Didn&apos;t receive the code?{" "}
-                    <button
-                      type="button"
-                      disabled={resendCooldown > 0}
-                      onClick={async () => {
-                        if (!signUp) return;
-                        try {
-                          await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-                          setError(null);
-                          setResendCooldown(30);
-                        } catch {
-                          setError("Failed to resend code. Please try again.");
-                        }
-                      }}
-                      className={`font-semibold ${resendCooldown > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#C04622] hover:underline"}`}
-                    >
-                      {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Resend code"}
-                    </button>
-                  </p>
-                </div>
               </>
             ) : (
               /* Signup Form View */
