@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 // import { Geist, Geist_Mono } from "next/font/google";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import icon from "@/public/logo/ET Logo-01.webp";
+
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
 import { SkipLink } from "@/components/a11y";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "Enabled Talent",
   description: "Enabled Talent is an inclusive career platform connecting people with disabilities to accessible jobs, skills training, and supportive employers worldwide.",
   icons: {
-    icon: icon.src,
-    apple: icon.src,
+    icon: "/logo/ET-Logo-01.ico",
+    apple: "/logo/ET-Logo-01.ico",
   },
 };
 
