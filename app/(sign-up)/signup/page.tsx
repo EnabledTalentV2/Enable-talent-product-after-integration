@@ -654,7 +654,7 @@ function SignUpPageContent() {
                       </>
                     )}
                   </button>
-                  <button
+                  {/* <button
                     type="button"
                     disabled={oauthLoadingProvider !== null}
                     onClick={() => handleOAuthSignUp("oauth_github")}
@@ -673,7 +673,7 @@ function SignUpPageContent() {
                         Continue with GitHub
                       </>
                     )}
-                  </button>
+                  </button> */}
                   {oauthLoadingProvider ? (
                     <p role="status" aria-live="polite" className="text-center text-xs text-slate-500">
                       Connecting to {oauthLoadingProvider === "google" ? "Google" : "GitHub"}...
