@@ -212,6 +212,11 @@ export async function backendFetch(
       clerkToken = token;
       clerkTokenTemplate = template;
       headers.set("Authorization", `Bearer ${token}`);
+    } else {
+      console.warn(
+        `[backendFetch] No Clerk userId – request to ${endpoint} will have no Authorization header.`,
+        { method: options.method || "GET" },
+      );
     }
   } catch (error) {
     console.error("[backendFetch] Clerk auth/getToken failed", {
@@ -224,12 +229,12 @@ export async function backendFetch(
 
   // Generate a request ID for correlating frontend and backend logs.
   const incomingRequestId = headers.get("X-Request-Id")?.trim();
-  // const requestId =
-  //   incomingRequestId ||
-  //   (typeof crypto !== "undefined" && crypto.randomUUID
-  //     ? crypto.randomUUID()
-  //     : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
-  const requestId = "XYZ"
+  const requestId =
+    incomingRequestId ||
+    (typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+//  const requestId = "XYZ"
   if (!incomingRequestId) {
     headers.set("X-Request-Id", requestId);
   }

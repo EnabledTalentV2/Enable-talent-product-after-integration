@@ -197,33 +197,54 @@ function EmployerLoginPageContent() {
       return;
     }
 
-    const attemptNumber = syncRetryCount + 1;
-    if (attemptNumber > 2) {
-      setError(
-        "Maximum sync attempts reached. Please try again later or contact support."
-      );
-      setNeedsSync(false);
-      try {
-        await signOut();
-      } catch (err) {
-        console.error("[login-employer] signOut failed after max attempts:", err);
-      }
-      return;
-    }
-
     setIsSyncing(true);
     setError(null);
-    setSyncRetryCount(attemptNumber);
+
+    const MAX_ATTEMPTS = 3;
+    let delayMs = 1000;
 
     try {
-      // Call clerk-sync to create Django user
-      await apiRequest("/api/auth/clerk-sync", {
-        method: "POST",
-        body: JSON.stringify({
-          clerk_user_id: clerkUserId,
-          email: userEmail,
-        }),
-      });
+      // Retry clerk-sync with backoff (token may not be ready yet)
+      let syncSucceeded = false;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        setSyncRetryCount(attempt);
+        try {
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: clerkUserId,
+              email: userEmail,
+            }),
+          });
+          syncSucceeded = true;
+          break;
+        } catch (err) {
+          console.error(`[login-employer] Sync attempt ${attempt}/${MAX_ATTEMPTS} failed:`, err);
+          if (attempt < MAX_ATTEMPTS) {
+            setError(`Syncing account (attempt ${attempt}/${MAX_ATTEMPTS})...`);
+            await new Promise((r) => setTimeout(r, delayMs));
+            delayMs = Math.min(Math.round(delayMs * 1.5), 4000);
+          }
+        }
+      }
+
+      if (!syncSucceeded) {
+        setError(
+          "Account sync failed after multiple attempts. You're being signed out. Please try again later."
+        );
+        setNeedsSync(false);
+        try {
+          await signOut();
+        } catch (err) {
+          console.error("[login-employer] signOut failed after sync failures:", err);
+        } finally {
+          setClerkUserId(null);
+          setUserEmail(null);
+          setSyncRetryCount(0);
+          backendCheckedRef.current = false;
+        }
+        return;
+      }
 
       // Sync succeeded - now get user data and continue login
       const userData = await apiRequest<unknown>("/api/user/me", {
@@ -265,28 +286,7 @@ function EmployerLoginPageContent() {
       router.push(redirectTarget);
     } catch (error: any) {
       console.error("[login-employer] Sync failed:", error);
-      const attemptsRemaining = 2 - attemptNumber;
-
-      if (attemptsRemaining > 0) {
-        setError(
-          `Account sync failed. You have ${attemptsRemaining} attempt${attemptsRemaining === 1 ? '' : 's'} remaining.`
-        );
-      } else {
-        setError(
-          "Account sync failed twice. You're being signed out. Please try again later."
-        );
-        setNeedsSync(false);
-        try {
-          await signOut();
-        } catch (err) {
-          console.error("[login-employer] signOut failed after sync failures:", err);
-        } finally {
-          setClerkUserId(null);
-          setUserEmail(null);
-          setSyncRetryCount(0);
-          backendCheckedRef.current = false;
-        }
-      }
+      setError("Account sync failed. Please try again later.");
     } finally {
       setIsSyncing(false);
     }

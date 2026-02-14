@@ -206,6 +206,9 @@ function SignUpPageContent() {
         // can mint a Clerk template JWT for authenticated backend calls.
         await setActive({ session: result.createdSessionId });
 
+        // Give Clerk a moment to propagate the session cookie to the server
+        await sleep(1000);
+
         setIsVerifying(false);
         const syncOk = await syncBackendWithRetry(
           result.createdUserId,
