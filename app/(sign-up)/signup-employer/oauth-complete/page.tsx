@@ -7,7 +7,8 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { apiRequest, getApiErrorMessage } from "@/lib/api-client";
 
-const SYNC_RETRY_WINDOW_MS = 30_000;
+const TOKEN_WAIT_MS = 20_000;   // Phase 1: wait for getToken to succeed (needs extra time on slow connections)
+const SYNC_RETRY_WINDOW_MS = 20_000; // Phase 2: sync with Django
 const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
 
 const toFriendlySyncError = (err: unknown) => {
@@ -32,7 +33,7 @@ export default function EmployerOAuthCompletePage() {
   const { user } = useUser();
 
   const [isSyncing, setIsSyncing] = useState(true);
-  const [attemptCount, setAttemptCount] = useState(0);
+  const [syncPhase, setSyncPhase] = useState<"token" | "sync" | null>("token");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const hasStartedInitialSync = useRef(false);
@@ -58,6 +59,7 @@ export default function EmployerOAuthCompletePage() {
   const syncAccountWithRetry = async () => {
     if (!userId || !email) {
       setIsSyncing(false);
+      setSyncPhase(null);
       setError(
         "Unable to complete signup because your account email is missing.",
       );
@@ -65,24 +67,55 @@ export default function EmployerOAuthCompletePage() {
     }
 
     const runId = (syncRunIdRef.current += 1);
-    const deadline = Date.now() + SYNC_RETRY_WINDOW_MS;
-    let delayMs = 900;
-    let attempt = 0;
 
     setIsSyncing(true);
-    setAttemptCount(0);
+    setSyncPhase("token");
     setError(null);
     setSuccessMessage(null);
 
-    while (Date.now() < deadline) {
+    // ── Phase 1: Wait for getToken to succeed (up to TOKEN_WAIT_MS) ──
+    let freshToken: string | null = null;
+    const tokenDeadline = Date.now() + TOKEN_WAIT_MS;
+    let tokenDelay = 500;
+
+    while (Date.now() < tokenDeadline) {
       if (runId !== syncRunIdRef.current) return;
-      attempt += 1;
-      setAttemptCount(attempt);
+      try {
+        freshToken = await getToken({ template: "api", skipCache: true });
+        if (freshToken) break;
+      } catch (err) {
+        console.warn("[signup-employer/oauth-complete] getToken not ready yet:", err);
+      }
+      const remaining = Math.max(0, tokenDeadline - Date.now());
+      if (remaining <= 0) break;
+      await sleep(Math.min(tokenDelay, remaining));
+      tokenDelay = Math.min(Math.round(tokenDelay * 1.5), 3_000);
+    }
+
+    if (!freshToken) {
+      if (runId === syncRunIdRef.current) {
+        console.error("[signup-employer/oauth-complete] Could not obtain Clerk JWT after token wait phase");
+        setIsSyncing(false);
+        setSyncPhase(null);
+        setError(
+          "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
+        );
+      }
+      return;
+    }
+
+    // ── Phase 2: Sync with Django backend (up to SYNC_RETRY_WINDOW_MS) ──
+    if (runId !== syncRunIdRef.current) return;
+    setSyncPhase("sync");
+
+    const syncDeadline = Date.now() + SYNC_RETRY_WINDOW_MS;
+    let syncDelay = 900;
+
+    while (Date.now() < syncDeadline) {
+      if (runId !== syncRunIdRef.current) return;
 
       try {
-        // Get a fresh token on every attempt (skipCache avoids stale JWTs)
-        const freshToken = await getToken({ template: "api", skipCache: true });
-        if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+        const latestToken = await getToken({ template: "api", skipCache: true }) || freshToken;
 
         const controller = new AbortController();
         const timeoutId = setTimeout(
@@ -90,15 +123,15 @@ export default function EmployerOAuthCompletePage() {
           SYNC_ATTEMPT_TIMEOUT_MS,
         );
         try {
-        await apiRequest("/api/auth/clerk-sync", {
-          method: "POST",
-          body: JSON.stringify({
-            clerk_user_id: userId,
-            email,
-            token: freshToken,
-          }),
+          await apiRequest("/api/auth/clerk-sync", {
+            method: "POST",
+            body: JSON.stringify({
+              clerk_user_id: userId,
+              email,
+              token: latestToken,
+            }),
             signal: controller.signal,
-        });
+          });
         } finally {
           clearTimeout(timeoutId);
         }
@@ -107,23 +140,20 @@ export default function EmployerOAuthCompletePage() {
         router.replace("/signup-employer/organisation-info");
         return;
       } catch (syncError) {
-        const remainingMs = Math.max(0, deadline - Date.now());
-        const remainingSec = Math.ceil(remainingMs / 1000);
+        const remainingMs = Math.max(0, syncDeadline - Date.now());
         console.error(
           "[signup-employer/oauth-complete] Account sync failed:",
           syncError,
         );
-        setError(
-          `${toFriendlySyncError(syncError)} Retrying automatically for up to ${remainingSec}s...`,
-        );
         if (remainingMs <= 0) break;
-        await sleep(Math.min(delayMs, remainingMs));
-        delayMs = Math.min(Math.round(delayMs * 1.7), 5_000);
+        await sleep(Math.min(syncDelay, remainingMs));
+        syncDelay = Math.min(Math.round(syncDelay * 1.7), 5_000);
       }
     }
 
     if (runId === syncRunIdRef.current) {
       setIsSyncing(false);
+      setSyncPhase(null);
       setError(
         "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
       );
@@ -171,11 +201,13 @@ export default function EmployerOAuthCompletePage() {
       <div className="mx-auto w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="text-center mb-7">
           <h1 className="text-2xl font-semibold text-slate-900">
-            {isSyncing ? "Completing employer signup" : successMessage ? "Completing employer signup" : "Almost there"}
+            {isSyncing ? "Setting up your account" : successMessage ? "Setting up your account" : "Almost there"}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
             {isSyncing
-              ? "We're connecting your account. This can take up to 30 seconds."
+              ? syncPhase === "token"
+                ? "Preparing your secure session..."
+                : "Connecting your account to our system..."
               : successMessage
                 ? "We're syncing your account so you can continue onboarding."
                 : "Your account was created. We just need to finish connecting it to our system."}
@@ -185,13 +217,9 @@ export default function EmployerOAuthCompletePage() {
         {error ? (
           <div
             role="alert"
-            className={`mb-4 rounded-lg border p-3 text-sm ${
-              isSyncing
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-amber-200 bg-amber-50 text-amber-800"
-            }`}
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
           >
-            <p className="font-semibold">{isSyncing ? "Syncing..." : "Setup incomplete"}</p>
+            <p className="font-semibold">Setup incomplete</p>
             <p className="mt-1 whitespace-pre-wrap">{error}</p>
           </div>
         ) : null}
@@ -213,7 +241,9 @@ export default function EmployerOAuthCompletePage() {
               >
                 <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting account{attemptCount ? ` (attempt ${attemptCount})` : ""}...
+                  {syncPhase === "token"
+                    ? "Setting up your account..."
+                    : "Connecting to our system..."}
                 </span>
               </button>
               <button

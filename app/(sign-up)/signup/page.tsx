@@ -21,7 +21,8 @@ import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
 
-const SYNC_RETRY_WINDOW_MS = 30_000;
+const TOKEN_WAIT_MS = 20_000;   // Phase 1: wait for getToken to succeed (needs extra time on slow connections)
+const SYNC_RETRY_WINDOW_MS = 20_000; // Phase 2: sync with Django
 const SYNC_ATTEMPT_TIMEOUT_MS = 10_000;
 
 const toFriendlySyncError = (err: unknown) => {
@@ -79,7 +80,7 @@ function SignUpPageContent() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  const [syncPhase, setSyncPhase] = useState<"token" | "sync" | null>(null);
   const [oauthLoadingProvider, setOauthLoadingProvider] = useState<
     "google" | "github" | null
   >(null);
@@ -127,26 +128,53 @@ function SignUpPageContent() {
     emailAddress: string,
   ): Promise<boolean> => {
     const runId = (syncRunIdRef.current += 1);
-    const deadline = Date.now() + SYNC_RETRY_WINDOW_MS;
-    let delayMs = 900;
-    let attempt = 0;
 
     setIsRetrying(true);
-    setRetryCount(0);
-    setServerError(
-      "Account created. Finishing setup by syncing with our backend. This can take up to 30 seconds...",
-    );
+    setSyncPhase("token");
+    setServerError(null);
 
+    let succeeded = false;
     try {
-      while (Date.now() < deadline) {
+      // ── Phase 1: Wait for getToken to succeed (up to TOKEN_WAIT_MS) ──
+      let freshToken: string | null = null;
+      const tokenDeadline = Date.now() + TOKEN_WAIT_MS;
+      let tokenDelay = 500;
+
+      while (Date.now() < tokenDeadline) {
         if (runId !== syncRunIdRef.current) return false;
-        attempt += 1;
-        setRetryCount(attempt);
+        try {
+          freshToken = await getToken({ template: "api", skipCache: true });
+          if (freshToken) break;
+        } catch (err) {
+          console.warn("[signup] getToken not ready yet:", err);
+        }
+        const remaining = Math.max(0, tokenDeadline - Date.now());
+        if (remaining <= 0) break;
+        await sleep(Math.min(tokenDelay, remaining));
+        tokenDelay = Math.min(Math.round(tokenDelay * 1.5), 3_000);
+      }
+
+      if (!freshToken) {
+        console.error("[signup] Could not obtain Clerk JWT after token wait phase");
+        setServerError(
+          "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
+        );
+        return false;
+      }
+
+      // ── Phase 2: Sync with Django backend (up to SYNC_RETRY_WINDOW_MS) ──
+      if (runId !== syncRunIdRef.current) return false;
+      setSyncPhase("sync");
+
+      const syncDeadline = Date.now() + SYNC_RETRY_WINDOW_MS;
+      let syncDelay = 900;
+
+      while (Date.now() < syncDeadline) {
+        if (runId !== syncRunIdRef.current) return false;
 
         try {
-          // Get a fresh token on every attempt (skipCache avoids stale JWTs)
-          const freshToken = await getToken({ template: "api", skipCache: true });
-          if (!freshToken) throw new Error("Could not obtain Clerk JWT");
+          // Refresh the token on each sync attempt too
+          const latestToken = await getToken({ template: "api", skipCache: true }) || freshToken;
 
           const controller = new AbortController();
           const timeoutId = setTimeout(
@@ -154,36 +182,37 @@ function SignUpPageContent() {
             SYNC_ATTEMPT_TIMEOUT_MS,
           );
           try {
-          await apiRequest("/api/auth/clerk-sync", {
-            method: "POST",
-            body: JSON.stringify({
-              clerk_user_id: createdUserId,
-              email: emailAddress,
-              token: freshToken,
-            }),
+            await apiRequest("/api/auth/clerk-sync", {
+              method: "POST",
+              body: JSON.stringify({
+                clerk_user_id: createdUserId,
+                email: emailAddress,
+                token: latestToken,
+              }),
               signal: controller.signal,
-          });
+            });
           } finally {
             clearTimeout(timeoutId);
           }
+          succeeded = true;
           return true;
         } catch (err) {
-          const remainingMs = Math.max(0, deadline - Date.now());
-          const remainingSec = Math.ceil(remainingMs / 1000);
+          const remainingMs = Math.max(0, syncDeadline - Date.now());
           console.error("[signup] Backend sync attempt failed:", err);
-          setServerError(
-            `${toFriendlySyncError(err)} Retrying automatically for up to ${remainingSec}s...`,
-          );
           if (remainingMs <= 0) break;
-          await sleep(Math.min(delayMs, remainingMs));
-          delayMs = Math.min(Math.round(delayMs * 1.7), 5_000);
+          await sleep(Math.min(syncDelay, remainingMs));
+          syncDelay = Math.min(Math.round(syncDelay * 1.7), 5_000);
         }
       }
 
+      setServerError(
+        "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe.",
+      );
       return false;
     } finally {
-      if (runId === syncRunIdRef.current) {
+      if (runId === syncRunIdRef.current && !succeeded) {
         setIsRetrying(false);
+        setSyncPhase(null);
       }
     }
   };
@@ -193,7 +222,6 @@ function SignUpPageContent() {
     setIsVerifying(true);
     setServerError(null);
     setVerificationComplete(false);
-    setRetryCount(0);
 
     try {
       const result = await signUp.attemptEmailAddressVerification({
@@ -202,6 +230,8 @@ function SignUpPageContent() {
 
       if (result.status === "complete" && result.createdUserId) {
         setVerificationComplete(true);
+        setIsRetrying(true);
+        setSyncPhase("token");
 
         if (!result.createdSessionId) {
           throw new Error("Session could not be created. Please try again.");
@@ -451,11 +481,13 @@ function SignUpPageContent() {
                   <>
                     <div className="text-center mb-7">
                       <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
-                        {isRetrying ? "Completing signup" : "Almost there"}
+                        {isRetrying ? "Setting up your account" : "Almost there"}
                       </h2>
                       <p className="text-sm text-slate-500">
                         {isRetrying
-                          ? "We're connecting your account. This can take up to 30 seconds."
+                          ? syncPhase === "token"
+                            ? "Preparing your secure session..."
+                            : "Connecting your account to our system..."
                           : "Your account was created. We just need to finish connecting it to our system."}
                       </p>
                     </div>
@@ -463,13 +495,9 @@ function SignUpPageContent() {
                     {serverError ? (
                       <div
                         role="alert"
-                        className={`mb-4 rounded-lg border p-3 text-sm ${
-                          isRetrying
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : "border-amber-200 bg-amber-50 text-amber-800"
-                        }`}
+                        className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
                       >
-                        <p className="font-semibold">{isRetrying ? "Syncing..." : "Setup incomplete"}</p>
+                        <p className="font-semibold">Setup incomplete</p>
                         <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
                       </div>
                     ) : null}
@@ -483,7 +511,9 @@ function SignUpPageContent() {
                         >
                           <span className="inline-flex items-center justify-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Connecting account{retryCount ? ` (attempt ${retryCount})` : ""}...
+                            {syncPhase === "token"
+                              ? "Setting up your account..."
+                              : "Connecting to our system..."}
                           </span>
                         </button>
                       ) : (
