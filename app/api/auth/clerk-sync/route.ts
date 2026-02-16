@@ -12,6 +12,14 @@ import {
  * Syncs Clerk user to Django backend
  * Called after Clerk signup/login to ensure user exists in Django
  *
+ * Authentication: The client provides a fresh Clerk JWT (template: "api",
+ * skipCache: true) in the request body. This token is forwarded to Django
+ * as the Authorization header. Django is the sole authority for JWT verification.
+ *
+ * The server-side auth() call is non-blocking — used only for logging.
+ * This avoids the race condition where the session cookie hasn't propagated
+ * to the server yet after setActive().
+ *
  * Request body:
  * {
  *   clerk_user_id: string,  // Clerk user ID (e.g., "user_2abc123...")
@@ -29,19 +37,10 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify the caller has a valid Clerk session
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized – no active Clerk session" },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const cookies = request.headers.get("cookie") || "";
 
-    // 2. Validate required fields and types
+    // 1. Validate required fields and types
     const clerkUserId =
       typeof body.clerk_user_id === "string" ? body.clerk_user_id.trim() : "";
     const email =
@@ -63,18 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Ensure the body's clerk_user_id matches the authenticated session
-    if (clerkUserId !== userId) {
-      console.warn(
-        `[clerk-sync] clerk_user_id mismatch: body="${clerkUserId}" session="${userId}"`,
-      );
-      return NextResponse.json(
-        { error: "clerk_user_id does not match authenticated session" },
-        { status: 403 }
-      );
-    }
-
-    // 4. Basic email format check
+    // 2. Basic email format check
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         { error: "Invalid email format" },
@@ -82,18 +70,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 3. Non-blocking session check — for logging only, never rejects.
+    //    During the signup race window the session cookie may not have
+    //    propagated yet, so auth() can return null. That's fine — Django
+    //    will verify the client-provided JWT independently.
+    let sessionUserId: string | null = null;
+    try {
+      const { userId } = await auth();
+      sessionUserId = userId;
+    } catch {
+      // Session cookie not ready — expected during signup race window
+    }
+
     // DEBUG: Log request summary for troubleshooting
     console.log("[clerk-sync] Incoming request", {
-      sessionUserId: userId,
+      sessionUserId,
+      sessionReady: Boolean(sessionUserId),
       bodyClerkUserId: clerkUserId,
       bodyEmail: email,
       hasClientToken: Boolean(clientToken),
       clientTokenPreview: `${clientToken.slice(0, 16)}...`,
     });
 
-    // 5. Forward only the expected fields to Django backend.
+    // 4. Forward only the expected fields to Django backend.
     //    Use the client-provided token directly (fresh, skipCache:true)
     //    instead of server-side getToken which may serve a cached/stale JWT.
+    //    Django verifies the JWT signature, audience, and issuer —
+    //    it is the sole authority for authentication on this endpoint.
     const backendResponse = await backendFetchWithToken(
       `${BACKEND_URL}/api/auth/clerk-sync/`,
       clientToken,
