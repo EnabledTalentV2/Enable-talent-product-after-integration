@@ -137,6 +137,7 @@ function SignupEmployerPageContent() {
     setSyncPhase("token");
     setError(null);
 
+    let succeeded = false;
     try {
       // ── Phase 1: Wait for getToken to succeed (up to TOKEN_WAIT_MS) ──
       let freshToken: string | null = null;
@@ -196,6 +197,7 @@ function SignupEmployerPageContent() {
           } finally {
             clearTimeout(timeoutId);
           }
+          succeeded = true;
           return true;
         } catch (err) {
           const remainingMs = Math.max(0, syncDeadline - Date.now());
@@ -211,7 +213,7 @@ function SignupEmployerPageContent() {
       );
       return false;
     } finally {
-      if (runId === syncRunIdRef.current) {
+      if (runId === syncRunIdRef.current && !succeeded) {
         setIsRetrying(false);
         setSyncPhase(null);
       }
