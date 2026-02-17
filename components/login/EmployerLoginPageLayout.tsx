@@ -1,18 +1,17 @@
 "use client";
 
-import { Suspense } from "react";
-import Image from "next/image";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
 import logo from "@/public/logo/ET Logo-01.webp";
-import { useEmployerSignup } from "@/lib/hooks/useEmployerSignup";
-import EmployerSignupForm from "@/components/signup/employer/EmployerSignupForm";
-import EmployerSignupVerification from "@/components/signup/employer/EmployerSignupVerification";
+import { ArrowLeft } from "lucide-react";
 
-function SignupEmployerPageContent() {
-  const signup = useEmployerSignup();
+type EmployerLoginPageLayoutProps = {
+  children: ReactNode;
+};
 
+export default function EmployerLoginPageLayout({ children }: EmployerLoginPageLayoutProps) {
   return (
     <main
       id="main-content"
@@ -46,7 +45,6 @@ function SignupEmployerPageContent() {
           {/* Left Side - Welcome */}
           <div className="flex max-w-105 flex-col items-center text-center">
             <div className="relative mb-8 flex items-center justify-center">
-              {/* Orange glow effect behind logo */}
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-orange-400/50 blur-3xl" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
               <a
@@ -66,62 +64,16 @@ function SignupEmployerPageContent() {
             </div>
 
             <h1 className="text-3xl font-semibold text-gray-900 mb-4 leading-tight md:text-4xl">
-              Welcome To Enabled Talent
+              Welcome Back
             </h1>
             <p className="text-base text-gray-700 md:text-lg max-w-md">
-              Find and hire top talent across Canada - faster and smarter
+              Log in to manage your job postings and find top talent.
             </p>
           </div>
 
           {/* Right Side - Form */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-xl md:px-10 md:py-12">
-            {signup.pendingVerification ? (
-              <EmployerSignupVerification
-                email={signup.email}
-                verificationCode={signup.verificationCode}
-                isVerifying={signup.isVerifying}
-                serverError={signup.serverError}
-                verificationComplete={signup.verificationComplete}
-                isRetrying={signup.isRetrying}
-                syncPhase={signup.syncPhase}
-                resendCooldown={signup.resendCooldown}
-                setVerificationCode={signup.setVerificationCode}
-                handleVerification={signup.handleVerification}
-                handleResendCode={signup.handleResendCode}
-                handleRetrySyncBackend={signup.handleRetrySyncBackend}
-                handleGoToLogin={signup.handleGoToLogin}
-              />
-            ) : (
-              <EmployerSignupForm
-                fullName={signup.fullName}
-                employerName={signup.employerName}
-                email={signup.email}
-                password={signup.password}
-                confirmPassword={signup.confirmPassword}
-                showPassword={signup.showPassword}
-                showConfirmPassword={signup.showConfirmPassword}
-                fieldErrors={signup.fieldErrors}
-                serverError={signup.serverError}
-                hasErrors={signup.hasErrors}
-                isSubmitting={signup.isSubmitting}
-                fullNameRef={signup.fullNameRef}
-                employerNameRef={signup.employerNameRef}
-                emailRef={signup.emailRef}
-                passwordRef={signup.passwordRef}
-                confirmPasswordRef={signup.confirmPasswordRef}
-                errorSummaryRef={signup.errorSummaryRef}
-                fieldMeta={signup.fieldMeta}
-                setFullName={signup.setFullName}
-                setEmployerName={signup.setEmployerName}
-                setEmail={signup.setEmail}
-                setPassword={signup.setPassword}
-                setConfirmPassword={signup.setConfirmPassword}
-                togglePassword={signup.togglePassword}
-                toggleConfirmPassword={signup.toggleConfirmPassword}
-                clearFieldError={signup.clearFieldError}
-                handleSubmit={signup.handleSubmit}
-              />
-            )}
+            {children}
           </div>
         </div>
       </div>
@@ -131,21 +83,13 @@ function SignupEmployerPageContent() {
           Are you a Candidate?{" "}
           <Link
             className="font-bold text-[#C04622] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 rounded-sm"
-            href="/signup"
-            aria-label="Sign up here for a Candidate account"
+            href="/login-talent"
+            aria-label="Log in here to the Candidate portal"
           >
-            Sign up here!
+            Log in here!
           </Link>
         </p>
       </div>
     </main>
-  );
-}
-
-export default function SignupEmployerPage() {
-  return (
-    <Suspense fallback={null}>
-      <SignupEmployerPageContent />
-    </Suspense>
   );
 }

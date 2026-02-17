@@ -1,0 +1,86 @@
+"use client";
+
+const inputClasses =
+  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
+
+type TalentVerificationFormProps = {
+  email: string;
+  error: string | null;
+  verificationCode: string;
+  isVerifying: boolean;
+  onCodeChange: (value: string) => void;
+  onVerify: () => void;
+  onCancel: () => void;
+};
+
+export default function TalentVerificationForm({
+  email,
+  error,
+  verificationCode,
+  isVerifying,
+  onCodeChange,
+  onVerify,
+  onCancel,
+}: TalentVerificationFormProps) {
+  return (
+    <>
+      <div className="text-center mb-7">
+        <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
+          Verify your email
+        </h2>
+        <p className="text-sm text-slate-500">
+          We sent a verification code to <strong>{email}</strong>
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <label
+            className="block text-[16px] font-semibold text-slate-700"
+            htmlFor="talent-verificationCode"
+          >
+            Verification code
+          </label>
+          <input
+            className={inputClasses}
+            id="talent-verificationCode"
+            name="verificationCode"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Enter 6-digit code"
+            value={verificationCode}
+            onChange={(e) => onCodeChange(e.target.value)}
+            autoFocus
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={onVerify}
+          disabled={isVerifying || !verificationCode.trim()}
+          className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {isVerifying ? "Verifying..." : "Verify email"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Back to login
+        </button>
+      </div>
+    </>
+  );
+}
