@@ -70,11 +70,11 @@ export function useOAuthComplete(config: OAuthCompleteConfig) {
   }, []);
 
   const syncAccountWithRetry = async () => {
-    if (!userId || !email) {
+    if (!userId) {
       setIsSyncing(false);
       setSyncPhase(null);
       setError(
-        "Unable to complete signup because your account email is missing.",
+        "Unable to complete signup because your account information is missing.",
       );
       return;
     }
@@ -85,6 +85,34 @@ export function useOAuthComplete(config: OAuthCompleteConfig) {
     setSyncPhase("token");
     setError(null);
     setSuccessMessage(null);
+
+    // ── Phase 0: Wait for email to be loaded (up to 5 seconds) ──
+    let currentEmail = email;
+    if (!currentEmail) {
+      const emailDeadline = Date.now() + 5_000;
+      let emailDelay = 200;
+
+      while (Date.now() < emailDeadline) {
+        if (runId !== syncRunIdRef.current) return;
+        // Re-check email (useMemo will update when user object loads)
+        currentEmail = user?.primaryEmailAddress?.emailAddress || user?.emailAddresses?.[0]?.emailAddress || "";
+        if (currentEmail) break;
+        const remaining = Math.max(0, emailDeadline - Date.now());
+        if (remaining <= 0) break;
+        await sleep(Math.min(emailDelay, remaining));
+        emailDelay = Math.min(Math.round(emailDelay * 1.5), 1_000);
+      }
+
+      if (!currentEmail) {
+        console.error(`[${logLabel}] Email not loaded after waiting`);
+        setIsSyncing(false);
+        setSyncPhase(null);
+        setError(
+          "Unable to complete signup because your account email is missing.",
+        );
+        return;
+      }
+    }
 
     // ── Phase 1: Wait for getToken to succeed (up to TOKEN_WAIT_MS) ──
     let freshToken: string | null = null;
@@ -143,7 +171,7 @@ export function useOAuthComplete(config: OAuthCompleteConfig) {
             method: "POST",
             body: JSON.stringify({
               clerk_user_id: userId,
-              email,
+              email: currentEmail,
               token: latestToken,
             }),
             signal: controller.signal,

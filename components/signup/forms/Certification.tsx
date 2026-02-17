@@ -158,9 +158,10 @@ export default function Certification({
                 <InputBlock
                   id={`cert-${idx}-issueDate`}
                   label="Issue Date"
+                  type="month"
                   value={entry.issueDate}
                   onChange={(v) => onEntryChange(idx, { issueDate: v })}
-                  placeholder="Aug 2021"
+                  placeholder="2021-08"
                   error={Boolean(entryErrors.issueDate)}
                   errorMessage={entryErrors.issueDate}
                 />
@@ -168,9 +169,10 @@ export default function Certification({
                 <InputBlock
                   id={`cert-${idx}-expiryDate`}
                   label="Expiry Date"
+                  type="month"
                   value={entry.expiryDate ?? ""}
                   onChange={(v) => onEntryChange(idx, { expiryDate: v })}
-                  placeholder="Aug 2026"
+                  placeholder="2026-08"
                   error={Boolean(entryErrors.expiryDate)}
                   errorMessage={entryErrors.expiryDate}
                 />
