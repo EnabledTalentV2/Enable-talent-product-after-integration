@@ -20,7 +20,11 @@ import {
   buildCandidateSkillPayloads,
   buildCandidateWorkExperiencePayloads,
   normalizeGenderForBackend,
+  toDateValue,
 } from "@/lib/candidateProfileUtils";
+
+const isValidDate = (value: string): boolean =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value);
 import type { Step, StepKey, StepStatus, UserData } from "@/lib/types/user";
 
 type WorkEntry = UserData["workExperience"]["entries"][number];
@@ -357,28 +361,41 @@ export function useManualResumeFill() {
         entries.forEach((entry, idx) => {
           requiredFields.forEach(({ field, message }) => {
             const val = entry[field];
-            const isValid =
+            const isPresent =
               val && typeof val === "string" && val.trim().length > 0;
-
-            if (!isValid) {
+            if (!isPresent) {
               if (!errors.entries) errors.entries = {};
               if (!errors.entries[idx]) errors.entries[idx] = {};
               errors.entries[idx]![field] = message;
-              if (!firstId) {
-                firstId = `workExp-${idx}-${field}`;
+              if (!firstId) firstId = `workExp-${idx}-${field}`;
+            } else if (field === "from") {
+              const converted = toDateValue(val as string);
+              if (!isValidDate(converted)) {
+                if (!errors.entries) errors.entries = {};
+                if (!errors.entries[idx]) errors.entries[idx] = {};
+                errors.entries[idx]!.from =
+                  "Please enter a valid Start Date (e.g. 2024-03-15)";
+                if (!firstId) firstId = `workExp-${idx}-from`;
               }
             }
           });
           if (!entry.current) {
             const toVal = entry.to;
-            const isToValid =
+            const isToPresent =
               toVal && typeof toVal === "string" && toVal.trim().length > 0;
-            if (!isToValid) {
+            if (!isToPresent) {
               if (!errors.entries) errors.entries = {};
               if (!errors.entries[idx]) errors.entries[idx] = {};
               errors.entries[idx]!.to = "Please enter end date";
-              if (!firstId) {
-                firstId = `workExp-${idx}-to`;
+              if (!firstId) firstId = `workExp-${idx}-to`;
+            } else {
+              const converted = toDateValue(toVal as string);
+              if (!isValidDate(converted)) {
+                if (!errors.entries) errors.entries = {};
+                if (!errors.entries[idx]) errors.entries[idx] = {};
+                errors.entries[idx]!.to =
+                  "Please enter a valid End Date (e.g. 2024-03-15)";
+                if (!firstId) firstId = `workExp-${idx}-to`;
               }
             }
           }
@@ -448,6 +465,31 @@ export function useManualResumeFill() {
               if (!firstProjectId) firstProjectId = `project-${idx}-${field}`;
             }
           });
+          // Validate date format if filled in (optional fields)
+          const fromVal = entry.from;
+          if (fromVal && typeof fromVal === "string" && fromVal.trim().length > 0) {
+            const converted = toDateValue(fromVal);
+            if (!isValidDate(converted)) {
+              if (!projectErrs.entries) projectErrs.entries = {};
+              if (!projectErrs.entries[idx]) projectErrs.entries[idx] = {};
+              projectErrs.entries[idx]!.from =
+                "Please enter a valid Start Date (e.g. 2024-03-15)";
+              if (!firstProjectId) firstProjectId = `project-${idx}-from`;
+            }
+          }
+          if (!entry.current) {
+            const toVal = entry.to;
+            if (toVal && typeof toVal === "string" && toVal.trim().length > 0) {
+              const converted = toDateValue(toVal);
+              if (!isValidDate(converted)) {
+                if (!projectErrs.entries) projectErrs.entries = {};
+                if (!projectErrs.entries[idx]) projectErrs.entries[idx] = {};
+                projectErrs.entries[idx]!.to =
+                  "Please enter a valid End Date (e.g. 2024-03-15)";
+                if (!firstProjectId) firstProjectId = `project-${idx}-to`;
+              }
+            }
+          }
         });
         if (firstProjectId) {
           setProjectErrors((prev) => ({ ...prev, ...projectErrs }));
@@ -487,6 +529,29 @@ export function useManualResumeFill() {
               if (!firstCertId) firstCertId = `cert-${idx}-${field}`;
             }
           });
+          // Validate date format if filled in (optional fields)
+          const issueVal = entry.issueDate;
+          if (issueVal && typeof issueVal === "string" && issueVal.trim().length > 0) {
+            const converted = toDateValue(issueVal);
+            if (!isValidDate(converted)) {
+              if (!certErrs.entries) certErrs.entries = {};
+              if (!certErrs.entries[idx]) certErrs.entries[idx] = {};
+              certErrs.entries[idx]!.issueDate =
+                "Please enter a valid Issue Date (e.g. Aug 2024)";
+              if (!firstCertId) firstCertId = `cert-${idx}-issueDate`;
+            }
+          }
+          const expiryVal = entry.expiryDate;
+          if (expiryVal && typeof expiryVal === "string" && expiryVal.trim().length > 0) {
+            const converted = toDateValue(expiryVal);
+            if (!isValidDate(converted)) {
+              if (!certErrs.entries) certErrs.entries = {};
+              if (!certErrs.entries[idx]) certErrs.entries[idx] = {};
+              certErrs.entries[idx]!.expiryDate =
+                "Please enter a valid Expiry Date (e.g. Aug 2026)";
+              if (!firstCertId) firstCertId = `cert-${idx}-expiryDate`;
+            }
+          }
         });
         if (firstCertId) {
           setCertErrors((prev) => ({ ...prev, ...certErrs }));
@@ -575,6 +640,32 @@ export function useManualResumeFill() {
         setOtherDetailsErrors({});
         setOtherDetailsFirstError(null);
         return true;
+      case "achievements": {
+        let firstAchId: string | null = null;
+        const achErrs: Record<number, { issueDate?: string }> = {};
+        userData.achievements.entries.forEach((entry, idx) => {
+          const issueVal = entry.issueDate;
+          if (issueVal && typeof issueVal === "string" && issueVal.trim().length > 0) {
+            const converted = toDateValue(issueVal);
+            if (!isValidDate(converted)) {
+              achErrs[idx] = {
+                issueDate: "Please enter a valid Issue Date (e.g. Aug 2024)",
+              };
+              if (!firstAchId) firstAchId = `achievement-${idx}-issueDate`;
+            }
+          }
+        });
+        if (firstAchId) {
+          // Achievements has no dedicated error state — surface via finishError isn't ideal,
+          // but we set it so the user sees it at the right step before proceeding.
+          setFinishError(
+            "One or more achievement dates are invalid. Please enter a valid date (e.g. Aug 2024).",
+          );
+          return false;
+        }
+        setFinishError(null);
+        return true;
+      }
       default:
         return true;
     }

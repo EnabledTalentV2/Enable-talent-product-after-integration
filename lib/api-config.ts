@@ -215,7 +215,7 @@ export async function backendFetch(
       headers.set("Authorization", `Bearer ${token}`);
     } else {
       console.warn(
-        `[backendFetch] No Clerk userId – request to ${endpoint} will have no Authorization header.`,
+        `[backendFetch] No Clerk userId "–" request to ${endpoint} will have no Authorization header.`,
         { method: options.method || "GET" },
       );
     }

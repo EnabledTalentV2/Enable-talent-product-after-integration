@@ -235,11 +235,14 @@ const toDateFromYear = (value: unknown): string => {
   return year ? `${year}-01-01` : "";
 };
 
-const toDateValue = (value: unknown): string => {
+export const toDateValue = (value: unknown): string => {
   const trimmed = toTrimmedString(value);
   if (!trimmed) return "";
+  // YYYY-MM-DD — already correct
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  // YYYY-MM → YYYY-MM-01
   if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  // Month-name Year (e.g. "Aug 2021", "january-2020", "jan/2024")
   const monthYearMatch = trimmed.match(
     /^(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[\s,\/-]+(\d{4})$/i
   );
@@ -264,7 +267,19 @@ const toDateValue = (value: unknown): string => {
     const month = monthMap[monthToken];
     if (month) return `${year}-${month}-01`;
   }
-  return trimmed;
+  // MM/YYYY → YYYY-MM-01
+  const mmYyyySlash = trimmed.match(/^(\d{2})\/(\d{4})$/);
+  if (mmYyyySlash) return `${mmYyyySlash[2]}-${mmYyyySlash[1]}-01`;
+  // YYYY/MM → YYYY-MM-01
+  const yyyyMmSlash = trimmed.match(/^(\d{4})\/(\d{2})$/);
+  if (yyyyMmSlash) return `${yyyyMmSlash[1]}-${yyyyMmSlash[2]}-01`;
+  // MM-YYYY → YYYY-MM-01
+  const mmYyyyDash = trimmed.match(/^(\d{2})-(\d{4})$/);
+  if (mmYyyyDash) return `${mmYyyyDash[2]}-${mmYyyyDash[1]}-01`;
+  // YYYY (year only) → YYYY-01-01
+  if (/^\d{4}$/.test(trimmed)) return `${trimmed}-01-01`;
+  // Unrecognized format — return "" to prevent invalid data reaching the backend
+  return "";
 };
 
 const hasValue = (value: unknown): boolean => {

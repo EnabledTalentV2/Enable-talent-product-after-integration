@@ -130,19 +130,23 @@ app/                                    # Next.js App Router
   page.tsx                              # Landing/home page
   globals.css                           # Global styles
 
-  (login)/
+  (login)/                              # Login route group
     login-talent/page.tsx               # Talent login with vector background
     login-employer/page.tsx             # Employer login with vector background
+    forgot-password/page.tsx            # Password recovery flow
 
-  (sign-up)/
-    signup/page.tsx                     # Talent signup form
-    signup/manual-resume-fill/page.tsx  # Manual profile data entry
+  (sign-up)/                            # Signup route group
+    signup/page.tsx                     # Talent initial signup form
+    signup/manual-resume-fill/page.tsx  # Manual profile data entry (multi-step form)
     signup/resume-upload/page.tsx       # Resume upload + parsing
+    signup/accessability-needs/page.tsx # Accessibility accommodation preferences
+    signup/oauth-complete/page.tsx      # OAuth flow completion
     signup-employer/page.tsx            # Employer signup form
     signup-employer/email-verification/page.tsx
     signup-employer/organisation-info/page.tsx
+    signup-employer/oauth-complete/page.tsx
 
-  (employer)/
+  (employer)/                           # Employer routes
     employer/page.tsx                   # Employer landing
     employer/dashboard/
       layout.tsx                        # Employer dashboard layout
@@ -157,12 +161,12 @@ app/                                    # Next.js App Router
       company-profile/page.tsx          # Company info
       company-profile-edit/page.tsx     # Edit company info
 
-  (user-dashboard)/
+  (user-dashboard)/                     # Talent dashboard routes
     dashboard/
       layout.tsx                        # Talent dashboard layout
       page.tsx                          # Dashboard home
       home/page.tsx                     # Dashboard home section
-      my-jobs/page.tsx                  # Applied jobs
+      my-jobs/page.tsx                  # Applied jobs with tracking
       companies/page.tsx                # Browse companies
       profile/page.tsx                  # View profile
       profile-update/page.tsx           # Update profile
@@ -170,31 +174,52 @@ app/                                    # Next.js App Router
       career-coach/start/page.tsx       # Career coach start
 
   accessibility/page.tsx                # Accessibility features and info
+  account/setup-required/page.tsx       # Account setup required page
 
   api/
     auth/                               # Auth proxy routes
-      clerk-sync/route.ts               # Sync Clerk user -> Django user (required before onboarding continues)
-      debug-token/route.ts              # Dev-only: issue a Clerk JWT for manual backend testing
-      users/me/route.ts                 # Proxy to backend `/api/auth/users/me/`
-      add-feedback/route.ts
+      clerk-sync/route.ts               # Sync Clerk user -> Django user
+      debug-token/route.ts              # Dev-only: issue Clerk JWT
+      users/me/route.ts                 # Proxy to backend user profile
+      add-feedback/route.ts             # Feedback submission
 
-    candidates/                         # Candidate endpoints
+    candidates/                         # Candidate data endpoints
       route.ts                          # All candidates
-      [slug]/route.ts                   # Single candidate
+      [slug]/route.ts                   # Single candidate profile
       prompt/route.ts                   # AI prompt generation
       career-coach/route.ts             # Career coaching AI
-      profiles/route.ts                 # Candidate profiles
-      profiles/[slug]/route.ts
+      profiles/route.ts                 # Candidate profiles CRUD
+      profiles/[slug]/route.ts          # Individual profile update
+      profiles/[slug]/full/route.ts     # Full profile fetch
       profiles/[slug]/parse-resume/route.ts
       profiles/[slug]/parsing-status/route.ts
       profiles/[slug]/verify-profile/route.ts
+
+      # Profile data CRUD endpoints (auto-generated from modular structure)
+      education/route.ts                # Education CRUD
+      education/[id]/route.ts           # Individual education entry
+      certifications/route.ts           # Certifications CRUD
+      certifications/[id]/route.ts      # Individual certification entry
+      skills/route.ts                   # Skills CRUD
+      skills/[id]/route.ts              # Individual skill entry
+      languages/route.ts                # Languages CRUD
+      work-experience/route.ts          # Work experience CRUD
+      work-experience/[id]/route.ts     # Individual work experience entry
+      projects/route.ts                 # Projects CRUD
+      projects/[id]/route.ts            # Individual project entry
+      achievements/route.ts             # Achievements CRUD
+      achievements/[id]/route.ts        # Individual achievement entry
+
+      job-invites/route.ts              # Job invitation management
+      job-invites/respond/route.ts      # Respond to job invites
+      notes/route.ts                    # Candidate notes
 
     candidate/
       applications/route.ts             # Talent's job applications
 
     jobs/                               # Job endpoints
       route.ts                          # All jobs
-      browse/route.ts                   # Browse jobs
+      browse/route.ts                   # Browse jobs with filtering
       [id]/route.ts                     # Single job
       [id]/apply/route.ts               # Apply to job
       [id]/applications/route.ts        # Job applications
@@ -202,37 +227,40 @@ app/                                    # Next.js App Router
       [id]/rank-candidates/route.ts     # AI candidate ranking
       [id]/ranking-data/route.ts        # Ranking results
 
+    organization/                       # Organization management
+      jobs/[jobId]/invite/route.ts      # Job invitation management
+      selected-candidates/route.ts      # Track selected candidates
+      test/candidate-insight/[candidateId]/route.ts # Candidate insights
+
     organizations/                      # Organization endpoints
-      route.ts
-      [id]/route.ts
+      route.ts                          # All organizations
+      [id]/route.ts                     # Single organization
 
     agent/
-      search/route.ts                   # AI-powered search
+      search/route.ts                   # AI-powered candidate search
 
     user/
       me/route.ts                       # Current user session
 
-components/                             # Reusable React components
-  DashBoardNavbar.tsx                   # Talent dashboard navbar
-  DashBaordNavbarEmployer.tsx           # Employer dashboard navbar
-  DashboardSubnav.tsx                   # Talent subnav
-  DashBoardSubNavEmployer.tsx           # Employer subnav
-  DashboardProfilePrompt.tsx            # Profile completion prompt
-  EngagementTrendChart.tsx              # Analytics chart
-  BackendValidationBanner.tsx           # Backend data validation banner
-  Toast.tsx                             # Toast notifications
+components/                             # Modular, organized components
+  a11y/                                 # Accessibility components
+    ConfirmDialog.tsx                   # ARIA-compliant confirmation dialog
+    (other a11y utilities)
 
-  employer/
-    NavBarEmployerSignUp.tsx            # Signup navbar
-    dashboard/                          # Employer dashboard widgets
-    candidates/                         # Candidate list + detail components
+  login/                                # Login-specific components
+    talent/                             # Talent login components
+    employer/                           # Employer login components
 
-  signup/
+  signup/                               # Signup-specific components
     Header.tsx                          # Signup page header
     Navbar.tsx                          # Signup navbar
-    Sidebar.tsx                         # Signup sidebar/stepper
-    types.ts                            # TypeScript types for signup
-    forms/                              # Form components for signup steps
+    Sidebar.tsx                         # Signup sidebar/stepper with status tracking
+
+    accessibility/                      # Accessibility step components
+    talent/                             # Talent signup step components
+    employer/                           # Employer signup step components
+
+    forms/                              # Multi-step form components
       BasicInfo.tsx
       Education.tsx
       WorkExperience.tsx
@@ -246,24 +274,64 @@ components/                             # Reusable React components
       InputBlock.tsx
       SimpleText.tsx
 
-lib/                                    # Utility functions and stores
+  employer/                             # Employer dashboard components
+    NavBarEmployerSignUp.tsx            # Signup navbar
+    ai/                                 # AI search components
+    candidates/                         # Candidate list + detail components
+    dashboard/                          # Dashboard widgets and panels
+    portal/                             # Employer portal components
+
+  ui/                                   # Shared UI components
+    (buttons, cards, modals, etc.)
+
+  DashBoardNavbar.tsx                   # Talent dashboard navbar
+  DashboardSubnav.tsx                   # Talent subnav
+  DashboardProfilePrompt.tsx            # Profile completion prompt
+  EngagementTrendChart.tsx              # Analytics chart
+  BackendValidationBanner.tsx           # Backend data validation banner
+  Toast.tsx                             # Toast notifications
+
+lib/                                    # Organized utilities and stores
   api-config.ts                         # Backend API endpoints + helpers
   api-client.ts                         # Frontend API client
+  candidateProfile.ts                   # Candidate profile utilities
+  candidateProfileUtils.ts              # Profile data transformation + validation
+  profileCompletion.ts                  # Profile progress tracking
   backendDataValidator.ts               # Backend data validation utilities
   notifications.ts                      # Notification helpers
-  hooks/                                # Auth + profile hooks
-  types/                                # Shared types
 
-  userDataStore.ts                      # Zustand store for talent data
-  userDataDefaults.ts                   # Default user data
-  localUserStore.ts                     # Local storage for users
-  talentAppliedJobsStore.ts             # Applied jobs state
+  constants/                            # Application constants
 
-  employerDataStore.ts                  # Zustand store for employer data
-  employerJobsStore.ts                  # Employer jobs state
-  employerJobsTypes.ts                  # Job type definitions
-  employerJobsUtils.ts                  # Job utility functions
-  profileCompletion.ts                  # Profile progress tracking
+  helpers/                              # Helper functions
+
+  hooks/                                # React hooks
+    useManualResumeFill.ts              # Multi-step form hook with validation
+    useFetchCandidateProfile.ts         # Profile fetching hook
+    useOAuthComplete.ts                 # OAuth completion hook
+    (auth, query, mutation hooks)
+
+  providers/                            # React context providers
+
+  schemas/                              # Zod/validation schemas
+
+  services/                             # API service abstractions
+
+  testing/                              # Testing utilities
+
+  transformers/                         # Data transformation utilities
+
+  types/                                # Shared TypeScript types
+    user.ts                             # User data types
+    (domain types)
+
+  utils/                                # General utilities
+
+  stores/                               # Zustand stores
+    userDataStore.ts                    # Talent profile state + localStorage
+    employerDataStore.ts                # Employer profile state
+    talentAppliedJobsStore.ts           # Applied jobs state
+    employerJobsStore.ts                # Employer jobs state
+    (other stores)
 
 public/                                 # Static assets
   logo/                                 # Brand logos
@@ -281,6 +349,32 @@ proxy.ts                                # Route guard helper
 - `npm run build` - Create optimized production build
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
+
+## Recent Fixes & Improvements
+
+### Date Format Validation for Manual Resume Fill (Feb 2026)
+
+Fixed an issue where users could enter invalid date formats in the manual profile builder (Work Experience, Projects, Certifications, Achievements) that would fail silently until the final submission step, creating a confusing user experience.
+
+**What was fixed:**
+- ✅ Users now see validation errors **immediately on the correct step** (not on Step 10)
+- ✅ Clear, user-friendly error messages (e.g., "Please enter a valid Start Date (e.g. 2024-03-15)")
+- ✅ Support for multiple date input formats from resume parsing (MM/YYYY, YYYY/MM, YYYY, month names, etc.)
+- ✅ Invalid dates are caught before reaching the backend API
+
+**Supported date formats (automatically converted to YYYY-MM-DD):**
+- `2024-03-15` (YYYY-MM-DD) — already correct
+- `2024-03` (YYYY-MM) → `2024-03-01`
+- `03/2024` (MM/YYYY) → `2024-03-01`
+- `2024/03` (YYYY/MM) → `2024-03-01`
+- `03-2024` (MM-YYYY) → `2024-03-01`
+- `2024` (year only) → `2024-01-01`
+- `Aug 2021`, `August 2021`, `aug-2021`, `aug/2021` (month names) → `2021-08-01`
+
+**Files modified:**
+- `lib/candidateProfileUtils.ts` — Enhanced `toDateValue()` with support for 5 additional date formats
+- `lib/hooks/useManualResumeFill.ts` — Added format validation in `validateStep()` for work experience, projects, certifications, and achievements
+- `components/signup/forms/Certification.tsx` — Changed certification date inputs to `type="month"` for consistency and to prevent invalid text input
 
 ## Documentation
 
@@ -384,4 +478,4 @@ For questions, bug reports, or support requests, please contact the Enabled Tale
 
 Built with care to create inclusive employment opportunities for everyone.
 
-**Last Updated:** February 12, 2026
+**Last Updated:** February 17, 2026
