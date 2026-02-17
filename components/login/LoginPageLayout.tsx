@@ -1,18 +1,17 @@
 "use client";
 
-import { Suspense } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
-import logo from "@/public/logo/ET Logo-01.webp";
 import backgroundVectorSvg from "@/public/Vector 4500.svg";
-import { useTalentSignup } from "@/lib/hooks/useTalentSignup";
-import TalentSignupForm from "@/components/signup/talent/TalentSignupForm";
-import TalentSignupVerification from "@/components/signup/talent/TalentSignupVerification";
+import logo from "@/public/logo/ET Logo-01.webp";
+import { ArrowLeft } from "lucide-react";
 
-function SignUpPageContent() {
-  const signup = useTalentSignup();
+type LoginPageLayoutProps = {
+  children: ReactNode;
+};
 
+export default function LoginPageLayout({ children }: LoginPageLayoutProps) {
   return (
     <main
       id="main-content"
@@ -40,13 +39,12 @@ function SignUpPageContent() {
           priority
         />
       </div>
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-0">
-        <div className="pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 bg-gradient-to-br from-[#F7D877]/90 via-[#F2BF4A]/90 to-[#E8A426]/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-0 ">
+        <div className=" pointer-events-none absolute inset-0 rounded-[36px] border border-white/35 bg-gradient-to-br from-[#F7D877]/90 via-[#F2BF4A]/90 to-[#E8A426]/90 backdrop-blur-sm shadow-[0_20px_50px_rgba(120,72,12,0.18)]" />
         <div className="relative flex w-full flex-col items-center justify-center gap-12 px-0 py-4 md:flex-row md:gap-20">
           {/* Left Side Content */}
           <div className="flex max-w-105 flex-col items-center text-center ">
             <div className="relative mb-8 flex items-center justify-center">
-              {/* Golden aura behind logo */}
               <div className="pointer-events-none absolute -inset-8 rounded-full bg-[#8C4A0A] opacity-70 blur-3xl mix-blend-multiply" />
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
               <a
@@ -73,52 +71,7 @@ function SignUpPageContent() {
 
           {/* Right Side Card */}
           <div className="w-full max-w-[460px] rounded-[32px] bg-white px-8 py-10 shadow-[0_25px_60px_rgba(120,72,12,0.18)] md:px-10 md:py-12">
-            {signup.pendingVerification ? (
-              <TalentSignupVerification
-                email={signup.email}
-                verificationCode={signup.verificationCode}
-                isVerifying={signup.isVerifying}
-                serverError={signup.serverError}
-                verificationComplete={signup.verificationComplete}
-                isRetrying={signup.isRetrying}
-                syncPhase={signup.syncPhase}
-                resendCooldown={signup.resendCooldown}
-                setVerificationCode={signup.setVerificationCode}
-                handleVerification={signup.handleVerification}
-                handleResendCode={signup.handleResendCode}
-                handleRetrySyncBackend={signup.handleRetrySyncBackend}
-                handleGoToLogin={signup.handleGoToLogin}
-              />
-            ) : (
-              <TalentSignupForm
-                fullName={signup.fullName}
-                email={signup.email}
-                password={signup.password}
-                confirmPassword={signup.confirmPassword}
-                showPassword={signup.showPassword}
-                showConfirmPassword={signup.showConfirmPassword}
-                fieldErrors={signup.fieldErrors}
-                serverError={signup.serverError}
-                hasErrors={signup.hasErrors}
-                isSubmitting={signup.isSubmitting}
-                oauthLoadingProvider={signup.oauthLoadingProvider}
-                fullNameRef={signup.fullNameRef}
-                emailRef={signup.emailRef}
-                passwordRef={signup.passwordRef}
-                confirmPasswordRef={signup.confirmPasswordRef}
-                errorSummaryRef={signup.errorSummaryRef}
-                fieldMeta={signup.fieldMeta}
-                setFullName={signup.setFullName}
-                setEmail={signup.setEmail}
-                setPassword={signup.setPassword}
-                setConfirmPassword={signup.setConfirmPassword}
-                togglePassword={signup.togglePassword}
-                toggleConfirmPassword={signup.toggleConfirmPassword}
-                clearFieldError={signup.clearFieldError}
-                handleSubmit={signup.handleSubmit}
-                handleOAuthGoogle={signup.handleOAuthGoogle}
-              />
-            )}
+            {children}
           </div>
         </div>
       </div>
@@ -127,21 +80,13 @@ function SignUpPageContent() {
           Are you an Employer?{" "}
           <Link
             className="font-bold text-[#8C4A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
-            href="/signup-employer"
-            aria-label="Sign up here for an Employer account"
+            href="/login-employer"
+            aria-label="Log in here to the Employer portal"
           >
-            Sign up here!
+            Log in here!
           </Link>
         </p>
       </div>
     </main>
-  );
-}
-
-export default function SignUpPage() {
-  return (
-    <Suspense fallback={null}>
-      <SignUpPageContent />
-    </Suspense>
   );
 }
