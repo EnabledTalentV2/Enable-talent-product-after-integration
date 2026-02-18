@@ -463,7 +463,7 @@ function CompaniesPageContent() {
                       Job description
                     </h4>
                     {hasDescription ? (
-                      <div className="text-slate-600 prose prose-slate max-w-none">
+                      <div className="text-slate-600 prose prose-slate max-w-none whitespace-pre-wrap break-words">
                         <ReactMarkdown
                           rehypePlugins={[rehypeSanitize]}
                           components={{

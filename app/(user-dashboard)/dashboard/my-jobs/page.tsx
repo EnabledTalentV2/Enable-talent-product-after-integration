@@ -848,7 +848,7 @@ function MyJobsPageContent() {
                       <h4 className="text-xl font-bold text-slate-900">
                         Job Description
                       </h4>
-                      <div className="text-slate-600 prose prose-slate max-w-none">
+                      <div className="text-slate-600 prose prose-slate max-w-none whitespace-pre-wrap break-words">
                         <ReactMarkdown
                           rehypePlugins={[rehypeSanitize]}
                           components={{

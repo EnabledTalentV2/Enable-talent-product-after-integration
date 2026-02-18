@@ -7,6 +7,7 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import type { JobFormValues } from "@/lib/employerJobsTypes";
@@ -27,6 +28,35 @@ const employmentTypeOptions = [
 const workArrangementOptions = ["Remote", "Hybrid", "Onsite"] as const;
 
 const toId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+type DescriptionFormatAction = "bold" | "heading" | "bullet" | "link";
+
+const descriptionToolbarButtons: ReadonlyArray<{
+  action: DescriptionFormatAction;
+  label: string;
+  ariaLabel: string;
+}> = [
+  {
+    action: "bold",
+    label: "Bold",
+    ariaLabel: "Format selected text as bold",
+  },
+  {
+    action: "heading",
+    label: "H2",
+    ariaLabel: "Format line or selection as a level 2 heading",
+  },
+  {
+    action: "bullet",
+    label: "Bullets",
+    ariaLabel: "Format line or selection as a bullet list",
+  },
+  {
+    action: "link",
+    label: "Link",
+    ariaLabel: "Insert markdown link",
+  },
+];
 
 const emptyValues: JobFormValues = {
   title: "",
@@ -51,10 +81,13 @@ export default function JobForm({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitLockRef = useRef(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const descriptionSelectionRef = useRef({ start: 0, end: 0 });
   const [skillInput, setSkillInput] = useState("");
 
   useEffect(() => {
     setValues({ ...emptyValues, ...initialValues });
+    descriptionSelectionRef.current = { start: 0, end: 0 };
   }, [initialValues]);
 
   const handleChange = (
@@ -85,11 +118,133 @@ export default function JobForm({
     }));
   };
 
-  const handleSkillKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSkillKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       handleAddSkill();
     }
+  };
+
+  const cacheDescriptionSelection = () => {
+    const textarea = descriptionRef.current;
+    if (!textarea) return;
+    descriptionSelectionRef.current = {
+      start: textarea.selectionStart ?? 0,
+      end: textarea.selectionEnd ?? 0,
+    };
+  };
+
+  const getDescriptionSelection = (text: string) => {
+    const textarea = descriptionRef.current;
+    const start =
+      textarea?.selectionStart ?? descriptionSelectionRef.current.start;
+    const end = textarea?.selectionEnd ?? descriptionSelectionRef.current.end;
+    const boundedStart = Math.max(0, Math.min(start, text.length));
+    const boundedEnd = Math.max(boundedStart, Math.min(end, text.length));
+    return { start: boundedStart, end: boundedEnd };
+  };
+
+  const setDescriptionWithSelection = (
+    description: string,
+    selectionStart: number,
+    selectionEnd: number,
+  ) => {
+    setValues((prev) => ({ ...prev, description }));
+    descriptionSelectionRef.current = {
+      start: selectionStart,
+      end: selectionEnd,
+    };
+    requestAnimationFrame(() => {
+      const textarea = descriptionRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+    });
+  };
+
+  const wrapDescriptionSelection = (
+    prefix: string,
+    suffix: string,
+    placeholder: string,
+  ) => {
+    const text = values.description ?? "";
+    const { start, end } = getDescriptionSelection(text);
+    const selectedText = text.slice(start, end);
+    const insertedText = selectedText || placeholder;
+    const nextText =
+      text.slice(0, start) + prefix + insertedText + suffix + text.slice(end);
+    const nextSelectionStart = start + prefix.length;
+    const nextSelectionEnd = nextSelectionStart + insertedText.length;
+    setDescriptionWithSelection(
+      nextText,
+      nextSelectionStart,
+      nextSelectionEnd,
+    );
+  };
+
+  const prefixDescriptionSelection = (prefix: string, fallbackText: string) => {
+    const text = values.description ?? "";
+    const { start, end } = getDescriptionSelection(text);
+
+    if (start === end) {
+      const lineStart = text.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+      const lineEndIndex = text.indexOf("\n", start);
+      const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex;
+      const lineText = text.slice(lineStart, lineEnd);
+      const content = lineText.trim().length > 0 ? lineText : fallbackText;
+      const nextLine = `${prefix}${content}`;
+      const nextText =
+        text.slice(0, lineStart) + nextLine + text.slice(lineEnd);
+      const nextSelectionStart = lineStart + prefix.length;
+      const nextSelectionEnd = nextSelectionStart + content.length;
+      setDescriptionWithSelection(
+        nextText,
+        nextSelectionStart,
+        nextSelectionEnd,
+      );
+      return;
+    }
+
+    const selectedText = text.slice(start, end);
+    const formattedSelection = selectedText
+      .split("\n")
+      .map((line) => (line.trim().length > 0 ? `${prefix}${line}` : line))
+      .join("\n");
+    const nextText =
+      text.slice(0, start) + formattedSelection + text.slice(end);
+    setDescriptionWithSelection(
+      nextText,
+      start,
+      start + formattedSelection.length,
+    );
+  };
+
+  const insertDescriptionLink = () => {
+    const text = values.description ?? "";
+    const { start, end } = getDescriptionSelection(text);
+    const selectedText = text.slice(start, end) || "link text";
+    const placeholderUrl = "https://example.com";
+    const markdownLink = `[${selectedText}](${placeholderUrl})`;
+    const nextText = text.slice(0, start) + markdownLink + text.slice(end);
+    const urlStart = start + markdownLink.indexOf(placeholderUrl);
+    const urlEnd = urlStart + placeholderUrl.length;
+    setDescriptionWithSelection(nextText, urlStart, urlEnd);
+  };
+
+  const handleDescriptionToolbarAction = (action: DescriptionFormatAction) => {
+    if (action === "bold") {
+      wrapDescriptionSelection("**", "**", "bold text");
+      return;
+    }
+    if (action === "heading") {
+      prefixDescriptionSelection("## ", "Heading");
+      return;
+    }
+    if (action === "bullet") {
+      prefixDescriptionSelection("- ", "List item");
+      return;
+    }
+    insertDescriptionLink();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -236,18 +391,42 @@ export default function JobForm({
           </span>
           <span className="sr-only">(required)</span>
         </label>
+        <div
+          role="toolbar"
+          aria-label="Job description formatting options"
+          className="mb-2 flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-gray-50 p-2"
+        >
+          {descriptionToolbarButtons.map((button) => (
+            <button
+              key={button.action}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => handleDescriptionToolbarAction(button.action)}
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              aria-label={button.ariaLabel}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
         <textarea
+          ref={descriptionRef}
           id={`${formId}-description`}
           rows={6}
           name="description"
           value={values.description}
           onChange={handleChange}
+          onSelect={cacheDescriptionSelection}
+          onClick={cacheDescriptionSelection}
+          onKeyUp={cacheDescriptionSelection}
+          onBlur={cacheDescriptionSelection}
           required
           aria-required="true"
+          aria-describedby={`${formId}-description-help`}
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
           placeholder={`## About the Role\nWe're looking for a **Senior Engineer** to join our team.\n\nResponsibilities:\n- Own the end-to-end design process\n- Collaborate with product and engineering\n\nApply: [Application Form](https://yourcompany.com/apply)`}
         />
-        <div className="mt-2 text-xs text-gray-600 space-y-2">
+        <div id={`${formId}-description-help`} className="mt-2 text-xs text-gray-600 space-y-2">
           <p className="font-medium text-gray-700">Markdown formatting supported:</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5">
             <div>
