@@ -164,7 +164,7 @@ export default function JobDetailView({
       {/* About */}
       <div className="mb-8">
         <h3 className="font-bold text-slate-900 mb-3">About the job</h3>
-        <div className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none">
+        <div className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none whitespace-pre-wrap break-words">
           <ReactMarkdown
             rehypePlugins={[rehypeSanitize]}
             components={{
