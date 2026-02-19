@@ -186,7 +186,11 @@ export default function DashBoardNavbar() {
       {isMenuOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/50 md:hidden"
-          onClick={toggleMenu}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              toggleMenu();
+            }
+          }}
           role="presentation"
         >
           <nav
@@ -195,7 +199,6 @@ export default function DashBoardNavbar() {
             role="navigation"
             aria-label="Mobile navigation"
             className="absolute right-0 top-0 h-full w-72 bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col h-full">
               {/* Header */}

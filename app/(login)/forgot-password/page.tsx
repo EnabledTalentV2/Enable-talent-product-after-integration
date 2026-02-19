@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,6 +37,11 @@ function ForgotPasswordContent() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const stepInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    stepInputRef.current?.focus();
+  }, [step]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -61,9 +66,9 @@ function ForgotPasswordContent() {
       });
       setStep("otp");
       setResendCooldown(30);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.errors?.[0]?.message ||
+        (err as { errors?: Array<{ message?: string }> }).errors?.[0]?.message ||
           "Failed to send reset code. Please check your email and try again."
       );
     } finally {
@@ -91,9 +96,9 @@ function ForgotPasswordContent() {
       } else {
         setError("Unexpected response. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.errors?.[0]?.message || "Invalid code. Please try again."
+        (err as { errors?: Array<{ message?: string }> }).errors?.[0]?.message || "Invalid code. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -172,9 +177,9 @@ function ForgotPasswordContent() {
       }
 
       setStep("success");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.errors?.[0]?.message ||
+        (err as { errors?: Array<{ message?: string }> }).errors?.[0]?.message ||
           "Failed to reset password. Please try again."
       );
     } finally {
@@ -234,7 +239,7 @@ function ForgotPasswordContent() {
                       handleSendCode();
                     }
                   }}
-                  autoFocus
+                  ref={stepInputRef}
                 />
               </div>
 
@@ -312,7 +317,7 @@ function ForgotPasswordContent() {
                       handleVerifyCode();
                     }
                   }}
-                  autoFocus
+                  ref={stepInputRef}
                 />
               </div>
 
@@ -411,7 +416,7 @@ function ForgotPasswordContent() {
                     placeholder="Enter new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    autoFocus
+                    ref={stepInputRef}
                   />
                   <button
                     type="button"

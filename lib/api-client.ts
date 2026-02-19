@@ -11,7 +11,7 @@ export class ApiError extends Error {
 }
 
 export class SessionExpiredError extends ApiError {
-  isSessionExpired: true = true;
+  isSessionExpired = true as const;
 
   constructor(message: string, status: number, data?: unknown) {
     super(message, status, data);

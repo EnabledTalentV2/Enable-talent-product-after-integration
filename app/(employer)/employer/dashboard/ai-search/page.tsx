@@ -9,7 +9,7 @@ export default function AISearchPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">AI Candidate Search</h1>
         <p className="text-gray-600 mt-2">
-          Use natural language to search for candidates. Describe what you're
+          Use natural language to search for candidates. Describe what you&apos;re
           looking for and let our AI find the best matches.
         </p>
       </div>

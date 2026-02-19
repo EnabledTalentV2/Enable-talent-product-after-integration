@@ -89,7 +89,7 @@ export default function Skills({ data, errors, onChange }: Props) {
             <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-slate-100 border border-slate-300 rounded">
               Enter
             </kbd>{" "}
-            or click the "Add" button. You can add multiple skills one at a
+            or click the &quot;Add&quot; button. You can add multiple skills one at a
             time.
           </p>
           <p className="text-sm text-slate-500 italic">
@@ -130,10 +130,10 @@ export default function Skills({ data, errors, onChange }: Props) {
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-base font-medium text-slate-700">
+        <fieldset className="space-y-2">
+          <legend className="block text-base font-medium text-slate-700">
             Proficiency Level
-          </label>
+          </legend>
           <div className="flex flex-wrap items-center gap-4">
             {(Object.keys(levelLabels) as SkillLevel[]).map((level) => (
               <label
@@ -155,7 +155,7 @@ export default function Skills({ data, errors, onChange }: Props) {
               </label>
             ))}
           </div>
-        </div>
+        </fieldset>
       </div>
 
       {skillList.length > 0 ? (

@@ -55,7 +55,7 @@ export default function LocationAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const listboxRef = useRef<HTMLUListElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
 
   // Sync internal query with external value (for initial load)
   useEffect(() => {
@@ -233,20 +233,22 @@ export default function LocationAutocomplete({
       </div>
 
       {isOpen && suggestions.length > 0 && (
-        <ul
+        <div
           id={listboxId}
           ref={listboxRef}
           role="listbox"
           className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto overflow-x-hidden"
         >
           {suggestions.map((place, index) => (
-            <li
+            <button
+              type="button"
               key={place.place_id}
               id={`${resolvedInputId}-item-${index}`}
               role="option"
               aria-selected={index === activeIndex}
               onClick={() => handleSelect(place)}
-              className={`px-4 py-3 cursor-pointer flex items-center text-sm transition-colors min-h-[44px] ${
+              onMouseEnter={() => setActiveIndex(index)}
+              className={`w-full px-4 py-3 text-left flex items-center text-sm transition-colors min-h-[44px] ${
                 index === activeIndex
                   ? "bg-blue-50 text-blue-700 font-medium"
                   : "text-gray-700 hover:bg-gray-50"
@@ -254,14 +256,14 @@ export default function LocationAutocomplete({
             >
               <MapPin className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
               <span className="truncate">{formatAddress(place)}</span>
-            </li>
+            </button>
           ))}
-          <li className="px-2 py-1 flex justify-end bg-gray-50 sticky bottom-0 border-t border-gray-100">
+          <div className="px-2 py-1 flex justify-end bg-gray-50 sticky bottom-0 border-t border-gray-100">
             <span className="text-[10px] text-gray-400" aria-hidden="true">
-              © OpenStreetMap contributors
+              (c) OpenStreetMap contributors
             </span>
-          </li>
-        </ul>
+          </div>
+        </div>
       )}
 
       {error && (

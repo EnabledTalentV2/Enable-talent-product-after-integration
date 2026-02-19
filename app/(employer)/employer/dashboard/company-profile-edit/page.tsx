@@ -304,7 +304,7 @@ export default function CompanyProfileEditPage() {
 
         {/* Organization Logo */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
+          <label htmlFor="avatar-upload-edit" className="text-sm font-medium text-slate-700">
             Organization Logo
           </label>
           <div className="flex items-center gap-6">
@@ -346,6 +346,7 @@ export default function CompanyProfileEditPage() {
                 className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
                 title="Upload organization logo"
               >
+                <span className="sr-only">Upload organization logo</span>
                 <svg
                   width="14"
                   height="14"

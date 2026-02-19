@@ -77,7 +77,7 @@ export default function ResumeChatPanel({
               <span>Chat with AI about {candidateName}</span>
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Ask questions about this candidate's resume and experience
+              Ask questions about this candidate&apos;s resume and experience
             </p>
           </div>
           {messages.length > 0 && (

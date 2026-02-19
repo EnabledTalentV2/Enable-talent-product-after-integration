@@ -90,8 +90,9 @@ export default function ApplicantsList({
               className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md"
             >
               {/* Left Section: Avatar + Info */}
-              <div
-                className="flex flex-1 cursor-pointer items-center gap-4"
+              <button
+                type="button"
+                className="flex flex-1 items-center gap-4 text-left"
                 onClick={() =>
                   router.push(
                     `/employer/dashboard/candidates/profile/${application.candidate.slug}?jobId=${jobId}&applicationId=${application.id}`
@@ -103,7 +104,7 @@ export default function ApplicantsList({
                   {application.candidate.avatar ? (
                     <img
                       src={application.candidate.avatar}
-                      alt={`Profile photo of ${application.candidate.name}`}
+                      alt={application.candidate.name}
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -136,7 +137,7 @@ export default function ApplicantsList({
                     </span>
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* Right Section: Decision Buttons */}
               {application.status === "applied" && (

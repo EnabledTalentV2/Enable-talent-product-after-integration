@@ -149,7 +149,7 @@ export default function EmployerLoginForm({
             role="status"
             className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
           >
-            <p>You're already signed in. Redirecting to your dashboard...</p>
+            <p>You&apos;re already signed in. Redirecting to your dashboard...</p>
           </div>
         ) : null}
 
@@ -160,7 +160,7 @@ export default function EmployerLoginForm({
             className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
           >
             <p>
-              You're already signed in in this browser. Continue to your
+              You&apos;re already signed in in this browser. Continue to your
               employer dashboard or sign out to use a different account.
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -318,7 +318,7 @@ export default function EmployerLoginForm({
 
       <div className="mt-6 text-center space-y-4">
         <p className="text-[13px] text-gray-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/signup-employer"
             className="text-[#C04622] font-semibold hover:underline"

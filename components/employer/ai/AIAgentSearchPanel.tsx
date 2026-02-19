@@ -55,7 +55,7 @@ export default function AIAgentSearchPanel() {
           <span>AI Candidate Search</span>
         </h2>
         <p className="text-sm text-gray-600 mt-1">
-          Search for candidates using natural language. Describe what you're
+          Search for candidates using natural language. Describe what you&apos;re
           looking for and let AI find the best matches.
         </p>
       </div>
@@ -223,9 +223,10 @@ export default function AIAgentSearchPanel() {
           {searchResults.results.candidates.length > 0 ? (
             <div className="space-y-3">
               {searchResults.results.candidates.map((candidate) => (
-                <div
+                <button
+                  type="button"
                   key={candidate.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                  className="w-full border border-gray-200 rounded-lg p-4 text-left hover:border-blue-300 hover:shadow-md transition-all"
                   onClick={() => handleCandidateClick(candidate.id)}
                 >
                   <div className="flex items-start justify-between">
@@ -234,7 +235,7 @@ export default function AIAgentSearchPanel() {
                         {candidate.avatarUrl && (
                           <img
                             src={candidate.avatarUrl}
-                            alt={`Profile photo of ${candidate.name}`}
+                            alt={candidate.name}
                             className="w-10 h-10 rounded-full"
                           />
                         )}
@@ -278,7 +279,7 @@ export default function AIAgentSearchPanel() {
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           ) : (

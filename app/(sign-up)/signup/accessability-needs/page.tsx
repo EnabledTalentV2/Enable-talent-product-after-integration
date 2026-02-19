@@ -8,9 +8,30 @@ import AccessibilityPreferences from "@/components/signup/accessibility/Accessib
 import AccessibilityAccommodations from "@/components/signup/accessibility/AccessibilityAccommodations";
 
 export default function AccessabilityNeedsPage() {
-  const accessibility = useAccessibilityNeeds();
+  const {
+    loading,
+    liveRegionRef,
+    step,
+    mainHeadingRef,
+    setStep,
+    selectedCategories,
+    toggleCategory,
+    accommodationNeed,
+    disclosurePreference,
+    setAccommodationNeed,
+    setDisclosurePreference,
+    selectedAccommodations,
+    toggleAccommodation,
+    isCompleting,
+    isParsingResume,
+    parseFailure,
+    parseFailureReason,
+    handleCompleteProfile,
+    handleRetryParsing,
+    handleContinueWithoutParsing,
+  } = useAccessibilityNeeds();
 
-  if (accessibility.loading) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
         <div className="text-slate-500">Verifying session...</div>
@@ -24,7 +45,7 @@ export default function AccessabilityNeedsPage() {
 
       {/* Screen reader announcements */}
       <div
-        ref={accessibility.liveRegionRef}
+        ref={liveRegionRef}
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -34,50 +55,50 @@ export default function AccessabilityNeedsPage() {
       <main
         className="flex flex-1 items-center justify-center px-6 pb-12 pt-4 md:px-12"
         role="main"
-        aria-labelledby={`${accessibility.step}-heading`}
+        aria-labelledby={`${step}-heading`}
       >
-        {accessibility.step === "intro" && (
+        {step === "intro" && (
           <AccessibilityIntro
-            mainHeadingRef={accessibility.mainHeadingRef}
-            onContinue={() => accessibility.setStep("categories")}
+            mainHeadingRef={mainHeadingRef}
+            onContinue={() => setStep("categories")}
           />
         )}
 
-        {accessibility.step === "categories" && (
+        {step === "categories" && (
           <AccessibilityCategories
-            mainHeadingRef={accessibility.mainHeadingRef}
-            selectedCategories={accessibility.selectedCategories}
-            toggleCategory={accessibility.toggleCategory}
-            onBack={() => accessibility.setStep("intro")}
-            onNext={() => accessibility.setStep("preferences")}
+            mainHeadingRef={mainHeadingRef}
+            selectedCategories={selectedCategories}
+            toggleCategory={toggleCategory}
+            onBack={() => setStep("intro")}
+            onNext={() => setStep("preferences")}
           />
         )}
 
-        {accessibility.step === "preferences" && (
+        {step === "preferences" && (
           <AccessibilityPreferences
-            mainHeadingRef={accessibility.mainHeadingRef}
-            accommodationNeed={accessibility.accommodationNeed}
-            disclosurePreference={accessibility.disclosurePreference}
-            setAccommodationNeed={accessibility.setAccommodationNeed}
-            setDisclosurePreference={accessibility.setDisclosurePreference}
-            onBack={() => accessibility.setStep("categories")}
-            onNext={() => accessibility.setStep("accommodations")}
+            mainHeadingRef={mainHeadingRef}
+            accommodationNeed={accommodationNeed}
+            disclosurePreference={disclosurePreference}
+            setAccommodationNeed={setAccommodationNeed}
+            setDisclosurePreference={setDisclosurePreference}
+            onBack={() => setStep("categories")}
+            onNext={() => setStep("accommodations")}
           />
         )}
 
-        {accessibility.step === "accommodations" && (
+        {step === "accommodations" && (
           <AccessibilityAccommodations
-            mainHeadingRef={accessibility.mainHeadingRef}
-            selectedAccommodations={accessibility.selectedAccommodations}
-            toggleAccommodation={accessibility.toggleAccommodation}
-            isCompleting={accessibility.isCompleting}
-            isParsingResume={accessibility.isParsingResume}
-            parseFailure={accessibility.parseFailure}
-            parseFailureReason={accessibility.parseFailureReason}
-            onBack={() => accessibility.setStep("preferences")}
-            onSubmit={accessibility.handleCompleteProfile}
-            onRetryParsing={accessibility.handleRetryParsing}
-            onContinueWithoutParsing={accessibility.handleContinueWithoutParsing}
+            mainHeadingRef={mainHeadingRef}
+            selectedAccommodations={selectedAccommodations}
+            toggleAccommodation={toggleAccommodation}
+            isCompleting={isCompleting}
+            isParsingResume={isParsingResume}
+            parseFailure={parseFailure}
+            parseFailureReason={parseFailureReason}
+            onBack={() => setStep("preferences")}
+            onSubmit={handleCompleteProfile}
+            onRetryParsing={handleRetryParsing}
+            onContinueWithoutParsing={handleContinueWithoutParsing}
           />
         )}
       </main>

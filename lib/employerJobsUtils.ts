@@ -160,7 +160,7 @@ const parseJobFromBackend = (
   // Extract skills - backend returns array of {id, name} objects
   const skills: string[] = [];
   if (Array.isArray(record.skills)) {
-    record.skills.forEach((skill: any) => {
+    record.skills.forEach((skill: unknown) => {
       if (typeof skill === "string") {
         skills.push(skill);
       } else if (isRecord(skill) && typeof skill.name === "string") {

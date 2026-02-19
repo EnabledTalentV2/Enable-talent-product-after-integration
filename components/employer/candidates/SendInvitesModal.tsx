@@ -66,12 +66,18 @@ export default function SendInvitesModal({
     };
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (!isOpen || !normalizedRestrictId) return;
-    const hasJob = jobs.some((job) => String(job.id) === normalizedRestrictId);
+  // Derived-state-during-render pattern: reset selection when modal opens with a new restrictId.
+  // This avoids calling setState inside a useEffect body (react-hooks/set-state-in-effect).
+  const [lastRestrictId, setLastRestrictId] = useState<string | null>(null);
+  if (isOpen && normalizedRestrictId && lastRestrictId !== normalizedRestrictId) {
+    setLastRestrictId(normalizedRestrictId);
     setSearchQuery("");
+    const hasJob = jobs.some((job) => String(job.id) === normalizedRestrictId);
     setSelectedJobIds(hasJob ? [normalizedRestrictId] : []);
-  }, [isOpen, normalizedRestrictId, jobs]);
+  }
+  if (!isOpen && lastRestrictId !== null) {
+    setLastRestrictId(null);
+  }
 
   const toggleJobSelection = (jobId: string | number) => {
     const normalizedId = String(jobId);

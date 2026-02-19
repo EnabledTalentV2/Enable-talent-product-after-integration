@@ -36,7 +36,7 @@ export default function AccessibilityCategories({
       </h1>
 
       <p id="categories-description" className="mb-8 text-sm font-medium text-slate-700">
-        Select all that apply, or choose "Prefer not to disclose."
+        Select all that apply, or choose &quot;Prefer not to disclose.&quot;
       </p>
 
       <form onSubmit={handleSubmit}>

@@ -534,11 +534,11 @@ function MyJobsPageContent() {
     applyToJob(
       { jobId: activeJob.id, jobData },
       {
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           console.error("Failed to apply to job:", error);
 
-          const status = error?.status;
-          const message = error?.message || "Failed to submit application";
+          const status = (error as { status?: number })?.status;
+          const message = (error as { message?: string })?.message || "Failed to submit application";
 
           if (status === 409) {
             alert("You have already applied to this job.");
@@ -608,7 +608,7 @@ function MyJobsPageContent() {
           {searchQuery && (
             <div className="mb-6">
               <p className="text-sm text-slate-600">
-                Found {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                Found {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} matching &quot;{searchQuery}&quot;
               </p>
             </div>
           )}

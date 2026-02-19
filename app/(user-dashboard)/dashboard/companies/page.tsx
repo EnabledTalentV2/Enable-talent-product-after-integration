@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Calendar, Globe, MapPin, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -102,7 +102,7 @@ function CompaniesPageContent() {
   );
 
   const [selectedId, setSelectedId] = useState("");
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const detailsRef = useRef<HTMLDivElement | null>(null);
@@ -172,13 +172,6 @@ function CompaniesPageContent() {
     });
   }, [allJobs, searchQuery]);
 
-  // Set initial selection when jobs load
-  useEffect(() => {
-    if (jobs.length > 0 && !selectedId) {
-      setSelectedId(jobs[0].id);
-    }
-  }, [jobs, selectedId]);
-
   const activeJob = useMemo(
     () => jobs.find((job) => job.id === selectedId) ?? jobs[0],
     [jobs, selectedId]
@@ -195,14 +188,11 @@ function CompaniesPageContent() {
   const descriptionLines = descriptionText.split(/\r?\n/);
   const hasDescription = descriptionText.trim().length > 0;
   const canToggleDescription = descriptionLines.length > 2;
+  const showFullDescription = expandedJobId === activeJob?.id;
   const visibleDescriptionText = showFullDescription
     ? descriptionText
     : descriptionLines.slice(0, 2).join("\n");
   const hasJobs = jobs.length > 0;
-
-  useEffect(() => {
-    setShowFullDescription(false);
-  }, [activeJob?.id]);
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -286,7 +276,7 @@ function CompaniesPageContent() {
             {searchQuery && (
               <div className="mb-6">
                 <p className="text-sm text-slate-600">
-                  Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                  Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching &quot;{searchQuery}&quot;
                 </p>
               </div>
             )}
@@ -490,7 +480,7 @@ function CompaniesPageContent() {
                     {hasDescription && canToggleDescription && (
                       <button
                         type="button"
-                        onClick={() => setShowFullDescription((prev) => !prev)}
+                        onClick={() => setExpandedJobId(showFullDescription ? null : (activeJob?.id ?? null))}
                         className="text-sm font-semibold text-[#C27803] transition hover:text-[#A56303]"
                       >
                         {showFullDescription ? "Show less" : "Read more"}

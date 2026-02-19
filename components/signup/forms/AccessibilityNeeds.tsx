@@ -142,7 +142,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
           Disability categories (Optional)
         </p>
         <p className="text-sm text-slate-500">
-          Select all that apply, or choose "Prefer not to disclose."
+          Select all that apply, or choose &quot;Prefer not to disclose.&quot;
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {categories.map((category) => {
@@ -206,7 +206,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
           When would you like to discuss your accommodation needs?
         </p>
         <p className="text-sm text-slate-500">
-          You control the timing, and we'll respect your preference.
+          You control the timing, and we&apos;ll respect your preference.
         </p>
         <div className="flex flex-wrap gap-6">
           {disclosureOptions.map((option) => (
@@ -232,8 +232,8 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
           Workplace accommodations that would help you thrive (Optional)
         </p>
         <p className="text-sm text-slate-500">
-          Select all that apply. You can choose "None needed" or
-          "Prefer to discuss later."
+          Select all that apply. You can choose &quot;None needed&quot; or
+          &quot;Prefer to discuss later.&quot;
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {accommodationOptions.map((option) => {

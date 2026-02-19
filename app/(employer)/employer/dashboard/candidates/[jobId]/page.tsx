@@ -1171,7 +1171,7 @@ export default function CandidatesPage() {
                     })
                   ) : rankingStatus === "not_started" ? (
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
-                      Click "Rank Candidates" to start AI ranking.
+                      Click &quot;Rank Candidates&quot; to start AI ranking.
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">

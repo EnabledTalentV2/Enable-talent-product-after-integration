@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { useUserDataStore } from "@/lib/userDataStore";
-import { initialUserData } from "@/lib/userDataDefaults";
 import { useCareerCoach } from "@/lib/hooks/useCareerCoach";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
 import { handleSessionExpiry } from "@/lib/api-client";
@@ -39,92 +37,40 @@ const quickPrompts = [
 
 export default function CareerCoachStartPage() {
   const router = useRouter();
-  const rawUserData = useUserDataStore((s) => s.userData);
-
-  const userData = useMemo(
-    () => ({
-      ...initialUserData,
-      ...rawUserData,
-      basicInfo: { ...initialUserData.basicInfo, ...rawUserData?.basicInfo },
-      workExperience: {
-        ...initialUserData.workExperience,
-        ...rawUserData?.workExperience,
-      },
-      education: { ...initialUserData.education, ...rawUserData?.education },
-      skills: { ...initialUserData.skills, ...rawUserData?.skills },
-      projects: { ...initialUserData.projects, ...rawUserData?.projects },
-      achievements: {
-        ...initialUserData.achievements,
-        ...rawUserData?.achievements,
-      },
-      certification: {
-        ...initialUserData.certification,
-        ...rawUserData?.certification,
-      },
-      preference: { ...initialUserData.preference, ...rawUserData?.preference },
-      otherDetails: {
-        ...initialUserData.otherDetails,
-        ...rawUserData?.otherDetails,
-      },
-      accessibilityNeeds: {
-        ...(initialUserData.accessibilityNeeds ?? {
-          categories: [],
-          accommodationNeed: "",
-          disclosurePreference: "",
-          accommodations: [],
-        }),
-        ...rawUserData?.accessibilityNeeds,
-      },
-      reviewAgree: {
-        ...initialUserData.reviewAgree,
-        ...rawUserData?.reviewAgree,
-      },
-    }),
-    [rawUserData]
-  );
 
   const { data: profileData, fetchCandidateProfile } =
     useFetchCandidateProfile();
   const { sendCareerCoachMessage, isLoading: isSendingMessage } =
     useCareerCoach();
 
-  const [messages, setMessages] = useState<ChatMessage[]>(defaultMessages);
-  const [draft, setDraft] = useState("");
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [resumeSlug, setResumeSlug] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const textareaRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    fetchCandidateProfile();
-  }, [fetchCandidateProfile]);
-
-  useEffect(() => {
-    if (profileData?.slug) {
-      setResumeSlug(profileData.slug);
-    }
-  }, [profileData]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === "undefined") return defaultMessages;
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    const storedThreadId = window.localStorage.getItem(THREAD_ID_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as ChatMessage[];
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
+          return parsed;
         }
       } catch {
         // Ignore invalid local data.
       }
     }
-    if (storedThreadId) {
-      setThreadId(storedThreadId);
-    }
-  }, []);
+    return defaultMessages;
+  });
+  const [draft, setDraft] = useState("");
+  const [threadId, setThreadId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(THREAD_ID_KEY);
+  });
+  const resumeSlug = profileData?.slug ?? null;
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLInputElement | null>(null);
+  const msgCounterRef = useRef(0);
+
+  useEffect(() => {
+    fetchCandidateProfile();
+  }, [fetchCandidateProfile]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -159,7 +105,7 @@ export default function CareerCoachStartPage() {
     }
 
     const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `user-${msgCounterRef.current++}`,
       role: "user",
       content: trimmed,
     };
@@ -188,7 +134,7 @@ export default function CareerCoachStartPage() {
       }
 
       const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
+        id: `error-${msgCounterRef.current++}`,
         role: "coach",
         content: `Sorry, I encountered an error: ${result.error}`,
       };
@@ -201,7 +147,7 @@ export default function CareerCoachStartPage() {
       }
 
       const coachMessage: ChatMessage = {
-        id: `coach-${Date.now()}`,
+        id: `coach-${msgCounterRef.current++}`,
         role: "coach",
         content: result.data.output,
       };

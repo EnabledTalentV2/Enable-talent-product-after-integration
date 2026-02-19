@@ -27,6 +27,6 @@ export type EmployerJob = JobFormValues & {
   postedAt: string;
   visaRequired?: boolean;
   rankingStatus?: string;
-  candidateRankingData?: any;
+  candidateRankingData?: unknown;
   user?: User;
 };

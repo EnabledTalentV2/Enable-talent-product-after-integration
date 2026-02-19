@@ -167,9 +167,10 @@ export default function CandidateRankingPanel({
             const badge = getScoreBadge(candidate.score, index);
 
             return (
-              <div
+              <button
+                type="button"
                 key={candidate.candidate_id}
-                className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                className="w-full border border-gray-200 rounded-lg p-4 text-left hover:border-blue-300 hover:shadow-md transition-all"
                 onClick={() => onCandidateSelect?.(candidate.candidate_slug || candidate.candidate_id, candidate.application_id)}
               >
                 <div className="flex items-start justify-between">
@@ -217,7 +218,7 @@ export default function CandidateRankingPanel({
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -234,7 +235,7 @@ export default function CandidateRankingPanel({
               No Ranking Yet
             </h3>
             <p className="text-gray-600 mb-4">
-              No ranking data yet. Click "Rank Candidates" to generate the list.
+              No ranking data yet. Click &quot;Rank Candidates&quot; to generate the list.
             </p>
           </div>
         )}

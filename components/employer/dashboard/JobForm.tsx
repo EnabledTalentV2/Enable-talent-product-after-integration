@@ -461,7 +461,7 @@ Responsibilities:
               <div className="text-gray-500 text-xs mb-2">How candidates see it:</div>
               <div className="text-sm bg-white p-3 rounded border border-gray-200">
                 <h2 className="text-base font-bold mb-2">About the Role</h2>
-                <p className="mb-2">We're hiring a <strong>Senior Developer</strong>.</p>
+                <p className="mb-2">We&apos;re hiring a <strong>Senior Developer</strong>.</p>
                 <p className="mb-1">Responsibilities:</p>
                 <ul className="list-disc list-inside mb-2">
                   <li>Lead technical projects</li>

@@ -25,12 +25,24 @@ function ListedJobsPageContent() {
   const searchParams = useSearchParams();
   const jobIdFromUrl = searchParams.get("jobId");
 
-  const [selectedJobId, setSelectedJobId] = useState<string | number | null>(
-    null
-  );
+  const [manualJobId, setManualJobId] = useState<string | number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [jobStatsMap, setJobStatsMap] = useState<Record<string, JobStats>>({});
   const didMountRef = useRef(false);
+
+  // Derive the selected job ID from URL param, manual selection, or first job.
+  // This replaces the previous useEffect that called setSelectedJobId in its body.
+  const selectedJobId = useMemo<string | number | null>(() => {
+    if (jobs.length === 0) return null;
+    if (jobIdFromUrl) {
+      const match = jobs.find((j) => String(j.id) === jobIdFromUrl);
+      if (match) return match.id;
+    }
+    if (manualJobId !== null && jobs.some((j) => j.id === manualJobId)) {
+      return manualJobId;
+    }
+    return jobs[0]?.id ?? null;
+  }, [jobs, jobIdFromUrl, manualJobId]);
 
   const handleSearch = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -48,7 +60,7 @@ function ListedJobsPageContent() {
       await deleteJob(jobId);
       // If we deleted the selected job, clear selection
       if (selectedJobId === jobId) {
-        setSelectedJobId(null);
+        setManualJobId(null);
       }
     } catch (error) {
       console.error("Failed to delete job:", error);
@@ -86,7 +98,7 @@ function ListedJobsPageContent() {
       const locationMatch = job.location?.toLowerCase().includes(query);
       return titleMatch || companyMatch || locationMatch;
     });
-  }, [jobs, searchQuery]);
+  }, [jobs, searchQuery, getStatsForJob]);
   const selectedJob = useMemo(() => {
     if (!selectedJobId) return null;
     const job = jobs.find((entry) => entry.id === selectedJobId);
@@ -106,32 +118,6 @@ function ListedJobsPageContent() {
       },
     };
   }, [jobs, selectedJobId, getStatsForJob]);
-
-  useEffect(() => {
-    if (jobs.length === 0) {
-      if (selectedJobId !== null) {
-        setSelectedJobId(null);
-      }
-      return;
-    }
-
-    // If jobId is in URL, select that job
-    if (jobIdFromUrl) {
-      const jobMatch = jobs.find((job) => String(job.id) === jobIdFromUrl);
-      if (jobMatch) {
-        if (jobMatch.id !== selectedJobId) {
-          setSelectedJobId(jobMatch.id);
-        }
-        return;
-      }
-    }
-
-    const hasValidSelection =
-      selectedJobId !== null && jobs.some((job) => job.id === selectedJobId);
-    if (!hasValidSelection && jobs[0].id !== selectedJobId) {
-      setSelectedJobId(jobs[0].id);
-    }
-  }, [jobs, jobIdFromUrl, selectedJobId]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -169,13 +155,6 @@ function ListedJobsPageContent() {
   }, [selectedJobId]);
 
   useEffect(() => {
-    if (jobs.length === 0) {
-      setJobStatsMap((prev) =>
-        Object.keys(prev).length === 0 ? prev : {}
-      );
-      return;
-    }
-
     let isMounted = true;
 
     const loadJobStats = async () => {
@@ -324,7 +303,7 @@ function ListedJobsPageContent() {
                     <ListedJobCard
                       job={job}
                       isSelected={isSelected}
-                      onClick={() => setSelectedJobId(job.id)}
+                      onClick={() => setManualJobId(job.id)}
                     />
                     {isSelected && (
                       <div
