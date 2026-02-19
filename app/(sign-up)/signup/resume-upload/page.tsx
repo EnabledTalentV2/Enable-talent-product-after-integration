@@ -8,9 +8,20 @@ import { useResumeUpload } from "@/lib/hooks/useResumeUpload";
 
 export default function ResumeUpload() {
   const router = useRouter();
-  const upload = useResumeUpload();
+  const {
+    loading,
+    isUploading,
+    uploadStageMessage,
+    error,
+    parseWarning,
+    selectedFileName,
+    fileInputRef,
+    handleUploadClick,
+    handleFileChange,
+    handleRemoveFile,
+  } = useResumeUpload();
 
-  if (upload.loading) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
         <div className="text-slate-500">Verifying session...</div>
@@ -42,49 +53,49 @@ export default function ResumeUpload() {
               Upload resume
             </label>
             <input
-              ref={upload.fileInputRef}
+              ref={fileInputRef}
               id="resume-upload-input"
               type="file"
               accept=".pdf,application/pdf"
               className="sr-only"
-              disabled={upload.isUploading}
+              disabled={isUploading}
               aria-describedby={
-                upload.error
+                error
                   ? "resume-upload-help resume-upload-error"
                   : "resume-upload-help"
               }
-              aria-invalid={Boolean(upload.error)}
-              onChange={upload.handleFileChange}
+              aria-invalid={Boolean(error)}
+              onChange={handleFileChange}
             />
 
             <button
               type="button"
-              onClick={upload.handleUploadClick}
-              disabled={upload.isUploading}
+              onClick={handleUploadClick}
+              disabled={isUploading}
               className="rounded-lg bg-[#D97706] px-8 py-3.5 text-base font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[#b76005] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D97706] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {upload.isUploading ? "Processing..." : "Upload Resume"}
+              {isUploading ? "Processing..." : "Upload Resume"}
             </button>
 
-            {upload.uploadStageMessage ? (
+            {uploadStageMessage ? (
               <div
                 role="status"
                 aria-live="polite"
                 className="text-sm text-slate-500"
               >
-                {upload.uploadStageMessage}
+                {uploadStageMessage}
               </div>
             ) : null}
 
-            {upload.selectedFileName ? (
+            {selectedFileName ? (
               <div className="flex items-center gap-3 text-sm text-slate-500">
                 <span id="resume-upload-selected" aria-live="polite">
-                  Selected: {upload.selectedFileName}
+                  Selected: {selectedFileName}
                 </span>
                 <button
                   type="button"
-                  onClick={upload.handleRemoveFile}
-                  disabled={upload.isUploading}
+                  onClick={handleRemoveFile}
+                  disabled={isUploading}
                   className="flex items-center justify-center rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-70"
                   aria-label="Remove file"
                 >
@@ -93,13 +104,13 @@ export default function ResumeUpload() {
               </div>
             ) : null}
 
-            {upload.parseWarning ? (
+            {parseWarning ? (
               <div
                 role="alert"
                 className="mt-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800"
               >
                 <span className="font-semibold">⚠️ Warning:</span>{" "}
-                {upload.parseWarning}
+                {parseWarning}
                 <button
                   type="button"
                   onClick={() => router.push("/signup/accessability-needs")}
@@ -110,13 +121,13 @@ export default function ResumeUpload() {
               </div>
             ) : null}
 
-            {upload.error ? (
+            {error ? (
               <span
                 id="resume-upload-error"
                 role="alert"
                 className="text-sm text-red-600"
               >
-                {upload.error}
+                {error}
               </span>
             ) : null}
 

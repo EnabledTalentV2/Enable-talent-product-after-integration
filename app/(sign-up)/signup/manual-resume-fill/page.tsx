@@ -663,35 +663,7 @@ export default function ManualResumeFill() {
       default:
         return null;
     }
-  }, [
-    form.activeStep.key,
-    form.userData,
-    form.setUserData,
-    form.basicInfoErrors,
-    form.educationErrors,
-    form.workExpErrors,
-    form.skillErrors,
-    form.projectErrors,
-    form.certErrors,
-    form.preferenceErrors,
-    form.otherDetailsErrors,
-    form.setBasicInfoErrors,
-    form.setBasicInfoFirstError,
-    form.setEducationErrors,
-    form.setEducationFirstError,
-    form.setWorkExpErrors,
-    form.setWorkExpFirstError,
-    form.setSkillErrors,
-    form.setSkillFirstError,
-    form.setProjectErrors,
-    form.setProjectFirstError,
-    form.setCertErrors,
-    form.setCertFirstError,
-    form.setPreferenceErrors,
-    form.setPreferenceFirstError,
-    form.setOtherDetailsErrors,
-    form.setOtherDetailsFirstError,
-  ]);
+  }, [form]);
 
   // Focus management effects
   useEffect(() => {

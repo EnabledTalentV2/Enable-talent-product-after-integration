@@ -150,7 +150,7 @@ export default function TalentLoginForm({
             role="status"
             className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
           >
-            <p>You're already signed in. Redirecting to your dashboard...</p>
+            <p>You&apos;re already signed in. Redirecting to your dashboard...</p>
           </div>
         ) : null}
 
@@ -165,7 +165,7 @@ export default function TalentLoginForm({
             className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700"
           >
             <p>
-              You're already signed in in this browser. Continue to your
+              You&apos;re already signed in in this browser. Continue to your
               dashboard or sign out to use a different account.
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">

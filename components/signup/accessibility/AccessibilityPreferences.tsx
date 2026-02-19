@@ -94,7 +94,7 @@ export default function AccessibilityPreferences({
             </legend>
             <p id="disclosure-pref-desc" className="mt-2 text-base text-slate-600">
               When would you like to discuss your accommodation needs? You control the timing, and
-              we'll respect your preference.
+              we&apos;ll respect your preference.
             </p>
 
             <div

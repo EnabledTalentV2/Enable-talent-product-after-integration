@@ -12,35 +12,18 @@ type Props = {
   hideCompanySize?: boolean;
 };
 
-export default function Preference({
-  data,
-  errors,
-  onChange,
-  hideCompanySize = false,
-}: Props) {
-  const toggleValue = (list: string[], value: string) =>
-    list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
-
-  const companySizeOptions = [
-    "1 - 10",
-    "10 - 100",
-    "100 - 1000",
-    "1000 - 10000",
-  ];
-  const jobTypeOptions = ["Full time", "Contract", "Part time", "Intern"];
-  const workModeOptions = ["Remote", "Hybrid", "Onsite"];
-
-  const Option = ({
-    name,
-    label,
-    checked,
-    onCheckedChange,
-  }: {
-    name: string;
-    label: string;
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
-  }) => (
+function Option({
+  name,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
     <label className="inline-flex items-center gap-2 text-base cursor-pointer select-none">
       <input
         type="checkbox"
@@ -63,18 +46,20 @@ export default function Preference({
       </span>
     </label>
   );
+}
 
-  const RadioOption = ({
-    name,
-    label,
-    checked,
-    onSelect,
-  }: {
-    name: string;
-    label: string;
-    checked: boolean;
-    onSelect: () => void;
-  }) => (
+function RadioOption({
+  name,
+  label,
+  checked,
+  onSelect,
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+  onSelect: () => void;
+}) {
+  return (
     <label className="inline-flex items-center gap-2 text-base cursor-pointer select-none">
       <input
         type="radio"
@@ -89,6 +74,25 @@ export default function Preference({
       </span>
     </label>
   );
+}
+
+export default function Preference({
+  data,
+  errors,
+  onChange,
+  hideCompanySize = false,
+}: Props) {
+  const toggleValue = (list: string[], value: string) =>
+    list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+
+  const companySizeOptions = [
+    "1 - 10",
+    "10 - 100",
+    "100 - 1000",
+    "1000 - 10000",
+  ];
+  const jobTypeOptions = ["Full time", "Contract", "Part time", "Intern"];
+  const workModeOptions = ["Remote", "Hybrid", "Onsite"];
 
   return (
     <div className="space-y-8">

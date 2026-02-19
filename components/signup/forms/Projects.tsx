@@ -59,8 +59,8 @@ export default function Projects({
 
       {errorCount > 0 && !noProjects && entries.length === 0 ? (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          Please add at least one project or check "I don&apos;t have any
-          projects to list" below to continue.
+          Please add at least one project or check &quot;I don&apos;t have any
+          projects to list&quot; below to continue.
         </div>
       ) : null}
 

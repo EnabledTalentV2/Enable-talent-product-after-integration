@@ -49,7 +49,7 @@ export default function AccessibilityAccommodations({
       </h1>
 
       <p id="accommodations-description" className="mb-8 text-base text-slate-600">
-        Select all that apply. You can choose "None needed" or "Prefer to discuss later."
+        Select all that apply. You can choose &quot;None needed&quot; or &quot;Prefer to discuss later.&quot;
       </p>
 
       <form onSubmit={handleSubmit}>

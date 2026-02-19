@@ -38,7 +38,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
                 {candidate.avatarUrl ? (
                   <img
                     src={candidate.avatarUrl}
-                    alt={`Profile photo of ${candidate.name}`}
+                    alt={candidate.name}
                     className="h-full w-full object-cover"
                   />
                 ) : (

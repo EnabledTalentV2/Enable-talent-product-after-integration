@@ -339,6 +339,7 @@ export default function OrganisationInfoPage() {
                     className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors"
                     title="Upload organization logo"
                   >
+                    <span className="sr-only">Upload organization logo</span>
                     <svg
                       width="14"
                       height="14"
