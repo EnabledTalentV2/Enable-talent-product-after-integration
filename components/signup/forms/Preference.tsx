@@ -41,7 +41,7 @@ function Option({
       >
         {checked && <Check size={14} className="text-white" strokeWidth={3} />}
       </span>
-      <span className="text-slate-600 peer-checked:text-slate-800">
+      <span className="text-slate-700 peer-checked:text-slate-800">
         {label}
       </span>
     </label>
@@ -69,7 +69,7 @@ function RadioOption({
         className="peer sr-only"
       />
       <span className="relative flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 bg-white shadow-sm peer-checked:border-orange-600 peer-checked:bg-orange-50 after:content-[''] after:absolute after:h-2 after:w-2 after:rounded-full after:bg-orange-600 after:opacity-0 peer-checked:after:opacity-100" />
-      <span className="text-slate-600 peer-checked:text-slate-800">
+      <span className="text-slate-700 peer-checked:text-slate-800">
         {label}
       </span>
     </label>
@@ -170,7 +170,7 @@ export default function Preference({
       <div className="space-y-4">
         <p className="text-base font-semibold text-slate-800">
           Do you have a valid work visa?
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -201,7 +201,7 @@ export default function Preference({
         {errors?.hasWorkVisa && (
           <p
             id="preference-hasWorkVisa-error"
-            className="text-sm text-red-600"
+            className="text-sm text-red-800"
           >
             {errors.hasWorkVisa}
           </p>

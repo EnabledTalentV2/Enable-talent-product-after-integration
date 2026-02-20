@@ -56,12 +56,12 @@ export default function JobDetailView({
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-700">
               <Briefcase className="h-6 w-6" aria-hidden="true" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">{job.role}</h1>
-              <p className="text-slate-500">{job.company}</p>
+              <p className="text-slate-700">{job.company}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -76,7 +76,7 @@ export default function JobDetailView({
                 onClick={() => setShowDeleteModal(true)}
                 className="p-2 bg-red-50 hover:bg-red-100 rounded-full transition-colors"
               >
-                <Trash2 className="h-5 w-5 text-red-500" />
+                <Trash2 className="h-5 w-5 text-red-900" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -98,7 +98,7 @@ export default function JobDetailView({
           <div className="text-3xl font-bold text-slate-900">
             {job.stats.declined}
           </div>
-          <div className="text-sm text-slate-600 leading-tight">
+          <div className="text-sm text-slate-700 leading-tight">
             Declined
             <br />
             candidates
@@ -108,7 +108,7 @@ export default function JobDetailView({
           <div className="text-3xl font-bold text-slate-900">
             {job.stats.requests}
           </div>
-          <div className="text-sm text-slate-600 leading-tight">
+          <div className="text-sm text-slate-700 leading-tight">
             Requests
             <br />
             sent
@@ -118,7 +118,7 @@ export default function JobDetailView({
           <div className="text-3xl font-bold text-slate-900">
             {job.stats.matching}
           </div>
-          <div className="text-sm text-slate-600 leading-tight">
+          <div className="text-sm text-slate-700 leading-tight">
             Matching
             <br />
             candidates
@@ -129,7 +129,7 @@ export default function JobDetailView({
       {/* View Candidates Button */}
       <Link
         href={`/employer/dashboard/candidates/${job.id}`}
-        className="w-full bg-[#C27831] hover:bg-[#A66528] text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-medium mb-8 transition-colors"
+        className="w-full bg-orange-900 hover:bg-orange-950 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-medium mb-8 transition-colors"
       >
         View Candidates
         <ArrowRight className="h-4 w-4" />
@@ -140,22 +140,22 @@ export default function JobDetailView({
       {/* Job Details Grid */}
       <div className="grid grid-cols-2 gap-4 mb-8 sm:grid-cols-4 sm:gap-6">
         <div>
-          <div className="text-xs text-slate-500 mb-1">Job Type</div>
+          <div className="text-xs text-slate-700 mb-1">Job Type</div>
           <div className="font-semibold text-slate-900">{job.type}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-500 mb-1">Location</div>
+          <div className="text-xs text-slate-700 mb-1">Location</div>
           <div className="font-semibold text-slate-900">{job.location}</div>
         </div>
         <div>
-          <div className="text-xs text-slate-500 mb-1">Job Type</div>
+          <div className="text-xs text-slate-700 mb-1">Job Type</div>
           <div className="font-semibold text-slate-900">{job.workMode}</div>
         </div>
       </div>
 
       {/* Salary */}
       <div className="mb-8">
-        <div className="text-xs text-slate-500 mb-1">Salary</div>
+        <div className="text-xs text-slate-700 mb-1">Salary</div>
         <div className="text-xl font-bold text-slate-900">{job.salary}</div>
       </div>
 
@@ -164,7 +164,7 @@ export default function JobDetailView({
       {/* About */}
       <div className="mb-8">
         <h3 className="font-bold text-slate-900 mb-3">About the job</h3>
-        <div className="text-sm text-slate-600 leading-relaxed prose prose-slate max-w-none whitespace-pre-wrap break-words">
+        <div className="text-sm text-slate-700 leading-relaxed prose prose-slate max-w-none whitespace-pre-wrap break-words">
           <ReactMarkdown
             rehypePlugins={[rehypeSanitize]}
             components={{
@@ -173,7 +173,7 @@ export default function JobDetailView({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-orange-600 underline hover:text-orange-700"
+                  className="text-orange-900 underline hover:text-orange-900"
                 >
                   {children}
                 </a>
@@ -193,12 +193,12 @@ export default function JobDetailView({
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-red-100 rounded-full">
-                <Trash2 className="h-6 w-6 text-red-600" />
+                <Trash2 className="h-6 w-6 text-red-800" />
               </div>
               <h2 className="text-xl font-bold text-slate-900">Delete Job Post</h2>
             </div>
 
-            <p className="text-slate-600 mb-6">
+            <p className="text-slate-700 mb-6">
               Are you sure you want to delete <span className="font-semibold">{job.role}</span>?
               This action cannot be undone and all associated applications will be removed.
             </p>
@@ -214,7 +214,7 @@ export default function JobDetailView({
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="flex-1 px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>

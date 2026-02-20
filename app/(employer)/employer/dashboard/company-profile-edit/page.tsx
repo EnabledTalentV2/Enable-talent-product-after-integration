@@ -266,7 +266,7 @@ export default function CompanyProfileEditPage() {
     return (
       <section className="mx-auto max-w-3xl py-10 px-6">
         <div className="rounded-[28px] bg-white p-8 shadow-sm text-center">
-          <p className="text-slate-600">Loading organization data...</p>
+          <p className="text-slate-700">Loading organization data...</p>
         </div>
       </section>
     );
@@ -279,7 +279,7 @@ export default function CompanyProfileEditPage() {
       <div className="mb-8 flex items-center gap-4">
         <button
           onClick={() => router.back()}
-          className="rounded-full bg-slate-100 p-2 text-slate-600 transition hover:bg-slate-200"
+          className="rounded-full bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -295,7 +295,7 @@ export default function CompanyProfileEditPage() {
         {submitError && (
           <div
             role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
           >
             <p className="font-semibold">Unable to save</p>
             <p className="mt-1 whitespace-pre-wrap">{submitError}</p>
@@ -371,10 +371,10 @@ export default function CompanyProfileEditPage() {
               />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-700">
                 Upload your organization logo. Recommended size: 400x400px.
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-700 mt-1">
                 Max file size: 5MB. Accepted formats: JPG, PNG, WebP
               </p>
             </div>
@@ -508,7 +508,7 @@ export default function CompanyProfileEditPage() {
                     <div className="h-3 w-3 rounded-full bg-blue-500" />
                   )}
                 </div>
-                <span className="text-slate-600">{size.label}</span>
+                <span className="text-slate-700">{size.label}</span>
               </label>
             ))}
           </div>
@@ -549,7 +549,7 @@ export default function CompanyProfileEditPage() {
             type="button"
             onClick={() => router.back()}
             disabled={submitting}
-            className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-xl px-6 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

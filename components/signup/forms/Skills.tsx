@@ -21,9 +21,9 @@ const levelLabels: Record<SkillLevel, string> = {
 };
 
 const levelColors: Record<SkillLevel, string> = {
-  basic: "bg-slate-100 border-slate-200 text-slate-600",
+  basic: "bg-slate-100 border-slate-200 text-slate-700",
   intermediate: "bg-blue-50 border-blue-200 text-blue-700",
-  advanced: "bg-green-50 border-green-200 text-green-700",
+  advanced: "bg-green-50 border-green-200 text-green-900",
 };
 
 export default function Skills({ data, errors, onChange }: Props) {
@@ -65,7 +65,7 @@ export default function Skills({ data, errors, onChange }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Skills</h3>
         {errorCount > 0 ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")} error
           </span>
         ) : null}
@@ -78,13 +78,13 @@ export default function Skills({ data, errors, onChange }: Props) {
             className="block text-base font-medium text-slate-700"
           >
             Add Your Skills
-            <span aria-hidden="true" className="text-red-600">
+            <span aria-hidden="true" className="text-red-800">
               {" "}
               *
             </span>
             <span className="sr-only"> (required)</span>
           </label>
-          <p className="text-sm text-slate-500">
+          <p id="skills-help" className="text-sm text-slate-700">
             Type a skill name and press{" "}
             <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-slate-100 border border-slate-300 rounded">
               Enter
@@ -92,7 +92,7 @@ export default function Skills({ data, errors, onChange }: Props) {
             or click the &quot;Add&quot; button. You can add multiple skills one at a
             time.
           </p>
-          <p className="text-sm text-slate-500 italic">
+          <p className="text-sm text-slate-700 italic">
             Examples: Python, Communication, Microsoft Excel, Time Management,
             SQL, Leadership
           </p>
@@ -110,7 +110,8 @@ export default function Skills({ data, errors, onChange }: Props) {
                 onKeyDown={handleKeyDown}
                 placeholder="e.g., JavaScript"
                 aria-required="true"
-                aria-describedby="skills-help"
+                aria-describedby={errors?.skills ? "skills-help skills-error" : "skills-help"}
+                aria-invalid={errors?.skills ? true : undefined}
                 className="w-full bg-transparent text-base text-slate-800 outline-none"
               />
             </div>
@@ -118,7 +119,7 @@ export default function Skills({ data, errors, onChange }: Props) {
               type="button"
               onClick={addSkill}
               disabled={!data.skills.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#C27528] px-6 py-2.5 text-base font-semibold text-white hover:bg-[#A86321] transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="inline-flex items-center gap-2 rounded-lg bg-orange-900 px-6 py-2.5 text-base font-semibold text-white hover:bg-orange-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               aria-label="Add skill to your list"
             >
               <Plus size={18} />
@@ -126,7 +127,7 @@ export default function Skills({ data, errors, onChange }: Props) {
             </button>
           </div>
           {errors?.skills ? (
-            <p className="text-sm text-red-600">{errors.skills}</p>
+            <p id="skills-error" role="alert" className="text-sm text-red-800">{errors.skills}</p>
           ) : null}
         </div>
 
@@ -149,7 +150,7 @@ export default function Skills({ data, errors, onChange }: Props) {
                   className="peer sr-only"
                 />
                 <span className="relative flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 bg-white shadow-sm peer-checked:border-orange-600 peer-checked:bg-orange-50 after:content-[''] after:absolute after:h-2 after:w-2 after:rounded-full after:bg-orange-600 after:opacity-0 peer-checked:after:opacity-100" />
-                <span className="text-slate-600 peer-checked:text-slate-800">
+                <span className="text-slate-700 peer-checked:text-slate-800">
                   {levelLabels[level]}
                 </span>
               </label>
@@ -160,7 +161,7 @@ export default function Skills({ data, errors, onChange }: Props) {
 
       {skillList.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-600">Added Skills:</p>
+          <p className="text-sm font-medium text-slate-700">Added Skills:</p>
           <div className="flex flex-wrap gap-3">
             {skillList.map((skill) => (
               <span

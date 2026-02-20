@@ -54,8 +54,8 @@ const recentMatches: RecentMatch[] = [];
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
-  Google: "bg-amber-100 text-amber-700",
-  Amazon: "bg-orange-100 text-orange-700",
+  Google: "bg-amber-100 text-amber-900",
+  Amazon: "bg-orange-100 text-orange-900",
 };
 
 const getBrandKey = (company: string) => company.split(" ")[0] || company;
@@ -209,7 +209,7 @@ function DashboardPageContent() {
               <h2 className="text-lg font-semibold text-slate-900">
                 Recruiter Engagement Trend
               </h2>
-              <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-sm font-semibold text-slate-500">
+              <div className="mt-3 inline-flex rounded-full bg-slate-100 p-1 text-sm font-semibold text-slate-700">
                 {Object.entries(engagementSeries).map(([key, value]) => {
                   const isActive = activeMetric === key;
                   return (
@@ -222,7 +222,7 @@ function DashboardPageContent() {
                       className={`rounded-full px-3 py-1 transition ${
                         isActive
                           ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-500"
+                          : "text-slate-700"
                       }`}
                     >
                       {value.label}
@@ -247,7 +247,7 @@ function DashboardPageContent() {
                 />
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-500">
+              <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-700">
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-[#E6A24E]" />
                   Expected {metricLabelLower}
@@ -303,7 +303,7 @@ function DashboardPageContent() {
               Recent Matches
             </h2>
             {searchQuery && (
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-slate-700">
                 {filteredMatches.length} result{filteredMatches.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -328,16 +328,16 @@ function DashboardPageContent() {
                         <p className="text-base font-semibold text-slate-900">
                           {match.role}
                         </p>
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-700">
                           {match.company}
                         </p>
                       </div>
                     </div>
-                    <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-800">
+                    <div className="rounded-xl bg-amber-100 px-2.5 py-1 text-sm font-semibold text-amber-900">
                       {match.matchPercent}% Matching
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
                     <span className="rounded-full bg-slate-100 px-3 py-1">
                       {match.type}
                     </span>
@@ -345,10 +345,10 @@ function DashboardPageContent() {
                       {match.experience}
                     </span>
                   </div>
-                  <p className="mt-3 text-sm text-slate-500">
+                  <p className="mt-3 text-sm text-slate-700">
                     {match.location}
                   </p>
-                  <div className="mt-4 flex items-center gap-6 text-sm text-slate-500">
+                  <div className="mt-4 flex items-center gap-6 text-sm text-slate-700">
                     <span>
                       Accepted:{" "}
                       <span className="font-semibold text-slate-700">
@@ -371,7 +371,7 @@ function DashboardPageContent() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-700 shadow-sm">
                 {searchQuery
                   ? `No matches found for "${searchQuery}".`
                   : "No matches yet."}
@@ -385,11 +385,11 @@ function DashboardPageContent() {
             <h2 className="text-lg font-semibold text-slate-900">
               Notifications
             </h2>
-            <span className="text-base text-slate-500">
+            <span className="text-base text-slate-700">
               ({unreadCount} Unread)
             </span>
             {searchQuery && (
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-slate-700">
                 {filteredNotifications.length} result{filteredNotifications.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -447,7 +447,7 @@ function DashboardPageContent() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-500 shadow-sm">
+              <div className="rounded-[28px] bg-white p-5 text-sm text-slate-700 shadow-sm">
                 {searchQuery
                   ? `No notifications found for "${searchQuery}".`
                   : "No notifications yet."}

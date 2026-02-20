@@ -239,8 +239,8 @@ function ListedJobsPageContent() {
   // Show error state
   if (error) {
     return (
-      <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-500">
-        <p className="text-lg font-medium text-red-600">Failed to load jobs</p>
+      <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-700">
+        <p className="text-lg font-medium text-red-800">Failed to load jobs</p>
         <p className="text-sm">{error.message}</p>
       </div>
     );
@@ -250,16 +250,16 @@ function ListedJobsPageContent() {
   if (jobs.length === 0) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 py-16 text-center">
-        <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-700">
+        <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-900">
           No jobs posted yet
         </div>
-        <p className="text-base text-slate-500">
+        <p className="text-base text-slate-700">
           Post your first role to start reviewing candidates and tracking
           performance.
         </p>
         <Link
           href="/employer/dashboard/post-jobs"
-          className="rounded-xl bg-[#D98836] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+          className="rounded-xl bg-orange-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
         >
           Post a Job
         </Link>
@@ -281,7 +281,7 @@ function ListedJobsPageContent() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search your listed jobs"
                 aria-label="Search your listed jobs"
-                className="w-full bg-white pl-4 pr-12 py-2.5 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                className="w-full bg-white pl-4 pr-12 py-2.5 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C27803]/20 focus:border-[#C27803] transition-all"
               />
               <button
                 type="submit"
@@ -324,7 +324,7 @@ function ListedJobsPageContent() {
               })
             ) : (
               <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-slate-600">
+                <p className="text-slate-700">
                   No related job found
                 </p>
               </div>

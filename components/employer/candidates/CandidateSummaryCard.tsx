@@ -66,14 +66,14 @@ export default function CandidateSummaryCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-slate-300 text-sm font-semibold text-slate-600">
+              <div className="flex h-full w-full items-center justify-center bg-slate-300 text-sm font-semibold text-slate-700">
                 {getInitials(name) || "C"}
               </div>
             )}
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-900">{name}</h3>
-            {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-slate-700">{subtitle}</p>}
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export default function CandidateSummaryCard({
       {(meta.length > 0 || score) && (
         <div className="mt-4 flex items-end justify-between gap-3">
           {meta.length > 0 ? (
-            <div className="space-y-2 text-xs text-slate-500">
+            <div className="space-y-2 text-xs text-slate-700">
               {meta.map((item) => (
                 <div key={item.text} className="flex items-center gap-1">
                   {item.icon}
@@ -109,7 +109,7 @@ export default function CandidateSummaryCard({
           {score && (
             <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-[#FFF1D6] text-slate-900">
               <span className="text-sm font-semibold">{score.value}%</span>
-              <span className="text-[10px] text-slate-500">{score.label}</span>
+              <span className="text-[10px] text-slate-700">{score.label}</span>
             </div>
           )}
         </div>

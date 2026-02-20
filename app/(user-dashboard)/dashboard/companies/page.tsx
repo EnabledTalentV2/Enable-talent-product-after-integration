@@ -49,8 +49,8 @@ type CompanyJob = {
 
 const getStatusStyles = (status: CompanyJob["status"]) =>
   status === "Active"
-    ? "bg-[#ECFDF5] text-[#10B981]"
-    : "bg-slate-100 text-slate-500";
+    ? "bg-emerald-50 text-emerald-900"
+    : "bg-slate-100 text-slate-800";
 
 // Helper function to transform EmployerJob to CompanyJob format
 const transformToCompanyJob = (job: EmployerJob): CompanyJob => {
@@ -254,7 +254,7 @@ function CompaniesPageContent() {
       {isLoading && (
         <div className="rounded-[32px] bg-white p-8 text-center shadow-sm">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#C27803] border-r-transparent"></div>
-          <p className="mt-4 text-slate-600">Loading job opportunities...</p>
+          <p className="mt-4 text-slate-700">Loading job opportunities...</p>
         </div>
       )}
 
@@ -262,7 +262,7 @@ function CompaniesPageContent() {
       {error && (
         <div className="rounded-[32px] bg-red-50 p-6 shadow-sm">
           <p className="font-semibold text-red-800">Failed to load jobs</p>
-          <p className="mt-2 text-sm text-red-600">
+          <p className="mt-2 text-sm text-red-800">
             {error instanceof Error ? error.message : "Please try again later"}
           </p>
         </div>
@@ -275,7 +275,7 @@ function CompaniesPageContent() {
             {/* Search Results Info */}
             {searchQuery && (
               <div className="mb-6">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-700">
                   Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching &quot;{searchQuery}&quot;
                 </p>
               </div>
@@ -319,7 +319,7 @@ function CompaniesPageContent() {
                             className="h-12 w-12 object-contain"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-600">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-semibold text-slate-700">
                             {job.company.name.charAt(0)}
                           </div>
                         )}
@@ -328,7 +328,7 @@ function CompaniesPageContent() {
                           <h3 className="truncate text-xl font-bold text-slate-900">
                             {job.title}
                           </h3>
-                          <p className="truncate font-medium text-slate-500">
+                          <p className="truncate font-medium text-slate-700">
                             {job.company.name}
                           </p>
                         </div>
@@ -336,14 +336,14 @@ function CompaniesPageContent() {
 
                       <div className="mt-6 flex items-end justify-between gap-4">
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-slate-500">
+                          <div className="flex items-center gap-2 text-slate-700">
                             <MapPin size={18} className="text-orange-400" />
                             <span className="text-base font-medium">
                               {job.location}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-slate-500">
+                          <div className="flex items-center gap-2 text-slate-700">
                             <Users size={18} className="text-orange-400" />
                             <span className="text-base font-medium">
                               {job.company.hiringCount} Hiring
@@ -364,7 +364,7 @@ function CompaniesPageContent() {
                   );
                 })
               ) : (
-                <div className="rounded-[32px] bg-white p-6 text-sm text-slate-500 shadow-sm">
+                <div className="rounded-[32px] bg-white p-6 text-sm text-slate-700 shadow-sm">
                   {searchQuery
                     ? `No jobs found matching "${searchQuery}". Try a different search term.`
                     : "No job opportunities available yet."}
@@ -387,7 +387,7 @@ function CompaniesPageContent() {
                           className="h-16 w-16 object-contain"
                         />
                       ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-600">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl font-semibold text-slate-700">
                           {activeCompany.name.charAt(0)}
                         </div>
                       )}
@@ -396,7 +396,7 @@ function CompaniesPageContent() {
                         <h2 className="truncate text-3xl font-bold text-slate-900">
                           {activeCompany.name}
                         </h2>
-                        <p className="truncate text-lg font-medium text-slate-500">
+                        <p className="truncate text-lg font-medium text-slate-700">
                           {activeCompany.industry}
                         </p>
                       </div>
@@ -417,7 +417,7 @@ function CompaniesPageContent() {
                         className={`rounded-full px-6 py-2 text-base font-bold transition ${
                           canApply && !isApplying
                             ? "bg-[#C27803] text-white hover:bg-[#A56303]"
-                            : "cursor-not-allowed bg-slate-200 text-slate-500"
+                            : "cursor-not-allowed bg-slate-200 text-slate-700"
                         }`}
                       >
                         {isApplying
@@ -436,7 +436,7 @@ function CompaniesPageContent() {
                     <p className="text-2xl font-bold text-slate-900">
                       {activeJob.title}
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-6 text-slate-600">
+                    <div className="mt-4 flex flex-wrap gap-6 text-slate-700">
                       <div className="flex items-center gap-2">
                         <MapPin size={18} className="text-orange-400" />
                         <span>{activeJob.location}</span>
@@ -453,7 +453,7 @@ function CompaniesPageContent() {
                       Job description
                     </h4>
                     {hasDescription ? (
-                      <div className="text-slate-600 prose prose-slate max-w-none whitespace-pre-wrap break-words">
+                      <div className="text-slate-700 prose prose-slate max-w-none whitespace-pre-wrap break-words">
                         <ReactMarkdown
                           rehypePlugins={[rehypeSanitize]}
                           components={{
@@ -462,7 +462,7 @@ function CompaniesPageContent() {
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-orange-600 underline hover:text-orange-700"
+                                className="text-orange-900 underline hover:text-orange-900"
                               >
                                 {children}
                               </a>
@@ -473,7 +473,7 @@ function CompaniesPageContent() {
                         </ReactMarkdown>
                       </div>
                     ) : (
-                      <p className="text-slate-600">
+                      <p className="text-slate-700">
                         Details will be shared after you apply.
                       </p>
                     )}
@@ -539,7 +539,7 @@ function CompaniesPageContent() {
                     <h4 className="text-xl font-bold text-slate-900">
                       About the company
                     </h4>
-                    <div className="space-y-4 leading-relaxed text-slate-600">
+                    <div className="space-y-4 leading-relaxed text-slate-700">
                       {activeCompany.about.map((paragraph, i) => (
                         <p key={`${activeCompany.id}-about-${i}`}>
                           {paragraph}
@@ -553,7 +553,7 @@ function CompaniesPageContent() {
                       Company details
                     </h4>
 
-                    <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+                    <ul className="list-outside list-disc space-y-3 pl-5 text-slate-700">
                       <li className="flex items-center gap-2">
                         <Globe size={16} className="text-orange-400" />
                         <a
@@ -579,7 +579,7 @@ function CompaniesPageContent() {
                   </div>
                 </div>
               ) : (
-                <div className="flex h-full items-center justify-center rounded-[28px] border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                <div className="flex h-full items-center justify-center rounded-[28px] border border-dashed border-slate-200 p-6 text-sm text-slate-700">
                   {hasJobs
                     ? "Select a company to view details."
                     : "No company details yet."}

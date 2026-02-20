@@ -96,6 +96,7 @@ Create `.env.local` and set:
 - `NEXT_PUBLIC_SUPABASE_URL` (optional; resume uploads)
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_SUPABASE_RESUME_BUCKET` (default: `resumes`)
+- `GOOGLE_PLACES_API_KEY` (required for location autocomplete; server-side only)
 
 If Supabase is not configured, resume upload will warn and users can continue with manual entry.
 
@@ -238,6 +239,9 @@ app/                                    # Next.js App Router
 
     agent/
       search/route.ts                   # AI-powered candidate search
+
+    places/
+      autocomplete/route.ts             # Google Places autocomplete proxy
 
     user/
       me/route.ts                       # Current user session

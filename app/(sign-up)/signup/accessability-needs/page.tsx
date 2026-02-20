@@ -34,7 +34,7 @@ export default function AccessabilityNeedsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
-        <div className="text-slate-500">Verifying session...</div>
+        <div className="text-slate-700">Verifying session...</div>
       </div>
     );
   }
@@ -53,6 +53,7 @@ export default function AccessabilityNeedsPage() {
       />
 
       <main
+        id="main-content"
         className="flex flex-1 items-center justify-center px-6 pb-12 pt-4 md:px-12"
         role="main"
         aria-labelledby={`${step}-heading`}

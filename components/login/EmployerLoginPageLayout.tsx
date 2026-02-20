@@ -20,7 +20,7 @@ export default function EmployerLoginPageLayout({ children }: EmployerLoginPageL
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
           href="https://www.enabledtalent.com/"
-          className="group flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-[#C04622] bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/60 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-orange-900 bg-white/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/60 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -49,7 +49,7 @@ export default function EmployerLoginPageLayout({ children }: EmployerLoginPageL
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-orange-400/70 blur-2xl" />
               <a
                 href="https://www.enabledtalent.com/"
-                className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-[#C5D8F5]"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm p-4 transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-[#C5D8F5]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >
                 <Image
@@ -82,7 +82,7 @@ export default function EmployerLoginPageLayout({ children }: EmployerLoginPageL
         <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
           Are you a Candidate?{" "}
           <Link
-            className="font-bold text-[#C04622] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C04622] focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 rounded-sm"
+            className="font-bold text-orange-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 rounded-sm"
             href="/login-talent"
             aria-label="Log in here to the Candidate portal"
           >

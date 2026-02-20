@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import DashBoardNavbar from "@/components/DashBoardNavbar";
 import DashboardSubnav from "@/components/DashboardSubnav";
+import Breadcrumb from "@/components/a11y/Breadcrumb";
+import SessionExpiryWarning from "@/components/a11y/SessionExpiryWarning";
 import { useUserDataStore } from "@/lib/userDataStore";
 import {
   ensureCandidateProfileSlug,
@@ -385,6 +387,7 @@ export default function DashboardLayoutPage({
     return (
       <div
         className="min-h-screen bg-[#F0F4F8] animate-pulse"
+        aria-busy="true"
         aria-label="Loading dashboard"
       >
         <div className="h-16 border-b border-slate-200 bg-white px-6 md:px-12">
@@ -418,7 +421,9 @@ export default function DashboardLayoutPage({
     <div className="min-h-screen bg-[#F0F4F8]">
       <DashBoardNavbar />
       <DashboardSubnav />
-      <main className="px-6 pb-10 md:px-12">{children}</main>
+      <Breadcrumb />
+      <main id="main-content" className="px-6 pb-10 md:px-12">{children}</main>
+      <SessionExpiryWarning loginPath="/login-talent" />
     </div>
   );
 }

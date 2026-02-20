@@ -46,7 +46,7 @@ export default function SuccessModal({
         className="flex w-full max-w-md flex-col items-center justify-center rounded-3xl bg-[#F0F5FF] p-10 text-center shadow-2xl"
       >
         <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <Check className="h-8 w-8 text-green-500" strokeWidth={3} />
+          <Check className="h-8 w-8 text-emerald-900" strokeWidth={3} aria-hidden="true" />
         </div>
 
         <h2
@@ -58,7 +58,7 @@ export default function SuccessModal({
 
         <p
           id="success-modal-description"
-          className="mb-8 whitespace-pre-wrap text-sm text-slate-600"
+          className="mb-8 whitespace-pre-wrap text-sm text-slate-700"
         >
           {message}
         </p>

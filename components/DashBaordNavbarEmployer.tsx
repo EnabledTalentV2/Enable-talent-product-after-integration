@@ -105,7 +105,7 @@ export default function DashBoardNavbarEmployer() {
                   ? "page"
                   : undefined
               }
-              className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="flex items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-900"
             >
               <User size={18} aria-hidden="true" />
               <span>Profile</span>
@@ -114,7 +114,7 @@ export default function DashBoardNavbarEmployer() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="flex items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-900"
             >
               <LogOut size={18} aria-hidden="true" />
               <span>Log Out</span>
@@ -126,7 +126,7 @@ export default function DashBoardNavbarEmployer() {
                   ? "page"
                   : undefined
               }
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:bg-orange-950"
             >
               <span>Post a Job</span>
             </Link>
@@ -136,7 +136,7 @@ export default function DashBoardNavbarEmployer() {
           <button
             type="button"
             onClick={toggleMenu}
-            className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
+            className="flex items-center text-slate-700 transition-colors hover:text-slate-900 md:hidden"
             aria-label={
               isMenuOpen ? "Close navigation menu" : "Open navigation menu"
             }
@@ -173,7 +173,7 @@ export default function DashBoardNavbarEmployer() {
               <button
                 type="button"
                 onClick={toggleMenu}
-                className="self-end text-slate-600 transition-colors hover:text-slate-900 mb-6"
+                className="self-end text-slate-700 transition-colors hover:text-slate-900 mb-6"
                 aria-label="Close menu"
               >
                 <X size={24} aria-hidden="true" />
@@ -232,7 +232,7 @@ export default function DashBoardNavbarEmployer() {
                     toggleMenu();
                     handleLogout();
                   }}
-                  className="flex items-center gap-3 px-4 py-3 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50 rounded-lg"
+                  className="flex items-center gap-3 px-4 py-3 text-left text-base font-medium text-red-800 transition-colors hover:bg-red-50 rounded-lg"
                 >
                   <LogOut size={18} aria-hidden="true" />
                   <span>Log Out</span>

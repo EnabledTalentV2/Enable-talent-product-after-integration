@@ -39,7 +39,7 @@ const fallbackText = "Not specified";
 const getSkillLevelColor = (level?: string) => {
   const normalized = level?.toLowerCase() ?? "";
   if (normalized === "advanced") return "bg-green-50 text-green-800";
-  if (normalized === "intermediate") return "bg-amber-50 text-amber-800";
+  if (normalized === "intermediate") return "bg-amber-50 text-amber-900";
   return "bg-slate-100 text-slate-800";
 };
 
@@ -220,7 +220,7 @@ export default function HomePageDashboard() {
       <div
         role="alert"
         aria-live="polite"
-        className="py-10 text-base font-medium text-red-700"
+        className="py-10 text-base font-medium text-red-800"
       >
         {error}
       </div>
@@ -337,7 +337,7 @@ export default function HomePageDashboard() {
                 className="flex items-center gap-2 text-lg font-semibold text-slate-900"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-900 text-white"
                   aria-hidden="true"
                 >
                   <Award size={16} />
@@ -377,7 +377,7 @@ export default function HomePageDashboard() {
                 className="flex items-center gap-2 text-lg font-semibold text-slate-900"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-900 text-white"
                   aria-hidden="true"
                 >
                   <Briefcase size={16} />
@@ -424,7 +424,7 @@ export default function HomePageDashboard() {
                         </div>
                       </div>
                       {entry.description && (
-                        <p className="mt-2 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                        <p className="mt-2 text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                           {entry.description}
                         </p>
                       )}
@@ -446,7 +446,7 @@ export default function HomePageDashboard() {
                 className="flex items-center gap-2 text-lg font-semibold text-slate-900"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-900 text-white"
                   aria-hidden="true"
                 >
                   <FolderOpen size={16} />
@@ -465,13 +465,13 @@ export default function HomePageDashboard() {
                           {toTrimmed(project.projectName) || "Project"}
                         </h3>
                         {project.current && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
                             Ongoing
                           </span>
                         )}
                       </div>
                       {(project.from || project.to) && (
-                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+                        <p className="mt-1 flex items-center gap-1 text-xs text-slate-700">
                           <Calendar size={12} aria-hidden="true" />
                           <span className="sr-only">Duration: </span>
                           {formatDate(project.from)}
@@ -501,7 +501,7 @@ export default function HomePageDashboard() {
                 className="flex items-center gap-2 text-lg font-semibold text-slate-900"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-900 text-white"
                   aria-hidden="true"
                 >
                   <GraduationCap size={16} />
@@ -549,7 +549,7 @@ export default function HomePageDashboard() {
                 className="flex items-center gap-2 text-lg font-semibold text-slate-900"
               >
                 <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-[#C94A2A] to-[#F1B45C] text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-900 text-white"
                   aria-hidden="true"
                 >
                   <Award size={16} />
@@ -560,7 +560,7 @@ export default function HomePageDashboard() {
               {/* Achievements */}
               {achievementEntries.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-600">
+                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-700">
                     Achievements
                   </h3>
                   <ul aria-label="Achievements list" className="mt-2 flex flex-wrap gap-2">
@@ -573,7 +573,7 @@ export default function HomePageDashboard() {
                           {toTrimmed(achievement.title)}
                         </p>
                         {achievement.issueDate && (
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-slate-700">
                             <span className="sr-only">Received: </span>
                             {formatDate(achievement.issueDate)}
                           </p>
@@ -587,7 +587,7 @@ export default function HomePageDashboard() {
               {/* Certifications */}
               {certificationEntries.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-600">
+                  <h3 className="text-sm font-medium uppercase tracking-wide text-slate-700">
                     Certifications
                   </h3>
                   <ul aria-label="Certifications list" className="mt-2 flex flex-wrap gap-2">
@@ -600,7 +600,7 @@ export default function HomePageDashboard() {
                           <p className="font-medium text-slate-900">
                             {toTrimmed(cert.name)}
                           </p>
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-slate-700">
                             <span className="sr-only">Issued by: </span>
                             {toTrimmed(cert.organization)}
                           </p>
@@ -610,7 +610,7 @@ export default function HomePageDashboard() {
                             href={cert.credentialIdUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded p-1 text-green-700 transition-colors hover:text-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+                            className="rounded p-1 text-green-900 transition-colors hover:text-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
                             aria-label={`View ${toTrimmed(cert.name)} credential (opens in new tab)`}
                           >
                             <ExternalLink size={14} aria-hidden="true" />
@@ -641,7 +641,7 @@ export default function HomePageDashboard() {
                 {languages.length > 0 &&
                   languages.some((l) => toTrimmed(l.language)) && (
                     <div>
-                      <h3 className="text-sm font-medium text-slate-600">
+                      <h3 className="text-sm font-medium text-slate-700">
                         Languages
                       </h3>
                       <ul aria-label="Languages" className="mt-2 flex flex-wrap gap-2">
@@ -656,7 +656,7 @@ export default function HomePageDashboard() {
                               {(lang.speaking ||
                                 lang.reading ||
                                 lang.writing) && (
-                                <span className="ml-1 text-xs text-slate-600">
+                                <span className="ml-1 text-xs text-slate-700">
                                   <span className="sr-only">
                                     {" "}
                                     - proficiency:{" "}

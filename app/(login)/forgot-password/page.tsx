@@ -14,7 +14,7 @@ import { apiRequest, isApiError } from "@/lib/api-client";
 import { deriveUserRoleFromUserData } from "@/lib/roleUtils";
 
 const inputClasses =
-  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
+  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#C27803] focus:ring-[#C27803]/20";
 
 type Step = "email" | "otp" | "new-password" | "success";
 
@@ -196,7 +196,7 @@ function ForgotPasswordContent() {
               <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
                 Reset your password
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-700">
                 Enter your email and we&apos;ll send you a code to reset your
                 password.
               </p>
@@ -205,7 +205,7 @@ function ForgotPasswordContent() {
             {error && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
               >
                 {error}
               </div>
@@ -247,7 +247,7 @@ function ForgotPasswordContent() {
                 type="button"
                 onClick={handleSendCode}
                 disabled={isLoading}
-                className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoading ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -263,7 +263,7 @@ function ForgotPasswordContent() {
             <div className="mt-6 text-center">
               <Link
                 href={backLink}
-                className="text-[13px] font-semibold text-[#B45309] hover:underline"
+                className="text-[13px] font-semibold text-orange-900 hover:underline"
               >
                 Back to Login
               </Link>
@@ -278,7 +278,7 @@ function ForgotPasswordContent() {
               <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
                 Check your email
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-700">
                 We sent a verification code to{" "}
                 <strong>{email}</strong>
               </p>
@@ -287,7 +287,7 @@ function ForgotPasswordContent() {
             {error && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
               >
                 {error}
               </div>
@@ -325,7 +325,7 @@ function ForgotPasswordContent() {
                 type="button"
                 onClick={handleVerifyCode}
                 disabled={isLoading || !code.trim()}
-                className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoading ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -337,7 +337,7 @@ function ForgotPasswordContent() {
                 )}
               </button>
 
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-slate-700">
                 Didn&apos;t receive the code?{" "}
                 <button
                   type="button"
@@ -346,7 +346,7 @@ function ForgotPasswordContent() {
                   className={`font-semibold ${
                     resendCooldown > 0
                       ? "text-slate-400 cursor-not-allowed"
-                      : "text-[#B45309] hover:underline"
+                      : "text-orange-900 hover:underline"
                   }`}
                 >
                   {resendCooldown > 0
@@ -363,7 +363,7 @@ function ForgotPasswordContent() {
                     setCode("");
                     setError(null);
                   }}
-                  className="text-[13px] text-slate-500 hover:underline"
+                  className="text-[13px] text-slate-700 hover:underline"
                 >
                   Use a different email
                 </button>
@@ -379,7 +379,7 @@ function ForgotPasswordContent() {
               <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
                 Set new password
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-700">
                 Choose a strong password for your account.
               </p>
             </div>
@@ -387,7 +387,7 @@ function ForgotPasswordContent() {
             {error && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
               >
                 {error}
               </div>
@@ -426,7 +426,7 @@ function ForgotPasswordContent() {
                     }
                     aria-pressed={showPassword}
                     aria-controls="new-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOff size={18} />
@@ -479,7 +479,7 @@ function ForgotPasswordContent() {
                     }
                     aria-pressed={showConfirmPassword}
                     aria-controls="confirm-new-password"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] cursor-pointer"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={18} />
@@ -494,7 +494,7 @@ function ForgotPasswordContent() {
                 type="button"
                 onClick={handleResetPassword}
                 disabled={isLoading}
-                className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isLoading ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -514,12 +514,12 @@ function ForgotPasswordContent() {
           <>
             <div className="text-center mb-7">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                <CheckCircle2 className="h-8 w-8 text-emerald-900" />
               </div>
               <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
                 Password reset successful!
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-700">
                 Your password has been updated. You can now log in with your new
                 password.
               </p>
@@ -528,13 +528,13 @@ function ForgotPasswordContent() {
             <div className="space-y-3">
               <Link
                 href="/login-talent"
-                className="block w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-center text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white"
+                className="block w-full rounded-lg bg-orange-900 py-3 text-center text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white"
               >
                 Login as Talent
               </Link>
               <Link
                 href="/login-employer"
-                className="block w-full rounded-lg border border-slate-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A]"
+                className="block w-full rounded-lg border border-slate-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803]"
               >
                 Login as Employer
               </Link>
@@ -552,7 +552,7 @@ function ForgotPasswordContent() {
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <Link
           href={backLink}
-          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-orange-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -580,7 +580,7 @@ function ForgotPasswordContent() {
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
               <a
                 href="https://www.enabledtalent.com/"
-                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >
                 <Image

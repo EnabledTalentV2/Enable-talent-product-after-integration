@@ -71,7 +71,7 @@ const inputClasses = (hasError?: boolean) =>
   `w-full rounded-xl border bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+      : "border-gray-200 focus:border-[#C27803] focus:ring-[#C27803]"
   }`;
 
 const COMPANY_SIZE_OPTIONS = [
@@ -336,7 +336,7 @@ export default function OrganisationInfoPage() {
                   {/* Upload button overlay */}
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-600 transition-colors"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-orange-800 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-900 transition-colors"
                     title="Upload organization logo"
                   >
                     <span className="sr-only">Upload organization logo</span>
@@ -387,7 +387,7 @@ export default function OrganisationInfoPage() {
               {submitError ? (
                 <div
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
                 >
                   <p className="font-semibold">Unable to save</p>
                   <p className="mt-1 whitespace-pre-wrap">{submitError}</p>
@@ -424,7 +424,7 @@ export default function OrganisationInfoPage() {
                 {fieldErrors.organizationName ? (
                   <p
                     id="organization-name-error"
-                    className="text-sm text-red-500"
+                    className="text-sm text-red-800"
                   >
                     {fieldErrors.organizationName}
                   </p>
@@ -464,7 +464,7 @@ export default function OrganisationInfoPage() {
                 {fieldErrors.aboutOrganization ? (
                   <p
                     id="organization-about-error"
-                    className="text-sm text-red-500"
+                    className="text-sm text-red-800"
                   >
                     {fieldErrors.aboutOrganization}
                   </p>
@@ -523,7 +523,7 @@ export default function OrganisationInfoPage() {
                 {fieldErrors.website ? (
                   <p
                     id="organization-website-error"
-                    className="text-sm text-red-500"
+                    className="text-sm text-red-800"
                   >
                     {fieldErrors.website}
                   </p>
@@ -559,7 +559,7 @@ export default function OrganisationInfoPage() {
                 {fieldErrors.linkedinUrl ? (
                   <p
                     id="organization-linkedin-error"
-                    className="text-sm text-red-500"
+                    className="text-sm text-red-800"
                   >
                     {fieldErrors.linkedinUrl}
                   </p>
@@ -591,7 +591,7 @@ export default function OrganisationInfoPage() {
                         className="sr-only peer"
                       />
                       <div
-                        className={`h-5 w-5 rounded-full border flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-orange-500 peer-focus-visible:ring-offset-2 ${
+                        className={`h-5 w-5 rounded-full border flex items-center justify-center peer-focus-visible:ring-2 peer-focus-visible:ring-[#C27803] peer-focus-visible:ring-offset-2 ${
                           organizationInfo.companySize === size.value
                             ? "border-orange-500"
                             : "border-gray-300"
@@ -606,7 +606,7 @@ export default function OrganisationInfoPage() {
                   ))}
                 </div>
                 {fieldErrors.companySize ? (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-800">
                     {fieldErrors.companySize}
                   </p>
                 ) : null}
@@ -624,7 +624,7 @@ export default function OrganisationInfoPage() {
                   <select
                     ref={industryRef}
                     id="organization-industry"
-                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-700 focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
                     value={organizationInfo.industry}
                     aria-invalid={Boolean(fieldErrors.industry)}
                     aria-describedby={
@@ -652,7 +652,7 @@ export default function OrganisationInfoPage() {
                 {fieldErrors.industry ? (
                   <p
                     id="organization-industry-error"
-                    className="text-sm text-red-500"
+                    className="text-sm text-red-800"
                   >
                     {fieldErrors.industry}
                   </p>

@@ -28,7 +28,7 @@ export default async function BackendErrorPage({
         <h1 className="text-2xl font-semibold text-slate-900">
           We&apos;re having trouble reaching the server
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-700">
           Please try again in a moment. If this keeps happening, it may be a
           temporary backend issue.
         </p>

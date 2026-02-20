@@ -80,7 +80,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
         {/* Sections */}
         <div className="flex flex-col gap-3">
           <ProfileSection title="About" defaultOpen>
-            <p className="text-sm leading-relaxed text-slate-600">
+            <p className="text-sm leading-relaxed text-slate-700">
               {candidate.about}
             </p>
           </ProfileSection>
@@ -90,7 +90,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
               {candidate.culturalInterest.map((interest, i) => (
                 <span
                   key={i}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600"
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
                 >
                   {interest}
                 </span>
@@ -106,7 +106,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
               {candidate.education.map((edu, i) => (
                 <div key={i} className="border-l-2 border-slate-200 pl-4">
                   <h4 className="font-semibold text-slate-900">{edu.degree}</h4>
-                  <p className="text-sm text-slate-600">{edu.institution}</p>
+                  <p className="text-sm text-slate-700">{edu.institution}</p>
                   <p className="text-xs text-slate-400">{edu.year}</p>
                 </div>
               ))}
@@ -121,10 +121,10 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
               {candidate.workExperience.map((exp, i) => (
                 <div key={i} className="border-l-2 border-slate-200 pl-4">
                   <h4 className="font-semibold text-slate-900">{exp.role}</h4>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-700">
                     {exp.company} • {exp.duration}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-700">
                     {exp.description}
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
               {candidate.skills.map((skill, i) => (
                 <span
                   key={i}
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600"
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700"
                 >
                   {skill}
                 </span>
@@ -158,7 +158,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
                   <h4 className="font-semibold text-slate-900">
                     {project.name}
                   </h4>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-700">
                     {project.description}
                   </p>
                 </div>
@@ -170,7 +170,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
             title="Achievements"
             count={`${candidate.achievements.length} added`}
           >
-            <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+            <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
               {candidate.achievements.map((achievement, i) => (
                 <li key={i}>{achievement}</li>
               ))}
@@ -181,7 +181,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
             title="Certifications"
             count={`${candidate.certifications.length} added`}
           >
-            <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+            <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
               {candidate.certifications.map((cert, i) => (
                 <li key={i}>{cert}</li>
               ))}
@@ -189,7 +189,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
           </ProfileSection>
 
           <ProfileSection title="Preference">
-            <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+            <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
               {candidate.preferences.map((pref, i) => (
                 <li key={i}>{pref}</li>
               ))}
@@ -197,7 +197,7 @@ export default function CandidateDetail({ candidate }: CandidateDetailProps) {
           </ProfileSection>
 
           <ProfileSection title="Other details">
-            <ul className="list-inside list-disc space-y-1 text-sm text-slate-600">
+            <ul className="list-inside list-disc space-y-1 text-sm text-slate-700">
               {candidate.otherDetails.map((detail, i) => (
                 <li key={i}>{detail}</li>
               ))}

@@ -18,17 +18,21 @@ interface LocationAutocompleteProps {
   placeholder?: string;
 }
 
-interface OSMResult {
-  place_id: number;
-  display_name: string;
-  address: {
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-  };
+interface LocationSuggestion {
+  placeId: string;
+  label: string;
 }
+
+const MIN_QUERY_LENGTH = 3;
+const SEARCH_DEBOUNCE_MS = 400;
+const MAX_CACHE_ENTRIES = 40;
+
+const createSessionToken = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
 
 export default function LocationAutocomplete({
   label = "Location",
@@ -50,12 +54,35 @@ export default function LocationAutocomplete({
   const errorId = error ? `${resolvedInputId}-error` : undefined;
   const describedByIds = [describedBy, errorId].filter(Boolean).join(" ") || undefined;
   const [query, setQuery] = useState(value);
-  const [suggestions, setSuggestions] = useState<OSMResult[]>([]);
+  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
+  const sessionTokenRef = useRef<string | null>(null);
+  const cacheRef = useRef<Map<string, LocationSuggestion[]>>(new Map());
+
+  const getSessionToken = () => {
+    if (!sessionTokenRef.current) {
+      sessionTokenRef.current = createSessionToken();
+    }
+    return sessionTokenRef.current;
+  };
+
+  const clearSessionToken = () => {
+    sessionTokenRef.current = null;
+  };
+
+  const cacheSuggestions = (cacheKey: string, data: LocationSuggestion[]) => {
+    if (!cacheRef.current.has(cacheKey) && cacheRef.current.size >= MAX_CACHE_ENTRIES) {
+      const oldestKey = cacheRef.current.keys().next().value as string | undefined;
+      if (oldestKey) {
+        cacheRef.current.delete(oldestKey);
+      }
+    }
+    cacheRef.current.set(cacheKey, data);
+  };
 
   // Sync internal query with external value (for initial load)
   useEffect(() => {
@@ -73,74 +100,95 @@ export default function LocationAutocomplete({
         !wrapperRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        setActiveIndex(-1);
+        clearSessionToken();
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Debounced search effect (1 second to respect Nominatim TOS)
+  // Debounced search effect against internal API proxy.
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      // Only search if query changed significantly and isn't just the initial value
-      if (query.length < 3 || !isOpen) return;
+    const normalizedQuery = query.trim();
+    if (!isOpen || normalizedQuery.length < MIN_QUERY_LENGTH) {
+      setIsLoading(false);
+      setSuggestions([]);
+      if (normalizedQuery.length < MIN_QUERY_LENGTH) {
+        clearSessionToken();
+      }
+      return;
+    }
 
+    const cacheKey = normalizedQuery.toLowerCase();
+    const cached = cacheRef.current.get(cacheKey);
+    if (cached) {
+      setIsLoading(false);
+      setSuggestions(cached);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        // Query param 'featuretype=city' prioritizes cities
-        // 'addressdetails=1' allows us to format the display name neatly
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            query,
-          )}&addressdetails=1&limit=5&featuretype=city`,
-          {
-            headers: {
-              // REQUIRED by Nominatim Usage Policy - User-Agent
-              "User-Agent": "EnabledTalent-Platform/1.0",
-            },
-          },
-        );
+        const params = new URLSearchParams({
+          query: normalizedQuery,
+          sessionToken: getSessionToken(),
+        });
+        const response = await fetch(`/api/places/autocomplete?${params.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
 
-        if (response.ok) {
-          const data: OSMResult[] = await response.json();
-          setSuggestions(data);
+        if (!response.ok) {
+          setSuggestions([]);
+          return;
         }
+
+        const data = (await response.json()) as {
+          suggestions?: LocationSuggestion[];
+        };
+        const nextSuggestions = Array.isArray(data.suggestions)
+          ? data.suggestions
+          : [];
+        cacheSuggestions(cacheKey, nextSuggestions);
+        setSuggestions(nextSuggestions);
       } catch (err) {
-        console.error("OSM Search Error", err);
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.error("Google Places search error", err);
+          setSuggestions([]);
+        }
       } finally {
         setIsLoading(false);
       }
-    }, 1000);
+    }, SEARCH_DEBOUNCE_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
   }, [query, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-    onChange(e.target.value); // Update parent immediately
+    const nextValue = e.target.value;
+    setQuery(nextValue);
+    onChange(nextValue); // Update parent immediately
     setIsOpen(true);
     setActiveIndex(-1);
+    if (nextValue.trim().length < MIN_QUERY_LENGTH) {
+      setSuggestions([]);
+      clearSessionToken();
+    }
   };
 
-  const formatAddress = (place: OSMResult) => {
-    // Prefer "City, State, Country" format
-    const parts = [
-      place.address.city || place.address.town || place.address.village,
-      place.address.state,
-      place.address.country,
-    ].filter(Boolean);
-
-    // Fallback to display_name if address parts are missing
-    return parts.length > 0 ? parts.join(", ") : place.display_name;
-  };
-
-  const handleSelect = (place: OSMResult) => {
-    const formatted = formatAddress(place);
-    setQuery(formatted);
-    onChange(formatted);
+  const handleSelect = (place: LocationSuggestion) => {
+    setQuery(place.label);
+    onChange(place.label);
     setIsOpen(false);
     setSuggestions([]);
     setActiveIndex(-1);
+    clearSessionToken();
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -168,8 +216,10 @@ export default function LocationAutocomplete({
       }
     } else if (e.key === "Escape") {
       setIsOpen(false);
+      clearSessionToken();
     } else if (e.key === "Tab") {
       setIsOpen(false);
+      clearSessionToken();
     }
   };
 
@@ -202,7 +252,7 @@ export default function LocationAutocomplete({
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => query.length >= 3 && setIsOpen(true)}
+          onFocus={() => query.length >= MIN_QUERY_LENGTH && setIsOpen(true)}
           disabled={disabled}
           placeholder={placeholder ?? "e.g. Mississauga, Ontario"}
           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
@@ -242,7 +292,7 @@ export default function LocationAutocomplete({
           {suggestions.map((place, index) => (
             <button
               type="button"
-              key={place.place_id}
+              key={place.placeId}
               id={`${resolvedInputId}-item-${index}`}
               role="option"
               aria-selected={index === activeIndex}
@@ -255,12 +305,12 @@ export default function LocationAutocomplete({
               }`}
             >
               <MapPin className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
-              <span className="truncate">{formatAddress(place)}</span>
+              <span className="truncate">{place.label}</span>
             </button>
           ))}
           <div className="px-2 py-1 flex justify-end bg-gray-50 sticky bottom-0 border-t border-gray-100">
             <span className="text-[10px] text-gray-400" aria-hidden="true">
-              (c) OpenStreetMap contributors
+              Powered by Google
             </span>
           </div>
         </div>
@@ -269,7 +319,7 @@ export default function LocationAutocomplete({
       {error && (
         <div
           id={errorId}
-          className="flex items-center mt-1 text-red-500 text-sm"
+          className="flex items-center mt-1 text-red-800 text-sm"
           role="alert"
         >
           <AlertCircle className="w-4 h-4 mr-1" />

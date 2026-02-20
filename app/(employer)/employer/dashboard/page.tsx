@@ -67,8 +67,8 @@ const attentionItems: AttentionItem[] = [];
 
 const brandStyles: Record<string, string> = {
   Meta: "bg-blue-100 text-blue-700",
-  Google: "bg-amber-100 text-amber-700",
-  Amazon: "bg-orange-100 text-orange-700",
+  Google: "bg-amber-100 text-amber-900",
+  Amazon: "bg-orange-100 text-orange-900",
 };
 
 const getBrandKey = (company: string) => company.split(" ")[0] || company;
@@ -226,7 +226,7 @@ export default function EmployerDashboardPage() {
 
           {hasChartData ? (
             <>
-              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+              <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-700">
                 <span className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-sm bg-[#E6A24E]" />
                   Projected

@@ -19,7 +19,7 @@ export default function VisuallyHidden({
   as: Component = "span",
 }: VisuallyHiddenProps) {
   return (
-    <Component className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-slate-900 focus:ring-2 focus:ring-orange-500">
+    <Component className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-slate-900 focus:ring focus:ring-[#C27803]">
       {children}
     </Component>
   );

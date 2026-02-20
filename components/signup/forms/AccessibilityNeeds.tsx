@@ -127,23 +127,25 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
         <h3 className="text-lg font-semibold text-slate-900">
           Accessibility & accommodation preferences (Optional)
         </h3>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-700">
           Sharing this information is voluntary and will never affect
           eligibility.
         </p>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-700">
           If you choose to share, it helps us support you and communicate your
           needs when you decide.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">
-          Disability categories (Optional)
-        </p>
-        <p className="text-sm text-slate-500">
-          Select all that apply, or choose &quot;Prefer not to disclose.&quot;
-        </p>
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="w-full">
+          <p className="text-base font-semibold text-slate-800">
+            Disability categories (Optional)
+          </p>
+          <p className="text-sm text-slate-700 mt-1">
+            Select all that apply, or choose &quot;Prefer not to disclose.&quot;
+          </p>
+        </legend>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {categories.map((category) => {
             const isSelected = selectedCategories.includes(category.id);
@@ -167,7 +169,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
                     {category.title}
                   </span>
                   {category.description ? (
-                    <span className="block text-sm text-slate-500">
+                    <span className="block text-sm text-slate-700">
                       {category.description}
                     </span>
                   ) : null}
@@ -176,12 +178,14 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
             );
           })}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">
-          Do you need accommodations for the application or interview process?
-        </p>
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="w-full">
+          <p className="text-base font-semibold text-slate-800">
+            Do you need accommodations for the application or interview process?
+          </p>
+        </legend>
         <div className="flex flex-wrap gap-6">
           {accommodationNeedOptions.map((option) => (
             <label
@@ -199,15 +203,17 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">
-          When would you like to discuss your accommodation needs?
-        </p>
-        <p className="text-sm text-slate-500">
-          You control the timing, and we&apos;ll respect your preference.
-        </p>
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="w-full">
+          <p className="text-base font-semibold text-slate-800">
+            When would you like to discuss your accommodation needs?
+          </p>
+          <p className="text-sm text-slate-700 mt-1">
+            You control the timing, and we&apos;ll respect your preference.
+          </p>
+        </legend>
         <div className="flex flex-wrap gap-6">
           {disclosureOptions.map((option) => (
             <label
@@ -225,16 +231,18 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="space-y-4">
-        <p className="text-base font-semibold text-slate-800">
-          Workplace accommodations that would help you thrive (Optional)
-        </p>
-        <p className="text-sm text-slate-500">
-          Select all that apply. You can choose &quot;None needed&quot; or
-          &quot;Prefer to discuss later.&quot;
-        </p>
+      <fieldset className="space-y-4 border-0 p-0 m-0">
+        <legend className="w-full">
+          <p className="text-base font-semibold text-slate-800">
+            Workplace accommodations that would help you thrive (Optional)
+          </p>
+          <p className="text-sm text-slate-700 mt-1">
+            Select all that apply. You can choose &quot;None needed&quot; or
+            &quot;Prefer to discuss later.&quot;
+          </p>
+        </legend>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {accommodationOptions.map((option) => {
             const isSelected = selectedAccommodations.includes(option.id);
@@ -258,7 +266,7 @@ export default function AccessibilityNeeds({ data, onChange }: Props) {
             );
           })}
         </div>
-      </div>
+      </fieldset>
     </div>
   );
 }

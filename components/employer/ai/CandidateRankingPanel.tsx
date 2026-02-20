@@ -38,9 +38,9 @@ export default function CandidateRankingPanel({
   const getScoreColor = (score: number): string => {
     // Normalize score to 0-100 range
     const normalizedScore = score > 1 ? score : score * 100;
-    if (normalizedScore >= 80) return "text-green-600";
-    if (normalizedScore >= 60) return "text-yellow-600";
-    return "text-gray-600";
+    if (normalizedScore >= 80) return "text-green-900";
+    if (normalizedScore >= 60) return "text-amber-900";
+    return "text-slate-800";
   };
 
   const getScoreBadge = (score: number, index: number): string | null => {
@@ -116,15 +116,15 @@ export default function CandidateRankingPanel({
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start justify-between">
           <div className="flex items-start gap-2">
-            <span className="text-red-600 text-xl">⚠️</span>
+            <span className="text-red-800 text-xl">⚠️</span>
             <div>
               <p className="text-sm font-medium text-red-800">Error</p>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           </div>
           <button
             onClick={clearError}
-            className="text-red-400 hover:text-red-600"
+            className="text-red-800 hover:text-red-900"
           >
             ✕
           </button>

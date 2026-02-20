@@ -42,26 +42,26 @@ export default function RecentJobCard({
           </div>
           <div>
             <p className="text-base font-semibold text-slate-900">{job.role}</p>
-            <p className="text-sm text-slate-500">{job.company}</p>
+            <p className="text-sm text-slate-700">{job.company}</p>
           </div>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+      <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
         <MapPin className="h-4 w-4" />
         {job.location}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-        <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
+      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
+        <span className="rounded-full bg-green-50 text-green-900 px-3 py-1 font-medium">
           {job.experience}
         </span>
-        <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
+        <span className="rounded-full bg-green-50 text-green-900 px-3 py-1 font-medium">
           {job.type}
         </span>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-sm text-slate-500 sm:gap-6">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-sm text-slate-700 sm:gap-6">
         <span>
           Accepted:{" "}
           <span className="font-semibold text-slate-900">

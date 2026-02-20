@@ -39,7 +39,7 @@ export default function BasicInfo({
     `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
       hasError
         ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-        : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+        : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
     }`;
 
   return (
@@ -54,6 +54,7 @@ export default function BasicInfo({
           placeholder="Enter first name"
           error={Boolean(errors?.firstName)}
           errorMessage={errors?.firstName}
+          autoComplete="given-name"
         />
         <InputBlock
           id="basicInfo-lastName"
@@ -64,6 +65,7 @@ export default function BasicInfo({
           placeholder="Enter last name"
           error={Boolean(errors?.lastName)}
           errorMessage={errors?.lastName}
+          autoComplete="family-name"
         />
       </div>
 
@@ -72,7 +74,7 @@ export default function BasicInfo({
           <label
             htmlFor="basicInfo-profilePhoto"
             className={`block text-base font-medium ${
-              hasPhotoError ? "text-red-600" : "text-slate-700"
+              hasPhotoError ? "text-red-800" : "text-slate-700"
             }`}
           >
             Profile photo
@@ -86,7 +88,7 @@ export default function BasicInfo({
           >
             <label
               htmlFor="basicInfo-profilePhoto"
-              className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-600"
+              className="flex cursor-pointer flex-col items-center gap-2 text-base text-slate-700"
             >
               <UploadCloud className="h-5 w-5 text-orange-500" />
               <div className="flex items-center gap-1">
@@ -124,13 +126,13 @@ export default function BasicInfo({
             </label>
             {data.profilePhoto ? (
               <div className="mt-2 flex flex-wrap items-center justify-center gap-3 text-sm">
-                <span className="text-slate-500">
+                <span className="text-slate-700">
                   Selected: {data.profilePhoto}
                 </span>
                 <button
                   type="button"
                   onClick={clearProfilePhoto}
-                  className="font-medium text-red-600 hover:text-red-700"
+                  className="font-medium text-red-800 hover:text-red-800"
                 >
                   Remove photo
                 </button>
@@ -138,7 +140,7 @@ export default function BasicInfo({
             ) : null}
           </div>
           {resolvedPhotoError ? (
-            <p className="text-sm text-red-600">{resolvedPhotoError}</p>
+            <p className="text-sm text-red-800">{resolvedPhotoError}</p>
           ) : null}
         </div>
       ) : null}
@@ -153,6 +155,7 @@ export default function BasicInfo({
         type="email"
         error={Boolean(errors?.email)}
         errorMessage={errors?.email}
+        autoComplete="email"
       />
 
       <InputBlock
@@ -164,17 +167,18 @@ export default function BasicInfo({
         placeholder="Enter phone number"
         error={Boolean(errors?.phone)}
         errorMessage={errors?.phone}
+        autoComplete="tel"
       />
 
       <div className="space-y-1.5">
         <label
           htmlFor="basicInfo-location"
           className={`block text-base font-medium ${
-            errors?.location ? "text-red-700" : "text-slate-700"
+            errors?.location ? "text-red-800" : "text-slate-700"
           }`}
         >
           Location
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -196,11 +200,11 @@ export default function BasicInfo({
         <label
           htmlFor="basicInfo-citizenshipStatus"
           className={`block text-base font-medium ${
-            errors?.citizenshipStatus ? "text-red-600" : "text-slate-700"
+            errors?.citizenshipStatus ? "text-red-800" : "text-slate-700"
           }`}
         >
           Citizenship status
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -221,11 +225,11 @@ export default function BasicInfo({
           <option value="Other">Other</option>
         </select>
         {errors?.citizenshipStatus ? (
-          <p className="text-sm text-red-600">{errors.citizenshipStatus}</p>
+          <p className="text-sm text-red-800">{errors.citizenshipStatus}</p>
         ) : null}
       </div>
 
-      <div className="space-y-2 text-sm text-slate-600">
+      <div className="space-y-2 text-sm text-slate-700">
         <p>
           Your response to this question is entirely voluntary and will not
           affect your eligibility.
@@ -241,11 +245,11 @@ export default function BasicInfo({
         <label
           htmlFor="basicInfo-gender"
           className={`block text-base font-medium ${
-            errors?.gender ? "text-red-600" : "text-slate-700"
+            errors?.gender ? "text-red-800" : "text-slate-700"
           }`}
         >
           Gender
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -265,11 +269,11 @@ export default function BasicInfo({
           <option value="Prefer not to say">Prefer not to say</option>
         </select>
         {errors?.gender ? (
-          <p className="text-sm text-red-600">{errors.gender}</p>
+          <p className="text-sm text-red-800">{errors.gender}</p>
         ) : null}
       </div>
 
-      <div className="space-y-2 text-sm text-slate-600">
+      <div className="space-y-2 text-sm text-slate-700">
         <p>
           Please select all that apply. Your response to this question is
           entirely voluntary and will not affect your eligibility.
@@ -285,11 +289,11 @@ export default function BasicInfo({
         <label
           htmlFor="basicInfo-ethnicity"
           className={`block text-base font-medium ${
-            errors?.ethnicity ? "text-red-600" : "text-slate-700"
+            errors?.ethnicity ? "text-red-800" : "text-slate-700"
           }`}
         >
           Ethnicity
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -313,7 +317,7 @@ export default function BasicInfo({
           <option value="Other">Other</option>
         </select>
         {errors?.ethnicity ? (
-          <p className="text-sm text-red-600">{errors.ethnicity}</p>
+          <p className="text-sm text-red-800">{errors.ethnicity}</p>
         ) : null}
       </div>
 
@@ -325,6 +329,7 @@ export default function BasicInfo({
         placeholder="Website or portfolio"
         error={Boolean(errors?.socialProfile)}
         errorMessage={errors?.socialProfile}
+        autoComplete="url"
       />
 
       <InputBlock
@@ -335,6 +340,7 @@ export default function BasicInfo({
         placeholder="https://www.linkedin.com/in/your-profile"
         error={Boolean(errors?.linkedinUrl)}
         errorMessage={errors?.linkedinUrl}
+        autoComplete="url"
       />
 
       <SimpleText

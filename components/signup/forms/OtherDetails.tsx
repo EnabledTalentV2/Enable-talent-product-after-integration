@@ -42,7 +42,7 @@ export default function OtherDetails({
     `w-full rounded-lg border bg-white px-4 py-2.5 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 ${
       hasError
         ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-        : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+        : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
     }`;
 
   const errorCount =
@@ -96,7 +96,7 @@ export default function OtherDetails({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Other details</h3>
         {errorCount > 0 ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")} error
           </span>
         ) : null}
@@ -111,11 +111,11 @@ export default function OtherDetails({
                 <label
                   htmlFor={`otherDetails-lang-${idx}-language`}
                   className={`block text-base font-medium ${
-                    entryErrors.language ? "text-red-600" : "text-slate-700"
+                    entryErrors.language ? "text-red-800" : "text-slate-700"
                   }`}
                 >
                   Language
-                  <span aria-hidden="true" className="text-red-600">
+                  <span aria-hidden="true" className="text-red-800">
                     {" "}
                     *
                   </span>
@@ -128,6 +128,8 @@ export default function OtherDetails({
                     onLanguageChange(idx, { language: e.target.value })
                   }
                   aria-required="true"
+                  aria-invalid={Boolean(entryErrors.language) || undefined}
+                  aria-describedby={entryErrors.language ? `otherDetails-lang-${idx}-language-error` : undefined}
                   className={selectClass(Boolean(entryErrors.language))}
                 >
                   <option value="">Select</option>
@@ -138,7 +140,7 @@ export default function OtherDetails({
                   ))}
                 </select>
                 {entryErrors.language ? (
-                  <p className="text-sm text-red-600">{entryErrors.language}</p>
+                  <p id={`otherDetails-lang-${idx}-language-error`} role="alert" className="text-sm text-red-800">{entryErrors.language}</p>
                 ) : null}
               </div>
 
@@ -146,11 +148,11 @@ export default function OtherDetails({
                 <label
                   htmlFor={`otherDetails-lang-${idx}-speaking`}
                   className={`block text-base font-medium ${
-                    entryErrors.speaking ? "text-red-600" : "text-slate-700"
+                    entryErrors.speaking ? "text-red-800" : "text-slate-700"
                   }`}
                 >
                   Speaking
-                  <span aria-hidden="true" className="text-red-600">
+                  <span aria-hidden="true" className="text-red-800">
                     {" "}
                     *
                   </span>
@@ -163,6 +165,8 @@ export default function OtherDetails({
                     onLanguageChange(idx, { speaking: e.target.value })
                   }
                   aria-required="true"
+                  aria-invalid={Boolean(entryErrors.speaking) || undefined}
+                  aria-describedby={entryErrors.speaking ? `otherDetails-lang-${idx}-speaking-error` : undefined}
                   className={selectClass(Boolean(entryErrors.speaking))}
                 >
                   <option value="">Select</option>
@@ -173,7 +177,7 @@ export default function OtherDetails({
                   ))}
                 </select>
                 {entryErrors.speaking ? (
-                  <p className="text-sm text-red-600">{entryErrors.speaking}</p>
+                  <p id={`otherDetails-lang-${idx}-speaking-error`} role="alert" className="text-sm text-red-800">{entryErrors.speaking}</p>
                 ) : null}
               </div>
 
@@ -181,11 +185,11 @@ export default function OtherDetails({
                 <label
                   htmlFor={`otherDetails-lang-${idx}-reading`}
                   className={`block text-base font-medium ${
-                    entryErrors.reading ? "text-red-600" : "text-slate-700"
+                    entryErrors.reading ? "text-red-800" : "text-slate-700"
                   }`}
                 >
                   Reading
-                  <span aria-hidden="true" className="text-red-600">
+                  <span aria-hidden="true" className="text-red-800">
                     {" "}
                     *
                   </span>
@@ -198,6 +202,8 @@ export default function OtherDetails({
                     onLanguageChange(idx, { reading: e.target.value })
                   }
                   aria-required="true"
+                  aria-invalid={Boolean(entryErrors.reading) || undefined}
+                  aria-describedby={entryErrors.reading ? `otherDetails-lang-${idx}-reading-error` : undefined}
                   className={selectClass(Boolean(entryErrors.reading))}
                 >
                   <option value="">Select</option>
@@ -208,7 +214,7 @@ export default function OtherDetails({
                   ))}
                 </select>
                 {entryErrors.reading ? (
-                  <p className="text-sm text-red-600">{entryErrors.reading}</p>
+                  <p id={`otherDetails-lang-${idx}-reading-error`} role="alert" className="text-sm text-red-800">{entryErrors.reading}</p>
                 ) : null}
               </div>
 
@@ -217,11 +223,11 @@ export default function OtherDetails({
                   <label
                     htmlFor={`otherDetails-lang-${idx}-writing`}
                     className={`block text-base font-medium ${
-                      entryErrors.writing ? "text-red-600" : "text-slate-700"
+                      entryErrors.writing ? "text-red-800" : "text-slate-700"
                     }`}
                   >
                     Writing
-                    <span aria-hidden="true" className="text-red-600">
+                    <span aria-hidden="true" className="text-red-800">
                       {" "}
                       *
                     </span>
@@ -231,7 +237,7 @@ export default function OtherDetails({
                     <button
                       type="button"
                       onClick={() => onRemoveLanguage(idx)}
-                      className="inline-flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-red-800 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -245,6 +251,8 @@ export default function OtherDetails({
                     onLanguageChange(idx, { writing: e.target.value })
                   }
                   aria-required="true"
+                  aria-invalid={Boolean(entryErrors.writing) || undefined}
+                  aria-describedby={entryErrors.writing ? `otherDetails-lang-${idx}-writing-error` : undefined}
                   className={selectClass(Boolean(entryErrors.writing))}
                 >
                   <option value="">Select</option>
@@ -255,7 +263,7 @@ export default function OtherDetails({
                   ))}
                 </select>
                 {entryErrors.writing ? (
-                  <p className="text-sm text-red-600">{entryErrors.writing}</p>
+                  <p id={`otherDetails-lang-${idx}-writing-error`} role="alert" className="text-sm text-red-800">{entryErrors.writing}</p>
                 ) : null}
               </div>
             </div>
@@ -265,7 +273,7 @@ export default function OtherDetails({
         <button
           type="button"
           onClick={onAddLanguage}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-orange-900 border border-orange-900 px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
           Add another language
@@ -277,11 +285,11 @@ export default function OtherDetails({
           <label
             htmlFor="otherDetails-careerStage"
             className={`block text-base font-medium ${
-              errors?.careerStage ? "text-red-600" : "text-slate-700"
+              errors?.careerStage ? "text-red-800" : "text-slate-700"
             }`}
           >
             How would you identify your career stage (choose best option)
-            <span aria-hidden="true" className="text-red-600">
+            <span aria-hidden="true" className="text-red-800">
               {" "}
               *
             </span>
@@ -292,6 +300,8 @@ export default function OtherDetails({
             value={data.careerStage}
             onChange={(e) => onChange({ careerStage: e.target.value })}
             aria-required="true"
+            aria-invalid={Boolean(errors?.careerStage) || undefined}
+            aria-describedby={errors?.careerStage ? "otherDetails-careerStage-error" : undefined}
             className={selectClass(Boolean(errors?.careerStage))}
           >
             <option value="">Select</option>
@@ -302,7 +312,7 @@ export default function OtherDetails({
             ))}
           </select>
           {errors?.careerStage ? (
-            <p className="text-sm text-red-600">{errors.careerStage}</p>
+            <p id="otherDetails-careerStage-error" role="alert" className="text-sm text-red-800">{errors.careerStage}</p>
           ) : null}
         </div>
       ) : null}
@@ -310,13 +320,10 @@ export default function OtherDetails({
       <div className="space-y-2">
         <label
           htmlFor="otherDetails-availability"
-          className={`block text-base font-medium ${
-            availabilityError ? "text-red-600" : "text-slate-700"
-          }`}
+          className="block text-base font-medium text-slate-700"
         >
-          {availabilityError ||
-            "Are you available immediately for any full-time opportunities that may come from the Enabled Talent Access Service?"}
-          <span aria-hidden="true" className="text-red-600">
+          Are you available immediately for any full-time opportunities that may come from the Enabled Talent Access Service?
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -336,6 +343,8 @@ export default function OtherDetails({
             })()}
             onChange={(e) => onChange({ availability: e.target.value })}
             aria-required="true"
+            aria-invalid={Boolean(availabilityError) || undefined}
+            aria-describedby={availabilityError ? "otherDetails-availability-error" : undefined}
             className={`${selectClass(Boolean(availabilityError))} pr-10`}
           >
             <option value="">Select</option>
@@ -346,20 +355,23 @@ export default function OtherDetails({
             ))}
           </select>
           {availabilityError ? (
-            <AlertCircle className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-red-500" />
+            <AlertCircle className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-red-800" aria-hidden="true" />
           ) : null}
         </div>
+        {availabilityError ? (
+          <p id="otherDetails-availability-error" role="alert" className="text-sm text-red-800">{availabilityError}</p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
         <label
           htmlFor="otherDetails-desiredSalary"
           className={`block text-base font-medium ${
-            errors?.desiredSalary ? "text-red-600" : "text-slate-700"
+            errors?.desiredSalary ? "text-red-800" : "text-slate-700"
           }`}
         >
           Desired salary (CAD)
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -370,6 +382,8 @@ export default function OtherDetails({
           value={data.desiredSalary}
           onChange={(e) => onChange({ desiredSalary: e.target.value })}
           aria-required="true"
+          aria-invalid={Boolean(errors?.desiredSalary) || undefined}
+          aria-describedby={errors?.desiredSalary ? "otherDetails-desiredSalary-error" : undefined}
           className={selectClass(Boolean(errors?.desiredSalary))}
         >
           <option value="">Select</option>
@@ -380,7 +394,7 @@ export default function OtherDetails({
           ))}
         </select>
         {errors?.desiredSalary ? (
-          <p className="text-sm text-red-600">{errors.desiredSalary}</p>
+          <p id="otherDetails-desiredSalary-error" role="alert" className="text-sm text-red-800">{errors.desiredSalary}</p>
         ) : null}
       </div>
     </div>

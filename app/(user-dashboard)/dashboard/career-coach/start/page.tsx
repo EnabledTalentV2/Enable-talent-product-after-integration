@@ -187,7 +187,7 @@ export default function CareerCoachStartPage() {
           aria-label="Sidebar with career tips and prompts"
         >
           {/* Banner Card */}
-          <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#D9643A] to-[#E8A359] p-6 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-[24px] bg-orange-900 p-6 text-white shadow-lg">
             <div className="relative z-10">
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
                 <Bot
@@ -223,7 +223,7 @@ export default function CareerCoachStartPage() {
               Ask me about
             </h3>
 
-            <p className="mt-4 text-sm leading-relaxed text-slate-500">
+            <p className="mt-4 text-sm leading-relaxed text-slate-700">
               Career advancement strategies, Resume and profile optimization,
               Interview preparation tips, Industry-specific advice, Skill
               development recommendations
@@ -251,6 +251,7 @@ export default function CareerCoachStartPage() {
 
         {/* --- RIGHT MAIN CHAT AREA --- */}
         <main
+          id="main-content"
           className="flex h-[calc(100vh-140px)] min-h-[600px] flex-col rounded-[32px] bg-white shadow-sm ring-1 ring-slate-100"
           aria-label="Chat Interface"
         >
@@ -282,7 +283,7 @@ export default function CareerCoachStartPage() {
                 <h2 className="text-2xl font-bold text-slate-900">
                   Hi! I&apos;m your Career Coach
                 </h2>
-                <p className="mt-3 max-w-md text-slate-500">
+                <p className="mt-3 max-w-md text-slate-700">
                   I can help you navigate your career path, prepare for
                   interviews, improve your resume, and provide personalized
                   guidance for your professional development.
@@ -318,7 +319,7 @@ export default function CareerCoachStartPage() {
                 {isSendingMessage && (
                   <div className="flex justify-start">
                     <div
-                      className="flex items-center gap-2 rounded-3xl bg-slate-50 px-6 py-4 text-xs text-slate-500"
+                      className="flex items-center gap-2 rounded-3xl bg-slate-50 px-6 py-4 text-xs text-slate-700"
                       role="status"
                       aria-busy="true"
                     >

@@ -289,7 +289,7 @@ export default function JobForm({
           autoComplete="on"
           required
           aria-required="true"
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20 outline-none transition-colors text-gray-800"
         />
       </div>
 
@@ -341,7 +341,7 @@ export default function JobForm({
                     value={type}
                     checked={values.employmentType === type}
                     onChange={handleChange}
-                    className="w-5 h-5 text-orange-500 border-gray-300 focus:ring-orange-500"
+                    className="w-5 h-5 text-orange-500 border-gray-300 focus:ring-[#C27803]"
                   />
                   <span className="ml-2 text-gray-600 text-sm">{type}</span>
                 </label>
@@ -368,7 +368,7 @@ export default function JobForm({
                     value={type}
                     checked={values.workArrangement === type}
                     onChange={handleChange}
-                    className="w-5 h-5 text-orange-500 border-gray-300 focus:ring-orange-500"
+                    className="w-5 h-5 text-orange-500 border-gray-300 focus:ring-[#C27803]"
                   />
                   <span className="ml-2 text-gray-600 text-sm">{type}</span>
                 </label>
@@ -402,7 +402,7 @@ export default function JobForm({
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleDescriptionToolbarAction(button.action)}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803]"
               aria-label={button.ariaLabel}
             >
               {button.label}
@@ -423,7 +423,7 @@ export default function JobForm({
           required
           aria-required="true"
           aria-describedby={`${formId}-description-help`}
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20 outline-none transition-colors text-gray-800 text-sm leading-relaxed"
           placeholder={`## About the Role\nWe're looking for a **Senior Engineer** to join our team.\n\nResponsibilities:\n- Own the end-to-end design process\n- Collaborate with product and engineering\n\nApply: [Application Form](https://yourcompany.com/apply)`}
         />
         <div id={`${formId}-description-help`} className="mt-2 text-xs text-gray-600 space-y-2">
@@ -443,7 +443,7 @@ export default function JobForm({
             </div>
           </div>
           <details className="mt-2">
-            <summary className="cursor-pointer text-orange-600 hover:text-orange-700 font-medium">
+            <summary className="cursor-pointer text-orange-900 hover:text-orange-900 font-medium">
               Show full example
             </summary>
             <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
@@ -467,7 +467,7 @@ Responsibilities:
                   <li>Lead technical projects</li>
                   <li>Mentor junior developers</li>
                 </ul>
-                <a href="https://company.com/apply" target="_blank" rel="noopener noreferrer" className="text-orange-600 underline hover:text-orange-700">
+                <a href="https://company.com/apply" target="_blank" rel="noopener noreferrer" className="text-orange-900 underline hover:text-orange-900">
                   Apply Now
                 </a>
               </div>
@@ -494,12 +494,12 @@ Responsibilities:
               onKeyDown={handleSkillKeyDown}
               placeholder="e.g. React, TypeScript, Python"
               aria-describedby={`${formId}-skills-hint`}
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
+              className="flex-1 px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20 outline-none transition-colors text-gray-800"
             />
             <button
               type="button"
               onClick={handleAddSkill}
-              className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors"
+              className="px-6 py-3 bg-orange-800 hover:bg-orange-900 text-white font-medium rounded-lg transition-colors"
             >
               Add
             </button>
@@ -563,7 +563,7 @@ Responsibilities:
           value={values.salary}
           onChange={handleChange}
           placeholder="e.g. CAD 80,000 - 95,000"
-          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors text-gray-800"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20 outline-none transition-colors text-gray-800"
         />
       </div>
 
@@ -572,7 +572,7 @@ Responsibilities:
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-[#D98836] hover:bg-[#c2792f] text-white font-medium py-3.5 rounded-lg transition-colors shadow-sm"
+          className="w-full bg-orange-900 hover:bg-orange-950 text-white font-medium py-3.5 rounded-lg transition-colors shadow-sm"
         >
           {isSubmitting ? "Saving..." : submitLabel}
         </button>

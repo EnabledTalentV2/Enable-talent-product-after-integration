@@ -59,19 +59,19 @@ const filters: readonly JobApplicationTab[] = [
 const getStatusStyles = (status: Job["status"]) => {
   switch (status) {
     case "Active":
-      return "bg-[#ECFDF5] text-[#10B981]";
+      return "bg-emerald-50 text-emerald-900";
     case "Applied":
-      return "bg-[#EFF6FF] text-[#3B82F6]";
+      return "bg-blue-50 text-blue-900";
     case "Shortlisted":
-      return "bg-[#FEF3C7] text-[#F59E0B]";
+      return "bg-amber-100 text-amber-900";
     case "Accepted":
-      return "bg-[#ECFDF5] text-[#10B981]";
+      return "bg-emerald-50 text-emerald-900";
     case "Invited":
-      return "bg-[#FEF3C7] text-[#B45309]";
+      return "bg-amber-100 text-amber-900";
     case "Rejected":
-      return "bg-[#FEE2E2] text-[#EF4444]";
+      return "bg-red-100 text-red-900";
     default:
-      return "bg-slate-100 text-slate-500";
+      return "bg-slate-100 text-slate-800";
   }
 };
 
@@ -607,7 +607,7 @@ function MyJobsPageContent() {
           {/* Search Results Info */}
           {searchQuery && (
             <div className="mb-6">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-700">
                 Found {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} matching &quot;{searchQuery}&quot;
               </p>
             </div>
@@ -672,20 +672,20 @@ function MyJobsPageContent() {
                         <h3 className="text-xl font-bold text-slate-900">
                           {job.title}
                         </h3>
-                        <p className="mt-1 font-medium text-slate-500">
+                        <p className="mt-1 font-medium text-slate-700">
                           {job.company}
                         </p>
                       </div>
 
                       <div className="mt-6 space-y-2">
-                        <div className="flex items-center gap-2 text-slate-500">
+                        <div className="flex items-center gap-2 text-slate-700">
                           <MapPin size={18} className="text-orange-400" />
                           <span className="text-base font-medium">
                             {job.location}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 text-slate-500">
+                        <div className="flex items-center gap-2 text-slate-700">
                           <Briefcase size={18} className="text-orange-400" />
                           <span className="text-base font-medium">
                             {job.jobType}
@@ -693,7 +693,7 @@ function MyJobsPageContent() {
                         </div>
 
                         {job.salary && (
-                          <div className="flex items-center gap-2 text-slate-500">
+                          <div className="flex items-center gap-2 text-slate-700">
                             <DollarSign size={18} className="text-orange-400" />
                             <span className="text-base font-medium">
                               {job.salary}
@@ -705,7 +705,7 @@ function MyJobsPageContent() {
                   );
                 })
               ) : (
-                <div className="rounded-[32px] bg-white p-6 text-sm text-slate-500 shadow-sm">
+                <div className="rounded-[32px] bg-white p-6 text-sm text-slate-700 shadow-sm">
                   {searchQuery
                     ? `No jobs found matching "${searchQuery}". Try a different search term.`
                     : activeFilter === "All"
@@ -730,7 +730,7 @@ function MyJobsPageContent() {
                       <h2 className="text-3xl font-bold text-slate-900">
                         {activeJob.title}
                       </h2>
-                      <p className="mt-2 text-xl font-medium text-slate-500">
+                      <p className="mt-2 text-xl font-medium text-slate-700">
                         {activeJob.company}
                       </p>
                     </div>
@@ -751,7 +751,7 @@ function MyJobsPageContent() {
                           className={`flex items-center gap-2 rounded-full px-6 py-2 text-base font-bold transition ${
                             canApply && !isApplying
                               ? "bg-[#C27803] text-white hover:bg-[#A56303]"
-                              : "cursor-not-allowed bg-slate-200 text-slate-500"
+                              : "cursor-not-allowed bg-slate-200 text-slate-700"
                           }`}
                         >
                           {isApplying ? (
@@ -776,8 +776,8 @@ function MyJobsPageContent() {
                             disabled={respondingToken === activeJob.inviteToken}
                             className={`rounded-full px-6 py-2 text-base font-bold transition ${
                               respondingToken === activeJob.inviteToken
-                                ? "cursor-not-allowed bg-slate-200 text-slate-500"
-                                : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                ? "cursor-not-allowed bg-slate-200 text-slate-700"
+                                : "bg-emerald-900 text-white hover:bg-emerald-900"
                             }`}
                           >
                             {respondingToken === activeJob.inviteToken
@@ -790,7 +790,7 @@ function MyJobsPageContent() {
                             disabled={respondingToken === activeJob.inviteToken}
                             className={`rounded-full px-6 py-2 text-base font-bold transition ${
                               respondingToken === activeJob.inviteToken
-                                ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                                ? "cursor-not-allowed bg-slate-200 text-slate-700"
                                 : "bg-rose-600 text-white hover:bg-rose-700"
                             }`}
                           >
@@ -848,7 +848,7 @@ function MyJobsPageContent() {
                       <h4 className="text-xl font-bold text-slate-900">
                         Job Description
                       </h4>
-                      <div className="text-slate-600 prose prose-slate max-w-none whitespace-pre-wrap break-words">
+                      <div className="text-slate-700 prose prose-slate max-w-none whitespace-pre-wrap break-words">
                         <ReactMarkdown
                           rehypePlugins={[rehypeSanitize]}
                           components={{
@@ -857,7 +857,7 @@ function MyJobsPageContent() {
                                 href={href}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-orange-600 underline hover:text-orange-700"
+                                className="text-orange-900 underline hover:text-orange-900"
                               >
                                 {children}
                               </a>
@@ -876,7 +876,7 @@ function MyJobsPageContent() {
                       <h4 className="text-xl font-bold text-slate-900">
                         Requirements
                       </h4>
-                      <ul className="list-outside list-disc space-y-3 pl-5 text-slate-600">
+                      <ul className="list-outside list-disc space-y-3 pl-5 text-slate-700">
                         {activeJob.requirements.map((item, index) => (
                           <li key={`req-${index}`}>{item}</li>
                         ))}
@@ -894,7 +894,7 @@ function MyJobsPageContent() {
                   )}
                 </div>
               ) : (
-                <div className="flex h-full min-h-[400px] items-center justify-center rounded-[28px] border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                <div className="flex h-full min-h-[400px] items-center justify-center rounded-[28px] border border-dashed border-slate-200 p-6 text-sm text-slate-700">
                   {hasJobs
                     ? "Select a job to view details."
                     : "No job details yet."}

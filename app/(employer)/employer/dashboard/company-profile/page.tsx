@@ -176,7 +176,7 @@ export default function EmployerCompanyProfilePage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
             {/* Location Card */}
             <div className="rounded-[24px] bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Location</p>
+              <p className="text-sm text-slate-700">Location</p>
               <p className="mt-1 text-xl font-semibold text-slate-900">
                 {displayData.location}
               </p>
@@ -184,7 +184,7 @@ export default function EmployerCompanyProfilePage() {
 
             {/* Industry Card */}
             <div className="rounded-[24px] bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Industry</p>
+              <p className="text-sm text-slate-700">Industry</p>
               <p className="mt-1 text-xl font-semibold text-slate-900">
                 {displayData.industry}
               </p>
@@ -192,7 +192,7 @@ export default function EmployerCompanyProfilePage() {
 
             {/* Employees Card */}
             <div className="rounded-[24px] bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-500">Employees</p>
+              <p className="text-sm text-slate-700">Employees</p>
               <p className="mt-1 text-xl font-semibold text-slate-900">
                 {displayData.employees}
               </p>
@@ -256,10 +256,10 @@ export default function EmployerCompanyProfilePage() {
       {/* Delete Account */}
       <div className="rounded-[32px] bg-white p-8 shadow-sm border border-red-200">
         <div className="flex items-center gap-3 mb-4">
-          <Trash2 className="h-5 w-5 text-red-600" />
+          <Trash2 className="h-5 w-5 text-red-800" />
           <h2 className="text-xl font-bold text-slate-900">Delete Account</h2>
         </div>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-700">
           Deleting your account will permanently remove your organization,
           job postings, and all associated data. This action cannot be undone.
         </p>
@@ -269,8 +269,8 @@ export default function EmployerCompanyProfilePage() {
             visible
             className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
               deleteError
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-emerald-200 bg-emerald-50 text-emerald-900"
             }`}
           >
             {deleteStatusMessage}
@@ -283,14 +283,14 @@ export default function EmployerCompanyProfilePage() {
             setIsDeleteDialogOpen(true);
           }}
           disabled={isDeleting}
-          className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isDeleting ? "Deleting..." : "Delete Account"}
         </button>
       </div>
 
       {/* Footer */}
-      <div className="mt-12 text-center text-sm text-slate-500">
+      <div className="mt-12 text-center text-sm text-slate-700">
         <p>
           Copyright {currentYear} Enabled Talent. All rights reserved. You may print or
           download extracts for personal, non-commercial use only, and must

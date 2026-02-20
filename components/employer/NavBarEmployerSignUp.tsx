@@ -24,23 +24,23 @@ export default function Navbar() {
         <div className="flex items-center gap-7">
           <Link
             href="/profile"
-            className="hidden items-center gap-2 text-base font-medium text-slate-500 transition-colors hover:text-slate-800 md:flex"
+            className="hidden items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-800 md:flex"
           >
             <User size={18} />
             <span>Profile</span>
           </Link>
-          <button className="hidden items-center gap-2 text-base font-medium text-slate-500 transition-colors hover:text-slate-800 md:flex">
+          <button className="hidden items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-800 md:flex">
             <LogOut size={18} />
             <span>Log Out</span>
           </button>
           <button
-            className="relative text-slate-500 transition-colors hover:text-slate-800"
+            className="relative text-slate-700 transition-colors hover:text-slate-800"
             aria-label="Notifications"
           >
             <Bell size={20} />
             <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-[#C5D8F5]" />
           </button>
-          <button className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] px-6 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90">
+          <button className="flex items-center gap-2 rounded-lg bg-orange-900 px-6 py-2.5 text-base font-semibold text-white shadow-md transition-colors hover:bg-orange-950">
             <Search size={18} strokeWidth={2.5} />
             <span>Post a Job</span>
           </button>

@@ -127,14 +127,14 @@ function AccountSetupRequiredContent() {
         <h1 className="text-2xl font-semibold text-slate-900">
           Account setup required
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-slate-700">
           You&apos;re signed in{email ? ` as ${email}` : ""}, but your account
           record in our system is missing or was deleted. To continue, create
           your account again and complete onboarding.
         </p>
 
         {error ? (
-          <div className="mt-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+          <div className="mt-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">
             <AlertCircle className="mt-0.5 h-5 w-5" aria-hidden="true" />
             <div className="text-sm">{error}</div>
           </div>
@@ -144,7 +144,7 @@ function AccountSetupRequiredContent() {
           <button
             type="button"
             onClick={handleContinueSetup}
-            className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-2.5 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+            className="w-full rounded-lg bg-orange-900 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
           >
             Continue setup
           </button>
@@ -152,17 +152,17 @@ function AccountSetupRequiredContent() {
             type="button"
             onClick={handleCreateNewAccount}
             disabled={isSigningOut}
-            className="w-full rounded-lg border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {signOutMode === "signup" ? "Signing out..." : "Create a new account"}
           </button>
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-slate-700">
             Prefer to use a different login?{" "}
             <button
               type="button"
               onClick={handleSignOutToLogin}
               disabled={isSigningOut}
-              className="font-semibold text-[#B45309] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="font-semibold text-orange-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {signOutMode === "login"
                 ? "Signing out..."

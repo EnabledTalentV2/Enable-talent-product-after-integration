@@ -423,8 +423,8 @@ function CandidatesListPageContent() {
 
   if (error) {
     return (
-      <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-500">
-        <p className="text-lg font-medium text-red-600">
+      <div className="flex h-[calc(100vh-120px)] flex-col items-center justify-center gap-4 text-slate-700">
+        <p className="text-lg font-medium text-red-800">
           Failed to load candidates
         </p>
         <p className="text-sm">
@@ -464,10 +464,10 @@ function CandidatesListPageContent() {
   if (candidates.length === 0) {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 py-16 text-center">
-        <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-700">
+        <div className="rounded-full bg-orange-50 px-6 py-2 text-sm font-semibold text-orange-900">
           No candidates available
         </div>
-        <p className="text-base text-slate-500">
+        <p className="text-base text-slate-700">
           Once candidates create profiles, they will appear here for review.
         </p>
       </div>
@@ -480,7 +480,7 @@ function CandidatesListPageContent() {
         <div className="flex flex-col lg:col-span-4">
           <div className="mb-4">
             <h1 className="text-xl font-semibold text-slate-900">Candidates</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-700">
               Showing {filteredCandidates.length} candidate
               {filteredCandidates.length !== 1 ? "s" : ""}
             </p>
@@ -524,7 +524,7 @@ function CandidatesListPageContent() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                    className="text-xs font-semibold text-slate-700 hover:text-slate-700"
                   >
                     Clear all
                   </button>
@@ -533,7 +533,7 @@ function CandidatesListPageContent() {
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <fieldset className="space-y-2">
-                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                     Availability
                   </legend>
                   {availabilityOptions.length > 0 ? (
@@ -543,7 +543,7 @@ function CandidatesListPageContent() {
                         <label
                           key={option}
                           htmlFor={id}
-                          className="flex items-center gap-2 text-sm text-slate-600"
+                          className="flex items-center gap-2 text-sm text-slate-700"
                         >
                           <input
                             id={id}
@@ -562,7 +562,7 @@ function CandidatesListPageContent() {
                 </fieldset>
 
                 <fieldset className="space-y-2">
-                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                     Work Arrangement
                   </legend>
                   {workArrangementOptions.length > 0 ? (
@@ -572,7 +572,7 @@ function CandidatesListPageContent() {
                         <label
                           key={option}
                           htmlFor={id}
-                          className="flex items-center gap-2 text-sm text-slate-600"
+                          className="flex items-center gap-2 text-sm text-slate-700"
                         >
                           <input
                             id={id}
@@ -591,7 +591,7 @@ function CandidatesListPageContent() {
                 </fieldset>
 
                 <fieldset className="space-y-2">
-                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                     Job Type
                   </legend>
                   {jobTypeOptions.length > 0 ? (
@@ -601,7 +601,7 @@ function CandidatesListPageContent() {
                         <label
                           key={option}
                           htmlFor={id}
-                          className="flex items-center gap-2 text-sm text-slate-600"
+                          className="flex items-center gap-2 text-sm text-slate-700"
                         >
                           <input
                             id={id}
@@ -620,10 +620,10 @@ function CandidatesListPageContent() {
                 </fieldset>
 
                 <fieldset className="space-y-2">
-                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                     Verification
                   </legend>
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <label className="flex items-center gap-2 text-sm text-slate-700">
                     <input
                       type="checkbox"
                       checked={filters.verifiedOnly}
@@ -668,7 +668,7 @@ function CandidatesListPageContent() {
                         ) : isCandidateDetailLoading ? (
                           <CandidateDetailSkeleton />
                         ) : candidateError ? (
-                          <div className="rounded-[28px] bg-white p-6 text-center text-sm text-slate-500 shadow-sm">
+                          <div className="rounded-[28px] bg-white p-6 text-center text-sm text-slate-700 shadow-sm">
                             Unable to load candidate details.
                           </div>
                         ) : null}
@@ -679,7 +679,7 @@ function CandidatesListPageContent() {
               })
             ) : (
               <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                <p className="text-slate-600">
+                <p className="text-slate-700">
                   {localQuery
                     ? `No candidates found matching "${localQuery}"`
                     : "No candidates available"}
@@ -720,13 +720,13 @@ function CandidatesListPageContent() {
           ) : isCandidateDetailLoading ? (
             <CandidateDetailSkeleton />
           ) : selectedCandidate ? (
-            <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
+            <div className="rounded-[28px] bg-white p-8 text-center text-slate-700 shadow-sm">
               {candidateError
                 ? "Unable to load candidate details."
                 : "Select a candidate to view their profile details."}
             </div>
           ) : (
-            <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
+            <div className="rounded-[28px] bg-white p-8 text-center text-slate-700 shadow-sm">
               Select a candidate to view their profile details.
             </div>
           )}

@@ -126,7 +126,7 @@ export default function PostJobsPage() {
           {/* Warning Message */}
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="bg-orange-100 rounded-full p-4 mb-6">
-              <AlertCircle className="w-12 h-12 text-orange-600" />
+              <AlertCircle className="w-12 h-12 text-orange-900" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-3">
               Organization Required
@@ -140,7 +140,7 @@ export default function PostJobsPage() {
             <div className="flex gap-4">
               <Link
                 href="/employer/dashboard/company-profile-edit"
-                className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+                className="bg-orange-800 hover:bg-orange-900 text-white font-medium px-6 py-3 rounded-lg transition-colors"
               >
                 Create Organization Profile
               </Link>

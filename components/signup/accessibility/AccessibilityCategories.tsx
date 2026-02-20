@@ -74,7 +74,7 @@ export default function AccessibilityCategories({
                     </div>
                   </div>
                   {category.description && (
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
                       {category.description}
                     </p>
                   )}
@@ -88,7 +88,7 @@ export default function AccessibilityCategories({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
             aria-label="Go back to introduction"
           >
             Back

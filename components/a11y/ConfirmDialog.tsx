@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 type ConfirmDialogProps = {
@@ -10,6 +10,13 @@ type ConfirmDialogProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "warning" | "danger" | "info";
+  /**
+   * SC 3.3.4 — Error Prevention (AAA): When true, shows an explicit
+   * "I understand this cannot be undone" checkbox that must be checked
+   * before the confirm button is enabled. Use for irreversible destructive
+   * actions (delete account, remove all data, etc.).
+   */
+  requiresConfirmation?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -32,18 +39,21 @@ export default function ConfirmDialog({
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   variant = "warning",
+  requiresConfirmation = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [understood, setUnderstood] = useState(false);
 
-  // Store the previously focused element when dialog opens
+  // Reset checkbox whenever the dialog opens
   useEffect(() => {
     if (isOpen) {
+      setUnderstood(false);
       previousFocusRef.current = document.activeElement as HTMLElement;
-      // Focus the cancel button by default (safer action)
+      // Focus the cancel button by default (safer action — SC 3.3.4)
       setTimeout(() => {
         cancelButtonRef.current?.focus();
       }, 0);
@@ -101,16 +111,18 @@ export default function ConfirmDialog({
   if (!isOpen) return null;
 
   const iconColors = {
-    warning: "text-amber-600 bg-amber-100",
-    danger: "text-red-600 bg-red-100",
-    info: "text-blue-600 bg-blue-100",
+    warning: "text-amber-900 bg-amber-100",
+    danger: "text-red-900 bg-red-100",
+    info: "text-blue-900 bg-blue-100",
   };
 
   const confirmButtonStyles = {
-    warning: "bg-amber-600 hover:bg-amber-700 focus-visible:ring-amber-500",
-    danger: "bg-red-600 hover:bg-red-700 focus-visible:ring-red-500",
-    info: "bg-blue-600 hover:bg-blue-700 focus-visible:ring-blue-500",
+    warning: "bg-amber-900 hover:bg-amber-950 focus-visible:ring-[#C27803]",
+    danger: "bg-red-900 hover:bg-red-950 focus-visible:ring-[#C27803]",
+    info: "bg-blue-900 hover:bg-blue-950 focus-visible:ring-[#C27803]",
   };
+
+  const confirmDisabled = requiresConfirmation && !understood;
 
   return (
     <div
@@ -137,7 +149,7 @@ export default function ConfirmDialog({
         <button
           type="button"
           onClick={onCancel}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
           aria-label="Close dialog"
         >
           <X className="h-5 w-5" aria-hidden="true" />
@@ -162,10 +174,26 @@ export default function ConfirmDialog({
         {/* Message */}
         <p
           id="confirm-dialog-description"
-          className="mt-2 text-center text-base text-slate-600"
+          className="mt-2 text-center text-base text-slate-700"
         >
           {message}
         </p>
+
+        {/* SC 3.3.4 — Error Prevention: explicit acknowledgement for irreversible actions */}
+        {requiresConfirmation && (
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <input
+              type="checkbox"
+              checked={understood}
+              onChange={(e) => setUnderstood(e.target.checked)}
+              className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded border-slate-300 accent-orange-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+              aria-describedby="confirm-dialog-description"
+            />
+            <span className="text-sm font-medium text-slate-800">
+              I understand this action cannot be undone
+            </span>
+          </label>
+        )}
 
         {/* Actions - WCAG 2.5.8: Minimum 44x44px touch targets for mobile */}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
@@ -173,14 +201,20 @@ export default function ConfirmDialog({
             ref={cancelButtonRef}
             type="button"
             onClick={onCancel}
-            className="min-h-[44px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 sm:flex-initial sm:px-6"
+            className="min-h-[44px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-base font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 sm:flex-initial sm:px-6"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`min-h-[44px] flex-1 rounded-xl px-4 py-2.5 text-base font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:flex-initial sm:px-6 ${confirmButtonStyles[variant]}`}
+            disabled={confirmDisabled}
+            aria-disabled={confirmDisabled}
+            className={`min-h-[44px] flex-1 rounded-xl px-4 py-2.5 text-base font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:flex-initial sm:px-6 ${
+              confirmDisabled
+                ? "cursor-not-allowed bg-slate-300"
+                : confirmButtonStyles[variant]
+            }`}
           >
             {confirmLabel}
           </button>

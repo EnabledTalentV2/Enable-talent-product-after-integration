@@ -27,8 +27,8 @@ export default function CandidateDirectoryCard({
   const availability = candidate.availability;
   const availabilityClass =
     availability === "Available"
-      ? "bg-emerald-50 text-emerald-700"
-      : "bg-slate-100 text-slate-600";
+      ? "bg-emerald-50 text-emerald-900"
+      : "bg-slate-100 text-slate-700";
 
   return (
     <button
@@ -45,7 +45,7 @@ export default function CandidateDirectoryCard({
         <div className="flex gap-3">
           <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-200">
             <div
-              className="flex h-full w-full items-center justify-center bg-slate-300 text-sm font-semibold text-slate-600"
+              className="flex h-full w-full items-center justify-center bg-slate-300 text-sm font-semibold text-slate-700"
               aria-label={`${candidate.first_name} ${candidate.last_name} avatar`}
             >
               {getInitials(candidate.first_name, candidate.last_name)}
@@ -57,10 +57,10 @@ export default function CandidateDirectoryCard({
                 {candidate.first_name} {candidate.last_name}
               </h3>
               {candidate.is_verified && (
-                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <CheckCircle className="h-4 w-4 text-emerald-900" />
               )}
             </div>
-            <p className="text-xs text-slate-500">{formatHeadline(candidate)}</p>
+            <p className="text-xs text-slate-700">{formatHeadline(candidate)}</p>
           </div>
         </div>
         {availability && (
@@ -71,7 +71,7 @@ export default function CandidateDirectoryCard({
       </div>
 
       {(candidate.title || candidate.location) && (
-        <div className="mt-4 space-y-2 text-xs text-slate-500">
+        <div className="mt-4 space-y-2 text-xs text-slate-700">
           {candidate.title && (
             <div className="flex items-center gap-1">
               <Briefcase className="h-3.5 w-3.5 text-slate-400" />

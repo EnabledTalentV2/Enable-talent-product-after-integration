@@ -25,7 +25,7 @@ export function PasswordStrengthIndicator({
       {/* Strength Bar */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-600">
+          <span className="text-xs font-medium text-slate-700">
             Password Strength:
           </span>
           <span className={`text-xs font-semibold ${colors.text}`}>
@@ -51,13 +51,13 @@ export function PasswordStrengthIndicator({
       <ul className="space-y-1 text-xs list-none" aria-label="Password requirements">
         <li className="flex items-center gap-1.5">
           {strength.checks.length ? (
-            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 text-green-900" aria-hidden="true" />
           ) : (
             <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
-              strength.checks.length ? "text-green-700" : "text-slate-600"
+              strength.checks.length ? "text-green-900" : "text-slate-700"
             }
           >
             At least 8 characters
@@ -68,13 +68,13 @@ export function PasswordStrengthIndicator({
         </li>
         <li className="flex items-center gap-1.5">
           {strength.checks.uppercase ? (
-            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 text-green-900" aria-hidden="true" />
           ) : (
             <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
-              strength.checks.uppercase ? "text-green-700" : "text-slate-600"
+              strength.checks.uppercase ? "text-green-900" : "text-slate-700"
             }
           >
             One uppercase letter (A-Z)
@@ -85,13 +85,13 @@ export function PasswordStrengthIndicator({
         </li>
         <li className="flex items-center gap-1.5">
           {strength.checks.lowercase ? (
-            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 text-green-900" aria-hidden="true" />
           ) : (
             <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
-              strength.checks.lowercase ? "text-green-700" : "text-slate-600"
+              strength.checks.lowercase ? "text-green-900" : "text-slate-700"
             }
           >
             One lowercase letter (a-z)
@@ -102,13 +102,13 @@ export function PasswordStrengthIndicator({
         </li>
         <li className="flex items-center gap-1.5">
           {strength.checks.number ? (
-            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 text-green-900" aria-hidden="true" />
           ) : (
             <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
-              strength.checks.number ? "text-green-700" : "text-slate-600"
+              strength.checks.number ? "text-green-900" : "text-slate-700"
             }
           >
             One number (0-9)
@@ -119,13 +119,13 @@ export function PasswordStrengthIndicator({
         </li>
         <li className="flex items-center gap-1.5">
           {strength.checks.special ? (
-            <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 text-green-900" aria-hidden="true" />
           ) : (
             <X className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
           )}
           <span
             className={
-              strength.checks.special ? "text-green-700" : "text-slate-600"
+              strength.checks.special ? "text-green-900" : "text-slate-700"
             }
           >
             One special character (!@#$%...)

@@ -6,7 +6,7 @@ const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+      : "border-gray-200 focus:border-[#C27803] focus:ring-[#C27803]"
   }`;
 
 type EmployerSignupVerificationProps = {
@@ -59,7 +59,7 @@ export default function EmployerSignupVerification({
         {serverError ? (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
           >
             <p className="font-semibold">Setup incomplete</p>
             <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
@@ -71,7 +71,7 @@ export default function EmployerSignupVerification({
             <button
               type="button"
               disabled
-              className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
+              className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md opacity-80"
             >
               <span className="inline-flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -85,14 +85,14 @@ export default function EmployerSignupVerification({
               <button
                 type="button"
                 onClick={handleRetrySyncBackend}
-                className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white"
               >
                 Try again
               </button>
               <button
                 type="button"
                 onClick={handleGoToLogin}
-                className="w-full rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white"
+                className="w-full rounded-lg border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white"
               >
                 Go to login instead
               </button>
@@ -120,7 +120,7 @@ export default function EmployerSignupVerification({
       {serverError && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
         >
           <p className="font-semibold">Error</p>
           <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
@@ -153,7 +153,7 @@ export default function EmployerSignupVerification({
           type="button"
           onClick={handleVerification}
           disabled={isVerifying || !verificationCode.trim()}
-          className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isVerifying ? "Verifying..." : "Verify email"}
         </button>
@@ -164,7 +164,7 @@ export default function EmployerSignupVerification({
             type="button"
             disabled={resendCooldown > 0}
             onClick={handleResendCode}
-            className={`font-semibold ${resendCooldown > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#C04622] hover:underline"}`}
+            className={`font-semibold ${resendCooldown > 0 ? "text-gray-400 cursor-not-allowed" : "text-orange-900 hover:underline"}`}
           >
             {resendCooldown > 0
               ? `Resend code (${resendCooldown}s)`

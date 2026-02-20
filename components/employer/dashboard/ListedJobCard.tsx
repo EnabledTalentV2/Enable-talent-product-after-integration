@@ -43,8 +43,8 @@ export default function ListedJobCard({
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
             job.status === "Active"
-              ? "bg-green-50 text-green-600"
-              : "bg-slate-100 text-slate-600"
+              ? "bg-green-50 text-green-900"
+              : "bg-slate-100 text-slate-700"
           }`}
         >
           {job.status}
@@ -53,28 +53,28 @@ export default function ListedJobCard({
 
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-700">
             <Briefcase className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <p className="text-base font-semibold text-slate-900">{job.role}</p>
-            <p className="text-sm text-slate-500">{job.company}</p>
+            <p className="text-sm text-slate-700">{job.company}</p>
           </div>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+      <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
         <MapPin className="h-4 w-4" />
         {job.location}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
-        <span className="rounded-full bg-green-50 text-green-700 px-3 py-1 font-medium">
+      <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
+        <span className="rounded-full bg-green-50 text-green-900 px-3 py-1 font-medium">
           {job.type}
         </span>
       </div>
 
-      <div className="mt-4 flex items-center gap-6 text-sm text-slate-500 border-t pt-4">
+      <div className="mt-4 flex items-center gap-6 text-sm text-slate-700 border-t pt-4">
         <span>
           Accepted:{" "}
           <span className="font-semibold text-slate-900">

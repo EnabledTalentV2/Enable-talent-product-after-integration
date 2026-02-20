@@ -22,7 +22,7 @@ export default function CandidateList({
             type="text"
             placeholder="Search candidates"
             aria-label="Search candidates"
-            className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#C27803] focus:ring-1 focus:ring-[#C27803]"
+            className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
           />
           <svg
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
@@ -39,7 +39,7 @@ export default function CandidateList({
             />
           </svg>
         </div>
-        <button className="flex items-center gap-2 rounded-xl bg-[#D25B36] px-4 py-2 text-sm font-medium text-white hover:bg-[#b54d2e]">
+        <button className="flex items-center gap-2 rounded-xl bg-orange-900 px-4 py-2 text-sm font-medium text-white hover:bg-orange-950">
           Filters
         </button>
       </div>

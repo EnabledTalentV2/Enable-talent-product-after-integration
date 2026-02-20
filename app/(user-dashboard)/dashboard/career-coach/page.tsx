@@ -79,7 +79,7 @@ export default function CareerCoachPage() {
               <Sparkles className="h-6 w-6 text-amber-500" />
               <h1 className="text-2xl font-bold">AI Career Coach</h1>
             </div>
-            <p className="max-w-2xl text-base text-slate-600">
+            <p className="max-w-2xl text-base text-slate-700">
               Get personalized guidance on your resume, interview prep, and job
               search strategy powered by AI.
             </p>
@@ -98,16 +98,16 @@ export default function CareerCoachPage() {
               <FileText className="h-5 w-5 text-amber-500" />
               <h2 className="text-base font-semibold">Resume Review</h2>
             </div>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-700">
               Tighten your summary, highlight impact, and improve clarity.
             </p>
           </div>
           <div className="rounded-2xl bg-[#F0F9FF] p-4">
             <div className="flex items-center gap-2 text-slate-800">
-              <MessageSquareText className="h-5 w-5 text-blue-500" />
+              <MessageSquareText className="h-5 w-5 text-blue-900" aria-hidden="true" />
               <h2 className="text-base font-semibold">Interview Prep</h2>
             </div>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-700">
               Practice common questions and build a tailored prep plan.
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function CareerCoachPage() {
               <BriefcaseBusiness className="h-5 w-5 text-slate-700" />
               <h2 className="text-base font-semibold">Job Fit Strategy</h2>
             </div>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-700">
               Align your profile with the roles you want most.
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function CareerCoachPage() {
           <h2 className="text-lg font-semibold text-slate-900">
             Session Preview
           </h2>
-          <div className="mt-4 space-y-4 text-sm text-slate-600">
+          <div className="mt-4 space-y-4 text-sm text-slate-700">
             <div className="rounded-2xl bg-slate-100 px-4 py-3">
               I want to sharpen my resume summary for design roles.
             </div>
@@ -149,7 +149,7 @@ export default function CareerCoachPage() {
           <h2 className="text-lg font-semibold text-slate-900">
             Quick Prompts
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-700">
             Use these to jump-start your first coaching session.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
