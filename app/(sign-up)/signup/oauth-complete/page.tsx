@@ -26,7 +26,7 @@ export default function OAuthSignupCompletePage() {
                 ? "Setting up your account"
                 : "Almost there"}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-700">
             {oauth.isSyncing
               ? oauth.syncPhase === "token"
                 ? "Preparing your secure session..."
@@ -40,7 +40,7 @@ export default function OAuthSignupCompletePage() {
         {oauth.error ? (
           <div
             role="alert"
-            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
           >
             <p className="font-semibold">Setup incomplete</p>
             <p className="mt-1 whitespace-pre-wrap">{oauth.error}</p>
@@ -48,7 +48,7 @@ export default function OAuthSignupCompletePage() {
         ) : null}
 
         {oauth.successMessage ? (
-          <div className="flex items-center justify-center gap-3 text-emerald-700">
+          <div className="flex items-center justify-center gap-3 text-emerald-900">
             <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
             <span>{oauth.successMessage}</span>
           </div>
@@ -60,7 +60,7 @@ export default function OAuthSignupCompletePage() {
               <button
                 type="button"
                 disabled
-                className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md opacity-80"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md opacity-80"
               >
                 <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -72,7 +72,7 @@ export default function OAuthSignupCompletePage() {
               <button
                 type="button"
                 onClick={oauth.handleSignOut}
-                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
               >
                 Cancel and sign out
               </button>
@@ -82,18 +82,18 @@ export default function OAuthSignupCompletePage() {
               <button
                 type="button"
                 onClick={oauth.handleRetry}
-                className="w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
               >
                 Try again
               </button>
               <button
                 type="button"
                 onClick={oauth.handleSignOut}
-                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                className="w-full rounded-lg border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
               >
                 Go to login instead
               </button>
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-slate-700">
                 Don&apos;t worry — your account is safe. You can log in anytime
                 to complete setup.
               </p>

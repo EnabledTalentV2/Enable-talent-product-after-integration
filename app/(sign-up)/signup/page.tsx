@@ -21,7 +21,7 @@ function SignUpPageContent() {
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
           href="https://www.enabledtalent.com/"
-          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-[#8C4A0A] bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-orange-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -51,7 +51,7 @@ function SignUpPageContent() {
               <div className="pointer-events-none absolute -inset-3 rounded-full bg-[#B45309] opacity-90 blur-2xl mix-blend-multiply" />
               <a
                 href="https://www.enabledtalent.com/"
-                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
+                className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/70 bg-white/85 shadow-[0_12px_24px_rgba(146,86,16,0.2)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2BF4A]"
                 aria-label="Enabled Talent Logo - Back to Homepage"
               >
                 <Image
@@ -126,7 +126,7 @@ function SignUpPageContent() {
         <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
           Are you an Employer?{" "}
           <Link
-            className="font-bold text-[#8C4A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8C4A0A] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
+            className="font-bold text-orange-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
             href="/signup-employer"
             aria-label="Sign up here for an Employer account"
           >

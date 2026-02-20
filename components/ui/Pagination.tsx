@@ -76,7 +76,7 @@ export default function Pagination({
     >
       {/* Item count */}
       {showItemCount && totalItems !== undefined && startItem && endItem && (
-        <p className="text-sm text-slate-500" aria-live="polite">
+        <p className="text-sm text-slate-700" aria-live="polite">
           Showing {startItem} - {endItem} of {totalItems} results
         </p>
       )}
@@ -87,7 +87,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label={`Go to previous page, page ${currentPage - 1}`}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -109,10 +109,10 @@ export default function Pagination({
               onClick={() => onPageChange(page)}
               aria-label={`Go to page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
-              className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors ${
+              className={`flex min-h-11 min-w-11 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors ${
                 page === currentPage
-                  ? "bg-[#C27803] text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  ? "bg-orange-900 text-white"
+                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
               {page}
@@ -124,7 +124,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label={`Go to next page, page ${currentPage + 1}`}
         >
           <ChevronRight className="h-4 w-4" aria-hidden="true" />

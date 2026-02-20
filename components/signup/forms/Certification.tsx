@@ -77,7 +77,7 @@ export default function Certification({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Certifications</h3>
         {errorCount > 0 && !isNone ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")}{" "}
             {errorCount === 1 ? "field required" : "fields required"}
           </span>
@@ -85,7 +85,7 @@ export default function Certification({
       </div>
 
       {errorCount > 0 && !isNone && entries.length === 0 ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           Please add at least one certification or check &quot;No certification&quot;
           below to continue.
         </div>
@@ -101,19 +101,19 @@ export default function Certification({
         />
         <span>No certification</span>
       </label>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-700">
         Don&apos;t have any certifications? Tick &quot;No certification&quot; to
         skip this step.
       </p>
       {showDeleteWarning ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Warning: saving with no certification will delete your existing
           certifications.
         </div>
       ) : null}
 
       {isNone ? (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
+        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-700">
           You selected &quot;No certification&quot;. You can skip this step.
         </div>
       ) : null}
@@ -136,7 +136,7 @@ export default function Certification({
                     <button
                       type="button"
                       onClick={() => onRemoveEntry(idx)}
-                      className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
+                      className="flex items-center gap-1 text-sm font-semibold text-red-800 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -191,7 +191,7 @@ export default function Certification({
                   <label
                     htmlFor={`cert-${idx}-credentialIdUrl`}
                     className={`block text-base font-medium ${
-                      credentialError ? "text-red-600" : "text-slate-700"
+                      credentialError ? "text-red-800" : "text-slate-700"
                     }`}
                   >
                     Credential URL
@@ -214,11 +214,11 @@ export default function Certification({
                       className="w-full bg-transparent outline-none"
                     />
                     {credentialError ? (
-                      <AlertCircle className="h-5 w-5 text-red-500" />
+                      <AlertCircle className="h-5 w-5 text-red-900" aria-hidden="true" />
                     ) : null}
                   </div>
                   {credentialError ? (
-                    <p className="text-sm text-red-600">{credentialError}</p>
+                    <p className="text-sm text-red-800">{credentialError}</p>
                   ) : null}
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function Certification({
         <button
           type="button"
           onClick={onAddEntry}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-orange-900 border border-orange-900 px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
           {entries.length === 0

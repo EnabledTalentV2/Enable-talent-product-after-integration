@@ -110,7 +110,7 @@ export default function DashBoardNavbar() {
 
   return (
     <>
-      <nav className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
+      <nav aria-label="Main navigation" className="flex h-20 items-center justify-center bg-[#F0F4F8] px-6 md:px-12">
         <div className="flex w-full max-w-8xl items-center justify-between">
           <a
             href="https://www.enabledtalent.com/"
@@ -137,7 +137,7 @@ export default function DashBoardNavbar() {
               aria-current={
                 pathname === "/dashboard/profile" ? "page" : undefined
               }
-              className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="flex items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-900"
             >
               <User size={18} aria-hidden="true" />
               <span>Profile</span>
@@ -146,7 +146,7 @@ export default function DashBoardNavbar() {
             <button
               type="button"
               onClick={handleLogout}
-              className="flex items-center gap-2 text-base font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="flex items-center gap-2 text-base font-medium text-slate-700 transition-colors hover:text-slate-900"
             >
               <LogOut size={18} aria-hidden="true" />
               <span>Log Out</span>
@@ -158,7 +158,7 @@ export default function DashBoardNavbar() {
                   ? "page"
                   : undefined
               }
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:bg-orange-950"
             >
               <Search size={18} strokeWidth={3} aria-hidden="true" />
               <span>AI Career Coach</span>
@@ -170,7 +170,7 @@ export default function DashBoardNavbar() {
             ref={menuButtonRef}
             type="button"
             onClick={toggleMenu}
-            className="flex items-center text-slate-600 transition-colors hover:text-slate-900 md:hidden"
+            className="flex items-center text-slate-700 transition-colors hover:text-slate-900 md:hidden"
             aria-label={
               isMenuOpen ? "Close navigation menu" : "Open navigation menu"
             }
@@ -209,7 +209,7 @@ export default function DashBoardNavbar() {
                 <button
                   type="button"
                   onClick={toggleMenu}
-                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 text-slate-700 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                   aria-label="Close menu"
                 >
                   <X size={20} />
@@ -227,14 +227,15 @@ export default function DashBoardNavbar() {
                       <Link
                         key={item.href}
                         href={item.href}
+                        aria-current={isActive ? "page" : undefined}
                         className={`flex items-center gap-3 px-4 py-3 text-base font-medium transition-colors rounded-xl ${
                           isActive
-                            ? "bg-orange-50 text-orange-700"
+                            ? "bg-orange-50 text-orange-900"
                             : "text-slate-700 hover:bg-slate-50"
                         }`}
                         onClick={toggleMenu}
                       >
-                        <Icon size={20} />
+                        <Icon size={20} aria-hidden="true" />
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -272,7 +273,7 @@ export default function DashBoardNavbar() {
                     toggleMenu();
                     handleLogout();
                   }}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-medium text-red-800 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
                 >
                   <LogOut size={20} />
                   <span>Log Out</span>

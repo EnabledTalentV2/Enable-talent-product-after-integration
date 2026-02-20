@@ -2,7 +2,7 @@ import React from "react";
 
 function ProfilePromptSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl bg-gradient-to-r from-[#C94A2A] via-[#D96C3B] to-[#F1B45C] p-6 text-white shadow-sm">
+    <div className="animate-pulse rounded-2xl bg-orange-900 p-6 text-white shadow-sm">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="space-y-3">
           <div className="h-4 w-32 rounded bg-white/70" />

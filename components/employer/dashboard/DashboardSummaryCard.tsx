@@ -27,11 +27,11 @@ export default function DashboardSummaryCard({
   return (
     <div className="rounded-[28px] bg-white p-6 shadow-sm">
       <div className="rounded-2xl bg-[#FFF4DB] px-4 py-5 text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">
           {title}
         </p>
         <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-        <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        <p className="mt-1 text-sm text-slate-700">{subtitle}</p>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {metrics.map((metric) => (

@@ -31,12 +31,12 @@ export default function SimpleText({
     <div className="space-y-1.5">
       <label
         htmlFor={inputId}
-        className={`block text-base font-medium ${error ? "text-red-700" : "text-slate-700"}`}
+        className={`block text-base font-medium ${error ? "text-red-800" : "text-slate-700"}`}
       >
         {label}
         {required && (
           <>
-            <span aria-hidden="true" className="text-red-600">
+            <span aria-hidden="true" className="text-red-800">
               {" "}
               *
             </span>
@@ -56,11 +56,11 @@ export default function SimpleText({
         className={`w-full px-4 py-3 rounded-lg border text-slate-800 text-base leading-relaxed shadow-sm focus:outline-none focus:ring-2 ${
           error
             ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-            : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+            : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
         }`}
       />
       {errorMessage && (
-        <p id={errorId} role="alert" className="text-sm text-red-700">
+        <p id={errorId} role="alert" className="text-sm text-red-800">
           {errorMessage}
         </p>
       )}

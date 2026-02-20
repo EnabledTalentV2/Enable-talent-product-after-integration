@@ -31,10 +31,10 @@ export default function JobHeader({ jobInfo, stats }: JobHeaderProps) {
               {jobInfo.status}
             </span>
           </div>
-          <p className="text-sm font-medium text-slate-600">
+          <p className="text-sm font-medium text-slate-700">
             {jobInfo.company}
           </p>
-          <div className="mt-1 flex items-center gap-4 text-xs text-slate-500">
+          <div className="mt-1 flex items-center gap-4 text-xs text-slate-700">
             <span className="flex items-center gap-1">
               <svg
                 className="h-3.5 w-3.5"
@@ -103,7 +103,7 @@ function StatBox({
       className={`flex min-w-[100px] flex-col justify-center rounded-xl px-4 py-3 ${color}`}
     >
       <span className="text-2xl font-bold text-slate-900">{value}</span>
-      <span className="text-[10px] font-medium leading-tight text-slate-600">
+      <span className="text-[10px] font-medium leading-tight text-slate-700">
         {label}
       </span>
     </div>

@@ -158,15 +158,15 @@ export default function AIAgentSearchPanel() {
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start justify-between">
           <div className="flex items-start gap-2">
-            <span className="text-red-600 text-xl">⚠️</span>
+            <span className="text-red-800 text-xl">⚠️</span>
             <div>
               <p className="text-sm font-medium text-red-800">Error</p>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           </div>
           <button
             onClick={clearError}
-            className="text-red-400 hover:text-red-600"
+            className="text-red-800 hover:text-red-900"
           >
             ✕
           </button>
@@ -272,10 +272,10 @@ export default function AIAgentSearchPanel() {
                     </div>
                     {candidate.matchPercentage && (
                       <div className="ml-4">
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-green-900">
                           {candidate.matchPercentage}%
                         </div>
-                        <div className="text-xs text-gray-500">match</div>
+                        <div className="text-xs text-slate-700">match</div>
                       </div>
                     )}
                   </div>

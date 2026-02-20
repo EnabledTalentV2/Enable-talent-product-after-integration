@@ -59,7 +59,7 @@ function DetailSection({
           </span>
         </span>
       </summary>
-      <div className="mt-3 text-sm text-slate-600">{children}</div>
+      <div className="mt-3 text-sm text-slate-700">{children}</div>
     </details>
   );
 }
@@ -187,7 +187,7 @@ function CandidateProfilePageContent() {
       <div className="mx-auto max-w-4xl p-6">
         <div className="rounded-2xl bg-red-50 p-6 shadow-sm">
           <p className="font-semibold text-red-800">Failed to load candidate profile</p>
-          <p className="mt-2 text-sm text-red-600">
+          <p className="mt-2 text-sm text-red-800">
             {error instanceof Error ? error.message : "Please try again later"}
           </p>
         </div>
@@ -199,7 +199,7 @@ function CandidateProfilePageContent() {
     return (
       <div className="mx-auto max-w-4xl p-6">
         <div className="rounded-2xl bg-slate-50 p-6 shadow-sm">
-          <p className="text-slate-600">Candidate not found</p>
+          <p className="text-slate-700">Candidate not found</p>
         </div>
       </div>
     );
@@ -288,7 +288,7 @@ function CandidateProfilePageContent() {
       {/* Back Link */}
       <Link
         href={backHref}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-[#C27803] transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-slate-700 hover:text-[#C27803] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Candidates
@@ -310,7 +310,7 @@ function CandidateProfilePageContent() {
                     {candidate.first_name} {candidate.last_name}
                   </h1>
                   {candidate.is_verified && (
-                    <CheckCircle className="h-6 w-6 text-emerald-700" />
+                    <CheckCircle className="h-6 w-6 text-emerald-900" />
                   )}
                 </div>
                 <p className="text-sm text-slate-700">
@@ -325,8 +325,8 @@ function CandidateProfilePageContent() {
               <span
                 className={`self-start rounded-full px-3 py-1 text-sm font-medium ${
                   candidate.availability === "Available"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-100 text-slate-600"
+                    ? "bg-emerald-100 text-emerald-900"
+                    : "bg-slate-100 text-slate-700"
                 }`}
               >
                 {candidate.availability}
@@ -358,7 +358,7 @@ function CandidateProfilePageContent() {
                 href={candidate.resume_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
+                className="flex items-center justify-center gap-2 rounded-xl bg-orange-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-950"
               >
                 <FileText className="h-4 w-4" />
                 View Resume
@@ -376,9 +376,9 @@ function CandidateProfilePageContent() {
         {/* About Section */}
         <DetailSection title="About" defaultOpen>
           {summary ? (
-            <p className="leading-relaxed text-slate-600">{summary}</p>
+            <p className="leading-relaxed text-slate-700">{summary}</p>
           ) : (
-            <p className="text-slate-500">No bio or summary provided yet.</p>
+            <p className="text-slate-700">No bio or summary provided yet.</p>
           )}
         </DetailSection>
 
@@ -395,7 +395,7 @@ function CandidateProfilePageContent() {
                   key={item.label}
                   className="rounded-xl border border-slate-100 bg-slate-50 p-3"
                 >
-                  <p className="text-xs text-slate-500">{item.label}</p>
+                  <p className="text-xs text-slate-700">{item.label}</p>
                   <p className="text-sm font-semibold text-slate-900">
                     {item.value}
                   </p>
@@ -403,7 +403,7 @@ function CandidateProfilePageContent() {
               ))}
             </div>
           ) : (
-            <p className="text-slate-500">No preferences shared yet.</p>
+            <p className="text-slate-700">No preferences shared yet.</p>
           )}
         </DetailSection>
 
@@ -425,7 +425,7 @@ function CandidateProfilePageContent() {
               ))}
             </div>
           ) : (
-            <p className="text-slate-500">No skills listed yet.</p>
+            <p className="text-slate-700">No skills listed yet.</p>
           )}
         </DetailSection>
 
@@ -458,17 +458,17 @@ function CandidateProfilePageContent() {
                           {title}
                         </h3>
                         {subtitle ? (
-                          <p className="text-xs text-slate-500">{subtitle}</p>
+                          <p className="text-xs text-slate-700">{subtitle}</p>
                         ) : null}
                       </div>
                       {timeline ? (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-700">
                           {timeline}
                         </span>
                       ) : null}
                     </div>
                     {description ? (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
                         {description}
                       </p>
                     ) : null}
@@ -483,12 +483,12 @@ function CandidateProfilePageContent() {
                   key={`experience-line-${index}`}
                   className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                 >
-                  <p className="text-sm text-slate-600">{entry}</p>
+                  <p className="text-sm text-slate-700">{entry}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-slate-500">No experience details provided.</p>
+            <p className="text-slate-700">No experience details provided.</p>
           )}
         </DetailSection>
 
@@ -521,22 +521,22 @@ function CandidateProfilePageContent() {
                           {degreeLine || "Education entry"}
                         </h3>
                         {institution ? (
-                          <p className="text-xs text-slate-500">{institution}</p>
+                          <p className="text-xs text-slate-700">{institution}</p>
                         ) : null}
                       </div>
                       {timeline ? (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-700">
                           {timeline}
                         </span>
                       ) : null}
                     </div>
                     {entry.grade ? (
-                      <p className="mt-2 text-xs font-medium text-slate-500">
+                      <p className="mt-2 text-xs font-medium text-slate-700">
                         Grade: {entry.grade}
                       </p>
                     ) : null}
                     {description ? (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
                         {description}
                       </p>
                     ) : null}
@@ -551,12 +551,12 @@ function CandidateProfilePageContent() {
                   key={`education-line-${index}`}
                   className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                 >
-                  <p className="text-sm text-slate-600">{entry}</p>
+                  <p className="text-sm text-slate-700">{entry}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-slate-500">No education details provided.</p>
+            <p className="text-slate-700">No education details provided.</p>
           )}
         </DetailSection>
 
@@ -581,7 +581,7 @@ function CandidateProfilePageContent() {
                       {name}
                     </h3>
                     {details ? (
-                      <p className="text-xs text-slate-500">{details}</p>
+                      <p className="text-xs text-slate-700">{details}</p>
                     ) : null}
                   </div>
                 );
@@ -594,12 +594,12 @@ function CandidateProfilePageContent() {
                   key={`certification-line-${index}`}
                   className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                 >
-                  <p className="text-sm text-slate-600">{entry}</p>
+                  <p className="text-sm text-slate-700">{entry}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-slate-500">No certifications provided.</p>
+            <p className="text-slate-700">No certifications provided.</p>
           )}
         </DetailSection>
 
@@ -627,25 +627,25 @@ function CandidateProfilePageContent() {
               })}
             </div>
           ) : (
-            <p className="text-slate-500">No links shared yet.</p>
+            <p className="text-slate-700">No links shared yet.</p>
           )}
         </DetailSection>
 
         <DetailSection title="Employer insight" defaultOpen>
           {isInsightLoading ? (
-            <p className="text-slate-500" role="status" aria-live="polite">
+            <p className="text-slate-700" role="status" aria-live="polite">
               Loading insight...
             </p>
           ) : insightError ? (
-            <p className="text-slate-500" role="alert">
+            <p className="text-slate-700" role="alert">
               Unable to load employer insight.
             </p>
           ) : insightText ? (
-            <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
+            <p className="whitespace-pre-wrap leading-relaxed text-slate-700">
               {insightText}
             </p>
           ) : (
-            <p className="text-slate-500">No insight available yet.</p>
+            <p className="text-slate-700">No insight available yet.</p>
           )}
         </DetailSection>
 

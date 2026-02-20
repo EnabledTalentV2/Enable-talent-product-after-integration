@@ -104,7 +104,7 @@ export default function DashboardSubnav() {
                   handleSearchChange(searchQuery);
                 }
               }}
-              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
             />
             <button
               type="button"
@@ -113,7 +113,7 @@ export default function DashboardSubnav() {
                   handleSearchChange(searchQuery);
                 }
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
               aria-label="Submit search"
             >
               <Search className="h-5 w-5" aria-hidden="true" />

@@ -4,28 +4,36 @@
   --background: #ffffff;
   --foreground: #171717;
   --focus-ring-color: #C27803;
-  --focus-ring-offset: 2px;
+  --focus-ring-offset: 3px;
+  /* SC 2.4.12 AAA: scroll-padding-top clears sticky navbar height (~72px) + safety buffer */
+  --scroll-padding-top: 80px;
   color-scheme: light;
 
   /* ============================================
-     WCAG 1.4.3 Contrast (Minimum) - Level AA
-     All text colors meet 4.5:1 contrast ratio for normal text
-     and 3:1 for large text (18pt+ or 14pt bold)
+     WCAG 1.4.6 Contrast (Enhanced) - Level AAA
+     All text colors meet 7:1 contrast ratio for normal text
+     and 4.5:1 for large text (18pt+ or 14pt bold)
+     Verified against both #ffffff and #f0f4f8 backgrounds
      ============================================ */
 
-  /* Primary text colors - meet 4.5:1 against white */
-  --text-primary: #1e293b;    /* slate-800: 12.6:1 contrast */
-  --text-secondary: #475569;  /* slate-600: 6.4:1 contrast */
-  --text-muted: #64748b;      /* slate-500: 4.6:1 contrast - min for normal text */
+  /* Primary text colors - meet 7:1 against white */
+  --text-primary: #1e293b;    /* slate-900: 12.6:1 contrast */
+  --text-secondary: #334155;  /* slate-700: 10.3:1 contrast - WCAG AAA */
+  --text-muted: #334155;      /* slate-700: 10.3:1 contrast - merged with --text-secondary (AAA) */
 
   /* Error/success colors with sufficient contrast */
-  --text-error: #b91c1c;      /* red-700: 5.6:1 contrast */
-  --text-success: #047857;    /* emerald-700: 5.0:1 contrast */
-  --text-warning: #b45309;    /* amber-700: 4.5:1 contrast */
+  --text-error: #991b1b;      /* red-800: 8.3:1 contrast - WCAG AAA */
+  --text-success: #064e3b;    /* emerald-900: 9.7:1 contrast - WCAG AAA */
+  --text-warning: #78350f;    /* amber-900: 9.1:1 contrast - WCAG AAA */
 
   /* Link colors */
-  --link-color: #9a3412;      /* orange-800: 6.6:1 contrast */
-  --link-hover: #7c2d12;      /* orange-900: 9.3:1 contrast */
+  --link-color: #7c2d12;      /* orange-900: 9.4:1 contrast - WCAG AAA */
+  --link-hover: #7c2d12;      /* orange-900: 9.4:1 contrast - WCAG AAA */
+}
+
+html {
+  /* SC 2.4.12 AAA: prevent sticky headers from obscuring focused elements */
+  scroll-padding-top: var(--scroll-padding-top);
 }
 
 body {
@@ -45,9 +53,11 @@ a,
    ============================================ */
 
 /* Default focus-visible outline for all interactive elements */
+/* SC 2.4.13 AAA: 3px minimum width, box-shadow halo for enclosed area requirement */
 :focus-visible {
-  outline: 2px solid var(--focus-ring-color);
+  outline: 3px solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
+  box-shadow: 0 0 0 6px rgba(194, 120, 3, 0.15);
 }
 
 /* Remove default focus for mouse/touch users (pointer-based) */
@@ -59,24 +69,26 @@ a,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
+  outline: 3px solid var(--focus-ring-color);
   outline-offset: 0;
   border-color: var(--focus-ring-color);
+  box-shadow: 0 0 0 5px rgba(194, 120, 3, 0.15);
 }
 
 /* Enhanced focus for buttons */
 button:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
+  outline: 3px solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
-  box-shadow: 0 0 0 4px rgba(194, 120, 3, 0.2);
+  box-shadow: 0 0 0 6px rgba(194, 120, 3, 0.2);
 }
 
 /* Focus styles for links */
 a:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
+  outline: 3px solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
   border-radius: 2px;
+  box-shadow: 0 0 0 6px rgba(194, 120, 3, 0.15);
 }
 
 /* ============================================
@@ -112,7 +124,7 @@ a:focus-visible {
 @media (forced-colors: active) {
   :focus-visible {
     outline: 3px solid CanvasText;
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   button,
@@ -148,9 +160,9 @@ nav[class*="sticky"] {
    Minimum 2px focus indicator with sufficient contrast
    -------------------------------------------- */
 :focus-visible {
-  /* Already implemented above with 2px solid outline */
-  /* Additional enhancement: ensure focus indicator is at least 2px */
-  outline-width: 2px !important;
+  /* Already implemented above with 3px solid outline */
+  /* SC 2.4.13 AAA: minimum 3px */
+  outline-width: 3px !important;
 }
 
 /* --------------------------------------------
@@ -164,32 +176,25 @@ nav[class*="sticky"] {
    Interactive elements should be at least 24x24px
    Exception: inline links within text
    -------------------------------------------- */
+/* SC 2.5.5 AAA: 44x44px minimum for all interactive controls, all devices */
 button,
 [role="button"],
 input[type="checkbox"],
 input[type="radio"],
-select,
-a:not([class*="inline"]):not(p a):not(li a) {
-  min-height: 24px;
-  min-width: 24px;
+select {
+  min-height: 44px;
+  min-width: 44px;
 }
 
-/* Touch-friendly targets for mobile - recommended 44x44px */
-@media (pointer: coarse) {
-  button,
-  [role="button"],
-  input[type="checkbox"],
-  input[type="radio"],
-  select {
-    min-height: 44px;
-    min-width: 44px;
-  }
+/* Non-inline links (navigation, standalone CTAs) */
+a:not([class*="inline"]):not(p a):not(li a) {
+  min-height: 44px;
+}
 
-  /* Ensure adequate spacing between touch targets */
-  button + button,
-  [role="button"] + [role="button"] {
-    margin-left: 8px;
-  }
+/* Ensure adequate spacing between adjacent targets */
+button + button,
+[role="button"] + [role="button"] {
+  margin-left: 8px;
 }
 
 /* Custom checkbox/radio styling with proper target size */
@@ -233,6 +238,22 @@ input[type="radio"] {
   /* Use border in addition to color */
   border-left: 3px solid var(--text-error);
   padding-left: 0.75rem;
+}
+
+/* ============================================
+   SC 2.4.13 AAA: White focus ring on dark button backgrounds
+   #C27803 amber achieves only ~2.67:1 against orange-900/red-800/emerald-900
+   White (#fff) achieves 9.4:1+ against these dark backgrounds
+   ============================================ */
+[class*="bg-orange-9"]:focus-visible,
+[class*="bg-orange-8"]:focus-visible,
+[class*="bg-red-8"]:focus-visible,
+[class*="bg-red-9"]:focus-visible,
+[class*="bg-emerald-9"]:focus-visible,
+[class*="bg-slate-8"]:focus-visible,
+[class*="bg-slate-9"]:focus-visible {
+  outline-color: #ffffff;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.25);
 }
 
 /* Visible focus for custom controls */

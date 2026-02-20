@@ -51,7 +51,7 @@ export default function WorkExperience({
             />
             <span className="font-medium">I have experience</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-slate-500">
+          <label className="flex items-center gap-2 cursor-pointer text-slate-700">
             <input
               type="radio"
               name="experienceType"
@@ -63,14 +63,14 @@ export default function WorkExperience({
           </label>
         </div>
         {errorCount > 0 && data.experienceType === "experienced" ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")} error
           </span>
         ) : null}
       </div>
 
       {isFresher ? (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-600">
+        <div className="rounded-lg border border-dashed border-gray-200 bg-slate-50 px-4 py-4 text-base text-slate-700">
           Marked as fresher. You can add experience later if needed.
         </div>
       ) : null}
@@ -91,7 +91,7 @@ export default function WorkExperience({
                   <button
                     type="button"
                     onClick={() => onRemoveEntry(idx)}
-                    className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
+                    className="flex items-center gap-1 text-sm font-semibold text-red-800 hover:text-red-900"
                   >
                     <Trash2 className="h-4 w-4" />
                     Remove
@@ -126,11 +126,11 @@ export default function WorkExperience({
                   <label
                     htmlFor={`workExp-${idx}-from`}
                     className={`block text-base font-medium ${
-                      entryErrors.from ? "text-red-600" : "text-slate-700"
+                      entryErrors.from ? "text-red-800" : "text-slate-700"
                     }`}
                   >
                     From
-                    <span aria-hidden="true" className="text-red-600">
+                    <span aria-hidden="true" className="text-red-800">
                       {" "}
                       *
                     </span>
@@ -148,24 +148,24 @@ export default function WorkExperience({
                     className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                       entryErrors.from
                         ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-                        : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+                        : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
                     }`}
                   />
                   {entryErrors.from ? (
-                    <p className="text-sm text-red-600">{entryErrors.from}</p>
+                    <p className="text-sm text-red-800">{entryErrors.from}</p>
                   ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`workExp-${idx}-to`}
                     className={`block text-base font-medium ${
-                      entryErrors.to ? "text-red-600" : "text-slate-700"
+                      entryErrors.to ? "text-red-800" : "text-slate-700"
                     }`}
                   >
                     To
                     {!entry.current ? (
                       <>
-                        <span aria-hidden="true" className="text-red-600">
+                        <span aria-hidden="true" className="text-red-800">
                           {" "}
                           *
                         </span>
@@ -184,12 +184,12 @@ export default function WorkExperience({
                     className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                       entryErrors.to
                         ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-                        : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+                        : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
                     }`}
                     disabled={entry.current}
                   />
                   {entryErrors.to ? (
-                    <p className="text-sm text-red-600">{entryErrors.to}</p>
+                    <p className="text-sm text-red-800">{entryErrors.to}</p>
                   ) : null}
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function WorkExperience({
                 <label
                   htmlFor={`workExp-${idx}-description`}
                   className={`block text-base font-medium ${
-                    entryErrors.description ? "text-red-600" : "text-slate-700"
+                    entryErrors.description ? "text-red-800" : "text-slate-700"
                   }`}
                 >
                   Description
@@ -229,11 +229,11 @@ export default function WorkExperience({
                   className={`w-full px-4 py-3 rounded-lg border text-slate-800 text-base leading-relaxed shadow-sm focus:outline-none focus:ring-2 ${
                     entryErrors.description
                       ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-                      : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+                      : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
                   }`}
                 />
                 {entryErrors.description ? (
-                  <p className="text-sm text-red-600">
+                  <p className="text-sm text-red-800">
                     {entryErrors.description}
                   </p>
                 ) : null}
@@ -246,7 +246,7 @@ export default function WorkExperience({
         <button
           type="button"
           onClick={onAddEntry}
-          className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+          className="inline-flex items-center gap-2 text-orange-900 border border-orange-900 px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
         >
           <Plus size={16} />
           {entries.length === 0 ? "Add experience" : "Add another experience"}

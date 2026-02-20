@@ -9,7 +9,7 @@ const inputClasses = (hasError?: boolean) =>
   `w-full h-11 rounded-lg border bg-white px-4 text-sm text-gray-700 transition-shadow placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
     hasError
       ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+      : "border-gray-200 focus:border-[#C27803] focus:ring-[#C27803]"
   }`;
 
 type FieldErrors = Partial<{
@@ -108,7 +108,7 @@ export default function EmployerSignupForm({
             ref={errorSummaryRef}
             role="alert"
             tabIndex={-1}
-            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
           >
             <p className="font-semibold">Please fix the following:</p>
             <ul className="mt-2 space-y-1">
@@ -133,7 +133,7 @@ export default function EmployerSignupForm({
         {serverError && (
           <div
             role="alert"
-            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
           >
             <p className="font-semibold">Error</p>
             <p className="mt-1 whitespace-pre-wrap">{serverError}</p>
@@ -173,7 +173,7 @@ export default function EmployerSignupForm({
           {fieldErrors.fullName && (
             <p
               id="employer-fullname-error"
-              className="mt-1 text-sm text-red-600"
+              className="mt-1 text-sm text-red-800"
             >
               {fieldErrors.fullName}
             </p>
@@ -214,7 +214,7 @@ export default function EmployerSignupForm({
           {fieldErrors.employerName && (
             <p
               id="employer-name-error"
-              className="mt-1 text-sm text-red-600"
+              className="mt-1 text-sm text-red-800"
             >
               {fieldErrors.employerName}
             </p>
@@ -255,7 +255,7 @@ export default function EmployerSignupForm({
           {fieldErrors.email && (
             <p
               id="employer-email-error"
-              className="mt-1 text-sm text-red-600"
+              className="mt-1 text-sm text-red-800"
             >
               {fieldErrors.email}
             </p>
@@ -306,7 +306,7 @@ export default function EmployerSignupForm({
               }
               aria-pressed={showPassword}
               aria-controls="employer-password"
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] cursor-pointer"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -314,7 +314,7 @@ export default function EmployerSignupForm({
           {fieldErrors.password && (
             <p
               id="employer-password-error"
-              className="mt-1 text-sm text-red-600"
+              className="mt-1 text-sm text-red-800"
             >
               {fieldErrors.password}
             </p>
@@ -366,7 +366,7 @@ export default function EmployerSignupForm({
               }
               aria-pressed={showConfirmPassword}
               aria-controls="employer-confirm-password"
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] cursor-pointer"
             >
               {showConfirmPassword ? (
                 <EyeOff size={20} />
@@ -378,7 +378,7 @@ export default function EmployerSignupForm({
           {fieldErrors.confirmPassword && (
             <p
               id="employer-confirm-password-error"
-              className="mt-1 text-sm text-red-600"
+              className="mt-1 text-sm text-red-800"
             >
               {fieldErrors.confirmPassword}
             </p>
@@ -390,7 +390,7 @@ export default function EmployerSignupForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#C04622] to-[#E88F53] py-3 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Creating account..." : "Create account"}
         </button>
@@ -405,7 +405,7 @@ export default function EmployerSignupForm({
           Already have an account?{" "}
           <Link
             href="/login-employer"
-            className="text-[#C04622] font-semibold hover:underline"
+            className="text-orange-900 font-semibold hover:underline"
           >
             Login
           </Link>

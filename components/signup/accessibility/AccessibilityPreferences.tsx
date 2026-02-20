@@ -48,7 +48,7 @@ export default function AccessibilityPreferences({
             <legend className="text-lg font-bold text-slate-900 md:text-xl">
               Accommodation Needs
             </legend>
-            <p id="accommodation-needs-desc" className="mt-2 text-base text-slate-600">
+            <p id="accommodation-needs-desc" className="mt-2 text-base text-slate-700">
               Do you need accommodations for the application or interview process?
             </p>
 
@@ -92,7 +92,7 @@ export default function AccessibilityPreferences({
             <legend className="text-lg font-bold text-slate-900 md:text-xl">
               Disclosure Preferences
             </legend>
-            <p id="disclosure-pref-desc" className="mt-2 text-base text-slate-600">
+            <p id="disclosure-pref-desc" className="mt-2 text-base text-slate-700">
               When would you like to discuss your accommodation needs? You control the timing, and
               we&apos;ll respect your preference.
             </p>
@@ -135,7 +135,7 @@ export default function AccessibilityPreferences({
           <button
             type="button"
             onClick={onBack}
-            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
             aria-label="Go back to disability categories"
           >
             Back

@@ -26,7 +26,7 @@ export default function AccessibilityPage() {
           <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
             Accessibility Statement
           </h1>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-slate-700">
             Our commitment to digital accessibility for all users
           </p>
         </div>
@@ -38,7 +38,7 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Our Commitment
               </h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 Enabled Talent is committed to ensuring digital accessibility
                 for people with disabilities. We are continually improving the
                 user experience for everyone and applying the relevant
@@ -51,7 +51,7 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Conformance Status
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 The Web Content Accessibility Guidelines (WCAG) defines
                 requirements for designers and developers to improve
                 accessibility for people with disabilities. WCAG 2.2, published
@@ -59,7 +59,7 @@ export default function AccessibilityPage() {
                 accessibility standard. It defines three levels of conformance:
                 Level A, Level AA, and Level AAA.
               </p>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 Enabled Talent is conformant with <strong>WCAG 2.2 Level AA</strong>.
                 This includes all success criteria from WCAG 2.0, 2.1, and the new
                 criteria introduced in WCAG 2.2, ensuring our platform meets the
@@ -71,10 +71,10 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 WCAG 2.2 New Criteria Support
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 We have implemented support for the new WCAG 2.2 success criteria:
               </p>
-              <ul className="list-disc pl-6 text-slate-600 space-y-2">
+              <ul className="list-disc pl-6 text-slate-700 space-y-2">
                 <li>
                   <strong>2.4.11 Focus Not Obscured (Minimum):</strong> Focused
                   elements are never completely hidden by sticky headers or other
@@ -108,7 +108,7 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 AODA Compliance
               </h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 In accordance with the Accessibility for Ontarians with
                 Disabilities Act (AODA), we are committed to achieving Level AA
                 compliance with WCAG 2.2. We provide our services and
@@ -121,11 +121,11 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Accessibility Features
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 We have implemented the following accessibility features across
                 our platform:
               </p>
-              <ul className="list-disc pl-6 text-slate-600 space-y-2">
+              <ul className="list-disc pl-6 text-slate-700 space-y-2">
                 <li>
                   <strong>Keyboard Navigation:</strong> All functionality is
                   accessible via keyboard, including navigation menus, forms,
@@ -173,11 +173,11 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Known Limitations
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 Despite our best efforts to ensure accessibility, there may be
                 some limitations. Below is a description of known limitations:
               </p>
-              <ul className="list-disc pl-6 text-slate-600 space-y-2">
+              <ul className="list-disc pl-6 text-slate-700 space-y-2">
                 <li>
                   Some third-party content or integrations may not be fully
                   accessible.
@@ -193,17 +193,17 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Feedback
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 We welcome your feedback on the accessibility of Enabled Talent.
                 If you encounter accessibility barriers or have suggestions for
                 improvement, please contact us:
               </p>
-              <ul className="list-none text-slate-600 space-y-2">
+              <ul className="list-none text-slate-700 space-y-2">
                 <li>
                   <strong>Email:</strong>{" "}
                   <a
                     href="mailto:accessibility@enabledtalent.com"
-                    className="text-orange-700 hover:text-orange-800 underline"
+                    className="text-orange-900 hover:text-orange-800 underline"
                   >
                     accessibility@enabledtalent.com
                   </a>
@@ -219,11 +219,11 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Assistive Technologies Supported
               </h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
+              <p className="text-slate-700 leading-relaxed mb-4">
                 Enabled Talent is designed to be compatible with the following
                 assistive technologies:
               </p>
-              <ul className="list-disc pl-6 text-slate-600 space-y-2">
+              <ul className="list-disc pl-6 text-slate-700 space-y-2">
                 <li>Screen readers (NVDA, JAWS, VoiceOver, TalkBack)</li>
                 <li>Screen magnification software</li>
                 <li>Speech recognition software</li>
@@ -235,7 +235,7 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Technical Specifications
               </h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 Accessibility of Enabled Talent relies on the following
                 technologies to work with your web browser and any assistive
                 technologies or plugins installed on your computer: HTML, CSS,
@@ -248,18 +248,18 @@ export default function AccessibilityPage() {
               <h2 className="text-xl font-semibold text-slate-900 mb-4">
                 Assessment and Updates
               </h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 We assess the accessibility of our platform through:
               </p>
-              <ul className="list-disc pl-6 text-slate-600 space-y-2 mt-4">
+              <ul className="list-disc pl-6 text-slate-700 space-y-2 mt-4">
                 <li>Regular automated accessibility testing</li>
                 <li>Manual testing with assistive technologies</li>
                 <li>User feedback and testing</li>
               </ul>
-              <p className="text-slate-600 leading-relaxed mt-4">
+              <p className="text-slate-700 leading-relaxed mt-4">
                 <strong>Last updated:</strong> January 2026
               </p>
-              <p className="text-slate-600 leading-relaxed mt-2">
+              <p className="text-slate-700 leading-relaxed mt-2">
                 <strong>WCAG Version:</strong> 2.2 (W3C Recommendation, December 2024)
               </p>
             </section>
@@ -270,7 +270,7 @@ export default function AccessibilityPage() {
         <div className="mt-8 text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-2 text-slate-700 hover:text-slate-900 transition-colors"
           >
             <svg
               className="h-5 w-5"

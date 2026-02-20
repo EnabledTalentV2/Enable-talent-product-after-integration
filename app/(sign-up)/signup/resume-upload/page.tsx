@@ -24,7 +24,7 @@ export default function ResumeUpload() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F0F5FA]">
-        <div className="text-slate-500">Verifying session...</div>
+        <div className="text-slate-700">Verifying session...</div>
       </div>
     );
   }
@@ -33,7 +33,7 @@ export default function ResumeUpload() {
     <div className="flex min-h-screen flex-col bg-[#F0F5FA] text-slate-900">
       <Navbar />
 
-      <main className="flex flex-1 items-center justify-center px-6 pb-12 pt-4 md:px-12">
+      <main id="main-content" className="flex flex-1 items-center justify-center px-6 pb-12 pt-4 md:px-12">
         <div className="w-full max-w-5xl rounded-[28px] bg-white p-8 text-center shadow-[0_24px_80px_-48px_rgba(15,23,42,0.35)] md:rounded-[32px] md:p-14">
           <h1 className="text-3xl font-bold tracking-tight text-[#1E293B] md:text-4xl">
             Create your EnabledTalent profile
@@ -81,14 +81,14 @@ export default function ResumeUpload() {
               <div
                 role="status"
                 aria-live="polite"
-                className="text-sm text-slate-500"
+                className="text-sm text-slate-700"
               >
                 {uploadStageMessage}
               </div>
             ) : null}
 
             {selectedFileName ? (
-              <div className="flex items-center gap-3 text-sm text-slate-500">
+              <div className="flex items-center gap-3 text-sm text-slate-700">
                 <span id="resume-upload-selected" aria-live="polite">
                   Selected: {selectedFileName}
                 </span>
@@ -96,7 +96,7 @@ export default function ResumeUpload() {
                   type="button"
                   onClick={handleRemoveFile}
                   disabled={isUploading}
-                  className="flex items-center justify-center rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="flex items-center justify-center rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-70"
                   aria-label="Remove file"
                 >
                   <X size={18} strokeWidth={2} />
@@ -125,22 +125,22 @@ export default function ResumeUpload() {
               <span
                 id="resume-upload-error"
                 role="alert"
-                className="text-sm text-red-600"
+                className="text-sm text-red-800"
               >
                 {error}
               </span>
             ) : null}
 
-            <span id="resume-upload-help" className="text-base text-slate-500">
+            <span id="resume-upload-help" className="text-base text-slate-700">
               Supports PDF files.
             </span>
           </div>
 
-          <div className="mt-10 text-base text-slate-600">
+          <div className="mt-10 text-base text-slate-700">
             Don&apos;t have resume file ready?{" "}
             <Link
               href="/signup/accessability-needs"
-              className="font-semibold text-[#C27528] underline-offset-4 transition-colors hover:text-[#a45d1f] hover:underline"
+              className="font-semibold text-orange-900 underline-offset-4 transition-colors hover:text-[#a45d1f] hover:underline"
             >
               Skip to next step
             </Link>

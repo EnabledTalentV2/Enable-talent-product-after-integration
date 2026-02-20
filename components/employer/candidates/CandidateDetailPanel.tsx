@@ -87,8 +87,8 @@ function DetailSection({
       className="group rounded-2xl bg-white p-4 shadow-sm"
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer items-center justify-between text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
-        <span>{title}</span>
+      <summary className="flex cursor-pointer items-center justify-between [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-lg -m-1 p-1">
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         <span className="flex items-center gap-2 text-xs text-slate-400">
           {badge && <span aria-hidden="true">{badge}</span>}
           <ChevronDown
@@ -100,7 +100,7 @@ function DetailSection({
           </span>
         </span>
       </summary>
-      <div className="mt-3 text-sm text-slate-600">{children}</div>
+      <div className="mt-3 text-sm text-slate-700">{children}</div>
     </details>
   );
 }
@@ -189,19 +189,19 @@ export default function CandidateDetailPanel({
   const insightSection = showInsight ? (
     <DetailSection title={insightTitle} defaultOpen>
       {isInsightLoading ? (
-        <p className="text-slate-500" role="status" aria-live="polite">
+        <p className="text-slate-700" role="status" aria-live="polite">
           Loading insight...
         </p>
       ) : insightError ? (
-        <p className="text-slate-500" role="alert">
+        <p className="text-slate-700" role="alert">
           Unable to load insight.
         </p>
       ) : cleanedInsight ? (
-        <p className="whitespace-pre-wrap leading-relaxed text-slate-600">
+        <p className="whitespace-pre-wrap leading-relaxed text-slate-700">
           {cleanedInsight}
         </p>
       ) : (
-        <p className="text-slate-500">No insight available yet.</p>
+        <p className="text-slate-700">No insight available yet.</p>
       )}
     </DetailSection>
   ) : null;
@@ -223,7 +223,7 @@ export default function CandidateDetailPanel({
                 </h2>
                 {candidate.is_verified && (
                   <span title="Verified candidate" aria-label="Verified candidate">
-                    <CheckCircle className="h-5 w-5 text-emerald-700" aria-hidden="true" />
+                    <CheckCircle className="h-5 w-5 text-emerald-900" aria-hidden="true" />
                   </span>
                 )}
               </div>
@@ -263,7 +263,7 @@ export default function CandidateDetailPanel({
                 profileHref ||
                 `/employer/dashboard/candidates/profile/${candidate.slug}`
               }
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#C27831] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A66628]"
+              className="flex items-center justify-center gap-2 rounded-xl bg-orange-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-950"
             >
               View full profile
               <ArrowRight className="h-4 w-4" />
@@ -272,7 +272,7 @@ export default function CandidateDetailPanel({
               <button
                 type="button"
                 onClick={onInviteClick}
-                className="flex items-center justify-center gap-2 rounded-xl border border-[#C27831] bg-white px-4 py-2 text-sm font-semibold text-[#A66628] transition-colors hover:bg-white"
+                className="flex items-center justify-center gap-2 rounded-xl border border-orange-900 bg-white px-4 py-2 text-sm font-semibold text-orange-900 transition-colors hover:bg-orange-50"
               >
                 Send Invites for Jobs
                 <ArrowRight className="h-4 w-4" />
@@ -297,9 +297,9 @@ export default function CandidateDetailPanel({
 
       <DetailSection title="About" defaultOpen>
         {summary ? (
-          <p className="leading-relaxed text-slate-600">{summary}</p>
+          <p className="leading-relaxed text-slate-700">{summary}</p>
         ) : (
-          <p className="text-slate-500">No bio or summary provided yet.</p>
+          <p className="text-slate-700">No bio or summary provided yet.</p>
         )}
       </DetailSection>
 
@@ -314,7 +314,7 @@ export default function CandidateDetailPanel({
                 key={item.label}
                 className="rounded-xl border border-slate-100 bg-slate-50 p-3"
               >
-                <p className="text-xs text-slate-500">{item.label}</p>
+                <p className="text-xs text-slate-700">{item.label}</p>
                 <p className="text-sm font-semibold text-slate-900">
                   {item.value}
                 </p>
@@ -322,7 +322,7 @@ export default function CandidateDetailPanel({
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">No preferences shared yet.</p>
+          <p className="text-slate-700">No preferences shared yet.</p>
         )}
       </DetailSection>
 
@@ -342,7 +342,7 @@ export default function CandidateDetailPanel({
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">No skills listed yet.</p>
+          <p className="text-slate-700">No skills listed yet.</p>
         )}
       </DetailSection>
 
@@ -369,21 +369,21 @@ export default function CandidateDetailPanel({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-900">
+                      <h4 className="text-sm font-semibold text-slate-900">
                         {title}
-                      </h3>
+                      </h4>
                       {subtitle ? (
-                        <p className="text-xs text-slate-500">{subtitle}</p>
+                        <p className="text-xs text-slate-700">{subtitle}</p>
                       ) : null}
                     </div>
                     {timeline ? (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-700">
                         {timeline}
                       </span>
                     ) : null}
                   </div>
                   {description ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
                       {description}
                     </p>
                   ) : null}
@@ -398,12 +398,12 @@ export default function CandidateDetailPanel({
                 key={`experience-line-${index}`}
                 className="rounded-xl border border-slate-100 bg-slate-50 p-4"
               >
-                <p className="text-sm text-slate-600">{entry}</p>
+                <p className="text-sm text-slate-700">{entry}</p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">No experience details provided.</p>
+          <p className="text-slate-700">No experience details provided.</p>
         )}
       </DetailSection>
 
@@ -430,26 +430,26 @@ export default function CandidateDetailPanel({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-900">
+                      <h4 className="text-sm font-semibold text-slate-900">
                         {degreeLine || "Education entry"}
-                      </h3>
+                      </h4>
                       {institution ? (
-                        <p className="text-xs text-slate-500">{institution}</p>
+                        <p className="text-xs text-slate-700">{institution}</p>
                       ) : null}
                     </div>
                     {timeline ? (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-700">
                         {timeline}
                       </span>
                     ) : null}
                   </div>
                   {entry.grade ? (
-                    <p className="mt-2 text-xs font-medium text-slate-500">
+                    <p className="mt-2 text-xs font-medium text-slate-700">
                       Grade: {entry.grade}
                     </p>
                   ) : null}
                   {description ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
                       {description}
                     </p>
                   ) : null}
@@ -464,12 +464,12 @@ export default function CandidateDetailPanel({
                 key={`education-line-${index}`}
                 className="rounded-xl border border-slate-100 bg-slate-50 p-4"
               >
-                <p className="text-sm text-slate-600">{entry}</p>
+                <p className="text-sm text-slate-700">{entry}</p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">No education details provided.</p>
+          <p className="text-slate-700">No education details provided.</p>
         )}
       </DetailSection>
 
@@ -489,11 +489,11 @@ export default function CandidateDetailPanel({
                   key={`${entry.name ?? "certification"}-${index}`}
                   className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                 >
-                  <h3 className="text-sm font-semibold text-slate-900">
+                  <h4 className="text-sm font-semibold text-slate-900">
                     {name}
-                  </h3>
+                  </h4>
                   {details ? (
-                    <p className="text-xs text-slate-500">{details}</p>
+                    <p className="text-xs text-slate-700">{details}</p>
                   ) : null}
                 </div>
               );
@@ -506,12 +506,12 @@ export default function CandidateDetailPanel({
                 key={`certification-line-${index}`}
                 className="rounded-xl border border-slate-100 bg-slate-50 p-4"
               >
-                <p className="text-sm text-slate-600">{entry}</p>
+                <p className="text-sm text-slate-700">{entry}</p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-500">No certifications provided.</p>
+          <p className="text-slate-700">No certifications provided.</p>
         )}
       </DetailSection>
 
@@ -538,7 +538,7 @@ export default function CandidateDetailPanel({
             })}
           </div>
         ) : (
-          <p className="text-slate-500">No links shared yet.</p>
+          <p className="text-slate-700">No links shared yet.</p>
         )}
       </DetailSection>
 

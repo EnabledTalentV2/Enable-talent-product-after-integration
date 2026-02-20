@@ -15,15 +15,15 @@ export default function DashboardProfilePrompt({
   const safePercent = Math.min(100, Math.max(0, Math.round(percent)));
   const ringColor = safePercent >= 100 ? "text-emerald-500" : "text-orange-500";
   const numberColor =
-    safePercent >= 100 ? "text-emerald-600" : "text-[#C05621]";
+    safePercent >= 100 ? "text-emerald-900" : "text-orange-900";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#C94A2A] via-[#D96C3B] to-[#F1B45C] p-6 text-white shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl bg-orange-900 p-6 text-white shadow-sm">
       <div className="absolute right-10 top-6 h-32 w-32 rounded-full border border-white/25 opacity-40" />
       <div className="absolute right-24 top-2 h-24 w-24 rounded-full border border-white/20 opacity-50" />
       <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <p className="text-base font-semibold uppercase tracking-wide text-white/80">
+          <p className="text-base font-semibold uppercase tracking-wide text-white">
             Make your profile
           </p>
           <h2 className="mt-1 text-2xl font-semibold text-white">
@@ -31,7 +31,7 @@ export default function DashboardProfilePrompt({
           </h2>
           <Link
             href="/dashboard/profile-update"
-            className="mt-4 inline-flex items-center rounded-lg bg-white px-4 py-2 text-base font-semibold text-[#9A3412] shadow-sm transition hover:bg-white/90"
+            className="mt-4 inline-flex items-center rounded-lg bg-white px-4 py-2 text-base font-semibold text-orange-900 shadow-sm transition hover:bg-white/90"
           >
             Update Profile
           </Link>
@@ -65,10 +65,10 @@ export default function DashboardProfilePrompt({
               <span className={`text-3xl font-bold ${numberColor}`}>
                 {safePercent}%
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-700">
                 Profile
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-700">
                 Completed
               </span>
             </div>

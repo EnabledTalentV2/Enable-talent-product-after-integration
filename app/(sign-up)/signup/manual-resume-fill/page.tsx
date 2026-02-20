@@ -749,7 +749,7 @@ export default function ManualResumeFill() {
   if (form.loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFF6FF]">
-        <div className="text-slate-500">Verifying session...</div>
+        <div className="text-slate-700">Verifying session...</div>
       </div>
     );
   }
@@ -765,17 +765,17 @@ export default function ManualResumeFill() {
           <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
             <Sidebar steps={form.stepsState} />
 
-            <main className="md:col-span-9 bg-white rounded-3xl p-8 md:p-10 shadow-lg">
+            <main id="main-content" className="md:col-span-9 bg-white rounded-3xl p-8 md:p-10 shadow-lg">
               <div className="flex items-start justify-between gap-4 mb-8">
                 <div>
-                  <p className="text-base text-slate-500">
+                  <p className="text-base text-slate-700">
                     Step {form.activeStep.id}
                   </p>
                   <h2 className="text-2xl font-bold text-slate-900">
                     {form.activeStep.label}
                   </h2>
                 </div>
-                <div className="hidden md:flex items-center gap-2 text-base text-slate-500">
+                <div className="hidden md:flex items-center gap-2 text-base text-slate-700">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span>Profile completion tracking</span>
                 </div>
@@ -785,7 +785,7 @@ export default function ManualResumeFill() {
                 {renderForm}
 
                 {form.finishError ? (
-                  <p className="text-base font-medium text-red-600">
+                  <p className="text-base font-medium text-red-800">
                     {form.finishError}
                   </p>
                 ) : null}
@@ -802,7 +802,7 @@ export default function ManualResumeFill() {
                   <button
                     type="button"
                     onClick={form.handleSaveAndNext}
-                    className="px-6 py-2.5 bg-[#C27528] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 bg-orange-900 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={
                       form.isUpdating ||
                       (form.activeStep.key === "reviewAgree" &&

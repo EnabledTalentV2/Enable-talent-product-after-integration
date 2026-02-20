@@ -319,7 +319,7 @@ export default function LocationAutocomplete({
       {error && (
         <div
           id={errorId}
-          className="flex items-center mt-1 text-red-500 text-sm"
+          className="flex items-center mt-1 text-red-800 text-sm"
           role="alert"
         >
           <AlertCircle className="w-4 h-4 mr-1" />

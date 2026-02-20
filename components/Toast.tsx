@@ -19,10 +19,8 @@ export default function Toast({
 }: ToastProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const timer = window.setTimeout(onClose, 5000); // Extended for accessibility
-    return () => window.clearTimeout(timer);
-  }, [onClose]);
+  // SC 2.2.3 AAA — No Timing: toast must not auto-dismiss.
+  // Users close it via the Close button or Escape key.
 
   // Allow dismissal with Escape key
   useEffect(() => {
@@ -37,8 +35,8 @@ export default function Toast({
 
   const toneStyles =
     tone === "error"
-      ? "bg-red-700 text-white" // Improved contrast
-      : "bg-emerald-700 text-white"; // Improved contrast
+      ? "bg-red-800 text-white" // Improved contrast
+      : "bg-emerald-900 text-white"; // Improved contrast
 
   const iconLabel = tone === "error" ? "Error" : "Success";
 

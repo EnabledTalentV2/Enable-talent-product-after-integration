@@ -34,7 +34,7 @@ export default function CandidateListItem({
               />
             ) : (
               <div
-                className="flex h-full w-full items-center justify-center bg-slate-300 text-slate-500"
+                className="flex h-full w-full items-center justify-center bg-slate-300 text-slate-700"
                 role="img"
                 aria-label={`${candidate.name} avatar placeholder`}
               >
@@ -44,16 +44,16 @@ export default function CandidateListItem({
           </div>
           <div>
             <h3 className="font-bold text-slate-900">{candidate.name}</h3>
-            <p className="text-xs text-slate-500">{candidate.role}</p>
+            <p className="text-xs text-slate-700">{candidate.role}</p>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-2">
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-900">
               {candidate.status}
             </span>
             {candidate.isBestMatch && (
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-900">
                 Best Match
               </span>
             )}
@@ -62,7 +62,7 @@ export default function CandidateListItem({
       </div>
 
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-        <div className="flex flex-col gap-1 text-xs text-slate-500">
+        <div className="flex flex-col gap-1 text-xs text-slate-700">
           <div className="flex items-center gap-1">
             <svg
               className="h-3.5 w-3.5"
@@ -106,7 +106,7 @@ export default function CandidateListItem({
           <span className="text-lg font-bold text-slate-900">
             {candidate.matchPercentage}%
           </span>
-          <span className="text-[10px] text-slate-500">Matching</span>
+          <span className="text-[10px] text-slate-700">Matching</span>
         </div>
       </div>
     </button>

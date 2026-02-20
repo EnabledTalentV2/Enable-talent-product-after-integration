@@ -34,9 +34,9 @@ interface ApplicantsListProps {
 const STATUS_BADGES = {
   applied: { label: "Applied", color: "bg-blue-100 text-blue-700" },
   shortlisted: { label: "Shortlisted", color: "bg-yellow-100 text-yellow-700" },
-  rejected: { label: "Rejected", color: "bg-red-100 text-red-700" },
-  hired: { label: "Hired", color: "bg-green-100 text-green-700" },
-  request_sent: { label: "Request sent", color: "bg-orange-100 text-orange-700" },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800" },
+  hired: { label: "Hired", color: "bg-green-100 text-green-900" },
+  request_sent: { label: "Request sent", color: "bg-orange-100 text-orange-900" },
 };
 
 export default function ApplicantsList({
@@ -72,7 +72,7 @@ export default function ApplicantsList({
 
   if (applications.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-700">
         No applicants yet for this position.
       </div>
     );
@@ -109,7 +109,7 @@ export default function ApplicantsList({
                     />
                   ) : (
                     <div
-                      className="flex h-full w-full items-center justify-center text-xl font-semibold text-slate-600"
+                      className="flex h-full w-full items-center justify-center text-xl font-semibold text-slate-700"
                       role="img"
                       aria-label={`${application.candidate.name} avatar placeholder`}
                     >
@@ -127,7 +127,7 @@ export default function ApplicantsList({
                   <h3 className="text-lg font-semibold text-slate-800">
                     {application.candidate.name}
                   </h3>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-700">
                     {application.candidate.email}
                   </p>
                   <div className="flex items-center gap-3 text-xs text-slate-400">

@@ -35,17 +35,17 @@ export default function ValidationIcon({
   const icons = {
     error: {
       Icon: AlertCircle,
-      color: "text-red-600",
+      color: "text-red-800",
       defaultLabel: "Error",
     },
     success: {
       Icon: CheckCircle,
-      color: "text-emerald-600",
+      color: "text-emerald-900",
       defaultLabel: "Success",
     },
     warning: {
       Icon: AlertTriangle,
-      color: "text-amber-600",
+      color: "text-amber-900",
       defaultLabel: "Warning",
     },
     info: {

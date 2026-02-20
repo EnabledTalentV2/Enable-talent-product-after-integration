@@ -22,14 +22,14 @@ export default function AccessibilityIntro({
         Accessibility & Accommodation Preferences (Optional)
       </h1>
 
-      <p className="mt-3 text-lg text-slate-600">
+      <p className="mt-3 text-lg text-slate-700">
         Sharing this information is entirely voluntary and will never affect eligibility.
       </p>
-      <p className="mt-3 text-lg text-slate-600">
+      <p className="mt-3 text-lg text-slate-700">
         If you choose to share, it helps us support you and communicate your needs when you decide.
       </p>
 
-      <p className="mt-12 text-base text-slate-600" role="note">
+      <p className="mt-12 text-base text-slate-700" role="note">
         You can update these preferences anytime in your profile.
       </p>
 

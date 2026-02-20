@@ -8,7 +8,7 @@ export default function Home() {
       <header className="flex w-full items-center p-6">
         <a
           href="https://www.enabledtalent.com/"
-          className="group flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#C05621]"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-orange-900"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -46,7 +46,7 @@ export default function Home() {
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               Welcome to Enabled Talent
             </h1>
-            <p className="text-xl text-slate-600">
+            <p className="text-xl text-slate-700">
               Connecting exceptional talent with inclusive employers.
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function Home() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Link
               href="/login-talent"
-              className="flex items-center justify-center rounded-xl bg-gradient-to-r from-[#C05621] to-[#FBBF24] px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:opacity-90 active:scale-95"
+              className="flex items-center justify-center rounded-xl bg-orange-900 px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:bg-orange-950 active:scale-95"
             >
               For Talent
             </Link>
@@ -66,7 +66,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <p className="text-base text-slate-500">
+          <p className="text-base text-slate-700">
             Empowering careers through accessibility and opportunity.
           </p>
         </div>

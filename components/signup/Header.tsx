@@ -14,10 +14,10 @@ export default function Header({ percent }: Props) {
   const safePercent = Math.min(100, Math.max(0, Math.round(percent)));
   const ringColor = safePercent >= 100 ? "text-emerald-500" : "text-orange-500";
   const numberColor =
-    safePercent >= 100 ? "text-emerald-600" : "text-[#C05621]";
+    safePercent >= 100 ? "text-emerald-900" : "text-orange-900";
 
   return (
-    <header className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-r from-[#C05621] to-[#FBBF24] shadow-lg px-6 py-8 md:px-12 md:py-10">
+    <header className="relative w-full rounded-3xl overflow-hidden bg-orange-900 shadow-lg px-6 py-8 md:px-12 md:py-10">
       <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="text-white">
           <p className="text-lg md:text-xl font-light opacity-90">Welcome</p>
@@ -52,10 +52,10 @@ export default function Header({ percent }: Props) {
             <span className={`text-3xl font-bold ${numberColor}`}>
               {safePercent}%
             </span>
-            <span className="text-sm uppercase font-bold tracking-wider text-slate-500">
+            <span className="text-sm uppercase font-bold tracking-wider text-slate-700">
               Profile
             </span>
-            <span className="text-sm uppercase font-bold tracking-wider text-slate-500">
+            <span className="text-sm uppercase font-bold tracking-wider text-slate-700">
               Completed
             </span>
           </div>

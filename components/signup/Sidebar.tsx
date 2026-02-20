@@ -35,10 +35,10 @@ export default function Sidebar({ steps }: SidebarProps) {
                     {idx + 1}
                   </span>
                 )}
-                <span className={`text-base ${isActive ? 'font-semibold text-slate-900' : 'font-medium text-slate-600'}`}>{step.label}</span>
+                <span className={`text-base ${isActive ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>{step.label}</span>
               </div>
               {step.status === 'error' && step.errorText ? (
-                <span className="text-sm font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">{step.errorText}</span>
+                <span className="text-sm font-semibold text-red-900 bg-red-50 px-1.5 py-0.5 rounded">{step.errorText}</span>
               ) : null}
             </li>
           );

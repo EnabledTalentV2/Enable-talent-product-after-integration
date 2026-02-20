@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import DashboardSubNavEmployer from "@/components/DashBoardSubNavEmployer";
 import DashBoardNavbarEmployer from "@/components/DashBaordNavbarEmployer";
+import Breadcrumb from "@/components/a11y/Breadcrumb";
+import SessionExpiryWarning from "@/components/a11y/SessionExpiryWarning";
 import { useEmployerJobsStore } from "@/lib/employerJobsStore";
 
 export default function EmployerDashboardLayout({
@@ -83,7 +85,7 @@ export default function EmployerDashboardLayout({
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F0F4F8]">
-        <div className="text-slate-500">Verifying session...</div>
+        <div className="text-slate-700">Verifying session...</div>
       </div>
     );
   }
@@ -92,6 +94,7 @@ export default function EmployerDashboardLayout({
     <div className="min-h-screen bg-[#EEF5FF] flex flex-col">
       <DashBoardNavbarEmployer />
       <DashboardSubNavEmployer />
+      <Breadcrumb />
       <main
         id="main-content"
         aria-labelledby="employer-dashboard-heading"
@@ -103,6 +106,7 @@ export default function EmployerDashboardLayout({
         </h1>
         {children}
       </main>
+      <SessionExpiryWarning loginPath="/login-employer" />
     </div>
   );
 }

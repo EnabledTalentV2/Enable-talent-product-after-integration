@@ -30,7 +30,7 @@ export default function DashboardSubNavEmployer() {
   const linkClass =
     "flex items-center gap-2 rounded-full px-3 py-2 text-base font-medium transition-colors";
   const inactiveClass =
-    "text-slate-600 hover:bg-slate-200 hover:text-slate-900";
+    "text-slate-700 hover:bg-slate-200 hover:text-slate-900";
   const activeClass = "bg-[#DCE6F1] text-slate-900 shadow-sm";
   const disabledClass = "text-slate-400";
   const navItems = [
@@ -95,11 +95,11 @@ export default function DashboardSubNavEmployer() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search candidates by name..."
               aria-label="Search candidates"
-              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
               aria-label="Search"
             >
               <Search className="h-5 w-5" aria-hidden="true" />

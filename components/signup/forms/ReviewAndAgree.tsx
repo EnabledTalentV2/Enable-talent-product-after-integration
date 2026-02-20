@@ -43,7 +43,7 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
         </ul>
       </div>
 
-      <p className="text-base text-slate-600">
+      <p className="text-base text-slate-700">
         By ticking the checkboxes below, you confirm that you have read,
         understood and agreed with the statement.
       </p>
@@ -58,7 +58,7 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
         />
         <span className="text-base">
           I confirm that I have read, understood and agreed with the statement.
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>

@@ -34,15 +34,15 @@ export default function Education({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
           {errorCount > 0 ? (
-            <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
+            <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">{String(errorCount).padStart(2, "0")} error</span>
           ) : null}
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <label htmlFor={`${idPrefix}-courseName`} className={`block text-base font-medium ${hasCourseError ? "text-red-600" : "text-slate-700"}`}>
+        <label htmlFor={`${idPrefix}-courseName`} className={`block text-base font-medium ${hasCourseError ? "text-red-800" : "text-slate-700"}`}>
           {errors?.courseName || "Course Name"}
-          <span aria-hidden="true" className="text-red-600">
+          <span aria-hidden="true" className="text-red-800">
             {" "}
             *
           </span>
@@ -62,9 +62,9 @@ export default function Education({
             aria-required="true"
             className="w-full bg-transparent outline-none"
           />
-          {hasCourseError ? <AlertCircle className="h-5 w-5 text-red-500" /> : null}
+          {hasCourseError ? <AlertCircle className="h-5 w-5 text-red-900" aria-hidden="true" /> : null}
         </div>
-        {errors?.courseName ? <p className="text-sm text-red-600">{errors.courseName}</p> : null}
+        {errors?.courseName ? <p className="text-sm text-red-800">{errors.courseName}</p> : null}
       </div>
 
       <InputBlock
@@ -110,7 +110,7 @@ export default function Education({
               })
             }
             placeholder="YYYY"
-            className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500"
+            className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 pr-10 text-base text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C27803]/20 focus:border-[#C27803]"
           />
         </div>
       </div>

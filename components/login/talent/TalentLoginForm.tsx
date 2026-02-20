@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
 const inputClasses =
-  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
+  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#C27803] focus:ring-[#C27803]/20";
 
 type TalentLoginFormProps = {
   continuePath: string;
@@ -67,7 +67,7 @@ export default function TalentLoginForm({
         >
           Login
         </h2>
-        <p className="text-sm text-slate-500">Log in to your Talent account</p>
+        <p className="text-sm text-slate-700">Log in to your Talent account</p>
       </div>
 
       <div className="space-y-3 mb-6">
@@ -75,7 +75,7 @@ export default function TalentLoginForm({
           type="button"
           onClick={handleOAuthGoogle}
           disabled={!isLoaded || hasExistingSession}
-          className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full flex items-center justify-center gap-3 h-11 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -120,13 +120,13 @@ export default function TalentLoginForm({
             id="talent-login-warning"
             role="alert"
             tabIndex={-1}
-            className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+            className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
           >
             <p>{roleWarning}</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
               <Link
                 href="/login-employer"
-                className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
               >
                 Go to Employer Login
               </Link>
@@ -192,7 +192,7 @@ export default function TalentLoginForm({
             id="talent-login-error"
             role="alert"
             tabIndex={-1}
-            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
           >
             <p>{error}</p>
             {needsSync && syncRetryCount < 2 && (
@@ -201,7 +201,7 @@ export default function TalentLoginForm({
                   type="button"
                   onClick={handleSyncAccount}
                   disabled={isSyncing}
-                  className="mt-3 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-2 px-4 text-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-3 w-full rounded-lg bg-orange-900 py-2 px-4 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSyncing
                     ? `Syncing... (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? "" : "s"} left)`
@@ -211,7 +211,7 @@ export default function TalentLoginForm({
                   type="button"
                   onClick={handleSignOut}
                   disabled={isSyncing}
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white py-2 px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   Sign out
                 </button>
@@ -281,7 +281,7 @@ export default function TalentLoginForm({
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
               aria-controls="password"
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E58C3A] cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-11 w-11 items-center justify-center rounded text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] cursor-pointer"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -292,7 +292,7 @@ export default function TalentLoginForm({
           <Link
             href="/forgot-password?from=talent"
             title="Forgot Password"
-            className="font-medium text-[#B45309] hover:underline"
+            className="font-medium text-orange-900 hover:underline"
           >
             Forgot password?
           </Link>
@@ -301,32 +301,32 @@ export default function TalentLoginForm({
         <button
           type="submit"
           disabled={isLoading || !isLoaded || hasExistingSession}
-          className="mt-5 w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isLoading ? "Signing in..." : "Login"}
         </button>
       </form>
 
       <div className="mt-6 text-center space-y-4">
-        <p className="text-[13px] text-slate-600">
+        <p className="text-[13px] text-slate-700">
           Already have an account?{" "}
-          <Link className="font-semibold text-[#B45309] hover:underline" href="/signup">
+          <Link className="font-semibold text-orange-900 hover:underline" href="/signup">
             Sign up
           </Link>
         </p>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-slate-700">
           By clicking login, you agree to our{" "}
           <Link
             href="/terms"
-            className="underline text-slate-600 hover:text-slate-700"
+            className="underline text-slate-700 hover:text-slate-700"
           >
             Terms of Service
           </Link>{" "}
           and{" "}
           <Link
             href="/privacy"
-            className="underline text-slate-600 hover:text-slate-700"
+            className="underline text-slate-700 hover:text-slate-700"
           >
             Privacy Policy
           </Link>

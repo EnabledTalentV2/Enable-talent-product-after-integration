@@ -75,7 +75,7 @@ export default function CandidateDecisionButtons({
     return (
       <div className="flex items-center gap-2">
         {error && (
-          <span className="text-xs text-red-600">{error}</span>
+          <span className="text-xs text-red-800">{error}</span>
         )}
 
         {isUpdating ? (
@@ -85,40 +85,43 @@ export default function CandidateDecisionButtons({
             <button
               onClick={() => handleDecision("shortlisted")}
               disabled={isUpdating || localStatus === "shortlisted"}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`min-h-11 min-w-11 flex items-center justify-center rounded-lg transition-colors ${
                 localStatus === "shortlisted"
                   ? "bg-blue-100 text-blue-600"
                   : "text-gray-400 hover:bg-blue-50 hover:text-blue-600"
               }`}
               title="Shortlist"
+              aria-label="Shortlist candidate"
             >
-              <CheckCircle className="h-5 w-5" />
+              <CheckCircle className="h-5 w-5" aria-hidden="true" />
             </button>
 
             <button
               onClick={() => handleDecision("hired")}
               disabled={isUpdating || localStatus === "hired"}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`min-h-11 min-w-11 flex items-center justify-center rounded-lg transition-colors ${
                 localStatus === "hired"
-                  ? "bg-green-100 text-green-600"
-                  : "text-gray-400 hover:bg-green-50 hover:text-green-600"
+                  ? "bg-green-100 text-green-900"
+                  : "text-gray-400 hover:bg-green-50 hover:text-green-900"
               }`}
               title="Hire"
+              aria-label="Mark candidate as hired"
             >
-              <UserCheck className="h-5 w-5" />
+              <UserCheck className="h-5 w-5" aria-hidden="true" />
             </button>
 
             <button
               onClick={() => handleDecision("rejected")}
               disabled={isUpdating || localStatus === "rejected"}
-              className={`p-1.5 rounded-lg transition-colors ${
+              className={`min-h-11 min-w-11 flex items-center justify-center rounded-lg transition-colors ${
                 localStatus === "rejected"
-                  ? "bg-red-100 text-red-600"
-                  : "text-gray-400 hover:bg-red-50 hover:text-red-600"
+                  ? "bg-red-100 text-red-800"
+                  : "text-gray-400 hover:bg-red-50 hover:text-red-800"
               }`}
               title="Reject"
+              aria-label="Reject candidate"
             >
-              <XCircle className="h-5 w-5" />
+              <XCircle className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
         )}
@@ -132,7 +135,7 @@ export default function CandidateDecisionButtons({
       {/* Error Message */}
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-800">{error}</p>
         </div>
       )}
 
@@ -147,13 +150,13 @@ export default function CandidateDecisionButtons({
           )}
           {localStatus === "hired" && (
             <>
-              <UserCheck className="h-4 w-4 text-green-600" />
+              <UserCheck className="h-4 w-4 text-green-900" aria-hidden="true" />
               <span>Hired</span>
             </>
           )}
           {localStatus === "rejected" && (
             <>
-              <XCircle className="h-4 w-4 text-red-600" />
+              <XCircle className="h-4 w-4 text-red-800" />
               <span>Rejected</span>
             </>
           )}
@@ -212,7 +215,7 @@ export default function CandidateDecisionButtons({
             disabled={isUpdating || localStatus === "hired"}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors ${
               localStatus === "hired"
-                ? "bg-green-100 text-green-600 cursor-not-allowed"
+                ? "bg-green-100 text-green-900 cursor-not-allowed"
                 : "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
             }`}
           >
@@ -229,8 +232,8 @@ export default function CandidateDecisionButtons({
             disabled={isUpdating || localStatus === "rejected"}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors ${
               localStatus === "rejected"
-                ? "bg-red-100 text-red-600 cursor-not-allowed"
-                : "bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                ? "bg-red-100 text-red-800 cursor-not-allowed"
+                : "bg-red-800 text-white hover:bg-red-900 disabled:opacity-50"
             }`}
           >
             {isUpdating ? (

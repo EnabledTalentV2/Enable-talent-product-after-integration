@@ -312,7 +312,7 @@ export default function ProfilePage() {
       {/* Header Section */}
       <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          <div className="w-32 h-32 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0 overflow-hidden">
+          <div className="w-32 h-32 rounded-full bg-orange-100 flex items-center justify-center text-orange-900 shrink-0 overflow-hidden">
             {basicInfo.profilePhoto ? (
               <img
                 src={basicInfo.profilePhoto}
@@ -330,7 +330,7 @@ export default function ProfilePage() {
                   {displayName}
                 </h1>
                 {careerStageLabel ? (
-                  <p className="text-lg text-slate-500 font-medium">
+                  <p className="text-lg text-slate-700 font-medium">
                     {careerStageLabel}
                   </p>
                 ) : null}
@@ -345,32 +345,32 @@ export default function ProfilePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-slate-600">
+              <div className="flex items-center gap-2 text-slate-700">
                 <Mail size={18} className="text-orange-500" />
                 <span>{emailLabel}</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
+              <div className="flex items-center gap-2 text-slate-700">
                 <Phone size={18} className="text-orange-500" />
                 <span>{phoneLabel}</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-600">
+              <div className="flex items-center gap-2 text-slate-700">
                 <MapPin size={18} className="text-orange-500" />
                 <span>{locationLabel}</span>
               </div>
               {linkedInUrl ? (
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-700">
                   <Linkedin size={18} className="text-orange-500" />
                   <a
                     href={linkedInUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-orange-600 transition-colors"
+                    className="hover:text-orange-900 transition-colors"
                   >
                     LinkedIn Profile
                   </a>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-700">
                   <Linkedin size={18} className="text-orange-500" />
                   <span>{fallbackText}</span>
                 </div>
@@ -386,13 +386,13 @@ export default function ProfilePage() {
           {/* Work Experience */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <Briefcase className="text-orange-600" />
+              <Briefcase className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">
                 Work Experience
               </h2>
             </div>
             {workEntries.length === 0 ? (
-              <p className="text-slate-500 italic">{fallbackText}.</p>
+              <p className="text-slate-700 italic">{fallbackText}.</p>
             ) : (
               <div className="space-y-8">
                 {workEntries.map((exp, idx) => {
@@ -416,15 +416,15 @@ export default function ProfilePage() {
                           <h3 className="font-bold text-slate-800 text-lg">
                             {roleLabel}
                           </h3>
-                          <span className="text-sm font-medium text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                          <span className="text-sm font-medium text-orange-900 bg-orange-50 px-3 py-1 rounded-full">
                             Duration: {fromLabel} - {toLabel}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-600 font-medium">
+                        <div className="flex items-center gap-2 text-slate-700 font-medium">
                           <Building2 size={16} />
                           <span>{companyLabel}</span>
                         </div>
-                        <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                        <p className="text-slate-700 leading-relaxed whitespace-pre-line">
                           {descriptionLabel}
                         </p>
                       </div>
@@ -438,11 +438,11 @@ export default function ProfilePage() {
           {/* Projects */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <FolderKanban className="text-orange-600" />
+              <FolderKanban className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">Projects</h2>
             </div>
             {projectEntries.length === 0 ? (
-              <p className="text-slate-500 italic">{fallbackText}.</p>
+              <p className="text-slate-700 italic">{fallbackText}.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {projectEntries.map((project, idx) => {
@@ -467,10 +467,10 @@ export default function ProfilePage() {
                         </h3>
                         <Calendar size={16} className="text-slate-400" />
                       </div>
-                      <p className="text-sm text-slate-500 font-medium">
+                      <p className="text-sm text-slate-700 font-medium">
                         {projectFromLabel} - {projectToLabel}
                       </p>
-                      <p className="text-slate-600 text-sm leading-relaxed">
+                      <p className="text-slate-700 text-sm leading-relaxed">
                         {projectDescLabel}
                       </p>
                     </div>
@@ -483,7 +483,7 @@ export default function ProfilePage() {
             {/* Education */}
             <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
-                <GraduationCap className="text-orange-600" />
+                <GraduationCap className="text-orange-900" />
                 <h2 className="text-xl font-bold text-slate-900">Education</h2>
               </div>
               {educationEntries.length > 0 ? (
@@ -510,11 +510,11 @@ export default function ProfilePage() {
                           <h3 className="font-bold text-slate-800 text-lg">
                             {courseLabel} in {majorLabel}
                           </h3>
-                          <p className="text-slate-600 font-medium">
+                          <p className="text-slate-700 font-medium">
                             {institutionLabel}
                           </p>
                         </div>
-                        <span className="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium text-slate-700 bg-slate-100 px-3 py-1 rounded-full">
                           Graduated: {graduationLabel}
                         </span>
                       </div>
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                   })}
                 </div>
               ) : (
-                <p className="text-slate-500">No education details provided.</p>
+                <p className="text-slate-700">No education details provided.</p>
               )}
             </section>
         </div>
@@ -532,7 +532,7 @@ export default function ProfilePage() {
           {/* Skills */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <Code className="text-orange-600" />
+              <Code className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">Skills</h2>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -540,13 +540,13 @@ export default function ProfilePage() {
                 primarySkills.map((skill, idx) => (
                   <span
                     key={idx}
-                    className="px-4 py-2 bg-orange-50 text-orange-700 rounded-xl text-sm font-semibold border border-orange-100"
+                    className="px-4 py-2 bg-orange-50 text-orange-900 rounded-xl text-sm font-semibold border border-orange-100"
                   >
                     {skill}
                   </span>
                 ))
               ) : (
-                <p className="text-slate-500 italic">{fallbackText}.</p>
+                <p className="text-slate-700 italic">{fallbackText}.</p>
               )}
             </div>
           </section>
@@ -554,13 +554,13 @@ export default function ProfilePage() {
           {/* Certifications */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <Award className="text-orange-600" />
+              <Award className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">
                 Certifications
               </h2>
             </div>
             {certificationEntries.length === 0 ? (
-              <p className="text-slate-500 italic">{fallbackText}.</p>
+              <p className="text-slate-700 italic">{fallbackText}.</p>
             ) : (
               <div className="space-y-4">
                 {certificationEntries.map((cert, idx) => {
@@ -573,7 +573,7 @@ export default function ProfilePage() {
                       <h3 className="font-bold text-slate-800 text-sm">
                         {certName}
                       </h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-700">
                         {certOrg} - {certDate}
                       </p>
                       {cert.credentialIdUrl && (
@@ -581,7 +581,7 @@ export default function ProfilePage() {
                           href={cert.credentialIdUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-orange-600 hover:underline"
+                          className="text-xs text-orange-900 hover:underline"
                         >
                           View Credential
                         </a>
@@ -596,7 +596,7 @@ export default function ProfilePage() {
           {/* Languages */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <Languages className="text-orange-600" />
+              <Languages className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">Languages</h2>
             </div>
             <div className="space-y-4">
@@ -617,13 +617,13 @@ export default function ProfilePage() {
                         {languageLabel}
                       </span>
                       <div className="flex gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
                           S: {speakingLabel}
                         </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
                           R: {readingLabel}
                         </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
                           W: {writingLabel}
                         </span>
                       </div>
@@ -631,7 +631,7 @@ export default function ProfilePage() {
                   );
                 })
               ) : (
-                <p className="text-slate-500 italic">{fallbackText}.</p>
+                <p className="text-slate-700 italic">{fallbackText}.</p>
               )}
             </div>
           </section>
@@ -639,7 +639,7 @@ export default function ProfilePage() {
           {/* Preferences */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
-              <Globe className="text-orange-600" />
+              <Globe className="text-orange-900" />
               <h2 className="text-xl font-bold text-slate-900">Preferences</h2>
             </div>
             <div className="space-y-4">
@@ -658,7 +658,7 @@ export default function ProfilePage() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-700">
                       {fallbackText}
                     </span>
                   )}
@@ -666,13 +666,13 @@ export default function ProfilePage() {
               </div>
               <div>
                 <div className="pt-2 border-t border-slate-50">
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-slate-700">
                     <span className="font-bold text-slate-800">
                       Desired Salary:
                   </span>{" "}
                   {desiredSalaryLabel}
                 </p>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-slate-700">
                   <span className="font-bold text-slate-800">
                     Availability:
                   </span>{" "}
@@ -686,12 +686,12 @@ export default function ProfilePage() {
           {/* Account Actions */}
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-red-200">
             <div className="flex items-center gap-3 mb-4">
-              <User className="text-red-600" />
+              <User className="text-red-800" />
               <h2 className="text-xl font-bold text-slate-900">
                 Delete Account
               </h2>
             </div>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-700">
               Deleting your account removes your login and access to Enabled
               Talent. This action cannot be undone.
             </p>
@@ -701,8 +701,8 @@ export default function ProfilePage() {
                 visible
                 className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                   deleteAccountError
-                    ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    ? "border-red-200 bg-red-50 text-red-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-900"
                 }`}
               >
                 {deleteAccountStatusMessage}
@@ -712,7 +712,7 @@ export default function ProfilePage() {
               type="button"
               onClick={openDeleteAccountDialog}
               disabled={isDeleteAccountDisabled}
-              className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 min-h-[44px] w-full rounded-xl border border-red-300 bg-red-800 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isDeletingAccount ? "Deleting..." : "Delete Account"}
             </button>

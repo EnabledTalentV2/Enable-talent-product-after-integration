@@ -48,7 +48,7 @@ export default function AccessibilityAccommodations({
         Workplace accommodations (Optional)
       </h1>
 
-      <p id="accommodations-description" className="mb-8 text-base text-slate-600">
+      <p id="accommodations-description" className="mb-8 text-base text-slate-700">
         Select all that apply. You can choose &quot;None needed&quot; or &quot;Prefer to discuss later.&quot;
       </p>
 
@@ -130,21 +130,21 @@ export default function AccessibilityAccommodations({
             role="alert"
             className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
           >
-            <p className="font-semibold text-amber-800">
+            <p className="font-semibold text-amber-900">
               {parseFailureReason === "timeout"
                 ? "Resume parsing timed out"
                 : parseFailureReason === "no_data"
                   ? "Could not extract data from resume"
                   : "Resume parsing failed"}
             </p>
-            <p className="mt-1 text-amber-700">{parseFailure}</p>
+            <p className="mt-1 text-amber-900">{parseFailure}</p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
               {parseFailureReason === "timeout" ? (
                 <button
                   type="button"
                   onClick={onRetryParsing}
                   disabled={isCompleting}
-                  className="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-amber-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-950 disabled:opacity-50"
                 >
                   Retry Parsing
                 </button>
@@ -154,8 +154,8 @@ export default function AccessibilityAccommodations({
                 onClick={onContinueWithoutParsing}
                 className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
                   parseFailureReason === "timeout"
-                    ? "border border-amber-300 bg-white text-amber-700 hover:bg-amber-50"
-                    : "bg-amber-600 text-white hover:bg-amber-700"
+                    ? "border border-amber-300 bg-white text-amber-900 hover:bg-amber-50"
+                    : "bg-amber-900 text-white hover:bg-amber-950"
                 }`}
               >
                 Continue to Manual Entry
@@ -169,7 +169,7 @@ export default function AccessibilityAccommodations({
             type="button"
             onClick={onBack}
             disabled={isCompleting}
-            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+            className="rounded-xl border border-slate-300 bg-white px-8 py-3 text-lg font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
             aria-label="Go back to accommodation preferences"
           >
             Back

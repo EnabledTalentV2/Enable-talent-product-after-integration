@@ -43,7 +43,7 @@ export default function EditJobPage() {
   );
   if (!jobId || !hasFetched) {
     return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
+      <div className="flex h-screen items-center justify-center text-slate-700">
         Loading job details...
       </div>
     );
@@ -51,7 +51,7 @@ export default function EditJobPage() {
 
   if (!job) {
     return (
-      <div className="flex h-screen items-center justify-center text-slate-500">
+      <div className="flex h-screen items-center justify-center text-slate-700">
         Redirecting to listed jobs...
       </div>
     );

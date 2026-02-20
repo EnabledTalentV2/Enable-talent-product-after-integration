@@ -50,7 +50,7 @@ export default function Projects({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">Projects</h3>
         {errorCount > 0 && !noProjects ? (
-          <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+          <span className="text-sm font-semibold text-red-800 bg-red-50 px-3 py-1 rounded-full">
             {String(errorCount).padStart(2, "0")}{" "}
             {errorCount === 1 ? "field required" : "fields required"}
           </span>
@@ -58,7 +58,7 @@ export default function Projects({
       </div>
 
       {errorCount > 0 && !noProjects && entries.length === 0 ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           Please add at least one project or check &quot;I don&apos;t have any
           projects to list&quot; below to continue.
         </div>
@@ -80,7 +80,7 @@ export default function Projects({
         </label>
       </div>
       {showDeleteWarning ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Warning: saving with no projects will delete your existing project
           entries.
         </div>
@@ -105,7 +105,7 @@ export default function Projects({
                     <button
                       type="button"
                       onClick={() => onRemoveEntry(idx)}
-                      className="flex items-center gap-1 text-sm font-semibold text-red-500 hover:text-red-600"
+                      className="flex items-center gap-1 text-sm font-semibold text-red-800 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -171,7 +171,7 @@ export default function Projects({
                     <label
                       htmlFor={`project-${idx}-from`}
                       className={`block text-base font-medium ${
-                        entryErrors.from ? "text-red-600" : "text-slate-700"
+                        entryErrors.from ? "text-red-800" : "text-slate-700"
                       }`}
                     >
                       From
@@ -186,18 +186,18 @@ export default function Projects({
                       className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                         entryErrors.from
                           ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-                          : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
+                          : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
                       }`}
                     />
                     {entryErrors.from ? (
-                      <p className="text-sm text-red-600">{entryErrors.from}</p>
+                      <p className="text-sm text-red-800">{entryErrors.from}</p>
                     ) : null}
                   </div>
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`project-${idx}-to`}
                       className={`block text-base font-medium ${
-                        entryErrors.to ? "text-red-600" : "text-slate-700"
+                        entryErrors.to ? "text-red-800" : "text-slate-700"
                       }`}
                     >
                       To
@@ -213,11 +213,11 @@ export default function Projects({
                       className={`w-full px-4 py-2.5 rounded-lg border text-slate-900 shadow-sm focus:outline-none focus:ring-2 ${
                         entryErrors.to
                           ? "border-red-400 focus:ring-red-200 focus:border-red-500"
-                          : "border-gray-200 focus:ring-orange-500/30 focus:border-orange-500"
-                      } ${isCurrent ? "bg-slate-50 text-slate-500" : ""}`}
+                          : "border-gray-200 focus:ring-[#C27803]/20 focus:border-[#C27803]"
+                      } ${isCurrent ? "bg-slate-50 text-slate-700" : ""}`}
                     />
                     {entryErrors.to ? (
-                      <p className="text-sm text-red-600">{entryErrors.to}</p>
+                      <p className="text-sm text-red-800">{entryErrors.to}</p>
                     ) : null}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function Projects({
           <button
             type="button"
             onClick={onAddEntry}
-            className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+            className="inline-flex items-center gap-2 text-orange-900 border border-orange-900 px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
           >
             <Plus size={16} />
             {entries.length === 0 ? "Add project" : "Add another project"}

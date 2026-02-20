@@ -148,7 +148,7 @@ function VerificationContent() {
       ) : (
         <>
           <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-10 w-10 text-green-500" strokeWidth={3} />
+            <Check className="h-10 w-10 text-emerald-900" strokeWidth={3} aria-hidden="true" />
           </div>
 
           <h1 className="mb-4 text-4xl font-bold text-gray-900">Success!</h1>

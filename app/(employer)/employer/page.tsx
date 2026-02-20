@@ -23,14 +23,14 @@ export default function Employers() {
               Employer Portal
             </h1>
             <div className="mx-auto h-1 w-20 rounded-full bg-gradient-to-r from-[#C05621] to-[#FBBF24]" />
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-slate-700">
               We are currently building a world-class experience for our
               employer partners.
             </p>
           </div>
 
           <div className="mt-10 flex flex-col items-center gap-6">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-50 text-amber-900">
               <svg
                 className="h-10 w-10"
                 fill="none"
@@ -45,7 +45,7 @@ export default function Employers() {
                 />
               </svg>
             </div>
-            <p className="font-medium text-slate-500">Work in Progress</p>
+            <p className="font-medium text-slate-700">Work in Progress</p>
 
             <Link
               href="/"

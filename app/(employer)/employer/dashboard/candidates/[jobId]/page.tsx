@@ -105,13 +105,13 @@ const STATUS_BADGES: Record<
   applied: { label: "Applied", className: "bg-blue-50 text-blue-700" },
   shortlisted: {
     label: "Shortlisted",
-    className: "bg-emerald-50 text-emerald-700",
+    className: "bg-emerald-50 text-emerald-900",
   },
   rejected: { label: "Rejected", className: "bg-rose-50 text-rose-700" },
-  hired: { label: "Hired", className: "bg-green-50 text-green-700" },
+  hired: { label: "Hired", className: "bg-green-50 text-green-900" },
   request_sent: {
     label: "Request sent",
-    className: "bg-orange-50 text-orange-700",
+    className: "bg-orange-50 text-orange-900",
   },
 };
 
@@ -649,7 +649,7 @@ export default function CandidatesPage() {
 
   if (!currentJobId || !hasFetched) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-700">
         Loading candidates...
       </div>
     );
@@ -657,7 +657,7 @@ export default function CandidatesPage() {
 
   if (!currentJob) {
     return (
-      <div className="flex h-full items-center justify-center text-slate-500">
+      <div className="flex h-full items-center justify-center text-slate-700">
         Redirecting to listed jobs...
       </div>
     );
@@ -683,7 +683,7 @@ export default function CandidatesPage() {
               className={`whitespace-nowrap rounded-xl px-5 py-2 text-sm font-semibold transition-colors ${
                 activeTab === tab.id
                   ? "bg-[#C27803] text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
               }`}
             >
               {tab.label}
@@ -735,7 +735,7 @@ export default function CandidatesPage() {
                         <button
                           type="button"
                           onClick={clearFilters}
-                          className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                          className="text-xs font-semibold text-slate-700 hover:text-slate-700"
                         >
                           Clear all
                         </button>
@@ -744,7 +744,7 @@ export default function CandidatesPage() {
 
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
                       <fieldset className="space-y-2">
-                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                           Availability
                         </legend>
                         {availabilityOptions.length > 0 ? (
@@ -754,7 +754,7 @@ export default function CandidatesPage() {
                               <label
                                 key={option}
                                 htmlFor={id}
-                                className="flex items-center gap-2 text-sm text-slate-600"
+                                className="flex items-center gap-2 text-sm text-slate-700"
                               >
                                 <input
                                   id={id}
@@ -777,7 +777,7 @@ export default function CandidatesPage() {
                       </fieldset>
 
                       <fieldset className="space-y-2">
-                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                           Work Arrangement
                         </legend>
                         {workArrangementOptions.length > 0 ? (
@@ -787,7 +787,7 @@ export default function CandidatesPage() {
                               <label
                                 key={option}
                                 htmlFor={id}
-                                className="flex items-center gap-2 text-sm text-slate-600"
+                                className="flex items-center gap-2 text-sm text-slate-700"
                               >
                                 <input
                                   id={id}
@@ -810,7 +810,7 @@ export default function CandidatesPage() {
                       </fieldset>
 
                       <fieldset className="space-y-2">
-                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                           Job Type
                         </legend>
                         {jobTypeOptions.length > 0 ? (
@@ -820,7 +820,7 @@ export default function CandidatesPage() {
                               <label
                                 key={option}
                                 htmlFor={id}
-                                className="flex items-center gap-2 text-sm text-slate-600"
+                                className="flex items-center gap-2 text-sm text-slate-700"
                               >
                                 <input
                                   id={id}
@@ -841,10 +841,10 @@ export default function CandidatesPage() {
                       </fieldset>
 
                       <fieldset className="space-y-2">
-                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-700">
                           Verification
                         </legend>
-                        <label className="flex items-center gap-2 text-sm text-slate-600">
+                        <label className="flex items-center gap-2 text-sm text-slate-700">
                           <input
                             type="checkbox"
                             checked={filters.verifiedOnly}
@@ -859,7 +859,7 @@ export default function CandidatesPage() {
                 )}
 
                 {applicationsError ? (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                     <p className="font-semibold">Failed to load applications</p>
                     <p className="mt-1">{applicationsError}</p>
                     <button
@@ -870,7 +870,7 @@ export default function CandidatesPage() {
                           setApplicationsError(result.error);
                         });
                       }}
-                      className="mt-3 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                      className="mt-3 rounded-lg bg-red-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-900"
                     >
                       Retry
                     </button>
@@ -994,7 +994,7 @@ export default function CandidatesPage() {
                       })
                     ) : (
                       <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-                        <p className="text-slate-600">
+                        <p className="text-slate-700">
                           No candidates found in this category.
                         </p>
                       </div>
@@ -1022,13 +1022,13 @@ export default function CandidatesPage() {
                       <p className="text-sm font-semibold text-slate-900">
                         AI Candidate Ranking
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-700">
                         Let AI analyze and rank candidates for this job.
                       </p>
                     </div>
                     <div className="flex items-center gap-3 sm:ml-auto">
                       {isFetchingRankingData && !isRanking && (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
                           <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-[#C27803]"></span>
                           Loading ranking data...
                         </div>
@@ -1039,7 +1039,7 @@ export default function CandidatesPage() {
                         className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${
                           isRanking
                             ? "bg-slate-200 text-slate-400"
-                            : "bg-[#C27803] text-white hover:bg-[#A66628]"
+                            : "bg-[#C27803] text-white hover:bg-orange-950"
                         }`}
                       >
                         {isRanking ? "Ranking..." : "Rank Candidates"}
@@ -1049,12 +1049,12 @@ export default function CandidatesPage() {
                 </div>
 
                 {rankingError && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                     <div className="flex items-center justify-between gap-3">
                       <p>{rankingError}</p>
                       <button
                         onClick={clearError}
-                        className="text-xs font-semibold text-red-600"
+                        className="text-xs font-semibold text-red-800"
                       >
                         Dismiss
                       </button>
@@ -1064,11 +1064,11 @@ export default function CandidatesPage() {
 
                 <div className="space-y-4 lg:pr-2 lg:overflow-y-auto lg:scrollbar-thin lg:scrollbar-thumb-slate-200 lg:scrollbar-track-transparent">
                   {isRanking ? (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
                       AI is ranking candidates...
                     </div>
                   ) : isFetchingRankingData ? (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
                       Loading ranking data...
                     </div>
                   ) : rankedCandidates.length > 0 ? (
@@ -1122,7 +1122,7 @@ export default function CandidatesPage() {
                                     {
                                       label: badge,
                                       className:
-                                        "bg-emerald-50 text-emerald-700",
+                                        "bg-emerald-50 text-emerald-900",
                                     },
                                   ]
                                 : []
@@ -1170,11 +1170,11 @@ export default function CandidatesPage() {
                       );
                     })
                   ) : rankingStatus === "not_started" ? (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
                       Click &quot;Rank Candidates&quot; to start AI ranking.
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
                       No ranked candidates available.
                     </div>
                   )}
@@ -1230,7 +1230,7 @@ export default function CandidatesPage() {
             ) : isCandidateLoading ? (
               <CandidateDetailSkeleton />
             ) : (
-              <div className="rounded-[28px] bg-white p-8 text-center text-slate-500 shadow-sm">
+              <div className="rounded-[28px] bg-white p-8 text-center text-slate-700 shadow-sm">
                 {candidateError
                   ? "Unable to load candidate details."
                   : "Select a candidate to view their profile."}

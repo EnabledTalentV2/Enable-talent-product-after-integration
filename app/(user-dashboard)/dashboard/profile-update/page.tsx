@@ -2240,7 +2240,7 @@ export default function ProfileUpdatePage() {
                               return next.length > 0 ? next : [nextPrimary];
                             });
                           }}
-                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-slate-300 hover:text-slate-800"
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:border-slate-300 hover:text-slate-800"
                         >
                           <Trash2 className="h-4 w-4" />
                           Remove
@@ -2281,7 +2281,7 @@ export default function ProfileUpdatePage() {
                     { ...initialUserData.education },
                   ])
                 }
-                className="inline-flex items-center gap-2 text-[#C27528] border border-[#C27528] px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
+                className="inline-flex items-center gap-2 text-orange-900 border border-orange-900 px-4 py-2 rounded-lg font-medium text-base hover:bg-orange-50 transition-colors"
               >
                 <Plus className="h-4 w-4" />
                 Add another education
@@ -2623,7 +2623,7 @@ export default function ProfileUpdatePage() {
 
   if (loading) {
     return (
-      <div className="py-10 text-base text-slate-600">
+      <div className="py-10 text-base text-slate-700">
         Loading your profile...
       </div>
     );
@@ -2631,18 +2631,18 @@ export default function ProfileUpdatePage() {
 
   if (error) {
     return (
-      <div className="py-10 text-base font-medium text-red-600">{error}</div>
+      <div className="py-10 text-base font-medium text-red-800">{error}</div>
     );
   }
 
   return (
     <section className="space-y-6 max-w-360 mx-auto py-10">
       <header className="space-y-2">
-        <p className="text-base font-semibold text-amber-700">Profile Update</p>
+        <p className="text-base font-semibold text-amber-900">Profile Update</p>
         <h1 className="text-2xl font-bold text-slate-900">
           Finish your profile
         </h1>
-        <p className="text-base text-slate-600">
+        <p className="text-base text-slate-700">
           Review and update your profile details below. Profile completion:{" "}
           {completion.percent}%.
         </p>
@@ -2651,7 +2651,7 @@ export default function ProfileUpdatePage() {
       {hasIncompleteSections ? (
         <div className={cardClass}>
           <h2 className={titleClass}>Missing information</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-slate-700">
             Complete these sections to finish your profile.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -2660,7 +2660,7 @@ export default function ProfileUpdatePage() {
                 key={key}
                 type="button"
                 onClick={() => scrollToSection(key)}
-                className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+                className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-900 transition hover:border-amber-300 hover:bg-amber-100"
               >
                 {sectionLabels[key]}
               </button>
@@ -2672,7 +2672,7 @@ export default function ProfileUpdatePage() {
       {!hasIncompleteSections ? (
         <div className={cardClass}>
           <h2 className={titleClass}>All set</h2>
-          <p className="mt-2 text-base text-slate-600">
+          <p className="mt-2 text-base text-slate-700">
             Your profile is complete.
           </p>
           <button
@@ -2687,7 +2687,7 @@ export default function ProfileUpdatePage() {
 
       <div className={cardClass}>
         <h2 className={titleClass}>Resume</h2>
-        <p className="mt-2 text-base text-slate-600">
+        <p className="mt-2 text-base text-slate-700">
           Upload a new resume to replace your existing one.
         </p>
         <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
@@ -2716,25 +2716,25 @@ export default function ProfileUpdatePage() {
             PDF only, max 10MB.
           </p>
           {selectedResumeName ? (
-            <div className="mt-3 flex items-center justify-center gap-3 text-sm text-slate-600">
+            <div className="mt-3 flex items-center justify-center gap-3 text-sm text-slate-700">
               <span>Selected: {selectedResumeName}</span>
               <button
                 type="button"
                 onClick={handleResumeRemove}
                 disabled={isUploadingResume}
-                className="text-slate-500 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-70"
+                className="text-slate-700 transition hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Remove
               </button>
             </div>
           ) : null}
           {resumeUploadError ? (
-            <p className="mt-3 text-sm font-medium text-red-600">
+            <p className="mt-3 text-sm font-medium text-red-800">
               {resumeUploadError}
             </p>
           ) : null}
           {resumeUploadSuccess ? (
-            <p className="mt-3 text-sm font-medium text-emerald-600">
+            <p className="mt-3 text-sm font-medium text-emerald-900">
               {resumeUploadSuccess}
             </p>
           ) : null}
@@ -2756,7 +2756,7 @@ export default function ProfileUpdatePage() {
             <h2 className={`${titleClass} flex items-center gap-2`}>
               {sectionLabels[key]}
               {!sectionCompletion[key]?.isComplete ? (
-                <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+                <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900">
                   Incomplete
                 </span>
               ) : null}
@@ -2771,7 +2771,7 @@ export default function ProfileUpdatePage() {
           type="button"
           onClick={() => handleSave(false)}
           disabled={saving}
-          className="rounded-lg bg-[#C27528] px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+          className="rounded-lg bg-orange-900 px-5 py-2.5 text-base font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {saving ? "Saving..." : "Save changes"}
         </button>
@@ -2784,12 +2784,12 @@ export default function ProfileUpdatePage() {
           Save &amp; return
         </button>
         {saveError ? (
-          <span className="text-base font-medium text-red-600">
+          <span className="text-base font-medium text-red-800">
             {saveError}
           </span>
         ) : null}
         {saveSuccess ? (
-          <span className="text-base font-medium text-emerald-600">
+          <span className="text-base font-medium text-emerald-900">
             {saveSuccess}
           </span>
         ) : null}

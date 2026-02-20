@@ -1,7 +1,7 @@
 "use client";
 
 const inputClasses =
-  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#E58C3A] focus:ring-[#F6C071]/60";
+  "w-full h-11 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-900 transition-shadow placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#C27803] focus:ring-[#C27803]/20";
 
 type TalentVerificationFormProps = {
   email: string;
@@ -28,7 +28,7 @@ export default function TalentVerificationForm({
         <h2 className="text-[26px] font-semibold text-slate-900 mb-2">
           Verify your email
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-700">
           We sent a verification code to <strong>{email}</strong>
         </p>
       </div>
@@ -36,7 +36,7 @@ export default function TalentVerificationForm({
       {error && (
         <div
           role="alert"
-          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
         >
           <p>{error}</p>
         </div>
@@ -68,7 +68,7 @@ export default function TalentVerificationForm({
           type="button"
           onClick={onVerify}
           disabled={isVerifying || !verificationCode.trim()}
-          className="w-full rounded-lg bg-gradient-to-r from-[#B45309] to-[#E57E25] py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#E58C3A] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isVerifying ? "Verifying..." : "Verify email"}
         </button>

@@ -122,7 +122,7 @@ export default function SendInvitesModal({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           >
             <X className="h-6 w-6" />
           </button>
@@ -144,10 +144,10 @@ export default function SendInvitesModal({
               aria-label="Search jobs"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#C27803] focus:ring-1 focus:ring-[#C27803]"
+              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20"
             />
           </div>
-          <button className="rounded-xl bg-[#E85D04] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#d05304]">
+          <button className="rounded-xl bg-orange-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-950">
             Filters
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function SendInvitesModal({
         <div className="max-h-[400px] overflow-y-auto px-6 pb-4">
           <div className="space-y-4">
             {filteredJobs.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-700">
                 No jobs available to invite for right now.
               </div>
             ) : (
@@ -177,7 +177,7 @@ export default function SendInvitesModal({
                     }`}
                   >
                     <div className="mb-3 flex items-start justify-between">
-                      <span className="text-xs font-medium text-slate-500">
+                      <span className="text-xs font-medium text-slate-700">
                         Posted {formatPostedTime(job.postedAt)}
                       </span>
                       <div
@@ -202,11 +202,11 @@ export default function SendInvitesModal({
                         <h3 className="font-bold text-slate-900">
                           {job.title}
                         </h3>
-                        <p className="text-sm text-slate-500">{job.company}</p>
+                        <p className="text-sm text-slate-700">{job.company}</p>
 
-                        <div className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                        <div className="mt-2 flex items-center gap-2 text-sm text-slate-700">
                           <svg
-                            className="h-4 w-4 text-[#E85D04]"
+                            className="h-4 w-4 text-orange-900"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -228,15 +228,15 @@ export default function SendInvitesModal({
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
+                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-900">
                             {formatExperienceLabel(job.experience)}
                           </span>
-                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-600">
+                          <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-900">
                             {job.employmentType}
                           </span>
                         </div>
 
-                        <div className="mt-4 flex items-center gap-6 border-t border-slate-100 pt-3 text-xs font-medium text-slate-600">
+                        <div className="mt-4 flex items-center gap-6 border-t border-slate-100 pt-3 text-xs font-medium text-slate-700">
                           <span>
                             Accepted:{" "}
                             <span className="text-slate-900">
