@@ -65,49 +65,73 @@ This application is built specifically for **persons with disabilities** to:
 
 ## Accessibility First Design
 
-This application is built with **WCAG 2.2 Level AA compliance** (the current W3C standard as of December 2024) and **AODA standards** as core requirements:
+This application targets **WCAG 2.2 Level AAA** — the highest W3C standard — with **AODA** compliance as a legal requirement. Three implementation sprints have been completed; further phases are in progress.
 
-### WCAG 2.2 Compliance
+### WCAG 2.2 AAA — Implemented Success Criteria
 
-WCAG 2.2 is the latest W3C accessibility standard, published October 2023 and updated December 2024. It builds upon WCAG 2.1 with 9 new success criteria focused on:
+#### Sprint 1 — Visual & Focus Foundations
 
-- Mobile/touch accessibility
-- Cognitive accessibility
-- Focus management
-- Authentication without cognitive tests
+| SC | Criterion | Implementation |
+|----|-----------|---------------|
+| 1.4.6 | Contrast (Enhanced) | AAA token system in `globals.css`; `orange-900` (#7c2d12) = 9.4:1 on white; `#C27803` focus ring = 3:1+ on all backgrounds |
+| 2.4.12 | Focus Not Obscured (Enhanced) | `scroll-padding-top: 80px` on `html`; `id="main-content"` on all `<main>` elements |
+| 2.4.13 | Focus Appearance | 3 px `focus-visible` outline + box-shadow halo; white ring override for dark-bg buttons |
+| 2.5.5 | Target Size (Enhanced) | All interactive elements ≥ 44×44 px; Pagination + CandidateDecisionButtons updated |
 
-### Implemented Accessibility Features
+#### Sprint 2 — Semantics & Forms
 
-#### Core Features (WCAG 2.0/2.1)
+| SC | Criterion | Implementation |
+|----|-----------|---------------|
+| 1.3.5 | Identify Input Purpose | `autoComplete` attributes on all sign-up inputs |
+| 1.3.1 | Info and Relationships | Fieldset/legend groups for accessibility-needs checkboxes |
+| 3.3.1/3.3.3 | Error Identification/Suggestion | `aria-invalid` + `aria-describedby` linkage on all form inputs and selects |
+| 2.4.6 | Headings and Labels | Full heading hierarchy audit across both dashboards |
+| 4.1.2 | Name, Role, Value | ARIA label sweep across navbars, buttons, and icon-only controls |
 
-- **Keyboard navigation** - All functionality accessible without a mouse
-- **Skip navigation links** - Bypass repetitive content (2.4.1)
-- **Visible focus indicators** - Clear visual feedback for keyboard users (2.4.7)
-- **High contrast ratios** - 4.5:1 for normal text, 3:1 for large text (1.4.3)
-- **Screen reader support** - Proper ARIA labels, semantic HTML, live regions (4.1.2, 4.1.3)
-- **Form accessibility** - Clear labels, error messages, required field indicators (3.3.1, 3.3.2)
-- **Alternative text** - Descriptive alt text for all images (1.1.1)
-- **Reduced motion support** - Respects user preferences (2.3.3)
-- **High contrast mode compatibility** - Windows High Contrast Mode support
+#### Sprint 3 — Timing, Navigation & Contrast
 
-#### WCAG 2.2 New Criteria
+| SC | Criterion | Implementation |
+|----|-----------|---------------|
+| 2.2.3 | No Timing | Toast `setTimeout` auto-dismiss removed; user-controlled dismiss only |
+| 2.2.1 | Timing Adjustable | `SessionExpiryWarning` — 28-min inactivity → 2-min countdown → Clerk `signOut()`; SR announcements at 60 s / 30 s / 10 s |
+| 2.4.8 | Location | `Breadcrumb` component auto-derives trail from URL; structural segments (e.g. `employer`) skipped |
+| 3.3.4/3.3.6 | Error Prevention | `ConfirmDialog` `requiresConfirmation` prop adds "I understand" checkbox before irreversible actions |
+| 1.4.6 (sweep) | Contrast (Enhanced) | Status badges, icon colours, remove buttons all raised to `-900` shade family (7:1+) |
 
-- **Focus Not Obscured (2.4.11)** - Focused elements never hidden by sticky headers
-- **Dragging Movements (2.5.7)** - Single-pointer alternatives for drag operations
-- **Target Size Minimum (2.5.8)** - 24x24px minimum, 44x44px for touch devices
-- **Consistent Help (3.2.6)** - Help mechanisms in consistent locations
-- **Redundant Entry (3.3.7)** - Previously entered info auto-populated
-- **Accessible Authentication (3.3.8)** - No CAPTCHA or cognitive tests required
+### Accessibility Components (`components/a11y/`)
 
-### Accessibility Components
+| Component | Purpose | WCAG SC |
+|-----------|---------|---------|
+| `Breadcrumb.tsx` | Auto-derived breadcrumb nav; `aria-current="page"` on last crumb | 2.4.8 (AAA) |
+| `ConfirmDialog.tsx` | `role="alertdialog"`, focus trap, Escape, `requiresConfirmation` checkbox | 3.3.4, 2.5.8 |
+| `LiveRegion.tsx` | Polite/assertive live region for dynamic announcements | 4.1.3 |
+| `SessionExpiryWarning.tsx` | Inactivity warning with countdown and extend-session button | 2.2.1 |
+| `SkipLink.tsx` | Skip to main content | 2.4.1 |
+| `ValidationIcon.tsx` | Non-colour error/success indicators | 1.4.1 |
+| `VisuallyHidden.tsx` | Screen-reader-only content wrapper | — |
 
-The codebase includes dedicated accessibility components in `components/a11y/`:
+### AAA Colour Token System
 
-- **SkipLink** - Skip to main content link
-- **VisuallyHidden** - Screen reader-only content
-- **LiveRegion** - Announcements for dynamic content
-- **ConfirmDialog** - Accessible modal dialogs (replaces window.confirm)
-- **ValidationIcon** - Non-color error/status indicators
+```css
+/* globals.css */
+--focus-ring-color: #C27803;          /* amber-900 — 3:1+ against all light backgrounds */
+/* Primary brand — orange-900 (#7c2d12) — 9.4:1 on white */
+/* All focus rings: focus-visible:ring-[#C27803] */
+/* All primary CTAs: bg-orange-900 hover:bg-orange-950 */
+/* Status badge family: bg-{colour}-50/-100, text-{colour}-900 */
+```
+
+### Remaining WCAG Phases (not yet started)
+
+| Phase | Topic |
+|-------|-------|
+| Phase 2 | Content/language — plain language, glossary, reading level, abbreviation expansion |
+| Phase 3 | Navigation enhancements — additional keyboard shortcuts |
+| Phase 4 | Keyboard/input operability audit |
+| Phase 5 | Media policy — captions, audio descriptions |
+| Phase 6 | Automated WCAG testing + governance documentation |
+
+> **Open design decision**: Login/signup amber gradient backgrounds test at ~5.6:1 — below the AAA 7:1 threshold. Requires a design call.
 
 ### Supported Assistive Technologies
 
@@ -161,6 +185,8 @@ app/
 │           ├── company-profile/
 │           └── edit-job/
 ├── accessibility/ - Public accessibility statement
+├── terms/ - Terms of Service (public)
+├── privacy/ - Privacy Policy — PIPEDA/AODA (public)
 └── page.tsx - Landing page
 ```
 
@@ -168,14 +194,17 @@ app/
 
 ### 1. Accessibility is Non-Negotiable
 
-- Every new feature must meet **WCAG 2.2 AA** standards
+- Every new feature must target **WCAG 2.2 AAA** standards (AA is the minimum floor)
 - Test with keyboard navigation before deploying
 - Include ARIA labels and semantic HTML
-- Maintain color contrast ratios (4.5:1 normal text, 3:1 large text)
+- Maintain **AAA contrast ratios: 7:1 for normal text, 4.5:1 for large text** (SC 1.4.6)
+- Focus rings must use `focus-visible:ring-[#C27803]` and be at least 3 px (SC 2.4.13)
 - Test with screen readers (NVDA, JAWS, VoiceOver)
-- Ensure minimum touch target sizes (24x24px desktop, 44x44px mobile)
-- Use accessible dialogs (never window.confirm/alert/prompt)
-- Don't rely on color alone for information (use icons + text)
+- All interactive elements must be ≥ 44×44 px (SC 2.5.5)
+- Use accessible dialogs from `components/a11y/ConfirmDialog` — never `window.confirm/alert/prompt`
+- Don't rely on colour alone for information (use icons + text)
+- Never add auto-dismissing toasts or timed actions without user control (SC 2.2.3)
+- Add `<Breadcrumb />` to any new layout that is more than one level deep (SC 2.4.8)
 
 ### 2. Respect User Privacy and Dignity
 
@@ -249,7 +278,7 @@ app/
 6. Handle states: "parsing", "parsed", "failed"
 7. Offer retry or manual entry on failure
 
-## Environment Valuehttps://www.enabledtalent.com/
+## Environment Value
 
 The platform emphasizes:
 
@@ -258,14 +287,20 @@ The platform emphasizes:
 - Equal access to employment opportunities
 - Dignity and independence for persons with disabilities
 - Continuous improvement of accessibility features
-- **Commitment to AODA and WCAG 2.2 AA compliance**
+- **Commitment to AODA and WCAG 2.2 AAA compliance**
 
 ## Legal & Standards Compliance
 
-- **WCAG 2.2 Level AA** - W3C Web Content Accessibility Guidelines (current standard)
-- **AODA** - Accessibility for Ontarians with Disabilities Act
-- **ISO/IEC 40500:2025** - International accessibility standard (equivalent to WCAG 2.2)
-- **EAA** - European Accessibility Act compliance ready
+- **WCAG 2.2 Level AAA** — W3C Web Content Accessibility Guidelines (target level; AA is the legal minimum)
+- **AODA** — Accessibility for Ontarians with Disabilities Act (legal requirement)
+- **PIPEDA** — Personal Information Protection and Electronic Documents Act (Privacy Policy covers full rights: access, correction, deletion, portability, OPC complaint)
+- **ISO/IEC 40500:2025** — International accessibility standard (equivalent to WCAG 2.2)
+- **EAA** — European Accessibility Act compliance ready
+
+### Legal Pages
+- `app/privacy/page.tsx` — Privacy Policy (12 sections; PIPEDA/AODA; disability data protections; contact: privacy@enabledtalent.com)
+- `app/terms/page.tsx` — Terms of Service (13 sections; Ontario courts; contact: legal@enabledtalent.com)
+- `app/accessibility/page.tsx` — Accessibility Statement (contact: accessibility@enabledtalent.com)
 
 ## Contact & Feedback
 
@@ -286,28 +321,52 @@ The platform emphasizes:
 7. **Error handling** - Provide clear, actionable error messages
 8. **Loading states** - Always show progress for async operations
 
-### Before Deploying (WCAG 2.2 AA Checklist)
+### Before Deploying (WCAG 2.2 AAA Checklist)
 
-- [ ] Test with keyboard only (Tab, Enter, Escape, Arrow keys)
-- [ ] Verify focus indicators are visible and not obscured (2.4.7, 2.4.11)
-- [ ] Test with screen reader (NVDA or VoiceOver)
-- [ ] Check color contrast ratios (4.5:1 text, 3:1 UI components)
-- [ ] Validate ARIA labels and roles
-- [ ] Test forms with assistive technology
-- [ ] Verify error messages are announced (use role="alert")
-- [ ] Test on mobile with screen reader
-- [ ] Verify touch targets are at least 44x44px on mobile (2.5.8)
-- [ ] Ensure no drag-only interactions without alternatives (2.5.7)
-- [ ] Check that help is in consistent location (3.2.6)
-- [ ] Verify no cognitive tests in authentication (3.3.8)
-- [ ] Review for inclusive language
-- [ ] Run axe DevTools or Lighthouse accessibility audit
+**Visual & Contrast**
+- [ ] Colour contrast ≥ 7:1 for normal text, ≥ 4.5:1 for large text (SC 1.4.6)
+- [ ] Focus ring visible: `focus-visible:ring-[#C27803]` 3 px (SC 2.4.13)
+- [ ] No information conveyed by colour alone — icons or text alongside (SC 1.4.1)
+- [ ] Status badges use `-900` text on `-50`/`-100` backgrounds
+
+**Keyboard & Focus**
+- [ ] Test with keyboard only (Tab, Shift+Tab, Enter, Escape, Arrow keys)
+- [ ] Focus indicator never fully hidden behind sticky headers (SC 2.4.12)
+- [ ] All interactive elements ≥ 44×44 px (SC 2.5.5)
+- [ ] No drag-only interactions without single-pointer alternatives (SC 2.5.7)
+
+**Screen Reader**
+- [ ] Test with NVDA (Windows) or VoiceOver (macOS/iOS)
+- [ ] Validate ARIA labels, roles, and `aria-current` on active nav items
+- [ ] Error messages announced immediately (`role="alert"` or `aria-live="assertive"`)
+- [ ] Forms: `aria-invalid` + `aria-describedby` linked to error text
+- [ ] Decorative icons have `aria-hidden="true"`
+
+**Forms & Input**
+- [ ] `autoComplete` attributes on all personal data inputs (SC 1.3.5)
+- [ ] Grouped controls use `<fieldset>`/`<legend>` (SC 1.3.1)
+- [ ] Irreversible actions use `<ConfirmDialog requiresConfirmation>` (SC 3.3.4)
+- [ ] No CAPTCHA or cognitive tests in authentication (SC 3.3.8)
+
+**Navigation & Timing**
+- [ ] `<Breadcrumb />` present in layouts ≥ 2 levels deep (SC 2.4.8)
+- [ ] No auto-dismissing toasts or timed UI — user controls all dismissal (SC 2.2.3)
+- [ ] `<SessionExpiryWarning />` present in authenticated layouts (SC 2.2.1)
+- [ ] `id="main-content"` on `<main>` element; `<SkipLink />` in layout header (SC 2.4.1)
+
+**Language & Content**
+- [ ] Review for inclusive, person-first language
+- [ ] Heading hierarchy is logical (h1 → h2 → h3, no skips)
+
+**Tooling**
+- [ ] Run axe DevTools or Lighthouse accessibility audit (zero violations)
+- [ ] Run `npm run lint` — zero ESLint errors
 
 ## Git Repository
 
-- **Current Branch**: preproduction
+- **Current Branch**: feature/new-branch
 - **Main Branch**: master (use for PRs)
-- Recent work includes: landing page updates, profile completion improvements, validation enhancements, employer branding features
+- Recent work includes: WCAG AAA Sprint 1–3 (colour tokens, focus, touch targets, breadcrumbs, session expiry, contrast sweep), Google Places API integration replacing OpenStreetMap, date validation improvements, Terms of Service and Privacy Policy pages
 
 ---
 

@@ -174,7 +174,9 @@ app/                                    # Next.js App Router
       career-coach/page.tsx             # AI career guidance
       career-coach/start/page.tsx       # Career coach start
 
-  accessibility/page.tsx                # Accessibility features and info
+  accessibility/page.tsx                # Accessibility statement (public)
+  terms/page.tsx                        # Terms of Service (public)
+  privacy/page.tsx                      # Privacy Policy — PIPEDA/AODA compliant (public)
   account/setup-required/page.tsx       # Account setup required page
 
   api/
@@ -248,8 +250,13 @@ app/                                    # Next.js App Router
 
 components/                             # Modular, organized components
   a11y/                                 # Accessibility components
-    ConfirmDialog.tsx                   # ARIA-compliant confirmation dialog
-    (other a11y utilities)
+    Breadcrumb.tsx                      # SC 2.4.8 — breadcrumb nav; auto-derives from pathname
+    ConfirmDialog.tsx                   # ARIA alertdialog; requiresConfirmation checkbox (SC 3.3.4)
+    LiveRegion.tsx                      # Polite/assertive live region announcements
+    SessionExpiryWarning.tsx            # SC 2.2.1 — 28-min inactivity timer + 2-min countdown
+    SkipLink.tsx                        # Skip to main content (SC 2.4.1)
+    ValidationIcon.tsx                  # Non-colour error/success indicators
+    VisuallyHidden.tsx                  # Screen-reader-only content wrapper
 
   login/                                # Login-specific components
     talent/                             # Talent login components
@@ -356,6 +363,32 @@ proxy.ts                                # Route guard helper
 
 ## Recent Fixes & Improvements
 
+### WCAG AAA Compliance — Sprints 1–3 (Feb 2026)
+
+Three implementation sprints have raised the platform to target **WCAG 2.2 Level AAA** (from AA):
+
+**Sprint 1 — Visual & Focus Foundations**
+- Global AAA colour token system in `app/globals.css`; 75+ tsx files updated
+- 3 px `focus-visible` ring system (SC 2.4.13); `scroll-padding-top` (SC 2.4.12); 44 px touch targets (SC 2.5.5)
+
+**Sprint 2 — Semantics & Forms**
+- ARIA audit: labels, heading hierarchy, `aria-invalid`/`aria-describedby` linkage, `autoComplete` attributes, fieldset groups
+
+**Sprint 3 — Timing, Navigation & Contrast**
+- Toast auto-dismiss removed (SC 2.2.3)
+- `Breadcrumb` component added to both dashboard layouts (SC 2.4.8)
+- `SessionExpiryWarning` — 28-min idle detection + 2-min countdown (SC 2.2.1)
+- `ConfirmDialog` `requiresConfirmation` prop — explicit checkbox for destructive actions (SC 3.3.4)
+- Full contrast sweep: all status badges, icons, remove buttons raised to `-900` shade family
+
+**New public pages**
+- `app/terms/page.tsx` — full Terms of Service (Ontario/Canada law)
+- `app/privacy/page.tsx` — full Privacy Policy (PIPEDA, AODA, disability data protections)
+
+**Remaining phases**: Content/language (Phase 2), Navigation (Phase 3), Keyboard audit (Phase 4), Media policy (Phase 5), Automated testing & governance (Phase 6).
+
+---
+
 ### Date Format Validation for Manual Resume Fill (Feb 2026)
 
 Fixed an issue where users could enter invalid date formats in the manual profile builder (Work Experience, Projects, Certifications, Achievements) that would fail silently until the final submission step, creating a confusing user experience.
@@ -449,16 +482,27 @@ Additional documentation is available in the project:
 
 ## Accessibility
 
-Enabled Talent is built with accessibility at its core:
+Enabled Talent targets **WCAG 2.2 Level AAA** — the highest accessibility standard — with AODA compliance. The following has been implemented across three sprints:
 
-- Semantic HTML structure
-- ARIA labels and roles for screen readers
-- Keyboard navigation support
-- Focus management and visible focus indicators
-- Form error handling and validation messages
-- Proper heading hierarchy
-- Color contrast compliance
-- Responsive design for all device sizes
+### Sprint 1 — Visual & Focus Foundations
+- **Colour token system** — AAA contrast tokens in `globals.css`; 75+ component files updated; all CTA buttons use `orange-900` (#7c2d12, 9.4:1 on white)
+- **Focus appearance** (SC 2.4.13) — 3 px `focus-visible` ring + box-shadow halo; white ring override on dark backgrounds
+- **Focus not obscured** (SC 2.4.12) — `scroll-padding-top: 80px` on `html`; `id="main-content"` on all layout `<main>` elements
+- **Touch targets** (SC 2.5.5) — minimum `44×44 px` enforced on all interactive elements; Pagination and CandidateDecisionButtons updated
+
+### Sprint 2 — Semantics & Forms
+- ARIA labels and heading hierarchy audit across all dashboards
+- Focus ring token standardised to `#C27803` (amber-900)
+- Error linkage via `aria-invalid` + `aria-describedby` on all form inputs
+- `autoComplete` attributes added to sign-up forms (SC 1.3.5)
+- Fieldset/legend groups for grouped form controls (AccessibilityNeeds)
+
+### Sprint 3 — Timing, Navigation & Contrast
+- **Toast notifications** (SC 2.2.3) — auto-dismiss `setTimeout` removed; user-controlled dismiss only
+- **Breadcrumb navigation** (SC 2.4.8) — `Breadcrumb` component auto-derives trail from URL; added to both dashboard layouts
+- **Session expiry warning** (SC 2.2.1) — 28-minute inactivity timer with 2-minute countdown modal, "Stay logged in" / "Sign out now" actions; screen reader announcements at 60 s, 30 s, 10 s
+- **Error prevention** (SC 3.3.4) — `ConfirmDialog` `requiresConfirmation` prop adds explicit "I understand" checkbox for irreversible actions
+- **Contrast sweep** — status badges, icon colours, remove buttons all raised to `-900` shade family (7:1+ on light backgrounds)
 
 ## Contributing
 
@@ -482,4 +526,4 @@ For questions, bug reports, or support requests, please contact the Enabled Tale
 
 Built with care to create inclusive employment opportunities for everyone.
 
-**Last Updated:** February 17, 2026
+**Last Updated:** February 20, 2026
