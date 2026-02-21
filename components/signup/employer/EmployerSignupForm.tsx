@@ -413,7 +413,7 @@ export default function EmployerSignupForm({
       </div>
 
       <div className="mt-6 text-center text-[11px] text-gray-500">
-        By clicking login, you agree to our{" "}
+        By clicking Create account, you agree to our{" "}
         <Link
           href="/terms"
           className="underline text-gray-600 hover:text-gray-700"

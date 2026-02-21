@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, useSignUp } from "@clerk/nextjs";
-import { OAuthStrategy } from "@clerk/types";
 import { validatePasswordStrength } from "@/lib/utils/passwordValidation";
 import { syncBackendWithRetry } from "@/lib/helpers/syncBackendWithRetry";
 
@@ -16,6 +15,26 @@ type FieldErrors = Partial<{
 }>;
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === "object") {
+    const maybeError = error as {
+      errors?: Array<{ message?: string }>;
+      message?: string;
+    };
+    const clerkMessage = maybeError.errors?.[0]?.message;
+    if (typeof clerkMessage === "string" && clerkMessage.trim()) {
+      return clerkMessage;
+    }
+    if (typeof maybeError.message === "string" && maybeError.message.trim()) {
+      return maybeError.message;
+    }
+  }
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
+};
 
 export function useEmployerSignup() {
   const router = useRouter();
@@ -44,7 +63,6 @@ export function useEmployerSignup() {
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [syncPhase, setSyncPhase] = useState<"token" | "sync" | null>(null);
-  const [oauthLoadingProvider, setOauthLoadingProvider] = useState<"google" | "github" | null>(null);
 
   const fullNameRef = useRef<HTMLInputElement | null>(null);
   const employerNameRef = useRef<HTMLInputElement | null>(null);
@@ -144,7 +162,7 @@ export function useEmployerSignup() {
 
         if (!syncOk) {
           setServerError(
-            "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later — your account is safe."
+            "Your account was created successfully, but we couldn't connect it to our system. This is usually a temporary issue. You can try again now or log in later - your account is safe."
           );
           return;
         }
@@ -153,30 +171,13 @@ export function useEmployerSignup() {
       } else {
         setServerError("Verification failed. Please try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[signup-employer] Verification error:", err);
-      const errorMessage =
-        err.errors?.[0]?.message || err.message || "Failed to complete signup. Please try again.";
-      setServerError(errorMessage);
+      setServerError(
+        getErrorMessage(err, "Failed to complete signup. Please try again.")
+      );
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleOAuthSignUp = async (strategy: OAuthStrategy) => {
-    if (!signUp) return;
-    const provider = strategy === "oauth_google" ? "google" : strategy === "oauth_github" ? "github" : null;
-    setOauthLoadingProvider(provider);
-    try {
-      await signUp.authenticateWithRedirect({
-        strategy,
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/signup-employer/oauth-complete",
-      });
-    } catch (err: any) {
-      console.error("[signup-employer] OAuth error:", err);
-      setServerError(err.errors?.[0]?.message || "OAuth sign up failed. Please try again.");
-      setOauthLoadingProvider(null);
     }
   };
 
@@ -255,11 +256,11 @@ export function useEmployerSignup() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
       setResendCooldown(30);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Signup error:", err);
-      const errorMessage =
-        err.errors?.[0]?.message || err.message || "An unexpected error occurred. Please try again.";
-      setServerError(errorMessage);
+      setServerError(
+        getErrorMessage(err, "An unexpected error occurred. Please try again.")
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -279,7 +280,6 @@ export function useEmployerSignup() {
     // Status
     isSubmitting, pendingVerification, verificationCode, setVerificationCode,
     isVerifying, resendCooldown, verificationComplete, isRetrying, syncPhase,
-    oauthLoadingProvider,
     // Refs
     fullNameRef, employerNameRef, emailRef, passwordRef, confirmPasswordRef, errorSummaryRef,
     // Meta
@@ -287,7 +287,6 @@ export function useEmployerSignup() {
     // Actions
     handleSubmit,
     handleVerification,
-    handleOAuthGoogle: () => handleOAuthSignUp("oauth_google"),
     handleResendCode,
     handleRetrySyncBackend,
     handleGoToLogin,
