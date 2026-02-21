@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { UserData } from "@/lib/types/user";
 
 type Props = {
@@ -12,35 +13,75 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
     <div className="space-y-6 text-slate-800">
       <div className="space-y-3">
         <p className="text-base font-semibold text-slate-800">
-          Terms And Conditions
+          Privacy Notice &amp; Consent
         </p>
         <p className="text-base text-slate-700">
-          I have read and understand the information provided to me in this
-          Notice of Collection pertaining to Enabled Talent&apos;s collection, use,
-          and disclosure of personal information. Enabled Talent collects
-          personal information for the purposes of program registration, and
-          related purposes as outlined in the Enabled Talent Notice of
-          Collection. Enabled Talent will collect, use, disclose, and protect
-          your personal information in accordance with the applicable privacy
-          laws and regulations.
+          Enabled Talent collects your personal information — including your
+          profile, skills, and accessibility needs — to match you with inclusive
+          employers and support your job search. Your data is handled in
+          accordance with our{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
+          >
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
+          >
+            Terms of Service
+          </Link>
+          .
+        </p>
+        <p className="text-base text-slate-700">
+          Your information will not be shared with employers without your
+          knowledge. You may withdraw consent at any time by contacting{" "}
+          <strong>ENABLED HR LABS INC.</strong> at{" "}
+          <a
+            href="mailto:jeby@enabledtalent.com"
+            className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
+          >
+            jeby@enabledtalent.com
+          </a>
+          .
         </p>
       </div>
 
-      <p className="text-base text-slate-700">
-        By ticking the checkboxes below, you confirm that you have read,
-        understood and agreed with the statement.
-      </p>
-
-      <label className="flex items-center gap-2 text-slate-800 cursor-pointer">
+      <label className="flex items-start gap-3 text-slate-800 cursor-pointer">
         <input
           type="checkbox"
           checked={data.agree}
           onChange={(e) => onChange({ agree: e.target.checked })}
           aria-required="true"
-          className="w-5 h-5 accent-orange-600 border-gray-300"
+          className="mt-1 w-5 h-5 accent-orange-600 border-gray-300 shrink-0"
         />
         <span className="text-base">
-          I confirm that I have read, understood and agreed with the statement.
+          I have read the{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
+          >
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
+          >
+            Terms of Service
+          </Link>
+          , and I agree to Enabled Talent collecting and using my personal
+          information as described.
           <span aria-hidden="true" className="text-red-800">
             {" "}
             *
