@@ -4,8 +4,11 @@ import Image from "next/image";
 export const metadata = {
   title: "Privacy Policy | Enabled Talent",
   description:
-    "Read Enabled Talent's Privacy Policy. Learn how we collect, use, and protect your personal information, including sensitive accessibility and disability data.",
+    "Privacy Policy, AI Transparency Notice, and Regulatory Readiness Memorandum for ENABLED HR LABS INC. operating as Enabled Talent.",
 };
+
+const linkCls =
+  "text-orange-900 underline hover:text-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 rounded-sm";
 
 export default function PrivacyPage() {
   return (
@@ -26,397 +29,516 @@ export default function PrivacyPage() {
           <h1 className="text-3xl font-bold text-slate-900 md:text-4xl">
             Privacy Policy
           </h1>
-          <p className="mt-4 text-base text-slate-700">
-            Effective date: February 2026 &mdash; Last updated: February 2026
+          <p className="mt-3 text-base text-slate-700">
+            Effective Date: January 27, 2026
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            <strong>Legal Entity:</strong> ENABLED HR LABS INC.&ensp;&mdash;&ensp;
+            <strong>Operating Name:</strong> Enabled Talent
           </p>
         </div>
 
-        {/* Content */}
+        {/* Content card */}
         <div className="rounded-3xl bg-white p-8 shadow-sm md:p-12">
-          <div className="prose prose-slate max-w-none">
+          <div className="space-y-2 text-slate-700">
+
+            {/* NOTICE */}
+            <section className="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-2 uppercase tracking-wide">
+                Notice
+              </h2>
+              <p className="leading-relaxed text-slate-700">
+                This document sets out the privacy practices, artificial intelligence
+                transparency disclosures, and regulatory compliance framework of{" "}
+                <strong>ENABLED HR LABS INC.</strong> (&ldquo;Enabled Talent&rdquo;,
+                &ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or
+                &ldquo;our&rdquo;) in connection with its recruitment and employment
+                technology platform, associated websites, applications, and services
+                (collectively, the &ldquo;Platform&rdquo;).
+              </p>
+              <p className="leading-relaxed text-slate-700 mt-3">
+                By accessing or using the Platform, all users acknowledge that they
+                have read, understood, and agreed to the practices described herein.
+              </p>
+            </section>
+
+            {/* ── SECTION 1 ── */}
+            <div className="mb-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-orange-900 mb-4">
+                Section 1 — Privacy Policy
+              </p>
+            </div>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                1. Introduction
+                1. Purpose and Scope
               </h2>
-              <p className="text-slate-700 leading-relaxed">
-                Enabled Talent (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
-                &ldquo;our&rdquo;) is committed to protecting the privacy of
-                all users of our inclusive hiring platform. This Privacy Policy
-                explains what personal information we collect, how we use it,
-                and your rights regarding that information.
+              <p className="leading-relaxed">
+                This Privacy Policy governs the collection, use, disclosure,
+                retention, and safeguarding of personal information obtained through
+                the operation of the Platform.
               </p>
-              <p className="text-slate-700 leading-relaxed mt-3">
-                We comply with the{" "}
-                <em>Personal Information Protection and Electronic Documents Act (PIPEDA)</em>
-                , Ontario&apos;s{" "}
-                <em>Freedom of Information and Protection of Privacy Act</em>,
-                and the{" "}
-                <em>Accessibility for Ontarians with Disabilities Act (AODA)</em>.
+              <p className="leading-relaxed mt-3">
+                This Policy applies to all individuals and entities accessing or
+                using the Platform, including job seekers, employers, institutional
+                partners, representatives, and website visitors (&ldquo;Users&rdquo;).
+              </p>
+              <p className="leading-relaxed mt-3">
+                The Company is committed to protecting privacy, dignity, and
+                autonomy in all information-handling practices.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                2. Information We Collect
+                2. Legal Compliance Framework
               </h2>
+              <p className="leading-relaxed">
+                The Company&apos;s privacy practices are designed to comply with
+                applicable Canadian federal private-sector privacy legislation,
+                Ontario provincial legislation governing employment standards,
+                accessibility, and human rights, and applicable electronic
+                communications and anti-spam legislation.
+              </p>
+              <p className="leading-relaxed mt-3">
+                Where Users voluntarily provide disability-related,
+                accommodation-related, or health-related information, the Company
+                applies enhanced confidentiality and security safeguards consistent
+                with recognized health-information protection standards.
+              </p>
+            </section>
 
-              <h3 className="text-base font-semibold text-slate-900 mb-2 mt-4">
-                2.1 Information you provide directly
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                3. Collection of Personal Information
+              </h2>
+              <p className="leading-relaxed">
+                The Company collects only personal information that is reasonably
+                necessary to operate the Platform, deliver services, meet legal
+                obligations, and improve system performance.
+              </p>
+
+              <h3 className="text-base font-semibold text-slate-900 mt-5 mb-2">
+                3.1 Information Provided by Users
               </h3>
-              <p className="text-slate-700 leading-relaxed mb-2">
-                When you create an account or complete your profile, we may
-                collect:
+              <p className="leading-relaxed mb-3">The Company may collect:</p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>
+                  Identity and contact information, including name, email address,
+                  telephone number, mailing address, and optional profile image;
+                </li>
+                <li>
+                  Account information, including login credentials, preferences,
+                  and user role classification;
+                </li>
+                <li>
+                  Professional information, including r&eacute;sum&eacute;s,
+                  education history, employment history, skills, certifications,
+                  and career preferences;
+                </li>
+                <li>
+                  Accessibility or accommodation information, where voluntarily
+                  disclosed;
+                </li>
+                <li>
+                  Employer information, including organization details, job
+                  postings, hiring preferences, interview records, and
+                  compensation information;
+                </li>
+                <li>
+                  Billing and transaction information processed through secure
+                  third-party payment service providers.
+                </li>
+              </ol>
+              <p className="leading-relaxed mt-3 text-sm bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <strong>Note:</strong> Disclosure of disability-related or
+                accommodation information is strictly voluntary and may be
+                withdrawn at any time.
               </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>
-                  <strong>Identity information:</strong> full name, email
-                  address, phone number, location, gender, ethnicity, and
-                  citizenship status.
-                </li>
-                <li>
-                  <strong>Professional information:</strong> work experience,
-                  education, skills, certifications, projects, achievements,
-                  career preferences, and resume content.
-                </li>
-                <li>
-                  <strong>Accessibility information (sensitive):</strong>{" "}
-                  disability categories, accommodation needs, workplace
-                  accommodation preferences, and disclosure preferences. This
-                  information is entirely optional and provided at your
-                  discretion.
-                </li>
-                <li>
-                  <strong>Profile media:</strong> a profile photo you choose to
-                  upload.
-                </li>
-                <li>
-                  <strong>Links:</strong> LinkedIn profile, GitHub, portfolio,
-                  or social media URLs you provide.
-                </li>
-              </ul>
 
-              <h3 className="text-base font-semibold text-slate-900 mb-2 mt-4">
-                2.2 Information collected automatically
+              <h3 className="text-base font-semibold text-slate-900 mt-5 mb-2">
+                3.2 Automatically Collected Information
               </h3>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>
-                  <strong>Usage data:</strong> pages visited, features used,
-                  and interaction patterns within the Platform.
-                </li>
-                <li>
-                  <strong>Technical data:</strong> IP address, browser type,
-                  device type, and operating system.
-                </li>
-                <li>
-                  <strong>Session data:</strong> authentication session
-                  information managed by our authentication provider (Clerk).
-                </li>
-              </ul>
+              <p className="leading-relaxed mb-3">
+                When Users interact with the Platform, the Company automatically
+                collects:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>IP address and approximate location;</li>
+                <li>device type, browser type, and operating system;</li>
+                <li>usage activity, interaction logs, and session data;</li>
+                <li>cookies and similar tracking technologies.</li>
+              </ol>
+              <p className="leading-relaxed mt-3">
+                This information is used for system security, fraud prevention,
+                analytics, performance optimization, and accessibility improvements.
+              </p>
 
-              <h3 className="text-base font-semibold text-slate-900 mb-2 mt-4">
-                2.3 Employer information
+              <h3 className="text-base font-semibold text-slate-900 mt-5 mb-2">
+                3.3 Information from Third Parties
               </h3>
-              <p className="text-slate-700 leading-relaxed">
-                If you register as an Employer, we collect your name, company
-                name, email address, company profile information, and job
-                postings you create on the Platform.
+              <p className="leading-relaxed mb-3">
+                The Company may receive limited personal information from:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>authentication or identity-verification services;</li>
+                <li>
+                  analytics, communication, and cloud service providers;
+                </li>
+                <li>authorized employer or institutional partners.</li>
+              </ol>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                4. Use of Personal Information
+              </h2>
+              <p className="leading-relaxed mb-3">
+                The Company uses personal information to:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>operate and maintain the Platform;</li>
+                <li>create and manage user accounts;</li>
+                <li>facilitate recruitment and job application processes;</li>
+                <li>match job seekers with employment opportunities;</li>
+                <li>deliver accessibility and accommodation features;</li>
+                <li>personalize user experience;</li>
+                <li>communicate service-related notices;</li>
+                <li>prevent fraud, misuse, or security incidents;</li>
+                <li>conduct analytics and improve system performance; and</li>
+                <li>comply with legal and regulatory obligations.</li>
+              </ol>
+              <p className="leading-relaxed mt-3 font-medium">
+                The Company does not sell or rent personal information.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                3. How We Use Your Information
+                5. Sensitive Personal Information
               </h2>
-              <p className="text-slate-700 leading-relaxed mb-2">
-                We use the information we collect to:
+              <p className="leading-relaxed mb-3">
+                Disability-related, health-related, and accommodation-related
+                information is treated as sensitive personal information.
               </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
+              <p className="leading-relaxed mb-3">The Company:</p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
                 <li>
-                  Create and manage your account and authenticate your identity.
+                  collects such information only where voluntarily provided;
                 </li>
                 <li>
-                  Match Candidates with relevant job opportunities and Employers
-                  with suitable candidates.
+                  uses such information solely to support accessibility and
+                  accommodation services;
                 </li>
                 <li>
-                  Power AI-driven features such as resume coaching, career
-                  advice, and candidate ranking, using your profile data to
-                  provide personalised results.
+                  restricts access to authorized personnel on a need-to-know
+                  basis; and
                 </li>
                 <li>
-                  Communicate with you about your account, job applications,
-                  invitations, and platform updates.
+                  applies enhanced technical and organizational safeguards.
                 </li>
-                <li>
-                  Improve and develop the Platform through analytics and usage
-                  patterns.
-                </li>
-                <li>
-                  Comply with legal obligations and enforce our{" "}
-                  <Link
-                    href="/terms"
-                    className="text-orange-900 underline hover:text-orange-800"
-                  >
-                    Terms of Service
-                  </Link>
-                  .
-                </li>
-              </ul>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                4. Sensitive Information — Accessibility and Disability Data
-              </h2>
-              <p className="text-slate-700 leading-relaxed mb-3">
-                We treat accessibility and disability-related information as
-                sensitive personal information and apply heightened protections:
-              </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>
-                  <strong>Voluntary disclosure:</strong> You choose whether to
-                  disclose any accessibility needs. You can update or remove
-                  this information at any time from your profile settings.
-                </li>
-                <li>
-                  <strong>Controlled sharing:</strong> Accessibility information
-                  is shared with Employers only according to your chosen
-                  disclosure preference. If you prefer not to disclose, this
-                  information will not be visible to Employers.
-                </li>
-                <li>
-                  <strong>Purpose limitation:</strong> This information is used
-                  exclusively to facilitate workplace accommodation discussions
-                  and to help Employers create accessible, inclusive workplaces.
-                </li>
-                <li>
-                  <strong>No profiling for discrimination:</strong> We never use
-                  disability data to exclude candidates from job opportunities
-                  or to rank candidates in a discriminatory manner.
-                </li>
-              </ul>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                5. Information Sharing
-              </h2>
-              <p className="text-slate-700 leading-relaxed mb-3">
-                We do not sell your personal information. We share your
-                information only in the following circumstances:
-              </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>
-                  <strong>With Employers:</strong> Your candidate profile
-                  (excluding information you have chosen not to disclose) is
-                  visible to Employers who use the Platform to search for and
-                  evaluate candidates.
-                </li>
-                <li>
-                  <strong>Service providers:</strong> We use trusted third-party
-                  service providers to operate the Platform, including{" "}
-                  <strong>Clerk</strong> (authentication and user management)
-                  and cloud hosting and storage providers. These providers
-                  process data only on our behalf and under strict
-                  confidentiality obligations.
-                </li>
-                <li>
-                  <strong>AI features:</strong> When you use AI-powered features
-                  (such as career coaching or resume analysis), your profile data
-                  is processed by our AI systems to generate personalised
-                  responses. We do not share identifiable data with third-party
-                  AI providers without your consent.
-                </li>
-                <li>
-                  <strong>Legal requirements:</strong> We may disclose
-                  information if required by law, court order, or governmental
-                  authority, or to protect the rights, property, or safety of
-                  Enabled Talent, our users, or the public.
-                </li>
-                <li>
-                  <strong>Business transfers:</strong> In the event of a merger,
-                  acquisition, or sale of assets, your information may be
-                  transferred, subject to the same protections described in this
-                  policy.
-                </li>
-              </ul>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                6. Data Storage and Security
-              </h2>
-              <p className="text-slate-700 leading-relaxed mb-3">
-                Your data is stored on secure servers. We implement
-                industry-standard security measures including:
-              </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>Encryption in transit (TLS) and at rest.</li>
-                <li>
-                  Role-based access controls limiting who can access personal
-                  data.
-                </li>
-                <li>Regular security assessments.</li>
-              </ul>
-              <p className="text-slate-700 leading-relaxed mt-3">
-                While we take reasonable precautions, no transmission over the
-                internet or electronic storage method is 100% secure. If you
-                suspect a security breach, please contact us immediately at{" "}
-                <a
-                  href="mailto:privacy@enabledtalent.com"
-                  className="text-orange-900 underline hover:text-orange-800"
-                >
-                  privacy@enabledtalent.com
-                </a>
-                .
+              </ol>
+              <p className="leading-relaxed mt-3">
+                Withdrawal of such information does not affect access to core
+                Platform services.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                7. Data Retention
+                6. Artificial Intelligence and Automated Processing
               </h2>
-              <p className="text-slate-700 leading-relaxed">
-                We retain your personal information for as long as your account
-                is active or as needed to provide our services. If you close
-                your account, we will delete or anonymise your personal
-                information within 90 days, except where retention is required
-                by law or for legitimate business purposes (such as resolving
-                disputes or enforcing our Terms).
+              <p className="leading-relaxed mb-3">
+                The Company employs artificial intelligence and statistical models
+                to support:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2 mb-5">
+                <li>job matching and candidate recommendations;</li>
+                <li>
+                  r&eacute;sum&eacute; parsing and skill identification;
+                </li>
+                <li>accessibility optimization; and</li>
+                <li>system performance enhancement.</li>
+              </ol>
+              <h3 className="text-base font-semibold text-slate-900 mb-2">
+                Safeguards
+              </h3>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>
+                  AI systems assist but do not make final hiring or rejection
+                  decisions;
+                </li>
+                <li>all recruitment decisions remain under human authority;</li>
+                <li>AI outputs are subject to human review;</li>
+                <li>
+                  sensitive disability or health information is not used for
+                  hiring decisions;
+                </li>
+                <li>
+                  Users may request information regarding AI-assisted processing
+                  affecting them.
+                </li>
+              </ol>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                7. Legal Basis for Processing
+              </h2>
+              <p className="leading-relaxed mb-3">
+                Personal information is processed on the basis of:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>User consent;</li>
+                <li>performance of a contract;</li>
+                <li>legitimate business interests; and</li>
+                <li>compliance with legal or regulatory obligations.</li>
+              </ol>
+              <p className="leading-relaxed mt-3">
+                Users may withdraw consent at any time, subject to legal or
+                contractual restrictions.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                8. Cookies and Tracking
+                8. Disclosure of Personal Information
               </h2>
-              <p className="text-slate-700 leading-relaxed">
-                We use cookies and similar technologies to authenticate sessions,
-                remember your preferences, and analyse Platform usage. Essential
-                cookies (required for the Platform to function) are always
-                active. You can control non-essential cookies through your
-                browser settings.
+              <p className="leading-relaxed mb-3">
+                The Company may disclose personal information:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>
+                  to employers where Users apply to positions or share profiles;
+                </li>
+                <li>
+                  to service providers supporting Platform operations;
+                </li>
+                <li>
+                  to affiliated corporate entities for internal operations;
+                </li>
+                <li>where required by law or court order; and</li>
+                <li>
+                  in connection with corporate restructuring, merger, or sale of
+                  assets.
+                </li>
+              </ol>
+              <p className="leading-relaxed mt-3">
+                All third parties receiving personal information are required to
+                maintain confidentiality and appropriate security safeguards.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                9. Your Rights
+                9. Employer Obligations
               </h2>
-              <p className="text-slate-700 leading-relaxed mb-3">
-                Under PIPEDA and applicable provincial law, you have the right
-                to:
-              </p>
-              <ul className="list-disc pl-6 text-slate-700 space-y-2">
-                <li>
-                  <strong>Access:</strong> Request a copy of the personal
-                  information we hold about you.
-                </li>
-                <li>
-                  <strong>Correction:</strong> Request that we correct
-                  inaccurate or incomplete information.
-                </li>
-                <li>
-                  <strong>Withdrawal of consent:</strong> Withdraw consent to
-                  the processing of non-essential personal information at any
-                  time. This may affect your ability to use certain features.
-                </li>
-                <li>
-                  <strong>Deletion:</strong> Request deletion of your account
-                  and associated personal information.
-                </li>
-                <li>
-                  <strong>Portability:</strong> Request a copy of your data in
-                  a structured, machine-readable format.
-                </li>
-                <li>
-                  <strong>Complaint:</strong> Lodge a complaint with the Office
-                  of the Privacy Commissioner of Canada if you believe your
-                  privacy rights have been violated.
-                </li>
-              </ul>
-              <p className="text-slate-700 leading-relaxed mt-3">
-                To exercise these rights, contact us at{" "}
-                <a
-                  href="mailto:privacy@enabledtalent.com"
-                  className="text-orange-900 underline hover:text-orange-800"
-                >
-                  privacy@enabledtalent.com
-                </a>
-                . We will respond within 30 days.
+              <p className="leading-relaxed">
+                Employers using the Platform act as independent controllers of
+                personal information they receive and are solely responsible for
+                compliance with employment, recruitment, and human rights laws.
+                The Company does not control employer hiring decisions.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                10. Children&apos;s Privacy
+                10. Cross-Border Data Transfers
               </h2>
-              <p className="text-slate-700 leading-relaxed">
-                The Platform is not intended for use by individuals under the
-                age of 16. We do not knowingly collect personal information from
-                children under 16. If you believe we have inadvertently collected
-                such information, please contact us and we will delete it promptly.
+              <p className="leading-relaxed">
+                Personal information may be processed or stored outside Canada.
+                The Company implements contractual and technical safeguards to
+                ensure appropriate protection for cross-border data transfers. Use
+                of the Platform constitutes consent to such transfers.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                11. Changes to This Policy
+                11. Data Retention
               </h2>
-              <p className="text-slate-700 leading-relaxed">
-                We may update this Privacy Policy from time to time. We will
-                notify you of material changes by email or through a prominent
-                notice on the Platform before they take effect. The
-                &ldquo;Last updated&rdquo; date at the top of this page will
-                always reflect the most recent revision. Continued use of the
-                Platform after changes take effect constitutes acceptance of the
-                revised policy.
+              <p className="leading-relaxed">
+                Personal information is retained only for as long as necessary to
+                provide services, meet legal obligations, resolve disputes, and
+                enforce agreements. Thereafter, information is securely deleted or
+                anonymized.
               </p>
             </section>
 
-            <section>
+            <section className="mb-8">
               <h2 className="text-xl font-semibold text-slate-900 mb-3">
-                12. Contact Us
+                12. Security Measures
               </h2>
-              <p className="text-slate-700 leading-relaxed mb-2">
-                For privacy-related questions, requests, or complaints:
+              <p className="leading-relaxed">
+                The Company implements reasonable administrative, technical, and
+                physical safeguards to protect personal information, including
+                encryption, access controls, secure infrastructure, and
+                incident-response procedures. No system can be guaranteed
+                completely secure, and Users accept this inherent risk.
               </p>
-              <ul className="list-none text-slate-700 space-y-2">
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                13. User Rights
+              </h2>
+              <p className="leading-relaxed mb-3">
+                Subject to applicable law, Users may request:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
+                <li>access to their personal information;</li>
+                <li>correction of inaccurate information;</li>
+                <li>withdrawal of consent;</li>
+                <li>deletion where legally permissible; and</li>
                 <li>
-                  <strong>Privacy Officer Email:</strong>{" "}
-                  <a
-                    href="mailto:privacy@enabledtalent.com"
-                    className="text-orange-900 underline hover:text-orange-800"
-                  >
-                    privacy@enabledtalent.com
+                  information regarding AI-assisted processing.
+                </li>
+              </ol>
+              <p className="leading-relaxed mt-4">
+                Requests may be submitted to:
+              </p>
+              <address className="not-italic mt-2 space-y-1 text-slate-700">
+                <p className="font-semibold">ENABLED HR LABS INC.</p>
+                <p>
+                  Email:{" "}
+                  <a href="mailto:jeby@enabledtalent.com" className={linkCls}>
+                    jeby@enabledtalent.com
                   </a>
-                </li>
+                </p>
+              </address>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                14. Cookies and Tracking Technologies
+              </h2>
+              <p className="leading-relaxed">
+                The Platform uses cookies and similar technologies to maintain
+                sessions and analyze usage. Users may control cookie settings
+                through their browser. Disabling cookies may affect Platform
+                functionality.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                15. Minors
+              </h2>
+              <p className="leading-relaxed">
+                The Platform is not intended for individuals under sixteen (16)
+                years of age without appropriate authorization. The Company does
+                not knowingly collect personal information from minors under
+                sixteen.
+              </p>
+            </section>
+
+            <section className="mb-10">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                16. Amendments
+              </h2>
+              <p className="leading-relaxed">
+                The Company may amend this Policy from time to time. Continued
+                use of the Platform constitutes acceptance of the amended Policy.
+              </p>
+            </section>
+
+            {/* ── SECTION 2 ── */}
+            <div className="border-t border-slate-200 pt-8 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-orange-900 mb-6">
+                Section 2 — AI Transparency Notice
+              </p>
+            </div>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                AI Transparency Notice
+              </h2>
+              <p className="leading-relaxed mb-3">
+                Enabled Talent uses artificial intelligence to enhance recruitment
+                efficiency, accessibility, and user experience.
+              </p>
+
+              <h3 className="text-base font-semibold text-slate-900 mb-2">
+                AI is used to:
+              </h3>
+              <ol className="list-[lower-alpha] pl-6 space-y-2 mb-5">
+                <li>recommend employment opportunities;</li>
+                <li>identify relevant candidate skills;</li>
+                <li>generate candidate summaries; and</li>
+                <li>improve accessibility features.</li>
+              </ol>
+
+              <h3 className="text-base font-semibold text-slate-900 mb-2">
+                AI is not used to:
+              </h3>
+              <ol className="list-[lower-alpha] pl-6 space-y-2 mb-5">
+                <li>make final hiring or rejection decisions;</li>
                 <li>
-                  <strong>General Support:</strong>{" "}
-                  <a
-                    href="mailto:support@enabledtalent.com"
-                    className="text-orange-900 underline hover:text-orange-800"
-                  >
-                    support@enabledtalent.com
-                  </a>
+                  evaluate disability or health information for employment
+                  decisions; or
                 </li>
+                <li>replace human judgment.</li>
+              </ol>
+
+              <p className="leading-relaxed">
+                All employment decisions remain under human authority. Users may
+                request information regarding AI-assisted recommendations affecting
+                them.
+              </p>
+            </section>
+
+            {/* ── SECTION 3 ── */}
+            <div className="border-t border-slate-200 pt-8 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-widest text-orange-900 mb-6">
+                Section 3 — Regulatory Readiness Memorandum
+              </p>
+            </div>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                Overview
+              </h2>
+              <p className="leading-relaxed">
+                The Company operates in a regulatory environment involving
+                recruitment, data protection, accessibility, and artificial
+                intelligence. The Company maintains governance practices designed
+                to comply with current legal requirements and adapt to evolving
+                legislative standards.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                Compliance Commitments
+              </h2>
+              <p className="leading-relaxed mb-3">
+                The Company commits to:
+              </p>
+              <ol className="list-[lower-alpha] pl-6 space-y-2">
                 <li>
-                  <strong>Website:</strong>{" "}
-                  <a
-                    href="https://www.enabledtalent.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-900 underline hover:text-orange-800"
-                  >
-                    www.enabledtalent.com
-                  </a>
+                  obtaining meaningful user consent for data collection and use;
                 </li>
+                <li>limiting data collection to defined purposes;</li>
+                <li>implementing strong security safeguards;</li>
+                <li>maintaining breach-response procedures;</li>
+                <li>ensuring accessibility-first platform design;</li>
+                <li>applying human oversight to AI systems; and</li>
                 <li>
-                  <strong>Response time:</strong> We aim to respond within 30
-                  days as required under PIPEDA.
+                  requiring employer accountability in recruitment practices.
                 </li>
-              </ul>
+              </ol>
+            </section>
+
+            <section className="rounded-xl border border-slate-200 bg-slate-50 p-6">
+              <h2 className="text-base font-semibold text-slate-900 mb-2">
+                Conclusion
+              </h2>
+              <p className="leading-relaxed text-slate-700">
+                Enabled Talent is committed to operating a lawful,
+                privacy-respecting, and inclusive recruitment platform that
+                protects personal information, ensures accessibility, and applies
+                artificial intelligence responsibly.
+              </p>
             </section>
 
           </div>
