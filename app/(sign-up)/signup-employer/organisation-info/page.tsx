@@ -1,11 +1,10 @@
 "use client";
 
-import NavBarEmployerSignUp from "@/components/employer/NavBarEmployerSignUp";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
 import defaultImage from "@/public/Placeholder.png";
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import {
   useEffect,
   useRef,
@@ -204,6 +203,7 @@ export default function OrganisationInfoPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) return;
     setSubmitError(null);
 
     const trimmedOrgName = organizationInfo.organizationName.trim();
@@ -302,9 +302,7 @@ export default function OrganisationInfoPage() {
 
   return (
     <div className="min-h-screen w-full bg-[#F0F5FA] pb-10">
-      <NavBarEmployerSignUp />
-
-      <div className="mx-auto max-w-7xl px-4 md:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-4 pt-6 md:px-8 md:pt-8 lg:px-12">
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Left Sidebar Card */}
           <div className="w-full lg:w-87.5 shrink-0">
@@ -668,9 +666,18 @@ export default function OrganisationInfoPage() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-[#D98B48] px-8 py-3 font-semibold text-white shadow-md hover:bg-[#C07A3D] transition-colors"
+                  disabled={submitting}
+                  aria-disabled={submitting}
+                  className="inline-flex min-w-[136px] items-center justify-center gap-2 rounded-xl bg-[#D98B48] px-8 py-3 font-semibold text-white shadow-md transition-colors hover:bg-[#C07A3D] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-[#D98B48]"
                 >
-                  Save & Next
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Save & Next"
+                  )}
                 </button>
               </div>
             </form>

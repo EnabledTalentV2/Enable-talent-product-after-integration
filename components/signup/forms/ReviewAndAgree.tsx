@@ -14,33 +14,16 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
         <p className="text-base font-semibold text-slate-800">
           Terms And Conditions
         </p>
-        <ul className="space-y-3 text-base text-slate-700 list-disc pl-5">
-          <li>
-            Allow EnabledTalent to share your resume, pitch yourself and
-            behaviour question video with third parties (ex. prospective
-            employers) to consider you for an internship.
-          </li>
-          <li>
-            The EnabledTalent program has the right to remove you from the
-            program if you decline more than three interview requests without
-            appropriate justification
-          </li>
-          <li>
-            The EnabledTalent has the right to remove you from the program if
-            you decline more than two internship offers without appropriate
-            justification
-          </li>
-          <li>
-            I have read and understand the information provided to me in this
-            Notice of Collection pertaining to Enabled Talent&apos;s collection,
-            use, and disclosure of personal information. Enabled Talent collects
-            personal information for the purposes of program registration, and
-            related purposes as outlined in the Enabled Talent Notice of
-            Collection. Enabled Talent will collect, use, disclose, and protect
-            your personal information in accordance with the applicable privacy
-            laws and regulations.
-          </li>
-        </ul>
+        <p className="text-base text-slate-700">
+          I have read and understand the information provided to me in this
+          Notice of Collection pertaining to Enabled Talent&apos;s collection, use,
+          and disclosure of personal information. Enabled Talent collects
+          personal information for the purposes of program registration, and
+          related purposes as outlined in the Enabled Talent Notice of
+          Collection. Enabled Talent will collect, use, disclose, and protect
+          your personal information in accordance with the applicable privacy
+          laws and regulations.
+        </p>
       </div>
 
       <p className="text-base text-slate-700">

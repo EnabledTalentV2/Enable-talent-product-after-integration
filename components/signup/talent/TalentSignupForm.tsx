@@ -422,7 +422,7 @@ export default function TalentSignupForm({
         </p>
 
         <p className="text-[11px] text-slate-700">
-          By clicking login, you agree to our{" "}
+          By clicking Create account, you agree to our{" "}
           <Link
             href="/terms"
             className="underline text-slate-700 hover:text-slate-700"

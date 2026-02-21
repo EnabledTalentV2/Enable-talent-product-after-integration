@@ -97,7 +97,7 @@ export default function EmployerSignupVerification({
                 Go to login instead
               </button>
               <p className="text-center text-xs text-gray-500">
-                Don&apos;t worry — your account is safe. You can log in anytime to complete setup.
+                Don&apos;t worry - your account is safe. You can log in anytime to complete setup.
               </p>
             </>
           )}
@@ -145,7 +145,6 @@ export default function EmployerSignupVerification({
             placeholder="Enter 6-digit code"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
-            autoFocus
           />
         </div>
 
