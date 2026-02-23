@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useCallback, FormEvent } from "react";
+import { useState, useCallback, FormEvent, useEffect } from "react";
 import {
   BriefcaseBusiness,
   Building2,
@@ -15,7 +15,12 @@ export default function DashboardSubNavEmployer() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const searchFromUrl = searchParams.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(searchFromUrl);
+
+  useEffect(() => {
+    setSearchQuery(searchFromUrl);
+  }, [searchFromUrl]);
 
   const handleSearch = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -32,7 +37,6 @@ export default function DashboardSubNavEmployer() {
   const inactiveClass =
     "text-slate-700 hover:bg-slate-200 hover:text-slate-900";
   const activeClass = "bg-[#DCE6F1] text-slate-900 shadow-sm";
-  const disabledClass = "text-slate-400";
   const navItems = [
     {
       href: "/employer/dashboard",
@@ -87,24 +91,34 @@ export default function DashboardSubNavEmployer() {
         </div>
 
         {/* Search Bar - Visible on All Screen Sizes */}
-        <form onSubmit={handleSearch} className="w-full md:w-[420px]" role="search" aria-label="Search candidates">
-          <div className="relative w-full">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search candidates by name..."
-              aria-label="Search candidates"
-              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
-            />
+        <form onSubmit={handleSearch} className="w-full md:w-[520px]" role="search" aria-label="Search candidates">
+          <div className="flex w-full flex-col gap-2 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search candidates by name..."
+                aria-label="Search candidates"
+                className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
+              />
+              <Search
+                className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+            </div>
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              aria-label="Search"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white transition-colors hover:bg-orange-950 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
+              aria-label="Search candidates"
             >
-              <Search className="h-5 w-5" aria-hidden="true" />
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <span>Search</span>
             </button>
           </div>
+          <p className="mt-1 text-center text-xs text-slate-700">
+            Press Enter or select Search.
+          </p>
         </form>
       </div>
     </div>
