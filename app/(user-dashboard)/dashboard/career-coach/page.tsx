@@ -77,7 +77,7 @@ export default function CareerCoachPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-3 text-slate-900">
               <Sparkles className="h-6 w-6 text-amber-500" />
-              <h1 className="text-2xl font-bold">AI Career Coach</h1>
+              <h1 className="text-2xl font-bold"><abbr title="Artificial Intelligence">AI</abbr> Career Coach</h1>
             </div>
             <p className="max-w-2xl text-base text-slate-700">
               Get personalized guidance on your resume, interview prep, and job

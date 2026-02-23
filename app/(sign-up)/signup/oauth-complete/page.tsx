@@ -32,7 +32,7 @@ export default function OAuthSignupCompletePage() {
                 ? "Preparing your secure session..."
                 : "Connecting your account to our system..."
               : oauth.successMessage
-                ? "We're syncing your account so you can continue to resume upload."
+                ? "We're setting up your account so you can continue to upload your resume."
                 : "Your account was created. We just need to finish connecting it to our system."}
           </p>
         </div>

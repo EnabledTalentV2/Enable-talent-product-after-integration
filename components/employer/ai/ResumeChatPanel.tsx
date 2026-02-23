@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
@@ -31,7 +32,7 @@ export default function ResumeChatPanel({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: scrollBehavior() });
   }, [messages]);
 
   // Auto-resize textarea
@@ -74,7 +75,7 @@ export default function ResumeChatPanel({
           <div>
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <span>💬</span>
-              <span>Chat with AI about {candidateName}</span>
+              <span>Chat with <abbr title="Artificial Intelligence">AI</abbr> about {candidateName}</span>
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               Ask questions about this candidate&apos;s resume and experience
@@ -205,20 +206,20 @@ export default function ResumeChatPanel({
                   <div className="flex items-center gap-2">
                     <div className="flex space-x-1">
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce motion-reduce:animate-none"
                         style={{ animationDelay: "0ms" }}
                       ></div>
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce motion-reduce:animate-none"
                         style={{ animationDelay: "150ms" }}
                       ></div>
                       <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce motion-reduce:animate-none"
                         style={{ animationDelay: "300ms" }}
                       ></div>
                     </div>
                     <span className="text-sm text-gray-600">
-                      AI is thinking...
+                      <abbr title="Artificial Intelligence">AI</abbr> is thinking...
                     </span>
                   </div>
                 </div>

@@ -161,7 +161,7 @@ export default function DashBoardNavbar() {
               className="flex items-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white shadow-md transition-opacity hover:bg-orange-950"
             >
               <Search size={18} strokeWidth={3} aria-hidden="true" />
-              <span>AI Career Coach</span>
+              <span><abbr title="Artificial Intelligence">AI</abbr> Career Coach</span>
             </Link>
           </div>
 
@@ -260,7 +260,7 @@ export default function DashBoardNavbar() {
                     onClick={toggleMenu}
                   >
                     <Search size={20} />
-                    <span>AI Career Coach</span>
+                    <span><abbr title="Artificial Intelligence">AI</abbr> Career Coach</span>
                   </Link>
                 </div>
               </div>

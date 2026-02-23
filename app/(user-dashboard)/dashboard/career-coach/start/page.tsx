@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -88,7 +89,7 @@ export default function CareerCoachStartPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: scrollBehavior(),
       block: "end",
     });
   }, [messages, isSendingMessage]);

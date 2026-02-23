@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -239,7 +240,7 @@ export function useEmployerSignup() {
       const target = firstInvalid?.[1]?.current;
       if (target) {
         target.focus();
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
       return;
     }

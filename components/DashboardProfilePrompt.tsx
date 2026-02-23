@@ -19,8 +19,7 @@ export default function DashboardProfilePrompt({
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-orange-900 p-6 text-white shadow-sm">
-      <div className="absolute right-10 top-6 h-32 w-32 rounded-full border border-white/25 opacity-40" />
-      <div className="absolute right-24 top-2 h-24 w-24 rounded-full border border-white/20 opacity-50" />
+{/* decorative circles removed for cleaner look */}
       <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
         <div>
           <p className="text-base font-semibold uppercase tracking-wide text-white">

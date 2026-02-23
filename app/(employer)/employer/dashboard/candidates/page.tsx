@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { Suspense, useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -318,7 +319,7 @@ function CandidatesListPageContent() {
       if (!target) return;
 
       if (!isDesktop) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
       }
 
       if (target instanceof HTMLElement) {
@@ -330,7 +331,7 @@ function CandidatesListPageContent() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     updatePageParam(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }, [updatePageParam]);
 
   const handleInviteClick = useCallback(() => {

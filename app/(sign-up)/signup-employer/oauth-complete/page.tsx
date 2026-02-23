@@ -28,7 +28,7 @@ export default function EmployerOAuthCompletePage() {
                 ? "Preparing your secure session..."
                 : "Connecting your account to our system..."
               : oauth.successMessage
-                ? "We're syncing your account so you can continue onboarding."
+                ? "We're setting up your account so you can continue."
                 : "Your account was created. We just need to finish connecting it to our system."}
           </p>
         </div>

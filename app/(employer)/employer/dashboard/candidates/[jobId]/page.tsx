@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import React, {
   useCallback,
@@ -40,7 +41,7 @@ import type { CandidateProfile } from "@/lib/types/candidateProfile";
 import type { Application } from "@/components/employer/candidates/ApplicantsList";
 
 const TABS = [
-  { id: "ai_ranking", label: "AI Ranking", status: null },
+  { id: "ai_ranking", label: <><abbr title="Artificial Intelligence">AI</abbr> Ranking</>, status: null },
   { id: "applicants", label: "Applicants", status: "applied" },
   { id: "shortlisted", label: "Shortlisted", status: "shortlisted" },
   { id: "declined", label: "Rejected", status: "rejected" },
@@ -545,7 +546,7 @@ export default function CandidatesPage() {
       if (!target) return;
 
       if (!isDesktop) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
       }
 
       if (target instanceof HTMLElement) {
@@ -556,7 +557,7 @@ export default function CandidatesPage() {
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }, []);
 
   const toggleFilter = useCallback(

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { UserData } from "@/lib/types/user";
 
 type AccessibilityNeeds = NonNullable<UserData["accessibilityNeeds"]>;
@@ -9,7 +10,7 @@ type Props = {
   onChange: (patch: Partial<AccessibilityNeeds>) => void;
 };
 
-const categories = [
+const categories: { id: string; title: string; description: ReactNode }[] = [
   {
     id: "physical",
     title: "Physical Disability",
@@ -24,7 +25,7 @@ const categories = [
   {
     id: "neurodevelopmental",
     title: "Neurodevelopmental",
-    description: "Includes ADHD, autism spectrum, and learning disabilities",
+    description: <>Includes <abbr title="Attention-Deficit/Hyperactivity Disorder">ADHD</abbr>, autism spectrum, and learning disabilities</>,
   },
   {
     id: "mental_health",

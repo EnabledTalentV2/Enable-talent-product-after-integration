@@ -31,6 +31,7 @@ type TalentLoginFormProps = {
   togglePassword: () => void;
   handleSignOut: () => void | Promise<void>;
   handleSyncAccount: () => void | Promise<void>;
+  isSessionExpired?: boolean;
 };
 
 export default function TalentLoginForm({
@@ -57,9 +58,20 @@ export default function TalentLoginForm({
   togglePassword,
   handleSignOut,
   handleSyncAccount,
+  isSessionExpired,
 }: TalentLoginFormProps) {
   return (
     <>
+      {isSessionExpired && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          Your session expired due to inactivity. Your progress has been saved
+          — please sign in to continue where you left off.
+        </div>
+      )}
+
       <div className="text-center mb-7">
         <h2
           id="talent-login-heading"
@@ -204,8 +216,8 @@ export default function TalentLoginForm({
                   className="mt-3 w-full rounded-lg bg-orange-900 py-2 px-4 text-sm font-semibold text-white shadow-md transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSyncing
-                    ? `Syncing... (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? "" : "s"} left)`
-                    : `Sync Account (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? "" : "s"} left)`}
+                    ? `Connecting... (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? "" : "s"} left)`
+                    : `Reconnect Account (${2 - syncRetryCount} attempt${2 - syncRetryCount === 1 ? "" : "s"} left)`}
                 </button>
                 <button
                   type="button"

@@ -45,8 +45,15 @@ export default function SessionExpiryWarning({
   const handleSignOut = useCallback(async () => {
     clearTimers();
     setShowWarning(false);
+
+    // SC 2.2.5 (Re-authenticating, AAA): preserve the user's current location
+    // so they can return after re-login. Zustand stores already persist form
+    // data to localStorage, so only the return path needs saving.
+    const returnPath = window.location.pathname + window.location.search;
+    const loginUrl = `${loginPath}?next=${encodeURIComponent(returnPath)}&reason=session_expired`;
+
     await signOut();
-    router.push(loginPath);
+    router.push(loginUrl);
   }, [clearTimers, signOut, router, loginPath]);
 
   const startCountdown = useCallback(() => {

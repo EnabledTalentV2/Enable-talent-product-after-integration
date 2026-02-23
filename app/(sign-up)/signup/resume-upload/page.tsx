@@ -132,7 +132,7 @@ export default function ResumeUpload() {
             ) : null}
 
             <span id="resume-upload-help" className="text-base text-slate-700">
-              Supports PDF files.
+              Supports <abbr title="Portable Document Format">PDF</abbr> files.
             </span>
           </div>
 

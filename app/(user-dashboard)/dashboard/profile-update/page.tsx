@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -853,7 +854,7 @@ export default function ProfileUpdatePage() {
     if (typeof document === "undefined") return;
     const target = document.getElementById(`profile-section-${key}`);
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     if ("focus" in target) {
       (target as HTMLElement).focus({ preventScroll: true });
     }
@@ -1010,7 +1011,7 @@ export default function ProfileUpdatePage() {
     const el = document.getElementById(firstErrorId);
     if (el instanceof HTMLElement) {
       el.focus({ preventScroll: false });
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
     }
   }, [firstErrorId]);
 
@@ -2713,7 +2714,7 @@ export default function ProfileUpdatePage() {
             id="profile-resume-help"
             className="mt-2 text-xs text-slate-400"
           >
-            PDF only, max 10MB.
+            <abbr title="Portable Document Format">PDF</abbr> only, max 10MB.
           </p>
           {selectedResumeName ? (
             <div className="mt-3 flex items-center justify-center gap-3 text-sm text-slate-700">

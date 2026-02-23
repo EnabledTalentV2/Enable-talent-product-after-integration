@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { Suspense, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -199,7 +200,7 @@ function CompaniesPageContent() {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       requestAnimationFrame(() => {
         detailsRef.current?.scrollIntoView({
-          behavior: "smooth",
+          behavior: scrollBehavior(),
           block: "start",
         });
       });

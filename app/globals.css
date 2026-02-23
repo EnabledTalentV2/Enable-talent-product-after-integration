@@ -41,6 +41,16 @@ body {
     BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* SC 3.1.4: remove Tailwind preflight's dotted underline on <abbr> — the
+   title tooltip still works on hover; the dotted line is distracting in
+   button/nav contexts.  Tailwind v4 preflight uses `abbr:where([title])`
+   which has low specificity, so a plain `abbr[title]` selector wins. But
+   some browsers add their own UA rule, so we use !important as a fallback. */
+abbr[title] {
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+}
+
 button,
 a,
 [role="button"] {
