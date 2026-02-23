@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import {
   BriefcaseBusiness,
   Home,
@@ -15,23 +16,68 @@ export default function DashboardSubnav() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
+  const [inputValue, setInputValue] = useState(searchQuery);
+  const isOnSearchablePage = pathname.startsWith("/dashboard/my-jobs");
 
-  const handleSearchChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set("q", value);
-    } else {
-      params.delete("q");
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
+  const updateRouteWithQuery = useCallback(
+    (
+      value: string,
+      options: { forceMyJobs?: boolean; method?: "push" | "replace" } = {},
+    ) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        params.set("q", trimmedValue);
+      } else {
+        params.delete("q");
+      }
+
+      const targetPath =
+        options.forceMyJobs || (!isOnSearchablePage && trimmedValue)
+          ? "/dashboard/my-jobs"
+          : pathname;
+      const nextUrl = params.toString()
+        ? `${targetPath}?${params.toString()}`
+        : targetPath;
+      const navigationMethod = options.method ?? "replace";
+
+      if (navigationMethod === "push") {
+        router.push(nextUrl);
+      } else {
+        router.replace(nextUrl);
+      }
+    },
+    [searchParams, isOnSearchablePage, pathname, router],
+  );
+
+  useEffect(() => {
+    if (!isOnSearchablePage) {
+      return;
+    }
+    if (inputValue === searchQuery) {
+      return;
     }
 
-    // If user is searching and not on my-jobs page, redirect to my-jobs
-    const isOnSearchablePage = pathname.startsWith("/dashboard/my-jobs");
+    const timer = setTimeout(() => {
+      updateRouteWithQuery(inputValue, { method: "replace" });
+    }, 300);
 
-    if (value.trim() && !isOnSearchablePage) {
-      router.push(`/dashboard/my-jobs?${params.toString()}`);
-    } else {
-      router.push(`${pathname}?${params.toString()}`);
+    return () => clearTimeout(timer);
+  }, [inputValue, searchQuery, isOnSearchablePage, updateRouteWithQuery]);
+
+  const handleSearchSubmit = () => {
+    const trimmedValue = inputValue.trim();
+    if (!trimmedValue && !searchQuery) {
+      return;
     }
+    updateRouteWithQuery(trimmedValue, {
+      forceMyJobs: Boolean(trimmedValue),
+      method: "push",
+    });
   };
   const linkClass =
     "flex items-center gap-2 rounded-full px-3 py-2 text-base font-medium transition-colors";
@@ -90,35 +136,47 @@ export default function DashboardSubnav() {
         </div>
 
         {/* Search Bar - Visible on All Screen Sizes */}
-        <div className="w-full md:w-[420px]" role="search" aria-label="Search jobs">
-          <div className="relative w-full">
-            <input
-              type="search"
-              placeholder="Search by skills, company or job"
-              aria-label="Search by skills, company or job"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim()) {
-                  // Ensure search is applied even if already on a searchable page
-                  handleSearchChange(searchQuery);
-                }
-              }}
-              className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
-            />
+        <div
+          className="w-full md:w-[520px]"
+          role="search"
+          aria-label="Search jobs"
+        >
+          <div className="flex w-full flex-col gap-2 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <input
+                type="search"
+                placeholder="Search by job title, company, location, or job type"
+                aria-label="Search by job title, company, location, or job type"
+                aria-describedby="search-help"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearchSubmit();
+                  }
+                }}
+                className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
+              />
+              <Search
+                className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+            </div>
             <button
               type="button"
-              onClick={() => {
-                if (searchQuery.trim()) {
-                  handleSearchChange(searchQuery);
-                }
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
-              aria-label="Submit search"
+              onClick={handleSearchSubmit}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white transition-colors hover:bg-orange-950 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
             >
-              <Search className="h-5 w-5" aria-hidden="true" />
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <span>Search</span>
             </button>
           </div>
+          <p
+            id="search-help"
+            className="text-xs text-slate-700 w-full mt-1 text-center"
+          >
+            Press Enter or select Search.
+          </p>
         </div>
       </div>
     </div>
