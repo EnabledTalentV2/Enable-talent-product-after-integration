@@ -46,6 +46,7 @@ function LoginPageContent() {
           togglePassword={login.togglePassword}
           handleSignOut={login.handleSignOut}
           handleSyncAccount={login.handleSyncAccount}
+          isSessionExpired={login.isSessionExpired}
         />
       )}
     </LoginPageLayout>

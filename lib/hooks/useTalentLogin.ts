@@ -585,5 +585,7 @@ export function useTalentLogin() {
     // Refs
     errorSummaryRef,
     warningSummaryRef,
+    // Session expiry
+    isSessionExpired: syncReason === "session_expired",
   };
 }

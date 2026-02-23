@@ -52,11 +52,11 @@ export default function AIAgentSearchPanel() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <span>🤖</span>
-          <span>AI Candidate Search</span>
+          <span><abbr title="Artificial Intelligence">AI</abbr> Candidate Search</span>
         </h2>
         <p className="text-sm text-gray-600 mt-1">
           Search for candidates using natural language. Describe what you&apos;re
-          looking for and let AI find the best matches.
+          looking for and let <abbr title="Artificial Intelligence">AI</abbr> find the best matches.
         </p>
       </div>
 

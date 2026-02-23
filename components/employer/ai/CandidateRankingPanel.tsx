@@ -59,10 +59,10 @@ export default function CandidateRankingPanel({
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <span>✨</span>
-            <span>AI Candidate Ranking</span>
+            <span><abbr title="Artificial Intelligence">AI</abbr> Candidate Ranking</span>
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Let AI analyze and rank candidates based on job requirements
+            Let <abbr title="Artificial Intelligence">AI</abbr> analyze and rank candidates based on job requirements
           </p>
         </div>
         <div className="flex items-center gap-3 sm:ml-auto">

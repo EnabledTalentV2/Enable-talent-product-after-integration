@@ -129,8 +129,8 @@ function AccountSetupRequiredContent() {
         </h1>
         <p className="mt-2 text-sm text-slate-700">
           You&apos;re signed in{email ? ` as ${email}` : ""}, but your account
-          record in our system is missing or was deleted. To continue, create
-          your account again and complete onboarding.
+          record in our system is missing or was deleted. To continue, please
+          create your account again and complete the setup process.
         </p>
 
         {error ? (

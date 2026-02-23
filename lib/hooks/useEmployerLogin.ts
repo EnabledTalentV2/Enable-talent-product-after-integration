@@ -581,5 +581,7 @@ export function useEmployerLogin() {
     // Refs
     errorSummaryRef,
     warningSummaryRef,
+    // Session expiry
+    isSessionExpired: syncReason === "session_expired",
   };
 }

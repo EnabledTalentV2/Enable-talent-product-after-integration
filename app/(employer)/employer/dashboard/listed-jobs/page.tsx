@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { Suspense, useEffect, useMemo, useRef, useState, useCallback, FormEvent } from "react";
 import { Search } from "lucide-react";
@@ -145,7 +146,7 @@ function ListedJobsPageContent() {
       }
 
       if (!isDesktop) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
       }
 
       if (target instanceof HTMLElement) {

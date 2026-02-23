@@ -132,10 +132,10 @@ export default function AccessibilityAccommodations({
           >
             <p className="font-semibold text-amber-900">
               {parseFailureReason === "timeout"
-                ? "Resume parsing timed out"
+                ? "We couldn\u2019t read your resume in time"
                 : parseFailureReason === "no_data"
-                  ? "Could not extract data from resume"
-                  : "Resume parsing failed"}
+                  ? "We couldn\u2019t find any data in your resume"
+                  : "Something went wrong while reading your resume"}
             </p>
             <p className="mt-1 text-amber-900">{parseFailure}</p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">

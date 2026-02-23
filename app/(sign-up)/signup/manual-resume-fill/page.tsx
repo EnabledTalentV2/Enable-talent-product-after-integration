@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import { useEffect, useMemo } from "react";
 import Navbar from "@/components/signup/Navbar";
@@ -671,7 +672,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.basicInfoFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.basicInfoFirstError, form.activeStep.key]);
@@ -681,7 +682,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.educationFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.educationFirstError, form.activeStep.key]);
@@ -691,7 +692,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.workExpFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.workExpFirstError, form.activeStep.key]);
@@ -701,7 +702,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.skillFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.skillFirstError, form.activeStep.key]);
@@ -711,7 +712,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.projectFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.projectFirstError, form.activeStep.key]);
@@ -721,7 +722,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.certFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.certFirstError, form.activeStep.key]);
@@ -731,7 +732,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.preferenceFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.preferenceFirstError, form.activeStep.key]);
@@ -741,7 +742,7 @@ export default function ManualResumeFill() {
       const el = document.getElementById(form.otherDetailsFirstError);
       if (el instanceof HTMLElement) {
         el.focus({ preventScroll: false });
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
     }
   }, [form.otherDetailsFirstError, form.activeStep.key]);

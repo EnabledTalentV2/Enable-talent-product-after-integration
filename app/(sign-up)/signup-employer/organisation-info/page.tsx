@@ -1,4 +1,5 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { useEmployerDataStore } from "@/lib/employerDataStore";
@@ -252,7 +253,7 @@ export default function OrganisationInfoPage() {
       const target = firstInvalid?.[1]?.current;
       if (target) {
         (target as HTMLElement).focus?.();
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }
       return;
     }

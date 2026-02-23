@@ -1,6 +1,15 @@
 "use client";
+import { scrollBehavior } from "@/lib/utils/scrollBehavior";
 
-import { Suspense, useMemo, useState, useCallback, useEffect, useRef } from "react";
+import {
+  Suspense,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  type FormEvent,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal } from "lucide-react";
 import {
@@ -23,6 +32,7 @@ import { getApiErrorMessage } from "@/lib/api-client";
 import { invitesAPI } from "@/lib/services/invitesAPI";
 
 const ITEMS_PER_PAGE = 12;
+const SEARCH_SYNC_DELAY_MS = 300;
 
 const DEFAULT_JOB_TYPES = [
   "Full-time",
@@ -106,8 +116,6 @@ function CandidatesListPageContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSendingInvites, setIsSendingInvites] = useState(false);
   const didMountRef = useRef(false);
-  const didInitQueryRef = useRef(false);
-  const updatePageParamRef = useRef<(page: number) => void>(() => undefined);
 
   useEffect(() => {
     setLocalQuery(queryFromUrl);
@@ -252,6 +260,35 @@ function CandidatesListPageContent() {
       : `/employer/dashboard/candidates/profile/${selectedCandidateSlug}`;
   }, [selectedCandidateSlug, queryFromUrl, currentPage]);
 
+  const syncSearchQueryToUrl = useCallback(
+    (nextQuery: string) => {
+      const trimmedQuery = nextQuery.trim();
+      const params = new URLSearchParams(searchParamsString);
+      const currentSearch = (params.get("search") || "").trim();
+
+      if (trimmedQuery === currentSearch) {
+        return;
+      }
+
+      if (trimmedQuery) {
+        params.set("search", trimmedQuery);
+      } else {
+        params.delete("search");
+      }
+
+      // Search changes should always reset pagination to page 1.
+      params.delete("page");
+
+      const query = params.toString();
+      const nextHref = query
+        ? `/employer/dashboard/candidates?${query}`
+        : "/employer/dashboard/candidates";
+
+      router.replace(nextHref);
+    },
+    [router, searchParamsString]
+  );
+
   const updatePageParam = useCallback(
     (page: number) => {
       const params = new URLSearchParams(searchParamsString);
@@ -273,17 +310,26 @@ function CandidatesListPageContent() {
   );
 
   useEffect(() => {
-    updatePageParamRef.current = updatePageParam;
-  }, [updatePageParam]);
-
-  useEffect(() => {
-    if (!didInitQueryRef.current) {
-      didInitQueryRef.current = true;
+    const trimmedLocalQuery = localQuery.trim();
+    const trimmedUrlQuery = queryFromUrl.trim();
+    if (trimmedLocalQuery === trimmedUrlQuery) {
       return;
     }
-    setCurrentPage(1);
-    updatePageParamRef.current(1);
-  }, [localQuery]);
+
+    const timer = setTimeout(() => {
+      syncSearchQueryToUrl(localQuery);
+    }, SEARCH_SYNC_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [localQuery, queryFromUrl, syncSearchQueryToUrl]);
+
+  const handleLocalSearchSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      syncSearchQueryToUrl(localQuery);
+    },
+    [localQuery, syncSearchQueryToUrl]
+  );
 
   useEffect(() => {
     if (paginatedCandidates.length === 0) {
@@ -318,7 +364,7 @@ function CandidatesListPageContent() {
       if (!target) return;
 
       if (!isDesktop) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        target.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
       }
 
       if (target instanceof HTMLElement) {
@@ -330,7 +376,7 @@ function CandidatesListPageContent() {
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     updatePageParam(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
   }, [updatePageParam]);
 
   const handleInviteClick = useCallback(() => {
@@ -487,31 +533,45 @@ function CandidatesListPageContent() {
           </div>
 
           <form
-            onSubmit={(event) => event.preventDefault()}
-            className="mb-5 flex items-center gap-2"
+            onSubmit={handleLocalSearchSubmit}
+            className="mb-2 flex flex-wrap items-center gap-2"
           >
             <div className="relative flex-1">
               <input
                 type="text"
                 value={localQuery}
                 onChange={(event) => setLocalQuery(event.target.value)}
-                placeholder="Search by skills, role, or location"
+                placeholder="Search candidates by name..."
                 aria-label="Search candidates"
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-10 text-sm text-slate-700 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
               />
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
             </div>
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-950 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
+              aria-label="Search candidates"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <span>Search</span>
+            </button>
             <button
               type="button"
               onClick={() => setIsFiltersOpen((prev) => !prev)}
               aria-expanded={isFiltersOpen}
               aria-controls="candidate-filters"
-              className="flex items-center gap-2 rounded-xl bg-[#D95F35] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B84D28]"
+              className="flex min-h-11 items-center gap-2 rounded-xl bg-[#D95F35] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#B84D28] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
             >
               <SlidersHorizontal className="h-4 w-4" />
               Filters{hasActiveFilters ? ` (${filters.availability.length + filters.jobType.length + filters.workArrangement.length + (filters.verifiedOnly ? 1 : 0)})` : ""}
             </button>
           </form>
+          <p className="mb-5 mt-1 text-center text-xs text-slate-700">
+            Press Enter or select Search.
+          </p>
 
           {isFiltersOpen && (
             <div

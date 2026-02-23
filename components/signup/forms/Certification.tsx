@@ -194,7 +194,7 @@ export default function Certification({
                       credentialError ? "text-red-800" : "text-slate-700"
                     }`}
                   >
-                    Credential URL
+                    Credential <abbr title="web address">URL</abbr>
                   </label>
                   <div
                     className={`flex items-center rounded-lg border px-3 py-2.5 text-base shadow-sm ${

@@ -46,6 +46,7 @@ function EmployerLoginPageContent() {
           togglePassword={login.togglePassword}
           handleSignOut={login.handleSignOut}
           handleSyncAccount={login.handleSyncAccount}
+          isSessionExpired={login.isSessionExpired}
         />
       )}
     </EmployerLoginPageLayout>

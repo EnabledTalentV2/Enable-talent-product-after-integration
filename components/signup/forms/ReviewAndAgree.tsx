@@ -44,10 +44,10 @@ export default function ReviewAndAgree({ data, onChange }: Props) {
           knowledge. You may withdraw consent at any time by contacting{" "}
           <strong>ENABLED HR LABS INC.</strong> at{" "}
           <a
-            href="mailto:jeby@enabledtalent.com"
+            href="mailto:support@enabledtalent.com"
             className="underline text-orange-900 hover:text-orange-950 focus-visible:ring-2 focus-visible:ring-[#C27803] rounded"
           >
-            jeby@enabledtalent.com
+            support@enabledtalent.com
           </a>
           .
         </p>
