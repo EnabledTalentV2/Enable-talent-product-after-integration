@@ -101,6 +101,13 @@ a:focus-visible {
   box-shadow: 0 0 0 6px rgba(194, 120, 3, 0.15);
 }
 
+/* Enforce a consistent 3px focus treatment even when utility classes use focus:outline-none/focus:ring-1. */
+:where(button, a, input, textarea, select, [role="button"], [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring-color) !important;
+  outline-offset: var(--focus-ring-offset) !important;
+  box-shadow: 0 0 0 6px rgba(194, 120, 3, 0.2) !important;
+}
+
 /* ============================================
    WCAG 1.4.13: Content on Hover or Focus
    Ensures dropdown/tooltip content is accessible
@@ -262,8 +269,23 @@ input[type="radio"] {
 [class*="bg-emerald-9"]:focus-visible,
 [class*="bg-slate-8"]:focus-visible,
 [class*="bg-slate-9"]:focus-visible {
-  outline-color: #ffffff;
-  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.25);
+  outline-color: #ffffff !important;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Bring common muted utility tokens to AAA-safe contrast levels on light backgrounds. */
+.text-slate-400,
+.text-slate-500,
+.text-gray-400,
+.text-gray-500 {
+  color: var(--text-secondary) !important;
+}
+
+/* Keep placeholder text readable on white/light surfaces. */
+input::placeholder,
+textarea::placeholder {
+  color: #475569 !important;
+  opacity: 1;
 }
 
 /* Visible focus for custom controls */

@@ -194,8 +194,8 @@ export default function EmployerDashboardPage() {
   ];
 
   return (
-    <main id="main-content" aria-labelledby="dashboard-heading">
-      <h1 id="dashboard-heading" className="sr-only">Employer Dashboard</h1>
+    <section aria-labelledby="dashboard-heading">
+      <h2 id="dashboard-heading" className="sr-only">Employer Dashboard Overview</h2>
       <section className="mx-auto max-w-360 space-y-6 px-4 py-8 mt-4 sm:space-y-8 sm:px-6 sm:py-10 sm:mt-6">
       {/* Top Section: Chart & Stats */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -318,6 +318,6 @@ export default function EmployerDashboardPage() {
         </div>
       </div>
       </section>
-    </main>
+    </section>
   );
 }

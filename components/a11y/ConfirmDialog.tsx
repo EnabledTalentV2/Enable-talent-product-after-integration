@@ -145,11 +145,11 @@ export default function ConfirmDialog({
         aria-describedby="confirm-dialog-description"
         className="relative z-10 mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
       >
-        {/* Close button - WCAG 2.5.8: 24x24px minimum touch target */}
+        {/* Close button - WCAG 2.5.5 AAA: 44x44px minimum touch target */}
         <button
           type="button"
           onClick={onCancel}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+          className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
           aria-label="Close dialog"
         >
           <X className="h-5 w-5" aria-hidden="true" />

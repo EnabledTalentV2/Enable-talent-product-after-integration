@@ -20,7 +20,7 @@ export default function LoginPageLayout({ children }: LoginPageLayoutProps) {
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <a
           href="https://www.enabledtalent.com/"
-          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-orange-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-slate-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -64,7 +64,7 @@ export default function LoginPageLayout({ children }: LoginPageLayoutProps) {
             <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
               Welcome To Enabled Talent
             </h1>
-            <p className="text-base text-slate-800 md:text-lg">
+            <p className="text-base text-slate-900 md:text-lg">
               Because every talent deserves the right chance
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function LoginPageLayout({ children }: LoginPageLayoutProps) {
         <p className="px-8 py-3 text-[14px] font-medium text-slate-900 text-center">
           Are you an Employer?{" "}
           <Link
-            className="font-bold text-orange-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
+            className="font-bold text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-300 rounded-sm"
             href="/login-employer"
             aria-label="Log in here to the Employer portal"
           >

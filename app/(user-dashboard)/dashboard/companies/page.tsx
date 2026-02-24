@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
 import ConfirmDialog from "@/components/a11y/ConfirmDialog";
+import Toast from "@/components/Toast";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
@@ -106,6 +107,8 @@ function CompaniesPageContent() {
   const [selectedId, setSelectedId] = useState("");
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<"success" | "error">("success");
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const detailsRef = useRef<HTMLDivElement | null>(null);
@@ -248,7 +251,8 @@ function CompaniesPageContent() {
       {
         onError: (error) => {
           console.error("Failed to apply to job:", error);
-          alert("Failed to submit application. Please try again.");
+          setToastTone("error");
+          setToastMessage("Failed to submit application. Please try again.");
         },
       }
     );
@@ -600,6 +604,14 @@ function CompaniesPageContent() {
           </div>
         </div>
       </div>
+      )}
+
+      {toastMessage && (
+        <Toast
+          tone={toastTone}
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
       )}
 
       <ConfirmDialog

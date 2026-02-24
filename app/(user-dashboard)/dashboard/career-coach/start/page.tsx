@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Sparkles, Bot, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import Toast from "@/components/Toast";
 import { useCareerCoach } from "@/lib/hooks/useCareerCoach";
 import { useFetchCandidateProfile } from "@/lib/hooks/useFetchCandidateProfile";
 import { handleSessionExpiry } from "@/lib/api-client";
@@ -60,6 +61,7 @@ export default function CareerCoachStartPage() {
     return defaultMessages;
   });
   const [draft, setDraft] = useState("");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return window.localStorage.getItem(THREAD_ID_KEY);
@@ -101,7 +103,7 @@ export default function CareerCoachStartPage() {
     }
 
     if (!resumeSlug) {
-      alert("Unable to send message. Profile not loaded yet.");
+      setToastMessage("Unable to send message. Profile not loaded yet.");
       return;
     }
 
@@ -251,8 +253,7 @@ export default function CareerCoachStartPage() {
         </aside>
 
         {/* --- RIGHT MAIN CHAT AREA --- */}
-        <main
-          id="main-content"
+        <section
           className="flex h-[calc(100vh-140px)] min-h-[600px] flex-col rounded-[32px] bg-white shadow-sm ring-1 ring-slate-100"
           aria-label="Chat Interface"
         >
@@ -383,8 +384,15 @@ export default function CareerCoachStartPage() {
               </div>
             </div>
           </div>
-        </main>
+        </section>
       </div>
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </section>
   );
 }

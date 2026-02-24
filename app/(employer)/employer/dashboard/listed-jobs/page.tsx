@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import ListedJobCard from "@/components/employer/dashboard/ListedJobCard";
 import JobDetailView from "@/components/employer/dashboard/JobDetailView";
+import Toast from "@/components/Toast";
 import {
   ListedJobDetailSkeleton,
   ListedJobsListSkeleton,
@@ -29,6 +30,7 @@ function ListedJobsPageContent() {
   const [manualJobId, setManualJobId] = useState<string | number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [jobStatsMap, setJobStatsMap] = useState<Record<string, JobStats>>({});
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const didMountRef = useRef(false);
 
   // Derive the selected job ID from URL param, manual selection, or first job.
@@ -65,7 +67,7 @@ function ListedJobsPageContent() {
       }
     } catch (error) {
       console.error("Failed to delete job:", error);
-      alert("Failed to delete job. Please try again.");
+      setToastMessage("Failed to delete job. Please try again.");
     }
   };
 
@@ -269,8 +271,9 @@ function ListedJobsPageContent() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-360 mx-auto">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+    <>
+      <div className="p-4 md:p-6 max-w-360 mx-auto">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Job List */}
         <div className="flex flex-col lg:col-span-4">
           {/* Search */}
@@ -343,8 +346,16 @@ function ListedJobsPageContent() {
             <JobDetailView job={selectedJob} onDelete={handleDeleteJob} />
           </div>
         )}
+        </div>
       </div>
-    </div>
+      {toastMessage && (
+        <Toast
+          tone="error"
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
+    </>
   );
 }
 

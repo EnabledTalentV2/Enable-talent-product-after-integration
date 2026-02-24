@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import type { UserData } from "@/lib/types/user";
 import { Plus, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
 import InputBlock from "./InputBlock";
 
 type Entry = UserData["projects"]["entries"][number];
@@ -25,6 +27,7 @@ export default function Projects({
   onRemoveEntry,
   onNoProjectsChange,
 }: Props) {
+  const [showNoProjectsConfirm, setShowNoProjectsConfirm] = useState(false);
   const entries = data.entries ?? [];
   const noProjects = data.noProjects ?? false;
   const showDeleteWarning = noProjects && entries.length > 0;
@@ -37,10 +40,8 @@ export default function Projects({
 
   const handleNoProjectsChange = (checked: boolean) => {
     if (checked && entries.length > 0) {
-      const confirmed = window.confirm(
-        "Choosing 'no projects' will remove your existing project entries when you save. Continue?",
-      );
-      if (!confirmed) return;
+      setShowNoProjectsConfirm(true);
+      return;
     }
     onNoProjectsChange(checked);
   };
@@ -235,6 +236,21 @@ export default function Projects({
           </button>
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={showNoProjectsConfirm}
+        title="Remove existing projects?"
+        message="Choosing 'I don't have any projects to list' will remove your existing project entries when you save."
+        confirmLabel="Continue"
+        cancelLabel="Cancel"
+        variant="warning"
+        requiresConfirmation
+        onConfirm={() => {
+          setShowNoProjectsConfirm(false);
+          onNoProjectsChange(true);
+        }}
+        onCancel={() => setShowNoProjectsConfirm(false)}
+      />
     </div>
   );
 }

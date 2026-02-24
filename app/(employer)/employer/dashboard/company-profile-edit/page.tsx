@@ -278,8 +278,10 @@ export default function CompanyProfileEditPage() {
     <section className="mx-auto max-w-3xl py-10 px-6">
       <div className="mb-8 flex items-center gap-4">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="rounded-full bg-slate-100 p-2 text-slate-700 transition hover:bg-slate-200"
+          aria-label="Go back"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -343,7 +345,7 @@ export default function CompanyProfileEditPage() {
               {/* Upload button overlay */}
               <label
                 htmlFor="avatar-upload-edit"
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
+                className="absolute bottom-0 right-0 h-11 w-11 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors"
                 title="Upload organization logo"
               >
                 <span className="sr-only">Upload organization logo</span>
@@ -395,7 +397,7 @@ export default function CompanyProfileEditPage() {
             name="organizationName"
             value={formData.organizationName}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus-visible:border-[#C27803] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
             placeholder="Enter organization name"
           />
         </div>
@@ -414,7 +416,7 @@ export default function CompanyProfileEditPage() {
             value={formData.aboutOrganization}
             onChange={handleChange}
             rows={4}
-            className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full resize-none rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus-visible:border-[#C27803] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
             placeholder="Enter description about company"
           />
         </div>
@@ -454,7 +456,7 @@ export default function CompanyProfileEditPage() {
             name="website"
             value={formData.website}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus-visible:border-[#C27803] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
             placeholder="Enter website link"
           />
         </div>
@@ -473,7 +475,7 @@ export default function CompanyProfileEditPage() {
             name="linkedinUrl"
             value={formData.linkedinUrl}
             onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-900 focus-visible:border-[#C27803] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
             placeholder="Enter LinkedIn page"
           />
         </div>
@@ -526,7 +528,7 @@ export default function CompanyProfileEditPage() {
             <select
               id="industry"
               name="industry"
-              className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 focus-visible:border-[#C27803] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
               value={formData.industry}
               onChange={handleChange}
             >
