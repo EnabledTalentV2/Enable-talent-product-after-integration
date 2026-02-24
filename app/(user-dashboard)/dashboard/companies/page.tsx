@@ -7,6 +7,7 @@ import { Calendar, Globe, MapPin, Users } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
 import { useUserDataStore } from "@/lib/userDataStore";
 import { computeDashboardProfileCompletion } from "@/lib/profileCompletion";
 import { useAppliedJobsStore } from "@/lib/talentAppliedJobsStore";
@@ -104,6 +105,7 @@ function CompaniesPageContent() {
 
   const [selectedId, setSelectedId] = useState("");
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
   const detailsRef = useRef<HTMLDivElement | null>(null);
@@ -208,6 +210,11 @@ function CompaniesPageContent() {
   };
 
   const handleApply = () => {
+    if (!activeJob || !activeCompany || !canApply) return;
+    setShowApplyConfirm(true);
+  };
+
+  const submitApply = () => {
     if (!activeJob || !activeCompany || !canApply) {
       return;
     }
@@ -248,7 +255,8 @@ function CompaniesPageContent() {
   };
 
   return (
-    <section className="mx-auto max-w-360 space-y-6">
+    <section aria-labelledby="companies-heading" className="mx-auto max-w-360 space-y-6">
+      <h1 id="companies-heading" className="sr-only">Browse Companies and Jobs</h1>
       <DashboardProfilePrompt percent={profilePercent} />
 
       {/* Loading State */}
@@ -481,10 +489,12 @@ function CompaniesPageContent() {
                     {hasDescription && canToggleDescription && (
                       <button
                         type="button"
+                        aria-expanded={showFullDescription}
                         onClick={() => setExpandedJobId(showFullDescription ? null : (activeJob?.id ?? null))}
                         className="text-sm font-semibold text-[#C27803] transition hover:text-[#A56303]"
                       >
                         {showFullDescription ? "Show less" : "Read more"}
+                        <span className="sr-only"> job description</span>
                       </button>
                     )}
                   </div>
@@ -591,6 +601,17 @@ function CompaniesPageContent() {
         </div>
       </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showApplyConfirm}
+        title="Apply for this position?"
+        message={`Apply to ${activeJob?.title ?? "this role"} at ${activeCompany?.name ?? "this company"}? You won't be able to undo this.`}
+        confirmLabel="Apply"
+        cancelLabel="Cancel"
+        variant="info"
+        onConfirm={() => { setShowApplyConfirm(false); submitApply(); }}
+        onCancel={() => setShowApplyConfirm(false)}
+      />
     </section>
   );
 }

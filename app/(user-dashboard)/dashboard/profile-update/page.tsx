@@ -769,6 +769,8 @@ export default function ProfileUpdatePage() {
   const setCandidateProfile = useCandidateProfileStore((s) => s.setProfile);
   const setCandidateLoading = useCandidateProfileStore((s) => s.setLoading);
   const educationInitializedRef = useRef(false);
+  const isDirtyRef = useRef(false);
+  const trackChangesRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -1005,6 +1007,30 @@ export default function ProfileUpdatePage() {
       setSaveError(null);
     }
   }, [effectiveUserData, saveError, showValidation, validationMessage]);
+
+  // SC 3.3.6 — Error Prevention: start tracking changes 1.5s after load
+  // to avoid false positives from background Zustand/layout data refreshes
+  useEffect(() => {
+    if (loading) return;
+    const timer = setTimeout(() => { trackChangesRef.current = true; }, 1500);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    if (trackChangesRef.current) {
+      isDirtyRef.current = true;
+    }
+  }, [rawUserData]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   useEffect(() => {
     if (!firstErrorId) return;
@@ -2091,6 +2117,7 @@ export default function ProfileUpdatePage() {
       }
 
       setSaveSuccess("Profile saved.");
+      isDirtyRef.current = false;
       if (redirect) {
         router.push("/dashboard");
       }

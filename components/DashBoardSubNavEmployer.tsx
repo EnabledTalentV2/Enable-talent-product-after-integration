@@ -100,6 +100,7 @@ export default function DashboardSubNavEmployer() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search candidates by name..."
                 aria-label="Search candidates"
+                aria-describedby="employer-search-help"
                 className="w-full rounded-full border border-slate-200 bg-white px-4 py-2.5 pr-12 text-base text-slate-800 shadow-sm focus:border-[#C27803] focus:outline-none focus:ring-2 focus:ring-[#C27803]/20"
               />
               <Search
@@ -110,13 +111,12 @@ export default function DashboardSubNavEmployer() {
             <button
               type="submit"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange-900 px-5 py-2.5 text-base font-semibold text-white transition-colors hover:bg-orange-950 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#C27803]"
-              aria-label="Search candidates"
             >
               <Search className="h-4 w-4" aria-hidden="true" />
               <span>Search</span>
             </button>
           </div>
-          <p className="mt-1 text-center text-xs text-slate-700">
+          <p id="employer-search-help" className="mt-1 text-center text-xs text-slate-700">
             Press Enter or select Search.
           </p>
         </form>

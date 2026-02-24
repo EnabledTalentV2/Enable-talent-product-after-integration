@@ -7,6 +7,7 @@ import { MapPin, Briefcase, DollarSign, Calendar, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import DashboardProfilePrompt from "@/components/DashboardProfilePrompt";
+import ConfirmDialog from "@/components/a11y/ConfirmDialog";
 import { CandidateMyJobsSkeleton } from "@/components/CandidateDashboardSkeletons";
 import Toast from "@/components/Toast";
 import { useUserDataStore } from "@/lib/userDataStore";
@@ -123,6 +124,7 @@ function MyJobsPageContent() {
 
   const [activeFilter, setActiveFilter] = useState<(typeof filters)[number]>("All");
   const [selectedId, setSelectedId] = useState("");
+  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
   const [respondingToken, setRespondingToken] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
@@ -513,6 +515,11 @@ function MyJobsPageContent() {
   };
 
   const handleApply = () => {
+    if (!activeJob || !canApply) return;
+    setShowApplyConfirm(true);
+  };
+
+  const submitApply = () => {
     if (!activeJob || !canApply) {
       return;
     }
@@ -583,7 +590,8 @@ function MyJobsPageContent() {
   }
 
   return (
-    <section className="mx-auto max-w-360 space-y-6 py-10">
+    <section aria-labelledby="my-jobs-heading" className="mx-auto max-w-360 space-y-6 py-10">
+      <h1 id="my-jobs-heading" className="sr-only">My Jobs</h1>
       <DashboardProfilePrompt percent={profilePercent} />
       <div>
           {/* Filter Tabs */}
@@ -911,6 +919,17 @@ function MyJobsPageContent() {
           onClose={() => setToastMessage(null)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showApplyConfirm}
+        title="Apply for this position?"
+        message={`Apply to ${activeJob?.title ?? "this role"} at ${activeJob?.company ?? "this company"}? You won't be able to undo this.`}
+        confirmLabel="Apply"
+        cancelLabel="Cancel"
+        variant="info"
+        onConfirm={() => { setShowApplyConfirm(false); submitApply(); }}
+        onCancel={() => setShowApplyConfirm(false)}
+      />
     </section>
   );
 }

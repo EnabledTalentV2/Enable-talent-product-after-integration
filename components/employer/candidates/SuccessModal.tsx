@@ -24,6 +24,11 @@ export default function SuccessModal({
         event.preventDefault();
         onClose();
       }
+      // Focus trap: only one focusable element (OK button), keep focus on it
+      if (event.key === "Tab") {
+        event.preventDefault();
+        primaryButtonRef.current?.focus();
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     primaryButtonRef.current?.focus();
