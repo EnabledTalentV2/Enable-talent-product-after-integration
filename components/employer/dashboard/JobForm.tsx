@@ -289,8 +289,12 @@ export default function JobForm({
           autoComplete="on"
           required
           aria-required="true"
+          aria-describedby={`${formId}-title-help`}
           className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#C27803] focus:ring-2 focus:ring-[#C27803]/20 outline-none transition-colors text-gray-800"
         />
+        <p id={`${formId}-title-help`} className="mt-1.5 text-xs text-gray-600">
+          Enter the exact job title candidates will see when searching. Be specific — e.g. "Senior UX Designer" rather than "Designer".
+        </p>
       </div>
 
       {/* Job Location */}
@@ -315,7 +319,11 @@ export default function JobForm({
             setValues((prev) => ({ ...prev, location: newLocation }))
           }
           required
+          describedBy={`${formId}-location-help`}
         />
+        <p id={`${formId}-location-help`} className="mt-1.5 text-xs text-gray-600">
+          Start typing a city or region. Candidates will use this to filter jobs by location.
+        </p>
       </div>
 
       {/* Job Type */}

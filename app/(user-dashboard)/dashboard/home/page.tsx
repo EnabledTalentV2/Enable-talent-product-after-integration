@@ -228,7 +228,7 @@ export default function HomePageDashboard() {
   }
 
   return (
-    <main id="main-content" aria-labelledby="dashboard-heading">
+    <section aria-labelledby="dashboard-heading">
       <h1 id="dashboard-heading" className="sr-only">
         Talent Dashboard - Portfolio
       </h1>
@@ -696,6 +696,6 @@ export default function HomePageDashboard() {
           )}
         </div>
       </section>
-    </main>
+    </section>
   );
 }
