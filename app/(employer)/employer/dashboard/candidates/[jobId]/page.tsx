@@ -254,7 +254,6 @@ export default function CandidatesPage() {
     isFetchingRankingData,
     error: rankingError,
     triggerRanking,
-    fetchRankingData,
     clearError,
   } = useAIRanking();
 
@@ -470,10 +469,6 @@ export default function CandidatesPage() {
     };
   }, [activeTab, currentJobId, currentJob]);
 
-  useEffect(() => {
-    if (!currentJobId || activeTab !== "ai_ranking") return;
-    fetchRankingData(currentJobId);
-  }, [currentJobId, activeTab, fetchRankingData]);
 
   useEffect(() => {
     setCurrentPage(1);

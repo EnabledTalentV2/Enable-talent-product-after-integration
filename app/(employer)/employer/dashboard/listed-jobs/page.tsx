@@ -14,10 +14,8 @@ import {
   ListedJobsListSkeleton,
 } from "@/components/employer/dashboard/ListedJobsLoadingSkeleton";
 import { useJobs, jobsKeys } from "@/lib/hooks/useJobs";
-import { emptyJobStats, toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
+import { toJobDetail, toListedJob } from "@/lib/employerJobsUtils";
 import { useEmployerJobsStore, setJobsCacheInvalidator } from "@/lib/employerJobsStore";
-import type { JobStats } from "@/lib/employerJobsUtils";
-import type { Application } from "@/components/employer/candidates/ApplicantsList";
 
 function ListedJobsPageContent() {
   // Use React Query hook - automatic fetching, caching, and error handling
@@ -29,7 +27,6 @@ function ListedJobsPageContent() {
 
   const [manualJobId, setManualJobId] = useState<string | number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [jobStatsMap, setJobStatsMap] = useState<Record<string, JobStats>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const didMountRef = useRef(false);
 
@@ -71,27 +68,8 @@ function ListedJobsPageContent() {
     }
   };
 
-  const getStatsForJob = useCallback(
-    (jobId: string | number) => jobStatsMap[String(jobId)],
-    [jobStatsMap]
-  );
-
   const listedJobs = useMemo(() => {
-    const allJobs = jobs.map((job) => {
-      const base = toListedJob(job);
-      const stats = getStatsForJob(job.id);
-      if (!stats) {
-        return base;
-      }
-      return {
-        ...base,
-        stats: {
-          accepted: stats.accepted,
-          declined: stats.declined,
-          matching: stats.matchingCandidates,
-        },
-      };
-    });
+    const allJobs = jobs.map((job) => toListedJob(job));
     if (!searchQuery.trim()) return allJobs;
 
     const query = searchQuery.toLowerCase();
@@ -101,26 +79,14 @@ function ListedJobsPageContent() {
       const locationMatch = job.location?.toLowerCase().includes(query);
       return titleMatch || companyMatch || locationMatch;
     });
-  }, [jobs, searchQuery, getStatsForJob]);
+  }, [jobs, searchQuery]);
+
   const selectedJob = useMemo(() => {
     if (!selectedJobId) return null;
     const job = jobs.find((entry) => entry.id === selectedJobId);
     if (!job) return null;
-    const base = toJobDetail(job);
-    const stats = getStatsForJob(job.id);
-    if (!stats) {
-      return base;
-    }
-    return {
-      ...base,
-      stats: {
-        accepted: stats.accepted,
-        declined: stats.declined,
-        requests: stats.requestsSent,
-        matching: stats.matchingCandidates,
-      },
-    };
-  }, [jobs, selectedJobId, getStatsForJob]);
+    return toJobDetail(job);
+  }, [jobs, selectedJobId]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -157,66 +123,6 @@ function ListedJobsPageContent() {
     });
   }, [selectedJobId]);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadJobStats = async () => {
-      const entries = await Promise.all(
-        jobs.map(async (job) => {
-          const stats = emptyJobStats();
-          const jobId = job.id;
-
-          try {
-            const response = await fetch(`/api/jobs/${jobId}/applications`);
-            if (response.ok) {
-              const data = await response.json();
-              const applications = Array.isArray(data) ? (data as Application[]) : [];
-
-              applications.forEach((application) => {
-                if (
-                  application.status === "shortlisted" ||
-                  application.status === "hired"
-                ) {
-                  stats.accepted += 1;
-                } else if (application.status === "rejected") {
-                  stats.declined += 1;
-                } else if (application.status === "request_sent") {
-                  stats.requestsSent += 1;
-                }
-              });
-            }
-          } catch (error) {
-            console.error("Failed to load applications for job:", jobId, error);
-          }
-
-          try {
-            const response = await fetch(`/api/jobs/${jobId}/ranking-data`);
-            if (response.ok) {
-              const data = await response.json();
-              const rankedCandidates = Array.isArray(data?.ranked_candidates)
-                ? data.ranked_candidates
-                : [];
-              stats.matchingCandidates = rankedCandidates.length;
-            }
-          } catch (error) {
-            console.error("Failed to load ranking data for job:", jobId, error);
-          }
-
-          return [String(jobId), stats] as const;
-        })
-      );
-
-      if (isMounted) {
-        setJobStatsMap(Object.fromEntries(entries));
-      }
-    };
-
-    loadJobStats();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [jobs]);
 
   // Show loading state
   if (isLoading) {
@@ -285,11 +191,11 @@ function ListedJobsPageContent() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search your listed jobs"
                 aria-label="Search your listed jobs"
-                className="w-full bg-white pl-4 pr-12 py-2.5 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C27803]/20 focus:border-[#C27803] transition-all"
+                className="w-full bg-white pl-4 pr-14 py-3 rounded-xl border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C27803]/20 focus:border-[#C27803] transition-all"
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 bg-[#D95F35] text-white hover:bg-[#B84D28] transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-3 bg-[#D95F35] text-white hover:bg-[#B84D28] transition-colors"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
