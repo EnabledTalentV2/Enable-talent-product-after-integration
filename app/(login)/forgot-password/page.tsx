@@ -552,7 +552,7 @@ function ForgotPasswordContent() {
       <div className="w-full p-6 z-30 flex justify-start md:absolute md:top-0 md:left-0">
         <Link
           href={backLink}
-          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-orange-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
+          className="group flex items-center gap-2 text-sm font-medium text-slate-900 transition-colors hover:text-slate-900 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/40 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
         >
           <ArrowLeft
             className="h-4 w-4 transition-transform group-hover:-translate-x-1"
@@ -595,7 +595,7 @@ function ForgotPasswordContent() {
             <h1 className="text-3xl font-semibold text-slate-900 mb-4 leading-tight md:text-4xl">
               Reset Your Password
             </h1>
-            <p className="text-base text-slate-800 md:text-lg">
+            <p className="text-base text-slate-900 md:text-lg">
               Don&apos;t worry, we&apos;ll help you get back in
             </p>
           </div>

@@ -549,11 +549,14 @@ function MyJobsPageContent() {
           const message = (error as { message?: string })?.message || "Failed to submit application";
 
           if (status === 409) {
-            alert("You have already applied to this job.");
+            setToastTone("error");
+            setToastMessage("You have already applied to this job.");
           } else if (status === 401) {
-            alert("Please log in to apply for this job.");
+            setToastTone("error");
+            setToastMessage("Please log in to apply for this job.");
           } else {
-            alert(message || "Failed to submit application. Please try again.");
+            setToastTone("error");
+            setToastMessage(message || "Failed to submit application. Please try again.");
           }
         },
       }

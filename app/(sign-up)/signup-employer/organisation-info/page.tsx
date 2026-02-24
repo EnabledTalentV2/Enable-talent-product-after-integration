@@ -68,10 +68,10 @@ const toFieldErrorsFromApi = (error: unknown): FieldErrors => {
 };
 
 const inputClasses = (hasError?: boolean) =>
-  `w-full rounded-xl border bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-1 ${
+  `w-full rounded-xl border bg-white px-4 py-3 text-gray-700 placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
     hasError
-      ? "border-red-400 focus:border-red-500 focus:ring-red-200"
-      : "border-gray-200 focus:border-[#C27803] focus:ring-[#C27803]"
+      ? "border-red-400 focus-visible:border-red-500 focus-visible:ring-red-200"
+      : "border-gray-200 focus-visible:border-[#C27803] focus-visible:ring-[#C27803]"
   }`;
 
 const COMPANY_SIZE_OPTIONS = [
@@ -335,7 +335,7 @@ export default function OrganisationInfoPage() {
                   {/* Upload button overlay */}
                   <label
                     htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-orange-800 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-900 transition-colors"
+                    className="absolute bottom-0 right-0 h-11 w-11 rounded-full bg-orange-800 border-2 border-white flex items-center justify-center cursor-pointer hover:bg-orange-900 transition-colors"
                     title="Upload organization logo"
                   >
                     <span className="sr-only">Upload organization logo</span>

@@ -116,7 +116,7 @@ export default function PostJobsPage() {
           <div className="flex justify-between items-center mb-6">
             <Link
               href="/employer/dashboard"
-              className="flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium"
+              className="flex items-center text-slate-700 hover:text-slate-900 text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -165,7 +165,7 @@ export default function PostJobsPage() {
         <div className="flex justify-between items-center mb-6">
           <Link
             href="/employer/dashboard"
-            className="flex items-center text-gray-500 hover:text-gray-700 text-sm font-medium"
+            className="flex items-center text-slate-700 hover:text-slate-900 text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -173,7 +173,7 @@ export default function PostJobsPage() {
           <button
             type="button"
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-600"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
             onClick={() => router.push("/employer/dashboard")}
           >
             <X className="w-5 h-5" />

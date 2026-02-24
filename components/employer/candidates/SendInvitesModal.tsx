@@ -120,9 +120,10 @@ export default function SendInvitesModal({
             Choose the jobs you want to send the invites
           </h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2"
           >
             <X className="h-6 w-6" />
           </button>

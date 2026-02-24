@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "plugins": [],
+    "jsxImportSource": "react",
+    "moduleResolution": "node16"
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"]
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useAIRanking } from "@/lib/hooks/useAIRanking";
 
@@ -20,16 +19,8 @@ export default function CandidateRankingPanel({
     isFetchingRankingData,
     error,
     triggerRanking,
-    fetchRankingData,
     clearError,
   } = useAIRanking();
-
-  // Fetch existing ranking data on mount
-  useEffect(() => {
-    if (jobId) {
-      fetchRankingData(jobId);
-    }
-  }, [jobId, fetchRankingData]);
 
   const handleTriggerRanking = async () => {
     await triggerRanking(jobId);

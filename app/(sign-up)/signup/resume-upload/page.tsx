@@ -96,7 +96,7 @@ export default function ResumeUpload() {
                   type="button"
                   onClick={handleRemoveFile}
                   disabled={isUploading}
-                  className="flex items-center justify-center rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-slate-700 transition-colors hover:bg-red-50 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
                   aria-label="Remove file"
                 >
                   <X size={18} strokeWidth={2} />
