@@ -392,7 +392,7 @@ export default function TalentSignupForm({
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || oauthLoadingProvider !== null}
           className="mt-5 w-full rounded-lg bg-orange-900 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(182,97,35,0.35)] transition-colors hover:bg-orange-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#C27803] focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? (
