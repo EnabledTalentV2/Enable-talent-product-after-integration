@@ -796,7 +796,7 @@ export default function ManualResumeFill() {
                     type="button"
                     onClick={form.handlePrevious}
                     className="px-6 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
-                    disabled={form.activeIndex === 0}
+                    disabled={form.activeIndex === 0 || form.isUpdating}
                   >
                     Previous
                   </button>

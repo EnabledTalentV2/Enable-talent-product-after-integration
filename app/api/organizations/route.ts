@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import { validateImageFile } from "@/lib/upload-validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,6 +39,17 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") || "";
     const isMultipart = contentType.includes("multipart/form-data");
     const body = isMultipart ? await request.formData() : await request.json();
+
+    if (isMultipart) {
+      const avatar = (body as FormData).get("avatar");
+      if (avatar instanceof File) {
+        const result = await validateImageFile(avatar);
+        if (!result.valid) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+      }
+    }
+
     console.log(
       "[Organizations API] POST ->",
       API_ENDPOINTS.organizations.list,

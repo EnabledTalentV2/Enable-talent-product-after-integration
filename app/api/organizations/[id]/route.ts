@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import { validateImageFile } from "@/lib/upload-validation";
 
 export async function PUT(
   request: NextRequest,
@@ -11,6 +12,16 @@ export async function PUT(
     const isMultipart = contentType.includes("multipart/form-data");
     const body = isMultipart ? await request.formData() : await request.json();
     const { id: organizationId } = await params;
+
+    if (isMultipart) {
+      const avatar = (body as FormData).get("avatar");
+      if (avatar instanceof File) {
+        const result = await validateImageFile(avatar);
+        if (!result.valid) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+      }
+    }
 
     console.log(
       "[Organizations API] PUT ->",
@@ -52,6 +63,16 @@ export async function PATCH(
     const isMultipart = contentType.includes("multipart/form-data");
     const body = isMultipart ? await request.formData() : await request.json();
     const { id: organizationId } = await params;
+
+    if (isMultipart) {
+      const avatar = (body as FormData).get("avatar");
+      if (avatar instanceof File) {
+        const result = await validateImageFile(avatar);
+        if (!result.valid) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+      }
+    }
 
     console.log(
       "[Organizations API] PATCH ->",

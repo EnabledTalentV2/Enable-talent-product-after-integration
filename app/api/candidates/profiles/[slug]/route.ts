@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS, backendFetch } from "@/lib/api-config";
+import { validateResumeFile } from "@/lib/upload-validation";
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
@@ -53,6 +54,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const isMultipart = contentType.includes("multipart/form-data");
     const body = isMultipart ? await request.formData() : await request.json();
 
+    if (isMultipart) {
+      const resumeFile = (body as FormData).get("resume_file");
+      if (resumeFile instanceof File) {
+        const result = await validateResumeFile(resumeFile);
+        if (!result.valid) {
+          return NextResponse.json({ error: result.error }, { status: 400 });
+        }
+      }
+    }
+
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
       {
@@ -91,6 +102,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ? resumeFileValue.trim().length > 0 &&
           resumeFileValue.trim().toLowerCase() !== "null"
         : Boolean(resumeFileValue);
+
+    if (resumeFileValue instanceof File) {
+      const result = await validateResumeFile(resumeFileValue);
+      if (!result.valid) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+    }
 
     const backendResponse = await backendFetch(
       API_ENDPOINTS.candidateProfiles.detail(slug),
