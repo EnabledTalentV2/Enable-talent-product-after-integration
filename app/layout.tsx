@@ -4,7 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 import { ReactQueryProvider } from "@/lib/providers/ReactQueryProvider";
-import { SkipLink } from "@/components/a11y";
+import { SkipLink, ClearStaleCredentials } from "@/components/a11y";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -33,6 +33,7 @@ export default function RootLayout({
           className={`${plusJakarta.variable}  antialiased`}
         >
           <SkipLink />
+          <ClearStaleCredentials />
           <ReactQueryProvider>
             {children}
           </ReactQueryProvider>

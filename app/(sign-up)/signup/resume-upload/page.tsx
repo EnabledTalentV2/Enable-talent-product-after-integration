@@ -114,7 +114,8 @@ export default function ResumeUpload() {
                 <button
                   type="button"
                   onClick={() => router.push("/signup/accessability-needs")}
-                  className="mt-3 block w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-700"
+                  disabled={isUploading}
+                  className="mt-3 block w-full rounded-lg bg-yellow-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   Continue to accessibility needs
                 </button>

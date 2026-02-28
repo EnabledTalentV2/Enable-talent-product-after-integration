@@ -20,3 +20,4 @@ export { default as VisuallyHidden } from "./VisuallyHidden";
 export { default as LiveRegion } from "./LiveRegion";
 export { default as ConfirmDialog } from "./ConfirmDialog";
 export { default as ValidationIcon } from "./ValidationIcon";
+export { ClearStaleCredentials } from "./ClearStaleCredentials";
